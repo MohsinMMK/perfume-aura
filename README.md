@@ -1,12 +1,12 @@
-# Perfume Aura — Coming Soon
+# Perfume Aura
 
-Single-page coming soon site for [perfumeaura.com](https://perfumeaura.com).
+Coming soon site for [perfumeaura.com](https://perfumeaura.com).
 
 ## Stack
 
-- Static HTML + CSS
-- No build step
-- Designed for Hostinger `public_html` / Git deploy
+- Static HTML + CSS (no build step)
+- Deployed to Hostinger `public_html` via **official GitHub Git integration**
+- Domain registered at **GoDaddy**; DNS via Hostinger nameservers
 
 ## Local preview
 
@@ -16,15 +16,34 @@ Open `index.html` in a browser, or:
 npx serve .
 ```
 
-## Deploy to Hostinger via GitHub
+## Production workflow
 
-1. Push this repo to GitHub (already set up if you used the project setup).
-2. In Hostinger → Websites → your site → **Advanced** → **Git**.
-3. Connect GitHub, select this repository, branch `main`.
-4. Set root directory to `public_html` (or Hostinger’s web root).
-5. Deploy. Enable auto-deploy if available.
+```bash
+git add .
+git commit -m "Your change"
+git push origin main
+```
 
-## Domain
+Hostinger auto-deploys `main` → `public_html`.
 
-- Registered at GoDaddy
-- Nameservers: `ns1.dns-parking.com`, `ns2.dns-parking.com` (Hostinger)
+### One-time Hostinger Git setup
+
+1. hPanel → Websites → **perfumeaura.com** → Dashboard  
+2. **Advanced** → **Git** → Continue with GitHub  
+3. Repo: `MohsinMMK/perfume-aura` · Branch: `main` · Root: `public_html`  
+4. Deploy · enable auto-deployment  
+
+## Domain (official)
+
+| Piece | Provider |
+|-------|----------|
+| Registration / renewal | GoDaddy |
+| Nameservers | Hostinger (`ns1.dns-parking.com`, `ns2.dns-parking.com`) |
+| A / CNAME / MX zone | Hostinger hPanel (not GoDaddy) |
+| Hosting + SSL + Git | Hostinger |
+
+Full details, DNS explanation, checks, and anti-patterns: **[docs/DEPLOY.md](docs/DEPLOY.md)**.
+
+## Status notes
+
+After nameserver changes, allow **up to 24 hours** for Hostinger validation and global DNS propagation. Do not transfer the domain or thrash nameservers during that window.
