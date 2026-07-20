@@ -20,6 +20,7 @@ Instructions for AI agents and developers working on this repository.
 3. **Source of truth for code is GitHub.** Deploy only via Hostinger’s **official Git integration** (not ad-hoc FTP/zip as the long-term path).
 4. **Official DNS method is Hostinger nameservers** at the registrar (GoDaddy). Prefer this over inventing A records at GoDaddy while Hostinger NS are active.
 5. Prefer Hostinger’s documented workflows. Waiting up to **24 hours** for DNS validation/propagation is acceptable. Do not thrash nameservers or dual-manage DNS.
+6. **A-record-at-GoDaddy deprecation / dual-DNS flows do not apply** while Path A (Hostinger NS) is active.
 
 ## Ownership split
 
@@ -37,12 +38,12 @@ Instructions for AI agents and developers working on this repository.
 
 ```text
 GoDaddy (owns perfumeaura.com — renewal only)
-   └── Nameservers
-         ns1.dns-parking.com
-         ns2.dns-parking.com
+   └── Nameservers (this domain — Path A)
+         lunar.dns-parking.com
+         solar.dns-parking.com
               └── Hostinger DNS zone (authoritative)
-                       └── A @ → Hostinger hosting IPv4
-                       └── www → CNAME/A as Hostinger configures
+                       └── A @ → 82.112.232.17  (hosting plan IPv4)
+                       └── CNAME www → perfumeaura.com
                               └── Hostinger hosting
                                        public_html
                                             ▲
@@ -51,60 +52,70 @@ GoDaddy (owns perfumeaura.com — renewal only)
                                        (this repo)
 ```
 
-## DNS (official Hostinger method)
+## DNS (official Hostinger method — Path A)
 
-### Nameservers (set at GoDaddy)
+### Nameservers (set at GoDaddy) — this domain
 
-```text
-ns1.dns-parking.com
-ns2.dns-parking.com
-```
-
-Confirm in hPanel if Hostinger ever shows different values for this domain; always use **exact** panel values.
-
-Glue IPs (only if a registrar demands NS IP addresses):
+**Authoritative values for `perfumeaura.com` (use these):**
 
 ```text
-ns1.dns-parking.com → 162.159.24.201
-ns2.dns-parking.com → 162.159.25.42
+lunar.dns-parking.com
+solar.dns-parking.com
 ```
+
+Confirm in hPanel **Check guide** if Hostinger ever shows different values for this domain; always use the **exact** panel values for this site.
+
+Generic Hostinger defaults sometimes documented as `ns1.dns-parking.com` / `ns2.dns-parking.com` — **not** the pair currently set for perfumeaura.com. Do not thrash between pairs without a Hostinger panel reason.
+
+### Glue IPs (only if a registrar demands NS IP addresses)
+
+```text
+lunar.dns-parking.com → 172.64.52.30   (and IPv6 as published)
+solar.dns-parking.com → 172.64.53.84
+```
+
+(Older generic pair glue, if ever needed: `ns1.dns-parking.com` → `162.159.24.201`, `ns2.dns-parking.com` → `162.159.25.42`.)
 
 ### Why nameservers (not GoDaddy A records) by default
 
 Hostinger recommends **Option 1 — change nameservers** for external domains so:
 
-- Hostinger auto-configures the DNS zone to the hosting IP
+- Hostinger manages the DNS zone to the hosting IP
 - DNS, SSL, email records, and hosting stay manageable in one place (hPanel)
 
-**Option 2 — A records at the registrar** is only for cases where nameservers cannot be changed (e.g. some CDN setups). Not the default for this project.
+**Option 2 — A records at the registrar** is only for cases where nameservers cannot be changed (e.g. some CDN setups). **Not** the default for this project. Do not run Option 2 while Hostinger NS are active.
 
-### Expected zone after Hostinger activates DNS
+### Expected zone after Hostinger allows DNS edits
 
 | Type | Name | Value | Purpose |
 |------|------|--------|---------|
-| **A** | `@` | Hosting plan **IPv4** (from Plan details) | Root → server |
-| **CNAME** or **A** | `www` | domain or same IP | `www` subdomain |
+| **A** | `@` | **`82.112.232.17`** | Root → hosting (from hPanel Check guide / Plan details) |
+| **CNAME** | `www` | `perfumeaura.com` | www → apex |
 | **MX** / **TXT** | `@` | As needed | Email / verification (optional) |
 
-Do **not** invent IP addresses. Read the real IP from:
+Re-confirm IP from:
 
-> hPanel → Websites → perfumeaura.com → Dashboard → Hosting plan → **Plan details** → Website details → **IP address**
+> hPanel → Websites → perfumeaura.com → Dashboard → Hosting plan → **Plan details** → Website details → **IP address**  
+> or hPanel **Check guide** (“Connect via DNS records” shows the A value).
+
+Do **not** invent other IPs from sibling sites on the same account.
 
 ### After NS change
 
 - Allow up to **24 hours** for Hostinger validation + global propagation.
 - Disable **DNSSEC** at GoDaddy if enabled (can block NS changes).
-- Hostinger may show “Domain not connected” until detection completes.
-- If WHOIS already shows Hostinger NS but the zone is still empty / API says “not pointing”, wait or use hPanel **Check guide / Live DNS Checkup**; after ~24h contact Hostinger support — do not transfer the domain.
+- Hostinger may show **“Domain not connected”** / **“Domain not pointing to Hostinger”** until detection completes — even when public WHOIS/`dig NS` already show Hostinger NS.
+- If WHOIS already shows Hostinger NS and authoritative servers return **SOA**, but hPanel still blocks **Add record** or API returns **Domain not found**: wait longer, use **Check guide / Live DNS Checkup**, then **Hostinger support** — do **not** transfer the domain and do **not** thrash nameservers.
+- Known status (as of 2026-07-20): NS `lunar`/`solar` **propagated**; zone may exist (SOA) while panel/API still refuse writes until Hostinger marks the domain as pointing. A `@` may still be empty until records can be saved.
 
 ### Verification commands
 
 ```bash
 dig NS perfumeaura.com +short
-# expect: ns1.dns-parking.com / ns2.dns-parking.com
+# expect: lunar.dns-parking.com / solar.dns-parking.com
 
 dig A perfumeaura.com +short
-# expect: same IPv4 as Hostinger Plan details
+# expect: 82.112.232.17 (after zone A record is live)
 
 curl -sI -L https://perfumeaura.com | head
 ```
@@ -119,7 +130,8 @@ Propagation map: https://dnschecker.org/#NS/perfumeaura.com
 | Vhost type | addon |
 | Hosting username | `u602723373` |
 | Web root | `/home/u602723373/domains/perfumeaura.com/public_html` |
-| Order / plan | Business hosting (same account may also host other sites) |
+| Order / plan | Business hosting (`order_id` `1008392140`; same account may host other sites) |
+| Hosting IPv4 (this site) | **`82.112.232.17`** (from Hostinger Check guide) |
 
 ## Git → Hostinger (official deploy)
 
@@ -154,7 +166,7 @@ hPanel → Advanced → Git → **Redeploy**
 
 ## SSL
 
-After the domain resolves publicly:
+After the domain resolves publicly (A record live):
 
 1. hPanel → site dashboard → **SSL**
 2. Install free certificate for `perfumeaura.com` and `www.perfumeaura.com`
@@ -162,10 +174,11 @@ After the domain resolves publicly:
 ## Repository layout
 
 ```text
-AGENTS.md          ← this file (agent/project rules)
+AGENTS.md                      ← this file (agent/project rules)
 README.md
-docs/DEPLOY.md     ← human-oriented deploy guide (same stack)
-index.html         ← site entry (deployed)
+docs/DEPLOY.md                 ← human-oriented deploy guide (same stack)
+docs/HOSTINGER_SUPPORT_DNS.md  ← Path A DNS steps + support paste text
+index.html                     ← site entry (deployed)
 styles.css
 ```
 
@@ -192,22 +205,24 @@ Update this file when that happens.
 | Website Builder / Horizons for this repo | No official Git integration |
 | Changing nameservers repeatedly | Resets propagation / validation |
 | Committing secrets (API tokens, passwords) | Rotate any token that was ever shared in chat |
+| Using sibling-site IPs as this site’s A record | Wrong target; use Plan details / Check guide only |
 
 ## Agent workflow preferences
 
-1. **Read** `docs/DEPLOY.md` and this file before changing hosting/DNS advice.
+1. **Read** `docs/DEPLOY.md`, `docs/HOSTINGER_SUPPORT_DNS.md`, and this file before changing hosting/DNS advice.
 2. **Ship code** via commits to `main` only when the user wants it live; Hostinger auto-deploy is the release path.
-3. For DNS issues: verify WHOIS NS, public `dig`, Hostinger zone, then hPanel Live DNS Checkup — not random A-record hacks.
+3. For DNS issues: verify WHOIS NS, public `dig`, Hostinger zone, then hPanel Live DNS Checkup — not random A-record hacks at GoDaddy.
 4. Prefer small, clear commits and keep the coming soon page **single viewport / no page scroll** until the full site replaces it.
 5. Do not claim the site is “live” until `https://perfumeaura.com` resolves and returns this project’s content.
-6. Hostinger MCP / API (if configured in the agent environment) may list websites and DNS zones; use them for verification. DNS write operations only after the zone is active and only in line with official defaults.
+6. Hostinger MCP / API (if configured) may list websites and DNS zones; use them for verification. DNS write operations only after the zone is writable and only with official defaults (A `@` → plan IP, CNAME `www` → apex). If API returns **Domain not found**, do not invent workarounds that break Path A — wait or escalate to Hostinger support.
 
 ## Success criteria
 
 - [ ] `https://perfumeaura.com` serves this site (coming soon, then full product)
 - [ ] `git push origin main` updates Hostinger without manual upload
 - [ ] Domain still registered only at GoDaddy
-- [ ] DNS managed only at Hostinger (nameserver method)
+- [ ] DNS managed only at Hostinger (nameserver method: `lunar` / `solar`)
+- [ ] A `@` → `82.112.232.17` (or current Plan details IP) publicly resolvable
 - [ ] SSL valid on apex and `www`
 
 ## Official references
@@ -224,3 +239,4 @@ Update this file when that happens.
 
 - [README.md](README.md) — quick start
 - [docs/DEPLOY.md](docs/DEPLOY.md) — full deploy guide
+- [docs/HOSTINGER_SUPPORT_DNS.md](docs/HOSTINGER_SUPPORT_DNS.md) — Path A DNS + support paste

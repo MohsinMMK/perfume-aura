@@ -38,7 +38,7 @@ Hostinger auto-deploys `main` → `public_html`.
 | Piece | Provider |
 |-------|----------|
 | Registration / renewal | GoDaddy |
-| Nameservers | Hostinger (`ns1.dns-parking.com`, `ns2.dns-parking.com`) |
+| Nameservers | Hostinger (`lunar.dns-parking.com`, `solar.dns-parking.com`) |
 | A / CNAME / MX zone | Hostinger hPanel (not GoDaddy) |
 | Hosting + SSL + Git | Hostinger |
 
