@@ -120,7 +120,7 @@ See [ROADMAP.md](./ROADMAP.md).
 ```text
 Phase 0  Docs + monorepo scaffold              ✅
 Phase 1  Inventory MVP                         ✅ code + tests; deploy pending
-Phase 2  Invoicing                             📐 design ready
+Phase 2  Invoicing                             ✅ core implemented
 Phase 3  Payments                              📐 design ready
 Phase 4  Finance dashboards                    📐 design ready
 ```
