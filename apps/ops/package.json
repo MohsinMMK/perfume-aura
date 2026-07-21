@@ -1,0 +1,40 @@
+{
+  "name": "@perfume-aura/ops",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "seed:owner": "tsx scripts/seed-owner.ts",
+    "test": "tsx --test lib/**/*.test.ts"
+  },
+  "dependencies": {
+    "@hugeicons/core-free-icons": "^4.2.2",
+    "@hugeicons/react": "^1.1.9",
+    "@perfume-aura/db": "workspace:*",
+    "@perfume-aura/ui": "workspace:*",
+    "@perfume-aura/validators": "workspace:*",
+    "better-auth": "1.6.23",
+    "drizzle-orm": "0.45.2",
+    "next": "16.2.10",
+    "pg": "^8.22.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.10",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.1",
+    "typescript": "^5"
+  }
+}

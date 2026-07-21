@@ -1,0 +1,18 @@
+{
+  "name": "perfume-aura",
+  "private": true,
+  "packageManager": "pnpm@11.1.3",
+  "scripts": {
+    "dev:ops": "pnpm --filter @perfume-aura/ops dev",
+    "build:ops": "pnpm --filter @perfume-aura/ops build",
+    "start:ops": "pnpm --filter @perfume-aura/ops start",
+    "db:generate": "pnpm --filter @perfume-aura/db generate",
+    "db:migrate": "pnpm --filter @perfume-aura/db migrate",
+    "lint": "pnpm -r lint",
+    "test": "pnpm --filter @perfume-aura/db test && pnpm --filter @perfume-aura/ops test",
+    "test:unit": "pnpm --filter @perfume-aura/db test:unit && pnpm --filter @perfume-aura/ops test",
+    "test:integration": "pnpm --filter @perfume-aura/db test:integration",
+    "marketing:sync": "cp apps/marketing/index.html index.html && cp apps/marketing/styles.css styles.css",
+    "marketing:check": "diff -q apps/marketing/index.html index.html && diff -q apps/marketing/styles.css styles.css"
+  }
+}

@@ -2,25 +2,106 @@
 
 Instructions for AI agents and developers working on this repository.
 
+## Non-negotiable: official tooling only (STRICT)
+
+Agents and developers **must** use **official documented install/setup paths** for every stack piece. Do **not** hand-roll alternatives “to save time.”
+
+| Area | Official source | Required method |
+|------|-----------------|-----------------|
+| **shadcn/ui** | https://ui.shadcn.com/docs · https://ui.shadcn.com/docs/monorepo | CLI only: `pnpm dlx shadcn@latest …`. Components live in `packages/ui`. Add from app: `pnpm dlx shadcn@latest add <name> -c apps/ops -y`. **Never** hand-copy registry components as the primary install path. **Never** dump UI into `apps/ops/components/ui` when monorepo aliases point at `@perfume-aura/ui`. |
+| **Next.js** | https://nextjs.org/docs | App Router patterns from current docs (`create-next-app` / official upgrades). |
+| **Better Auth** | https://better-auth.com/docs | Official Next.js + Drizzle adapter install. |
+| **Drizzle** | https://orm.drizzle.team/docs | Official schema / kit / Neon or `pg` guides. |
+| **Neon** | https://neon.com/docs | Official connection strings + drivers. |
+| **Hostinger marketing** | Hostinger classic Git docs | Advanced → Git → `public_html` for static only. |
+| **Hostinger ops** | Hostinger Node.js Web App docs | Deploy Web App for Next.js — **not** classic Git. |
+| **pnpm workspaces** | https://pnpm.io/workspaces | Root `pnpm-workspace.yaml` + `workspace:*` deps. |
+
+### shadcn monorepo rules (this repo)
+
+1. **Base UI package:** `packages/ui` (`@perfume-aura/ui`).
+2. **App config:** `apps/ops/components.json` aliases `ui` / `utils` → `@perfume-aura/ui/…`.
+3. **Package config:** `packages/ui/components.json` matches style (`base-luma`), `baseColor` (`taupe`), `iconLibrary` (`hugeicons`).
+4. **Preset (locked):** `b23PPibQOI` — luma / taupe / hugeicons / IBM Plex Sans + Raleway / radius small.  
+   Verify: `pnpm dlx shadcn@latest preset resolve -c apps/ops` must print code `b23PPibQOI` with **no fallbacks**.  
+   Apply: `pnpm dlx shadcn@latest apply b23PPibQOI -c apps/ops -y`.
+5. **Monorepo CSS path (required for preset resolve):**  
+   `apps/ops/components.json` → `"tailwind.css": "../../packages/ui/src/globals.css"`  
+   Tokens live only in `packages/ui/src/globals.css`. Do **not** move them solely into `apps/ops/app/globals.css` or `preset resolve` will fall back to neutral/default radius.
+6. **Add components only when used (official CLI only):**
+   ```bash
+   pnpm dlx shadcn@latest add button -c apps/ops -y
+   # overwrite when upgrading a component:
+   pnpm dlx shadcn@latest add button -c apps/ops -y -o
+   ```
+   Do **not** bulk-install unused registry components “for later.” Install with CLI when a screen needs them.
+7. **Dry-run before large adds:** `pnpm dlx shadcn@latest add … -c apps/ops --dry-run` — expect files under `packages/ui/src/…`.
+8. **Forbidden:** inventing custom Button/Input as a substitute for shadcn; skipping CLI because “files already exist”; installing shadcn only inside `apps/ops` without monorepo package; re-pointing CSS away from `packages/ui` without re-checking `preset resolve`; keeping unused registry files as inventory.
+9. **App-specific compositions** (sidebar shell, product forms) stay in `apps/ops/components/` and **import** from `@perfume-aura/ui/components/*`.
+
+### If official CLI conflicts with monorepo
+
+1. Fix `components.json` aliases (official monorepo pattern).
+2. Re-run CLI.
+3. Do **not** permanently switch to manual component paste.
+
+### Official agent skills (project-level)
+
+Installed under `.agents/skills/` via `pnpm dlx skills add …` (lockfile: `skills-lock.json`). Prefer these over ad-hoc community skills.
+
+| Vendor | Skills | Source |
+|--------|--------|--------|
+| **shadcn** | `shadcn`, `migrate-radix-to-base` | `shadcn/ui` |
+| **Better Auth** | `better-auth-best-practices`, `email-and-password-best-practices`, `better-auth-security-best-practices` | `better-auth/skills` |
+| **Neon** | `neon`, `neon-postgres`, `neon-postgres-branches` | `neondatabase/agent-skills` |
+| **Vercel (React/Next patterns only)** | `vercel-react-best-practices`, `vercel-composition-patterns` | `vercel-labs/agent-skills` |
+
+**Do not** install or follow Vercel **deploy** skills for production — hosting is Hostinger only.  
+**Neon stock path:** use `pg` Pool + Drizzle interactive transactions — not `neon-http` for ledger writes.  
+Restore: `pnpm dlx skills experimental_install` (from `skills-lock.json`).
+
+### Docs pointers
+
+- Locked stack: [docs/stack-research/RECOMMENDATION.md](docs/stack-research/RECOMMENDATION.md)
+- shadcn workflow: [docs/stack-research/agents/ui-shadcn-stack.md](docs/stack-research/agents/ui-shadcn-stack.md)
+
 ## Project identity
 
 | Field | Value |
 |-------|--------|
 | Brand / site | **Perfume Aura** |
-| Production domain | **perfumeaura.com** |
+| Production domain | **perfumeaura.com** (marketing) · **app.perfumeaura.com** (ops, planned) |
 | GitHub repo | https://github.com/MohsinMMK/perfume-aura |
 | Default branch | **`main`** |
-| Current phase | Static **coming soon** page (foundation for full custom site later) |
-| Stack (now) | Static HTML + CSS — **no build step** |
+| Current phase | Monorepo: marketing coming soon + ops app scaffold (inventory next) |
+| Stack | **pnpm monorepo** · marketing static · ops **Next.js 16** on Hostinger Node |
+| Specs | [docs/README.md](docs/README.md) · [PRD](docs/PRD.md) · [TRD](docs/TRD.md) · [ARCHITECTURE](docs/ARCHITECTURE.md) · [ROADMAP](docs/ROADMAP.md) |
+
+## Monorepo layout
+
+```text
+apps/marketing     # public brand (coming soon)
+apps/ops           # Next.js internal ops (inventory → finance)
+packages/ui        # shadcn base UI
+packages/db        # Drizzle + Neon
+packages/validators
+docs/              # PRD, TRD, stack-research
+```
+
+Root `index.html` + `styles.css` are **interim mirrors** of marketing for classic Hostinger Git until CI publishes only `apps/marketing`.
 
 ## Non-negotiable hosting rules
 
 1. **Domain registration stays at GoDaddy.** Do **not** transfer the domain to Hostinger (avoids re-paying for a year already purchased).
-2. **Hosting is on Hostinger** (web/cloud Business plan). Website files live under Hostinger `public_html`.
-3. **Source of truth for code is GitHub.** Deploy only via Hostinger’s **official Git integration** (not ad-hoc FTP/zip as the long-term path).
+2. **Hosting is on Hostinger** (Business plan). **Two website types:**
+   - Marketing: classic Git → `public_html` (static only)
+   - Ops: **Node.js Web App** (Next.js) — **not** classic Git into public_html
+3. **Source of truth for code is GitHub.** Prefer official Hostinger Git / Node GitHub integration (not ad-hoc FTP as the long-term path).
 4. **Official DNS method is Hostinger nameservers** at the registrar (GoDaddy). Prefer this over inventing A records at GoDaddy while Hostinger NS are active.
 5. Prefer Hostinger’s documented workflows. Waiting up to **24 hours** for DNS validation/propagation is acceptable. Do not thrash nameservers or dual-manage DNS.
 6. **A-record-at-GoDaddy deprecation / dual-DNS flows do not apply** while Path A (Hostinger NS) is active.
+7. **Do not use Vercel as production host** for this project (Hostinger-only policy).
+8. **Never deploy whole monorepo** (apps/ops source, .env, packages/db) into marketing `public_html`.
 
 ## Ownership split
 
@@ -174,25 +255,21 @@ After the domain resolves publicly (A record live):
 ## Repository layout
 
 ```text
-AGENTS.md                      ← this file (agent/project rules)
+AGENTS.md
 README.md
-docs/DEPLOY.md                 ← human-oriented deploy guide (same stack)
-docs/HOSTINGER_SUPPORT_DNS.md  ← Path A DNS steps + support paste text
-index.html                     ← site entry (deployed)
-styles.css
+package.json / pnpm-workspace.yaml
+apps/marketing/                ← brand coming soon
+apps/ops/                      ← Next.js ops (Hostinger Node)
+packages/ui|db|validators
+docs/   # full index: docs/README.md (PRD, TRD, ARCHITECTURE, phases, deploy, stack-research)
+index.html + styles.css        ← interim marketing mirror for classic Git
 ```
 
-Deploy root = repository root (files land in `public_html` as-is).
+### Deploy notes
 
-### Future stack note
-
-Classic Hostinger Git for HTML deploys **repo files as-is** (no `npm run build`). If the project later uses Vite/Next/Node:
-
-- Use Hostinger’s **Node.js** Git deploy path, or
-- CI that builds and deploys output, or
-- a deploy branch that only contains built assets
-
-Update this file when that happens.
+- **Marketing:** classic Git still points at repo; keep root marketing entry until artifact-only CI.
+- **Ops:** Hostinger **Node.js Web App** with monorepo root/filter `apps/ops`. See [docs/DEPLOY.md](docs/DEPLOY.md).
+- **Never** use classic Git alone for Next.js ops.
 
 ## Anti-patterns (do not do)
 
@@ -238,5 +315,11 @@ Update this file when that happens.
 ## Related docs in repo
 
 - [README.md](README.md) — quick start
-- [docs/DEPLOY.md](docs/DEPLOY.md) — full deploy guide
+- [docs/README.md](docs/README.md) — **documentation index**
+- [docs/ROADMAP.md](docs/ROADMAP.md) — phases 0–4
+- [docs/PHASE1_STATUS.md](docs/PHASE1_STATUS.md) — inventory MVP status
+- [docs/OPS_DEPLOY_CHECKLIST.md](docs/OPS_DEPLOY_CHECKLIST.md) — `app.perfumeaura.com` go-live
+- [docs/DEPLOY.md](docs/DEPLOY.md) — dual Hostinger deploy
 - [docs/HOSTINGER_SUPPORT_DNS.md](docs/HOSTINGER_SUPPORT_DNS.md) — Path A DNS + support paste
+- [docs/ENV.md](docs/ENV.md) · [docs/SECURITY.md](docs/SECURITY.md) · [docs/TESTING.md](docs/TESTING.md)
+- [docs/PHASE2_INVOICING.md](docs/PHASE2_INVOICING.md) · [docs/PHASE3_PAYMENTS.md](docs/PHASE3_PAYMENTS.md) · [docs/PHASE4_FINANCE.md](docs/PHASE4_FINANCE.md)

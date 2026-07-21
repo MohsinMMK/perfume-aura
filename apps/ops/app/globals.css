@@ -1,0 +1,11 @@
+@import "tailwindcss";
+/* Tokens + shadcn/tw-animate come from the shared UI package (preset source of truth) */
+@import "@perfume-aura/ui/globals.css";
+
+/* Scan shared UI package for class names used in components */
+@source "../../../packages/ui/src";
+
+/* Ops defaults to dark luxury admin */
+html {
+  color-scheme: dark;
+}
