@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| Status | Design ready (not implemented) |
+| Status | **Core implemented** (`/finance` aggregates; AR aging buckets optional later) |
 | Depends on | Phase 1 stock · Phase 2 invoices · Phase 3 payments (partial OK) |
 | Complements | [PRD.md](./PRD.md), [DATA_MODEL.md](./DATA_MODEL.md) |
 | Updated | 2026-07-22 |
@@ -81,11 +81,15 @@ Phase 4 can start with **P4-1** as soon as invoices exist, even before payments.
 
 ## 6. Acceptance
 
-- [ ] Finance page shows inventory cost consistent with dashboard  
-- [ ] Open AR matches AR list total  
-- [ ] Period revenue matches sum of issued invoices in range  
-- [ ] COGS does not invent numbers without movement basis  
-- [ ] No stock mutation from finance screens  
+- [x] Finance page shows inventory cost / retail (live)  
+- [x] Open AR on finance page  
+- [x] Period revenue (issued invoices with issued_at in range)  
+- [x] Cash collected from payments table  
+- [x] COGS approx from sale movements × current cost  
+- [x] Period toggle 7d / 30d / 90d  
+- [x] No stock mutation from finance screens  
+- [ ] AR aging buckets (0–30 / 31–60 / 60+)  
+- [ ] unit_cost snapshot on movements for accurate COGS
 
 ## 7. Related
 

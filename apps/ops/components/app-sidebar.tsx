@@ -9,6 +9,7 @@ import {
   DashboardSquare01Icon,
   File01Icon,
   Logout01Icon,
+  ChartHistogramIcon,
   MoneyBag01Icon,
   Package01Icon,
   UserGroupIcon,
@@ -37,6 +38,7 @@ const inventoryNav = [
   { href: "/products", label: "Products", icon: Package01Icon },
   { href: "/stock", label: "Stock", icon: WarehouseIcon },
   { href: "/stock/low", label: "Low stock", icon: Alert02Icon },
+  { href: "/finance", label: "Finance", icon: ChartHistogramIcon },
 ] as const;
 
 const salesNav = [

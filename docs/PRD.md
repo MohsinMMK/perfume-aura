@@ -122,5 +122,5 @@ Phase 0  Docs + monorepo scaffold              ✅
 Phase 1  Inventory MVP                         ✅ code + tests; deploy pending
 Phase 2  Invoicing                             ✅ core implemented
 Phase 3  Payments                              ✅ manual payments
-Phase 4  Finance dashboards                    📐 design ready
+Phase 4  Finance dashboards                    ✅ core /finance
 ```

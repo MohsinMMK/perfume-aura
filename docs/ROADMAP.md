@@ -12,7 +12,7 @@ Phase 0  Docs + monorepo scaffold              ✅ Done
 Phase 1  Inventory MVP                         ✅ Code + tests; ⬜ Hostinger Node
 Phase 2  Customers + invoicing                 ✅ Core implemented (see PHASE2_INVOICING.md)
 Phase 3  Payments (manual → optional Stripe)   ✅ Manual payments; Stripe optional later
-Phase 4  Finance dashboards                    📐 Design (PHASE4_FINANCE.md)
+Phase 4  Finance dashboards                    ✅ Core /finance page; aging optional
 ```
 
 ## Phase 0 — Scaffold ✅
@@ -102,6 +102,5 @@ Phase 1 inventory ledger
 ## Next concrete actions
 
 1. Complete [OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIST.md) in hPanel (Node + DNS `app`).  
-2. Production smoke: login → stock → customer → invoice → payment → fulfill.  
-3. Phase 4 finance dashboards when reporting is needed day-to-day.  
-4. Optional Stripe Invoicing (Phase 3.1) only if online card collection is required.  
+2. Production smoke: login → stock → customer → invoice → payment → fulfill → finance.  
+3. Optional: AR aging buckets, unit_cost on movements, Stripe Invoicing.
