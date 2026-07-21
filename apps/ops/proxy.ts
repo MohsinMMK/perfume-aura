@@ -15,7 +15,8 @@ export function proxy(request: NextRequest) {
     pathname.startsWith("/products") ||
     pathname.startsWith("/stock") ||
     pathname.startsWith("/customers") ||
-    pathname.startsWith("/invoices");
+    pathname.startsWith("/invoices") ||
+    pathname.startsWith("/payments");
 
   if (isProtected && !sessionCookie) {
     const login = new URL("/login", request.url);
@@ -37,6 +38,7 @@ export const config = {
     "/stock/:path*",
     "/customers/:path*",
     "/invoices/:path*",
+    "/payments/:path*",
     "/login",
   ],
 };

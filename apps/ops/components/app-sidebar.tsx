@@ -9,6 +9,7 @@ import {
   DashboardSquare01Icon,
   File01Icon,
   Logout01Icon,
+  MoneyBag01Icon,
   Package01Icon,
   UserGroupIcon,
   WarehouseIcon,
@@ -42,6 +43,7 @@ const salesNav = [
   { href: "/customers", label: "Customers", icon: UserGroupIcon },
   { href: "/invoices", label: "Invoices", icon: File01Icon },
   { href: "/invoices/ar", label: "AR", icon: Invoice01Icon },
+  { href: "/payments", label: "Payments", icon: MoneyBag01Icon },
 ] as const;
 
 function isActive(pathname: string, href: string) {
@@ -160,7 +162,7 @@ export function AppSidebar({
           </SidebarMenuItem>
         </SidebarMenu>
         <p className="px-2 pb-1 text-[10px] text-muted-foreground group-data-[collapsible=icon]:hidden">
-          Phase 2 · Inventory + invoices
+          Phase 3 · Inventory + sales + payments
         </p>
       </SidebarFooter>
 

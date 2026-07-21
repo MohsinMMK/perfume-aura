@@ -160,3 +160,25 @@ export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;
 export type CreateInvoiceDraftInput = z.infer<typeof createInvoiceDraftSchema>;
 export type InvoiceLineInput = z.infer<typeof invoiceLineSchema>;
 export type FulfillInvoiceInput = z.infer<typeof fulfillInvoiceSchema>;
+
+/* ─── Phase 3: payments ─── */
+
+export const paymentMethodSchema = z.enum([
+  "cash",
+  "bank_transfer",
+  "card",
+  "other",
+]);
+
+export const recordPaymentSchema = z.object({
+  invoiceId: z.string().uuid(),
+  /** Major PKR (rupees) */
+  amount: z.number().positive("Amount must be positive"),
+  method: paymentMethodSchema.default("cash"),
+  /** ISO date or datetime string; default now server-side if omitted */
+  paidAt: z.string().optional(),
+  reference: z.string().max(120).optional(),
+  note: z.string().max(1000).optional(),
+});
+
+export type RecordPaymentInput = z.infer<typeof recordPaymentSchema>;

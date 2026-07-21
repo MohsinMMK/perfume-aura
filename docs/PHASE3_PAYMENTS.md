@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| Status | Design ready (not implemented) |
+| Status | **Implemented** (manual payments; Stripe deferred) |
 | Depends on | Phase 2 invoices (issued / paid status) |
 | Complements | [PHASE2_INVOICING.md](./PHASE2_INVOICING.md), [PRD.md](./PRD.md), [DATA_MODEL.md](./DATA_MODEL.md) |
 | Updated | 2026-07-22 |
@@ -126,12 +126,15 @@ Do not add Stripe keys until this sub-phase is scheduled.
 
 ## 8. Acceptance
 
-- [ ] Record cash payment reduces invoice balance  
-- [ ] Full payment sets status `paid`  
-- [ ] Partial payment leaves status `issued` with remaining AR  
-- [ ] Payment never changes `quantity_on_hand`  
-- [ ] Overpayment rejected  
-- [ ] Existing concurrent stock tests still pass  
+- [x] Record cash payment reduces invoice balance  
+- [x] Full payment sets status `paid`  
+- [x] Partial payment leaves status `issued` with remaining AR  
+- [x] Payment never changes `quantity_on_hand`  
+- [x] Overpayment rejected  
+- [x] Existing concurrent stock tests still pass  
+- [x] Global `/payments` list + dashboard Cash MTD  
+- [x] Mark paid creates cash payment for remaining balance  
+- [ ] Stripe Invoicing (optional 3.1)
 
 ## 9. Related
 

@@ -28,6 +28,13 @@ export {
 } from "./invoice-math";
 
 export {
+  sumPaymentCents,
+  wouldOverpay,
+  remainingBalanceCents,
+  isFullyPaid,
+} from "./payment-math";
+
+export {
   seedMainLocation,
   runSeed,
   MAIN_LOCATION_CODE,
@@ -42,4 +49,15 @@ export {
  * Export only operators the monorepo currently uses. When a new query needs
  * another operator, add it here and import from `@perfume-aura/db`.
  */
-export { and, count, desc, eq, ilike, lte, or, sql } from "drizzle-orm";
+export {
+  and,
+  count,
+  desc,
+  eq,
+  gte,
+  ilike,
+  lt,
+  lte,
+  or,
+  sql,
+} from "drizzle-orm";

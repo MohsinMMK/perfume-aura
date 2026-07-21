@@ -15,6 +15,13 @@
       "when": 1784659404792,
       "tag": "0001_magical_starfox",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784660999523,
+      "tag": "0002_clear_tenebrous",
+      "breakpoints": true
     }
   ]
 }

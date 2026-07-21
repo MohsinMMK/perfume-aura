@@ -125,14 +125,17 @@ Ledger hooks: `stock_movements.ref_type = 'invoice'`, `ref_id = invoices.id` on 
 
 ---
 
-## Phase 3 tables (design)
+## Phase 3 tables (implemented — migration `0002_clear_tenebrous`)
 
 See [PHASE3_PAYMENTS.md](./PHASE3_PAYMENTS.md).
 
 ```text
-payments
-payment_allocations   -- optional if partials
+payments   id, number?, invoice_id, customer_id?, method, amount_cents,
+           paid_at, reference?, note?, created_by, created_at
 ```
+
+One payment row per receipt against one invoice (partials allowed via multiple rows).  
+`invoices.amount_paid_cents` is a cache updated on each payment.
 
 ---
 

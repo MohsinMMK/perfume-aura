@@ -17,6 +17,7 @@ import {
 } from "@perfume-aura/ui/components/table";
 import { getInvoice } from "@/lib/invoices";
 import { listActiveVariantsForSelect } from "@/lib/products";
+import { listPayments } from "@/lib/payments";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatPkr, formatQty } from "@/lib/money";
 import { AddInvoiceLineForm } from "@/components/invoices/add-line-form";
@@ -24,9 +25,17 @@ import {
   InvoiceStatusActions,
   RemoveLineButton,
 } from "@/components/invoices/invoice-actions";
+import { RecordPaymentForm } from "@/components/invoices/record-payment-form";
 import { DbUnavailableState } from "@/components/db-empty-state";
 
 export const dynamic = "force-dynamic";
+
+function formatWhen(d: Date) {
+  return new Intl.DateTimeFormat("en-PK", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(d);
+}
 
 export default async function InvoiceDetailPage({
   params,
@@ -34,9 +43,10 @@ export default async function InvoiceDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [invResult, variantsResult] = await Promise.all([
+  const [invResult, variantsResult, paymentsResult] = await Promise.all([
     safeDbQuery(() => getInvoice(id)),
     safeDbQuery(() => listActiveVariantsForSelect()),
+    safeDbQuery(() => listPayments({ invoiceId: id })),
   ]);
 
   if (invResult.error) {
@@ -50,6 +60,7 @@ export default async function InvoiceDetailPage({
     label: v.label,
     retailRupees: v.retailCents / 100,
   }));
+  const paymentRows = paymentsResult.data ?? [];
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -166,6 +177,51 @@ export default async function InvoiceDetailPage({
 
       {inv.status === "draft" ? (
         <AddInvoiceLineForm invoiceId={inv.id} variants={variants} />
+      ) : null}
+
+      {inv.status === "issued" ? (
+        <RecordPaymentForm
+          invoiceId={inv.id}
+          balanceRupees={inv.balanceCents / 100}
+        />
+      ) : null}
+
+      {paymentRows.length > 0 ? (
+        <Card className="overflow-hidden py-0">
+          <CardHeader className="border-b px-4 py-3">
+            <CardTitle className="text-base">Payment history</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Number</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead>When</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paymentRows.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-medium">
+                      {p.number ?? p.id.slice(0, 8)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{p.method}</Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {formatWhen(p.paidAt)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatPkr(p.amountCents)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       ) : null}
 
       {inv.notes ? (

@@ -504,6 +504,10 @@ export async function voidInvoiceAction(
   }
 }
 
+/**
+ * Mark remaining balance as paid via a cash payment row (Phase 3 path).
+ * Prefer explicit recordPaymentAction for partials / other methods.
+ */
 export async function markInvoicePaidAction(
   raw: unknown,
 ): Promise<ActionResult> {
@@ -528,17 +532,20 @@ export async function markInvoicePaidAction(
       return actionError("Only issued invoices can be marked paid");
     }
 
-    await db
-      .update(invoices)
-      .set({
-        status: "paid",
-        amountPaidCents: inv.totalCents,
-        paidAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(invoices.id, inv.id));
+    const remaining = inv.totalCents - inv.amountPaidCents;
+    if (remaining <= 0) {
+      return actionError("Nothing left to pay");
+    }
 
-    revalidateInvoicePaths(inv.id);
+    // Delegate to payment ledger (no stock side effects)
+    const { recordPaymentAction } = await import("@/lib/payments");
+    const result = await recordPaymentAction({
+      invoiceId: inv.id,
+      amount: remaining / 100,
+      method: "cash",
+      note: "Marked paid (full remaining balance)",
+    });
+    if (!result.ok) return result;
     return actionOk();
   } catch (err) {
     console.error("[markInvoicePaid]", err);

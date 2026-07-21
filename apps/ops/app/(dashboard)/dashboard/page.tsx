@@ -11,6 +11,7 @@ import { buttonVariants } from "@perfume-aura/ui/components/button";
 import { cn } from "@perfume-aura/ui/lib/utils";
 import { getDashboardStats } from "@/lib/stock";
 import { getOpenArTotalCents } from "@/lib/invoices";
+import { getCashCollectedThisMonthCents } from "@/lib/payments";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatPkr, formatQty } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
@@ -18,14 +19,16 @@ import { DbUnavailableState } from "@/components/db-empty-state";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [result, arResult] = await Promise.all([
+  const [result, arResult, cashResult] = await Promise.all([
     safeDbQuery(() => getDashboardStats()),
     safeDbQuery(() => getOpenArTotalCents()),
+    safeDbQuery(() => getCashCollectedThisMonthCents()),
   ]);
 
   const stats = result.data;
-  const error = result.error ?? arResult.error;
+  const error = result.error ?? arResult.error ?? cashResult.error;
   const openAr = arResult.data ?? 0;
+  const cashMtd = cashResult.data ?? 0;
 
   const metrics = [
     {
@@ -73,6 +76,14 @@ export default async function DashboardPage() {
       badge: openAr > 0 ? "AR" : error ? "Offline" : "Clear",
       warn: openAr > 0,
     },
+    {
+      label: "Cash MTD",
+      value: formatPkr(cashMtd),
+      hint: "Payments received this month",
+      href: "/payments",
+      badge: error ? "Offline" : "Live",
+      warn: false,
+    },
   ] as const;
 
   return (
@@ -86,7 +97,7 @@ export default async function DashboardPage() {
 
       {error ? <DbUnavailableState message={error} /> : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         {metrics.map((m) => (
           <Link key={m.label} href={m.href} className="group">
             <Card className="h-full transition-colors group-hover:ring-foreground/20">
@@ -137,6 +148,12 @@ export default async function DashboardPage() {
             className={cn(buttonVariants({ variant: "secondary" }))}
           >
             New invoice
+          </Link>
+          <Link
+            href="/payments"
+            className={cn(buttonVariants({ variant: "outline" }))}
+          >
+            Payments
           </Link>
           <Link
             href="/stock/low"

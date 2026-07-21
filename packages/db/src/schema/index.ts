@@ -29,3 +29,8 @@ export {
   invoiceLines,
   invoiceStatusEnum,
 } from "./invoices";
+
+export {
+  payments,
+  paymentMethodEnum,
+} from "./payments";
