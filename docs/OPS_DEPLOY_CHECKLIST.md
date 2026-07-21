@@ -10,15 +10,39 @@ Official Node guide: https://www.hostinger.com/support/how-to-deploy-a-nodejs-we
 | Updated | 2026-07-22 |
 | Related | [DEPLOY.md](./DEPLOY.md) · [ENV.md](./ENV.md) · [SECURITY.md](./SECURITY.md) |
 
-## Live account snapshot (verified 2026-07-21; re-check before go-live)
+## Live account snapshot (updated 2026-07-22 via Hostinger MCP)
 
 | Item | Value |
 |------|--------|
 | Hosting order | `1008392140` · user `u602723373` |
-| Existing websites | `perfumeaura.com` (addon), `perfumeaurastores.com`, `khanect.com` (main) |
-| **Ops website** | **Not created yet** — no `app.perfumeaura.com` Node app in list |
-| Marketing DNS | Hostinger zone writable · apex **ALIAS** → `perfumeaura.com.cdn.hstgr.net` · `www` CNAME → Hostinger CDN |
-| `app` DNS | **Missing** — add only after Node Web App exists (hPanel will show target) |
+| Existing websites | `perfumeaura.com`, `app.perfumeaura.com` (**created**), free `*.hostingersite.com`, others |
+| **Ops website** | `app.perfumeaura.com` addon **created** · root `/home/u602723373/domains/app.perfumeaura.com/public_html` |
+| Free staging site | `lightsteelblue-bear-889787.hostingersite.com` (MCP generated) |
+| Marketing DNS | Hostinger zone · apex **ALIAS** → CDN |
+| `app` DNS | Resolves publicly (Hostinger multi-A for addon) |
+| MCP deploy | Standalone ZIP **build completed** · process may still need hPanel “Node.js Web App” start command / entry |
+
+### MCP actions already run
+
+1. `hosting_createWebsiteV1` → `app.perfumeaura.com`  
+2. `hosting_deployJsApplication` with prebuilt Next **standalone** zip (source monorepo build fails: esbuild **EACCES** on shared hosting)  
+3. Build UUID completed: install skip + `echo prebuilt-standalone`  
+4. `hosting_restartNode_jsApplicationV1` accepted  
+5. Public HTTP still Hostinger default **404/403** until hPanel wires Node process / proxy  
+
+### Why source build fails on Hostinger shared Node
+
+- `pnpm` install runs, then build shell loses `pnpm` on PATH  
+- Fixing with `npx pnpm` hits **esbuild binary EACCES** (no exec bit on shared FS)  
+- **Mitigation:** build `output: "standalone"` locally, deploy prebuilt zip (`node apps/ops/server.js`)  
+
+### What you still do in hPanel (one-time)
+
+1. Open **app.perfumeaura.com** → **Deploy Web App / Node.js** (not classic files only)  
+2. Confirm **start command**: `node apps/ops/server.js` (or `pnpm start` if monorepo root is used)  
+3. **Node version** 20+  
+4. Paste env vars (see below) if not already on disk from deploy  
+5. Redeploy or restart until `https://app.perfumeaura.com/login` returns Next (not hPanel 404)
 
 ## Pre-flight (repo / Neon)
 

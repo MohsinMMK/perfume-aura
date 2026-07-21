@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Hostinger Node deploy: ship prebuilt standalone (avoids esbuild EACCES on shared hosting)
+  output: "standalone",
   transpilePackages: [
     "@perfume-aura/ui",
     "@perfume-aura/db",
