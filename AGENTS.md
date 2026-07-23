@@ -14,7 +14,7 @@ Agents and developers **must** use **official documented install/setup paths** f
 | **Drizzle** | https://orm.drizzle.team/docs | Official schema / kit / Neon or `pg` guides. |
 | **Neon** | https://neon.com/docs | Official connection strings + drivers. |
 | **Hostinger marketing** | Hostinger classic Git docs | Advanced → Git → `public_html` for static only. |
-| **Hostinger ops** | Hostinger Node.js Web App docs | Deploy Web App for Next.js — **not** classic Git. |
+| **Hostinger ops** | Hostinger Node.js Web App docs · [docs/OPS_DEPLOY_CHECKLIST.md](docs/OPS_DEPLOY_CHECKLIST.md) | Node Web App + **`pnpm ops:pack`** prebuilt zip — **not** classic Git; **not** Hostinger monorepo source build. |
 | **pnpm workspaces** | https://pnpm.io/workspaces | Root `pnpm-workspace.yaml` + `workspace:*` deps. |
 
 ### shadcn monorepo rules (this repo)
@@ -207,12 +207,25 @@ Propagation map: https://dnschecker.org/#NS/perfumeaura.com
 
 | Field | Value |
 |-------|--------|
-| Domain on plan | `perfumeaura.com` |
-| Vhost type | addon |
+| Domain on plan | `perfumeaura.com` (marketing) + `app.perfumeaura.com` (ops Node) |
+| Vhost type | addon (both) |
 | Hosting username | `u602723373` |
-| Web root | `/home/u602723373/domains/perfumeaura.com/public_html` |
+| Marketing web root | `/home/u602723373/domains/perfumeaura.com/public_html` |
+| Ops web root | `/home/u602723373/domains/app.perfumeaura.com/public_html` (build) · runtime under `…/nodejs/` |
 | Order / plan | Business hosting (`order_id` `1008392140`; same account may host other sites) |
-| Hosting IPv4 (this site) | **`82.112.232.17`** (from Hostinger Check guide) |
+| Client id | `1017729554` |
+| Hosting IPv4 (historical Check guide) | **`82.112.232.17`** — public apex may show multi-A / CDN (`hstgr`) now; re-check Plan details |
+| Ops login URL | **https://app.perfumeaura.com/login** |
+| Marketing URL | **https://perfumeaura.com** (coming soon) |
+
+### Two websites (do not merge)
+
+| Site | Domain | Hostinger product | Deploy |
+|------|--------|-------------------|--------|
+| Marketing | `perfumeaura.com` | Classic **Git** → `public_html` | `git push origin main` |
+| Ops | `app.perfumeaura.com` | **Node.js Web App** | `pnpm ops:pack` zip → hPanel / MCP deploy |
+
+Classic Git **cannot** run Next.js. Never put ops into marketing `public_html` as the app runtime.
 
 ## Git → Hostinger (official deploy)
 
@@ -267,9 +280,126 @@ index.html + styles.css        ← interim marketing mirror for classic Git
 
 ### Deploy notes
 
-- **Marketing:** classic Git still points at repo; keep root marketing entry until artifact-only CI.
-- **Ops:** Hostinger **Node.js Web App** with monorepo root/filter `apps/ops`. See [docs/DEPLOY.md](docs/DEPLOY.md).
+- **Marketing:** classic Git still points at **whole monorepo** → `public_html`. Root `index.html` / `styles.css` via `pnpm marketing:sync`. Root **`.htaccess`** denies HTTP to `/apps`, `/packages`, `/docs`, lockfiles, `*.md` (SEC-7 mitigate). Prefer artifact-only CI later.
+- **Ops:** prebuilt standalone zip — **not** source monorepo build on Hostinger (esbuild **EACCES**). See [docs/DEPLOY.md](docs/DEPLOY.md) · [docs/OPS_DEPLOY_CHECKLIST.md](docs/OPS_DEPLOY_CHECKLIST.md).
 - **Never** use classic Git alone for Next.js ops.
+
+## Ops deploy (Hostinger Node) — critical for agents
+
+### Pack (local, official)
+
+```bash
+pnpm ops:pack
+# → dist/perfume-aura-standalone_YYYYMMDD.zip
+```
+
+Script: [`scripts/pack-ops-standalone.sh`](scripts/pack-ops-standalone.sh)
+
+| Behavior | Detail |
+|----------|--------|
+| Layout | Monorepo standalone: entry **`apps/ops/server.js`** |
+| Modules | **Materializes** `apps/ops/node_modules` (real dirs) so unzip without symlinks still resolves `next` / `@swc/helpers` |
+| Zip | `zip -qry` (symlink-safe when present) |
+| Smoke | Stage + extract must `require('next')` from `apps/ops` or pack **fails** |
+| Secrets | **Never** bake `.env` into zip (pack refuses if found) |
+| Sharp | Linux x64 glibc natives for Hostinger |
+
+### hPanel / MCP deploy settings (exact)
+
+| Field | Value |
+|-------|--------|
+| Domain | `app.perfumeaura.com` |
+| Source | Upload `dist/perfume-aura-standalone_*.zip` |
+| Framework | Other (or Next.js) |
+| Node | **20.x** |
+| Root directory | `./` |
+| Build command | **`echo prebuilt-standalone`** (not `pnpm run build` on Hostinger) |
+| Output directory | *(empty)* |
+| **Entry file** | **`apps/ops/server.js`** |
+
+**Forbidden artifacts:** flat zip with root `server.js` / `entry.cjs` (~9MB experiments) → `Cannot find module 'next'`. Always use current `pnpm ops:pack` output (~40MB+).
+
+### Hostinger MCP / API (Docker gateway)
+
+Pi MCP server name: **`hostinger`**. Config often routes through **Docker MCP Toolkit** (`docker mcp gateway` + profile `servers` + image `hostinger-mcp-server`).
+
+| Item | Detail |
+|------|--------|
+| Docker must be running | `docker info` OK before connect |
+| API token secret | Docker secret `docker/mcp/hostinger-mcp-server.api_token` → env **`APITOKEN`** in container |
+| If Pi `mcp({ connect: "hostinger" })` flakes | Use CLI: `docker mcp tools call --gateway-arg '--profile=servers' <tool> …` |
+| Tool names (CLI) | **Unprefixed:** `hosting_listWebsitesV1`, `hosting_deployJsApplication`, `hosting_listJsDeployments`, `hosting_showJsDeploymentLogs` |
+| Tool names (Pi list) | Often `hostinger_hosting_*` — same tools |
+| Auth failures | `Unauthenticated` → token expired/missing in Docker MCP secrets; user must refresh API token in hPanel |
+| File paths for deploy | MCP container **cannot** see arbitrary host paths; copy zip to a shared path or upload via Hostinger files API + TUS (see prior session pattern) |
+
+**Useful API paths** (Bearer token, base `https://developers.hostinger.com`):
+
+| Action | Method / path |
+|--------|----------------|
+| List sites | `GET /api/hosting/v1/websites?domain=app.perfumeaura.com` |
+| Upload creds | `POST /api/hosting/v1/files/upload-urls` body `{ username, domain }` → TUS upload |
+| Build settings | `GET …/accounts/{user}/websites/{domain}/nodejs/builds/settings/from-archive?archive_path=ops.zip` |
+| Trigger build | `POST …/accounts/{user}/websites/{domain}/nodejs/builds` |
+| List builds | `GET …/nodejs/builds` |
+| Build logs | `GET …/nodejs/builds/{uuid}/logs` |
+| **Restart Node** | `POST …/nodejs/server/restart` body `{}` → `{ "message": "Request accepted" }` |
+
+Username for this account: **`u602723373`**. Archive on server often named `ops.zip` under site files.
+
+Hostinger may still run `pnpm install` on deploy; pack root `package.json` has **empty deps** + `postinstall: echo skip-postinstall` so install is a no-op.
+
+### Ops auth / owner login (do not invent)
+
+| Fact | Detail |
+|------|--------|
+| Public sign-up | **Disabled** (`disableSignUp: true`) |
+| Owner seed | `pnpm --filter @perfume-aura/ops seed:owner` with `OWNER_EMAIL` + `OWNER_PASSWORD` + `DATABASE_URL` + `BETTER_AUTH_SECRET` |
+| Local creds | Live in **`apps/ops/.env.local`** only (gitignored). Read file if user asks — **do not guess** |
+| Local DB | `.env.local` `DATABASE_URL` is typically **localhost** — owner exists only on that DB after local seed |
+| Prod login | Needs hPanel env + owner seeded on **Neon prod**. Same email/password as local **only if** prod was seeded with them |
+| Prod auth down | `/api/auth/*` **500** if `BETTER_AUTH_SECRET` / `DATABASE_URL` missing on Hostinger → UI often shows “Invalid email or password” |
+| Login URL | https://app.perfumeaura.com/login (shell SSR + client form; wait for hydrate) |
+| Root `/` on ops | Calls `getSession()` → **500** without working DB/auth env; use `/login` |
+
+**Required hPanel env (ops Node app) — never commit:**
+
+```text
+DATABASE_URL=<Neon pooled production>
+BETTER_AUTH_SECRET=<openssl rand -base64 32>
+BETTER_AUTH_URL=https://app.perfumeaura.com
+NEXT_PUBLIC_BETTER_AUTH_URL=https://app.perfumeaura.com
+NODE_ENV=production
+PORT=3000
+```
+
+Then migrate + seed against prod (human provides Neon URLs):
+
+```bash
+DATABASE_URL_DIRECT=… pnpm db:migrate
+DATABASE_URL=… BETTER_AUTH_SECRET=… BETTER_AUTH_URL=https://app.perfumeaura.com \
+  OWNER_EMAIL=… OWNER_PASSWORD=… pnpm --filter @perfume-aura/ops seed:owner
+```
+
+### Marketing leak (SEC-7)
+
+Classic Git deploys **entire repo** into marketing `public_html`. Without deny rules, `https://perfumeaura.com/apps/ops/package.json` was **200**.
+
+- Mitigate: root **`.htaccess`** → **403** on `/apps`, `/packages`, `/docs`, lockfiles, `*.md`.
+- Verify: `curl -sI -o /dev/null -w '%{http_code}\n' https://perfumeaura.com/apps/ops/package.json` → **403** (or 404).
+- Long-term: artifact-only marketing deploy (static files only).
+
+### Known live status (agents: re-verify, do not assume green)
+
+| Check | Last known |
+|-------|------------|
+| `https://perfumeaura.com` | 200 coming soon |
+| Marketing monorepo HTTP | 403 via `.htaccess` |
+| `https://app.perfumeaura.com/login` | Next 200 (page exists) |
+| `https://app.perfumeaura.com/` | Often 500 until session/DB env OK |
+| `/api/auth/*` on prod | 500 until hPanel secrets + Neon |
+| Owner login on prod | Fails until prod seed + env |
+| Ops Git auto-build monorepo on Hostinger | **Blocked** (esbuild EACCES) — zip path only |
 
 ## Anti-patterns (do not do)
 
@@ -278,29 +408,46 @@ index.html + styles.css        ← interim marketing mirror for classic Git
 | Transfer domain to Hostinger “to fix DNS” | Unnecessary cost; keep GoDaddy registration |
 | Edit A/CNAME at GoDaddy while Hostinger NS are set | Records ignored; dual management confusion |
 | Invent DNS before Hostinger validates the zone | Zone empty / “not pointing” until activation |
-| Long-term FTP/zip instead of Git | Breaks official GitHub workflow |
+| Long-term FTP/zip instead of Git **for marketing** | Breaks official GitHub workflow |
+| Flat ops zip (`entry.cjs` / root `server.js` only) | Breaks `require('next')`; use `pnpm ops:pack` monorepo layout |
+| `zip` without materializing / symlink-safe pack | Orphan `next` → missing `@swc/helpers` / `react` |
+| Hostinger source `pnpm build` for monorepo ops | esbuild **EACCES** on shared Node |
+| Baking `.env` into deploy zip | Secret leak; pack must refuse |
+| Guessing `OWNER_EMAIL` / `OWNER_PASSWORD` | Read `apps/ops/.env.local` only if user needs them; never invent |
+| Claiming prod login works without Neon + hPanel env + seed | Localhost DB ≠ prod |
+| Whole monorepo in marketing `public_html` without `.htaccess` | SEC-7 source leak |
 | Website Builder / Horizons for this repo | No official Git integration |
 | Changing nameservers repeatedly | Resets propagation / validation |
-| Committing secrets (API tokens, passwords) | Rotate any token that was ever shared in chat |
+| Committing secrets (API tokens, passwords) | Rotate any token that was ever shared in chat or left in `/tmp` |
+| Leaving Hostinger API tokens in `/tmp` | Rotate token; use Docker MCP secret store only |
 | Using sibling-site IPs as this site’s A record | Wrong target; use Plan details / Check guide only |
+| Vercel as production host | Hostinger-only policy |
 
 ## Agent workflow preferences
 
-1. **Read** `docs/DEPLOY.md`, `docs/HOSTINGER_SUPPORT_DNS.md`, and this file before changing hosting/DNS advice.
-2. **Ship code** via commits to `main` only when the user wants it live; Hostinger auto-deploy is the release path.
+1. **Read** this file, `docs/DEPLOY.md`, `docs/OPS_DEPLOY_CHECKLIST.md`, `docs/HOSTINGER_SUPPORT_DNS.md`, `docs/ENV.md` before hosting/ops deploy work.
+2. **Ship code** via commits to `main` when user wants marketing Git live; ops zip deploy is separate (`pnpm ops:pack` + Node app).
 3. For DNS issues: verify WHOIS NS, public `dig`, Hostinger zone, then hPanel Live DNS Checkup — not random A-record hacks at GoDaddy.
 4. Prefer small, clear commits and keep the coming soon page **single viewport / no page scroll** until the full site replaces it.
-5. Do not claim the site is “live” until `https://perfumeaura.com` resolves and returns this project’s content.
-6. Hostinger MCP / API (if configured) may list websites and DNS zones; use them for verification. DNS write operations only after the zone is writable and only with official defaults (A `@` → plan IP, CNAME `www` → apex). If API returns **Domain not found**, do not invent workarounds that break Path A — wait or escalate to Hostinger support.
+5. Do not claim marketing “live” until `https://perfumeaura.com` serves this project; do not claim ops “live” until `/login` works **and** auth API is not 500 **and** owner can sign in against Neon prod.
+6. **Hostinger MCP:** prefer Docker gateway tools when Pi connect flakes. Ensure Docker Desktop is running. List/deploy/restart via documented tools above. DNS writes only after zone writable; official defaults only. If API returns **Domain not found** / **Unauthenticated**, fix token or wait — do not thrash Path A NS.
+7. **Ops debug order:** public curl `/login` → `/api/auth/get-session` → latest `hosting_listJsDeployments` entry_file + logs → `nodejs/server/restart` → hPanel env present? → owner seeded on **that** `DATABASE_URL`?
+8. **Never print** full `DATABASE_URL` / API tokens in chat logs when avoidable; mask hosts. User-requested owner password from local `.env.local` is allowed when they ask for login creds explicitly.
 
 ## Success criteria
 
-- [ ] `https://perfumeaura.com` serves this site (coming soon, then full product)
-- [ ] `git push origin main` updates Hostinger without manual upload
+- [x] `https://perfumeaura.com` serves coming soon (marketing)
+- [x] Marketing monorepo paths denied over HTTP (`.htaccess` 403) — still prefer artifact-only later
+- [x] `https://app.perfumeaura.com/login` serves Next login shell
+- [ ] Ops hPanel env (Neon `DATABASE_URL` + `BETTER_AUTH_*`) set
+- [ ] Prod migrate + owner `seed:owner` against Neon
+- [ ] Owner can sign in on prod (not “invalid password” from auth 500)
+- [ ] `git push origin main` updates marketing Hostinger without manual upload
 - [ ] Domain still registered only at GoDaddy
 - [ ] DNS managed only at Hostinger (nameserver method: `lunar` / `solar`)
-- [ ] A `@` → `82.112.232.17` (or current Plan details IP) publicly resolvable
-- [ ] SSL valid on apex and `www`
+- [ ] Apex DNS matches current Plan details / CDN (do not hardcode stale IP forever)
+- [ ] SSL valid on apex, `www`, and `app`
+- [ ] Ops Path B Git auto-deploy (optional later; zip path is current)
 
 ## Official references
 

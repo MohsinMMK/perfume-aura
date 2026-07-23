@@ -28,3 +28,6 @@ apps/marketing/dist
 
 # tooling
 .vercel
+dist/
+perfume-aura-standalone_*.zip
+*.standalone.zip

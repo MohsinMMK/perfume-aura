@@ -1,0 +1,24 @@
+# Perfume Aura marketing public_html — block monorepo source leak (SEC-7)
+# Classic Git deploys whole repo; until artifact-only CI, deny non-marketing paths.
+<IfModule mod_authz_core.c>
+  Require all granted
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Block monorepo / tooling trees
+  RewriteRule ^(apps|packages|docs|scripts|taskplane-tasks|\.agents|\.pi|\.github)(/|$) - [F,L]
+
+  # Block lockfiles, workspace, agent, and package manifests at web root
+  RewriteRule ^(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|skills-lock\.json)$ - [F,L]
+  RewriteRule ^(AGENTS\.md|README\.md|CLAUDE\.md|TODO\.md)$ - [F,L]
+  RewriteRule ^.*\.md$ - [F,L]
+
+  # Block common secret / env patterns if ever present
+  RewriteRule /(^|/)\.env - [F,L]
+  RewriteRule \.(pem|key)$ - [F,L]
+</IfModule>
+
+# Extra belt: deny directory indexes
+Options -Indexes

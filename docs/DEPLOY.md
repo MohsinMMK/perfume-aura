@@ -2,9 +2,10 @@
 
 | Field | Value |
 |-------|--------|
-| Updated | 2026-07-22 |
+| Updated | 2026-07-23 |
 | Ops checklist | [OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIST.md) |
 | DNS support | [HOSTINGER_SUPPORT_DNS.md](./HOSTINGER_SUPPORT_DNS.md) |
+| Ops pack | `pnpm ops:pack` → prebuilt Hostinger zip |
 
 This document describes the **production-correct** way this project is hosted. Follow it for every future change.
 
@@ -23,20 +24,36 @@ Classic Git is **not** for Next.js. Do not put the ops app into marketing `publi
 
 Full step-by-step + live account snapshot: **[OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIST.md)**.
 
-1. hPanel → **Add Website** → **Deploy Web App** (Node.js)  
-2. Import GitHub monorepo · branch `main`  
-3. Framework: Next.js · Node 20/22  
-4. Root: monorepo root or `apps/ops` (see checklist fallbacks)  
-5. Build: `pnpm --filter @perfume-aura/ops build`  
-6. Start: `next start` (port 3000)  
-7. Env: [ENV.md](./ENV.md) / `apps/ops/.env.example`  
-8. Domain `app.perfumeaura.com` · SSL · DNS in **Hostinger zone only**  
+**Current workable path (prebuilt zip)** — Hostinger shared Node hits monorepo/esbuild **EACCES** on source build:
+
+1. Local: `pnpm ops:pack` → `dist/perfume-aura-standalone_*.zip`  
+   - Pack uses **`zip -y`** + **materialized** `apps/ops/node_modules` (no broken symlink graph)  
+   - Smoke gate: extract zip and `require('next')` from `apps/ops` must pass  
+2. hPanel → **app.perfumeaura.com** → Deploy Web App → **Settings and redeploy**  
+3. Upload zip · Framework Other · Node **20.x** · Root `./`  
+4. Build: `echo prebuilt-standalone` · **Entry file:** `apps/ops/server.js` · Output empty  
+5. Env in **hPanel only** (never bake `.env` into zip): [ENV.md](./ENV.md)  
+6. **Save and redeploy** · restart Node if offered · smoke `https://app.perfumeaura.com/login`  
+
+**Forbidden deploy artifacts**
+
+- Flat zip with root `server.js` / `entry.cjs` (missing monorepo layout → `Cannot find module 'next'`)  
+- Any zip containing `.env` / secrets  
+- Whole monorepo into marketing `public_html` without deny rules  
+
+**Goal path (Git auto on push)** — reconnect GitHub when Hostinger can build monorepo; see checklist Path B. Marketing classic Git already auto-deploys on `git push` independently.  
 
 ### Marketing deploy safety
 
 - Prefer CI that uploads **only** marketing static files.  
 - Until CI exists, root `index.html` / `styles.css` keep classic Git working (`pnpm marketing:sync`).  
-- After deploy: `https://perfumeaura.com/apps/ops/package.json` must be **404**.  
+- Classic Git still pulls the **whole monorepo** into `public_html`. Root **`.htaccess`** denies `/apps`, `/packages`, `/docs`, lockfiles, and `*.md` (SEC-7 mitigate).  
+- After deploy verify:
+
+```bash
+curl -sI -o /dev/null -w "%{http_code}\n" https://perfumeaura.com/apps/ops/package.json   # 403 or 404
+curl -sI -o /dev/null -w "%{http_code}\n" https://perfumeaura.com/                          # 200
+```
 
 ## Ownership split
 

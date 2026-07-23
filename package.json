@@ -13,6 +13,7 @@
     "test:unit": "pnpm --filter @perfume-aura/db test:unit && pnpm --filter @perfume-aura/ops test",
     "test:integration": "pnpm --filter @perfume-aura/db test:integration",
     "marketing:sync": "cp apps/marketing/index.html index.html && cp apps/marketing/styles.css styles.css",
-    "marketing:check": "diff -q apps/marketing/index.html index.html && diff -q apps/marketing/styles.css styles.css"
+    "marketing:check": "diff -q apps/marketing/index.html index.html && diff -q apps/marketing/styles.css styles.css",
+    "ops:pack": "bash scripts/pack-ops-standalone.sh"
   }
 }

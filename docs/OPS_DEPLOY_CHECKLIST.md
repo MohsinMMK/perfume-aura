@@ -7,8 +7,9 @@ Official Node guide: https://www.hostinger.com/support/how-to-deploy-a-nodejs-we
 
 | Field | Value |
 |-------|--------|
-| Updated | 2026-07-22 |
+| Updated | 2026-07-23 |
 | Related | [DEPLOY.md](./DEPLOY.md) · [ENV.md](./ENV.md) · [SECURITY.md](./SECURITY.md) |
+| Pack script | `pnpm ops:pack` → `dist/perfume-aura-standalone_YYYYMMDD.zip` (zip `-y` + materialized `apps/ops/node_modules`; no `.env`) |
 
 ## Live account snapshot (updated 2026-07-22 via Hostinger MCP)
 
@@ -38,11 +39,72 @@ Official Node guide: https://www.hostinger.com/support/how-to-deploy-a-nodejs-we
 
 ### What you still do in hPanel (one-time)
 
-1. Open **app.perfumeaura.com** → **Deploy Web App / Node.js** (not classic files only)  
-2. Confirm **start command**: `node apps/ops/server.js` (or `pnpm start` if monorepo root is used)  
-3. **Node version** 20+  
-4. Paste env vars (see below) if not already on disk from deploy  
-5. Redeploy or restart until `https://app.perfumeaura.com/login` returns Next (not hPanel 404)
+1. Open **app.perfumeaura.com** → **Deploy Web App / Node.js** → **Settings and redeploy**  
+2. Fill fields exactly as in **[hPanel Settings and redeploy (prebuilt zip)](#hpanel-settings-and-redeploy-prebuilt-zip)**  
+3. **Add** env vars (below)  
+4. **Save and redeploy**  
+5. Smoke: `https://app.perfumeaura.com/login` returns Next login (not Hostinger 404/403)
+
+## Why marketing ≠ ops on push
+
+Official Hostinger model = **one GitHub repo, two websites**:
+
+| Site | Domain | Product | Auto on `git push main` |
+|------|--------|---------|-------------------------|
+| Marketing | `perfumeaura.com` | Classic **Git** → `public_html` | Yes (when auto-deploy on) |
+| Ops | `app.perfumeaura.com` | **Node.js Web App** | Ideal yes via Git — **blocked today** by shared-host monorepo/esbuild **EACCES** |
+
+So push does **not** publish both until ops Node app is healthy. Classic Git cannot run Next.js. Do not merge ops into marketing `public_html`.
+
+**Workable ops path now:** local `pnpm ops:pack` → upload zip → entry `apps/ops/server.js` + env → Save and redeploy.  
+**Later Git auto path:** when Hostinger can build monorepo (or CI ships artifact Hostinger pulls), reconnect GitHub on the Node app and drop zip uploads.
+
+## hPanel Settings and redeploy (prebuilt zip)
+
+Matches Hostinger **Settings and redeploy** UI. Use after `pnpm ops:pack` (or **Use previous files** if zip already uploaded).
+
+| Field | Value |
+|-------|--------|
+| **Source files** | **Upload new files** → `dist/perfume-aura-standalone_*.zip` · or **Use previous files** if same zip already on server |
+| **Framework preset** | **Other** (or Next.js if listed; either OK for standalone) |
+| **Node version** | **20.x** |
+| **Root directory** | `./` |
+| **Build command** | `echo prebuilt-standalone` — **not** `pnpm run build` |
+| **Package manager** | `pnpm` (or npm) |
+| **Output directory** | *(leave empty)* |
+| **Entry file** | **`apps/ops/server.js`** — required; empty entry = public 403/404 |
+| **Forbidden** | Root `entry.cjs` / flat `server.js` zip · baking `.env` into zip |
+
+Then **Environment Variables → Add**:
+
+```text
+DATABASE_URL=<Neon pooled production URL>
+BETTER_AUTH_SECRET=<openssl rand -base64 32>
+BETTER_AUTH_URL=https://app.perfumeaura.com
+NEXT_PUBLIC_BETTER_AUTH_URL=https://app.perfumeaura.com
+NODE_ENV=production
+PORT=3000
+```
+
+Optional (not required to boot app):
+
+```text
+DATABASE_URL_DIRECT=<Neon direct, migrate only>
+# BETTER_AUTH_TRUSTED_ORIGINS=
+# NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=
+```
+
+Click **Save and redeploy**. If build is green but site still Hostinger HTML: **Restart** app; confirm entry path is exactly `apps/ops/server.js` (try `./apps/ops/server.js` only if panel requires it).
+
+### Pack zip locally (official repo command)
+
+```bash
+pnpm ops:pack
+# → dist/perfume-aura-standalone_YYYYMMDD.zip
+# zip root contains apps/ops/server.js + .next/static + package.json start script
+```
+
+Do **not** zip monorepo source for Hostinger build — use this prebuilt pack only until Git monorepo build works.
 
 ## Pre-flight (repo / Neon)
 
@@ -59,48 +121,51 @@ Official Node guide: https://www.hostinger.com/support/how-to-deploy-a-nodejs-we
 
 ## Env vars (hPanel Node app)
 
-Copy from `apps/ops/.env.example`. Production values:
+Copy names from `apps/ops/.env.example`. **Runtime required** on Node app:
 
 ```text
 DATABASE_URL=                 # Neon pooled
-DATABASE_URL_DIRECT=          # Neon direct (migrate job / one-off)
 BETTER_AUTH_SECRET=           # openssl rand -base64 32  (≥32 chars)
 BETTER_AUTH_URL=https://app.perfumeaura.com
 NEXT_PUBLIC_BETTER_AUTH_URL=https://app.perfumeaura.com
-# optional extras
+NODE_ENV=production
+PORT=3000
+```
+
+Optional / one-off:
+
+```text
+DATABASE_URL_DIRECT=          # Neon direct (migrate job only)
 # BETTER_AUTH_TRUSTED_ORIGINS=
 # NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=
 ```
 
-## Hostinger — create Node.js Web App (manual in hPanel)
+## Hostinger — Node.js Web App paths
 
-> Creating a website changes shared Hostinger state. Do this in hPanel (or confirm before API create).
+> `app.perfumeaura.com` addon **already created**. Prefer **Settings and redeploy** on that site over creating a second website.
 
-1. hPanel → **Add Website** → **Deploy Web App** (Node.js)  
-2. Connect GitHub → repo **`MohsinMMK/perfume-aura`** · branch **`main`**  
+### Path A — Prebuilt zip (current, works around EACCES)
+
+1. Local: `pnpm ops:pack`  
+2. hPanel → **app.perfumeaura.com** → Deploy Web App → **Settings and redeploy**  
+3. Upload zip · set **Entry file** `apps/ops/server.js` · build `echo prebuilt-standalone` · env · **Save and redeploy**  
+4. SSL on if not already  
+
+### Path B — GitHub auto-deploy (goal; blocked on shared Node build today)
+
+When Hostinger monorepo build works (or install no longer hits esbuild EACCES):
+
+1. hPanel → **app.perfumeaura.com** → Deploy Web App → connect GitHub  
+2. Repo **`MohsinMMK/perfume-aura`** · branch **`main`**  
 3. Framework: **Next.js** · Node **20** or **22**  
-4. Root / monorepo:
-   - Prefer root directory **`apps/ops`** if the UI offers it  
-   - Else monorepo root with:
-     - **Install:** `pnpm install` (or Hostinger’s pnpm detect)
-     - **Build:** `pnpm --filter @perfume-aura/ops build`
-     - **Start:** `pnpm --filter @perfume-aura/ops start` or `cd apps/ops && pnpm start`
-5. Port: **3000** (Hostinger Node default)  
-6. Attach domain: **`app.perfumeaura.com`**  
-7. Paste env vars · save · deploy  
-8. Enable SSL for `app.perfumeaura.com`
+4. Root monorepo with:
+   - **Install:** `pnpm install --frozen-lockfile`
+   - **Build:** `pnpm --filter @perfume-aura/ops build`
+   - **Start / entry:** `apps/ops/server.js` after standalone copy step, **or** `pnpm --filter @perfume-aura/ops start` if full Next runtime available  
+5. Same env vars · port **3000** · domain **`app.perfumeaura.com`**  
+6. Enable auto-deploy on push  
 
-### Monorepo install fallback
-
-If Hostinger cannot install workspace packages from `apps/ops` alone:
-
-```bash
-# Build from repo root (recommended when root is set to monorepo)
-pnpm install --frozen-lockfile
-pnpm --filter @perfume-aura/ops build
-# Start from apps/ops after build
-cd apps/ops && pnpm start
-```
+Until Path B is green, **do not** rely on `git push` alone for ops — marketing classic Git still auto-deploys independently.
 
 ## DNS (Hostinger zone only — Path A)
 
@@ -156,10 +221,15 @@ Root `index.html` + `styles.css` are interim marketing mirrors only.
 |------|--------|
 | Code ready | Done |
 | Tests (unit + concurrent) | Done |
-| Neon prod + migrate | **You** |
-| Hostinger Node Web App | **You (hPanel)** |
-| DNS `app` record | **You** after Web App |
+| `pnpm ops:pack` (materialize + zip `-y` + smoke) | Done |
+| Hostinger entry `apps/ops/server.js` + official zip | Done (build completed) |
+| `https://app.perfumeaura.com/login` Next HTML | Done (HTTP 200) |
+| Marketing monorepo HTTP deny (`.htaccess`) | Done (403 on `/apps/ops/*`) |
+| Neon prod + migrate + hPanel `DATABASE_URL` | **You** |
+| hPanel `BETTER_AUTH_*` env (no zip bake) | **You** |
 | Owner seed on prod | **You** |
-| SSL + smoke | **You** |
+| Root `/` session redirect (needs DB/auth env) | Blocked until env |
+| Git auto-deploy ops (Path B) | Blocked — shared Node esbuild EACCES |
+| Rotate API token if ever in `/tmp` | **You** |
 
-When the Node app exists, re-run Hostinger website list / DNS tools to confirm `app.perfumeaura.com` and the `app` zone record.
+When the Node app serves Next, re-check `curl -sI https://app.perfumeaura.com/login` (expect 200/302 from app, not Hostinger placeholder).
