@@ -31,3 +31,11 @@ apps/marketing/dist
 dist/
 perfume-aura-standalone_*.zip
 *.standalone.zip
+
+# neon / host secrets (never commit)
+.env.neon.prod
+.env.production
+.env.production.local
+
+# neonctl context
+.neon
