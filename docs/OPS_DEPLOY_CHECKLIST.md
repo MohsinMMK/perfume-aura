@@ -144,18 +144,23 @@ DATABASE_URL_DIRECT=          # Neon direct (migrate job only)
 
 > `app.perfumeaura.com` addon **already created**. Prefer **Settings and redeploy** on that site over creating a second website.
 
-### Path A — Prebuilt zip (current, works around EACCES)
+### Path Z — Prebuilt zip (current workable; Hostinger official source #2)
+
+Works around shared-Node monorepo EACCES. Full agent write-up: [AGENTS.md Path Z](../AGENTS.md#path-z--ops-node-via-prebuilt-zip-current-workable--official-option-2).
 
 1. Local: `pnpm ops:pack`  
 2. hPanel → **app.perfumeaura.com** → Deploy Web App → **Settings and redeploy**  
 3. Upload zip · set **Entry file** `apps/ops/server.js` · build `echo prebuilt-standalone` · env · **Save and redeploy**  
 4. SSL on if not already  
 
-### Path B — GitHub auto-deploy (goal; blocked on shared Node build today)
+### Path G — GitHub auto-deploy on Node Web App (official preferred; blocked today)
+
+Hostinger Node source #1: GitHub OAuth + auto build on push.  
+**Not** Advanced → Git (that is marketing Path M only).
 
 When Hostinger monorepo build works (or install no longer hits esbuild EACCES):
 
-1. hPanel → **app.perfumeaura.com** → Deploy Web App → connect GitHub  
+1. hPanel → **app.perfumeaura.com** → Deploy Web App → connect **GitHub**  
 2. Repo **`MohsinMMK/perfume-aura`** · branch **`main`**  
 3. Framework: **Next.js** · Node **20** or **22**  
 4. Root monorepo with:
@@ -165,7 +170,7 @@ When Hostinger monorepo build works (or install no longer hits esbuild EACCES):
 5. Same env vars · port **3000** · domain **`app.perfumeaura.com`**  
 6. Enable auto-deploy on push  
 
-Until Path B is green, **do not** rely on `git push` alone for ops — marketing classic Git still auto-deploys independently.
+Until Path G is green, **do not** rely on `git push` alone for ops — marketing classic Git (**Path M**) still auto-deploys independently. See [AGENTS.md GitHub → Hostinger](../AGENTS.md#github--hostinger-official-dual-flow).
 
 ## DNS (Hostinger zone only — Path A)
 
@@ -229,7 +234,7 @@ Root `index.html` + `styles.css` are interim marketing mirrors only.
 | hPanel `BETTER_AUTH_*` env (no zip bake) | **You** |
 | Owner seed on prod | **You** |
 | Root `/` session redirect (needs DB/auth env) | Blocked until env |
-| Git auto-deploy ops (Path B) | Blocked — shared Node esbuild EACCES |
+| GitHub auto-deploy ops (Path G) | Blocked — shared Node esbuild EACCES; use Path Z |
 | Rotate API token if ever in `/tmp` | **You** |
 
 When the Node app serves Next, re-check `curl -sI https://app.perfumeaura.com/login` (expect 200/302 from app, not Hostinger placeholder).

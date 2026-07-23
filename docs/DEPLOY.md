@@ -5,26 +5,45 @@
 | Updated | 2026-07-23 |
 | Ops checklist | [OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIST.md) |
 | DNS support | [HOSTINGER_SUPPORT_DNS.md](./HOSTINGER_SUPPORT_DNS.md) |
-| Ops pack | `pnpm ops:pack` → prebuilt Hostinger zip |
+| Ops pack | `pnpm ops:pack` → Path Z prebuilt zip |
+| Agent rules | [AGENTS.md](../AGENTS.md) — Path M / G / Z |
 
 This document describes the **production-correct** way this project is hosted. Follow it for every future change.
 
 ## Dual websites (monorepo)
 
-| Site | Path in repo | Hostinger product | Domain |
-|------|----------------|-------------------|--------|
-| **Marketing** | `apps/marketing` (+ root mirror interim) | Classic **Git** → `public_html` | perfumeaura.com |
-| **Ops** | `apps/ops` (Next.js) | **Node.js Web App** | app.perfumeaura.com |
+| Site | Path in repo | Hostinger product | Official GitHub flow | Domain |
+|------|----------------|-------------------|----------------------|--------|
+| **Marketing** | `apps/marketing` (+ root mirror interim) | Classic **Git** → `public_html` | **Path M** — Advanced → Git → GitHub OAuth | perfumeaura.com |
+| **Ops** | `apps/ops` (Next.js) | **Node.js Web App** | **Path G** GitHub (preferred) · **Path Z** zip (current) | app.perfumeaura.com |
 
-Official Node guide: https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/
+Official docs:
 
+- Classic Git (marketing): https://www.hostinger.com/support/1583302-how-to-deploy-a-git-repository-in-hostinger/
+- Node.js Web App (ops): https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/
+
+Hostinger Node sources (official order): **(1) GitHub** · **(2) zip upload** · **(3) Connector**.  
 Classic Git is **not** for Next.js. Do not put the ops app into marketing `public_html`.
+
+Full dual-flow write-up for agents: **[AGENTS.md — GitHub → Hostinger](../AGENTS.md#github--hostinger-official-dual-flow)**.
+
+### Path M — Marketing (GitHub classic Git)
+
+```bash
+pnpm marketing:sync   # when apps/marketing changes
+git push origin main  # Hostinger Advanced → Git auto-deploy → public_html
+```
 
 ### Ops deploy
 
 Full step-by-step + live account snapshot: **[OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIST.md)**.
 
-**Current workable path (prebuilt zip)** — Hostinger shared Node hits monorepo/esbuild **EACCES** on source build:
+#### Path G — GitHub on Node Web App (official preferred / goal)
+
+hPanel → **app.perfumeaura.com** → Node.js Web App → source **GitHub** → repo `MohsinMMK/perfume-aura` → `main` → auto build on push.  
+**Blocked today:** shared Node monorepo source build → esbuild **EACCES**. Do not thrash failed Path G deploys; use Path Z until green.
+
+#### Path Z — Prebuilt zip (current workable / official option #2)
 
 1. Local: `pnpm ops:pack` → `dist/perfume-aura-standalone_*.zip`  
    - Pack uses **`zip -y`** + **materialized** `apps/ops/node_modules` (no broken symlink graph)  
@@ -40,8 +59,7 @@ Full step-by-step + live account snapshot: **[OPS_DEPLOY_CHECKLIST.md](./OPS_DEP
 - Flat zip with root `server.js` / `entry.cjs` (missing monorepo layout → `Cannot find module 'next'`)  
 - Any zip containing `.env` / secrets  
 - Whole monorepo into marketing `public_html` without deny rules  
-
-**Goal path (Git auto on push)** — reconnect GitHub when Hostinger can build monorepo; see checklist Path B. Marketing classic Git already auto-deploys on `git push` independently.  
+- Classic Git as ops **runtime** (wrong Hostinger product)  
 
 ### Marketing deploy safety
 

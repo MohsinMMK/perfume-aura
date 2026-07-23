@@ -13,8 +13,8 @@ Agents and developers **must** use **official documented install/setup paths** f
 | **Better Auth** | https://better-auth.com/docs | Official Next.js + Drizzle adapter install. |
 | **Drizzle** | https://orm.drizzle.team/docs | Official schema / kit / Neon or `pg` guides. |
 | **Neon** | https://neon.com/docs | Official connection strings + drivers. |
-| **Hostinger marketing** | Hostinger classic Git docs | Advanced → Git → `public_html` for static only. |
-| **Hostinger ops** | Hostinger Node.js Web App docs · [docs/OPS_DEPLOY_CHECKLIST.md](docs/OPS_DEPLOY_CHECKLIST.md) | Node Web App + **`pnpm ops:pack`** prebuilt zip — **not** classic Git; **not** Hostinger monorepo source build. |
+| **Hostinger marketing** | [Classic Git docs](https://www.hostinger.com/support/1583302-how-to-deploy-a-git-repository-in-hostinger/) | Advanced → Git → GitHub OAuth → `public_html` (static only). |
+| **Hostinger ops** | [Node.js Web App docs](https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/) · [docs/OPS_DEPLOY_CHECKLIST.md](docs/OPS_DEPLOY_CHECKLIST.md) | **Node.js Web App** only (never classic Git). Official sources: **(1) GitHub** auto-build, **(2) zip upload**, **(3) Hostinger Connector**. **Current:** prebuilt zip via `pnpm ops:pack` until monorepo GitHub build works on shared Node. |
 | **pnpm workspaces** | https://pnpm.io/workspaces | Root `pnpm-workspace.yaml` + `workspace:*` deps. |
 
 ### shadcn monorepo rules (this repo)
@@ -220,18 +220,66 @@ Propagation map: https://dnschecker.org/#NS/perfumeaura.com
 
 ### Two websites (do not merge)
 
-| Site | Domain | Hostinger product | Deploy |
-|------|--------|-------------------|--------|
-| Marketing | `perfumeaura.com` | Classic **Git** → `public_html` | `git push origin main` |
-| Ops | `app.perfumeaura.com` | **Node.js Web App** | `pnpm ops:pack` zip → hPanel / MCP deploy |
+| Site | Domain | Hostinger product | Official deploy source | Everyday trigger |
+|------|--------|-------------------|------------------------|------------------|
+| Marketing | `perfumeaura.com` | Classic **Git** → `public_html` | GitHub `main` (OAuth) | `git push origin main` |
+| Ops | `app.perfumeaura.com` | **Node.js Web App** | GitHub (preferred) **or** zip upload **or** Connector | See paths below |
 
 Classic Git **cannot** run Next.js. Never put ops into marketing `public_html` as the app runtime.
 
-## Git → Hostinger (official deploy)
+## GitHub → Hostinger (official dual flow)
 
-Docs: https://www.hostinger.com/support/1583302-how-to-deploy-a-git-repository-in-hostinger/
+**Source of truth:** GitHub repo **`MohsinMMK/perfume-aura`** branch **`main`**.  
+Hostinger never becomes the long-term code store. Prefer GitHub-linked deploy over FTP.
 
-### One-time setup (hPanel)
+Official Hostinger docs:
+
+| Product | Doc |
+|---------|-----|
+| Marketing classic Git | https://www.hostinger.com/support/1583302-how-to-deploy-a-git-repository-in-hostinger/ |
+| Ops Node.js Web App | https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/ |
+| DNS Path A (nameservers) | https://www.hostinger.com/support/1863967-how-to-point-a-domain-to-hostinger/ |
+
+Hostinger Node.js Web App accepts **three** official sources (in doc order):
+
+1. **GitHub integration** — auto build on every push (preferred long-term)
+2. **Upload compressed (.zip)** — prebuilt or source archive
+3. **Hostinger Connector** — IDE-linked deploy (optional; not default for this repo)
+
+```text
+                    GitHub main (MohsinMMK/perfume-aura)
+                         │
+          ┌──────────────┴──────────────┐
+          ▼                             ▼
+  Marketing website              Ops Node.js Web App
+  Advanced → Git                 Deploy Web App / Node.js
+  (classic Git product)          (NOT Advanced → Git)
+          │                             │
+          ▼                             ├── Path G: GitHub OAuth (official preferred)
+  public_html static                    ├── Path Z: zip upload (current workable)
+  + root .htaccess                      └── Path C: Connector (optional IDE)
+```
+
+### Why GitHub path (benefits agents must know)
+
+| Benefit | Detail |
+|---------|--------|
+| Push = deploy | No manual zip/FTP for each change when auto-deploy on |
+| One source of truth | `main` commit = what Hostinger pulls/builds |
+| Rollback | Redeploy prior commit / previous successful build |
+| Less drift | Avoids “which zip is live?” |
+| Official happy path | Hostinger leads with GitHub for both classic Git and Node Web Apps |
+
+Zip remains valid official **option #2** when remote monorepo build cannot run (see Path Z).
+
+---
+
+### Path M — Marketing classic Git (live / official)
+
+**Product:** Advanced → **Git** on `perfumeaura.com` only.  
+**Not** Node.js Web App. Static HTML/CSS (and PHP-style) only.
+
+#### One-time setup (hPanel)
 
 1. Websites → **perfumeaura.com** → **Dashboard**
 2. **Advanced** → **Git**
@@ -242,11 +290,12 @@ Docs: https://www.hostinger.com/support/1583302-how-to-deploy-a-git-repository-i
 7. **Deploy**
 8. Enable **auto-deployment**
 
-Supported for static HTML/PHP-style sites on web/cloud. **Not** for Hostinger Website Builder / Horizons / Agency Git path.
+Supported on web/cloud. **Not** for Website Builder / Horizons / Agency Git path.
 
-### Everyday workflow
+#### Everyday workflow
 
 ```bash
+pnpm marketing:sync   # if apps/marketing changed — keep root index.html/styles.css mirrors
 git add .
 git commit -m "Describe the change"
 git push origin main
@@ -254,16 +303,107 @@ git push origin main
 
 Hostinger pulls `main` into `public_html`. No FTP for normal updates.
 
-### Manual redeploy
+#### Manual redeploy
 
-hPanel → Advanced → Git → **Redeploy**
+hPanel → perfumeaura.com → Advanced → Git → **Redeploy**
 
-## SSL
+#### Marketing safety (SEC-7)
 
-After the domain resolves publicly (A record live):
+Classic Git currently deploys **whole monorepo** into `public_html`. Root **`.htaccess`** must deny `/apps`, `/packages`, `/docs`, lockfiles, `*.md`.  
+Verify after push: `curl -sI https://perfumeaura.com/apps/ops/package.json` → **403**.  
+Long-term: artifact-only marketing (static files only).
 
-1. hPanel → site dashboard → **SSL**
-2. Install free certificate for `perfumeaura.com` and `www.perfumeaura.com`
+---
+
+### Path G — Ops Node via GitHub (official preferred / goal)
+
+**Product:** `app.perfumeaura.com` → **Node.js Web App** → source **GitHub**.  
+**Not** Advanced → Git on the ops domain. Classic Git cannot start Next.
+
+Docs: https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/
+
+#### One-time setup (hPanel)
+
+1. Websites → **app.perfumeaura.com** → **Dashboard** → **Node.js** / **Deploy Web App**
+2. Choose **GitHub** (not “Upload files” if Path G is unblocked)
+3. **Continue with GitHub** → authorize → repo **`MohsinMMK/perfume-aura`** → branch **`main`**
+4. Configure build settings (adjust when monorepo build is proven on Hostinger):
+
+| Field | Target value |
+|-------|----------------|
+| Framework | **Next.js** or **Other** |
+| Node | **20.x** |
+| Root directory | monorepo-aware path Hostinger accepts (often `./` or `apps/ops` — **confirm in panel**) |
+| Build command | what Hostinger can execute without EACCES (ideal: workspace build; **blocked today** on shared Node) |
+| Output / entry | Next standalone entry once build produces it — e.g. **`apps/ops/server.js`** after standalone layout |
+| Env vars | Same hPanel list as Path Z (`DATABASE_URL`, `BETTER_AUTH_*`, …) |
+
+5. Save → first deploy → enable auto-deploy on push if offered
+6. Smoke: `https://app.perfumeaura.com/login` + `/api/auth/get-session` not 500
+
+#### Everyday workflow (when Path G green)
+
+```bash
+git push origin main
+# Hostinger Node app pulls + builds + restarts
+```
+
+#### Path G status (agents: re-verify)
+
+| State | Detail |
+|-------|--------|
+| **Blocked today** | Hostinger shared Node monorepo **source build** hits esbuild **EACCES** / broken `pnpm` PATH |
+| **Do not force** | Repeated failed GitHub source builds waste time; switch to Path Z |
+| **Unblock later** | Hostinger fixes shared exec, or CI builds artifact Hostinger GitHub/zip consumes, or slim single-package deploy |
+| **Success criteria row** | “Ops Path B/G Git auto-deploy” stays unchecked until push alone serves Next + auth |
+
+---
+
+### Path Z — Ops Node via prebuilt zip (current workable / official option #2)
+
+Use while Path G monorepo build is blocked. Still a **Node.js Web App** on `app.perfumeaura.com` — not classic Git.
+
+```bash
+pnpm ops:pack
+# → dist/perfume-aura-standalone_YYYYMMDD.zip
+```
+
+Then hPanel **Settings and redeploy** (or Hostinger MCP deploy) with entry **`apps/ops/server.js`**. Full table: [Ops deploy](#ops-deploy-hostinger-node--critical-for-agents) below and [docs/OPS_DEPLOY_CHECKLIST.md](docs/OPS_DEPLOY_CHECKLIST.md).
+
+| When to use Path Z | When to leave Path Z |
+|--------------------|----------------------|
+| Need ops live now | Path G GitHub build green end-to-end |
+| Monorepo `next build` fails on Hostinger | CI ships proven artifact Hostinger can start without local pack |
+
+**Forbidden:** flat `entry.cjs` / root-only `server.js` zips; baking `.env` into zip; classic Git for ops.
+
+---
+
+### Path C — Hostinger Connector (optional)
+
+Official IDE path (Cursor / VS Code / Windsurf → Hostinger). Not required for this repo. Prefer Path G or Z so deploy stays reproducible from GitHub/`pnpm ops:pack`.
+
+---
+
+### Agent deploy decision tree
+
+```text
+Marketing change?
+  → Path M: commit + git push origin main (+ marketing:sync if needed)
+
+Ops change?
+  → Path G unblocked (last GitHub Node build green)?
+       yes → commit + git push origin main; watch Node deploy logs
+       no  → Path Z: pnpm ops:pack → upload/MCP deploy → entry apps/ops/server.js
+  → Always: hPanel env + Neon migrate/seed before claiming login works
+```
+
+### SSL
+
+After domains resolve:
+
+1. hPanel → each site dashboard → **SSL**
+2. Free cert for `perfumeaura.com`, `www.perfumeaura.com`, and `app.perfumeaura.com`
 
 ## Repository layout
 
@@ -280,13 +420,16 @@ index.html + styles.css        ← interim marketing mirror for classic Git
 
 ### Deploy notes
 
-- **Marketing:** classic Git still points at **whole monorepo** → `public_html`. Root `index.html` / `styles.css` via `pnpm marketing:sync`. Root **`.htaccess`** denies HTTP to `/apps`, `/packages`, `/docs`, lockfiles, `*.md` (SEC-7 mitigate). Prefer artifact-only CI later.
-- **Ops:** prebuilt standalone zip — **not** source monorepo build on Hostinger (esbuild **EACCES**). See [docs/DEPLOY.md](docs/DEPLOY.md) · [docs/OPS_DEPLOY_CHECKLIST.md](docs/OPS_DEPLOY_CHECKLIST.md).
-- **Never** use classic Git alone for Next.js ops.
+- **Marketing (Path M):** classic GitHub → `public_html`. Root `index.html` / `styles.css` via `pnpm marketing:sync`. Root **`.htaccess`** denies HTTP to `/apps`, `/packages`, `/docs`, lockfiles, `*.md` (SEC-7 mitigate). Prefer artifact-only CI later.
+- **Ops preferred (Path G):** Node.js Web App **GitHub** source — auto build on push. **Blocked today** on shared Node monorepo build (esbuild **EACCES**).
+- **Ops current (Path Z):** `pnpm ops:pack` prebuilt zip → Node Web App upload/MCP. See [docs/DEPLOY.md](docs/DEPLOY.md) · [docs/OPS_DEPLOY_CHECKLIST.md](docs/OPS_DEPLOY_CHECKLIST.md).
+- **Never** use classic Git (Advanced → Git) as the **runtime** for Next.js ops.
 
 ## Ops deploy (Hostinger Node) — critical for agents
 
-### Pack (local, official)
+**Default today = Path Z** (zip). **Goal = Path G** (GitHub). Both use the same Node Web App + hPanel env. Details: [GitHub → Hostinger](#github--hostinger-official-dual-flow).
+
+### Pack (local — Path Z)
 
 ```bash
 pnpm ops:pack
@@ -399,7 +542,7 @@ Classic Git deploys **entire repo** into marketing `public_html`. Without deny r
 | `https://app.perfumeaura.com/` | Often 500 until session/DB env OK |
 | `/api/auth/*` on prod | 500 until hPanel secrets + Neon |
 | Owner login on prod | Fails until prod seed + env |
-| Ops Git auto-build monorepo on Hostinger | **Blocked** (esbuild EACCES) — zip path only |
+| Ops Path G (GitHub Node auto-build) | **Blocked** (esbuild EACCES) — use Path Z zip |
 
 ## Anti-patterns (do not do)
 
@@ -408,10 +551,13 @@ Classic Git deploys **entire repo** into marketing `public_html`. Without deny r
 | Transfer domain to Hostinger “to fix DNS” | Unnecessary cost; keep GoDaddy registration |
 | Edit A/CNAME at GoDaddy while Hostinger NS are set | Records ignored; dual management confusion |
 | Invent DNS before Hostinger validates the zone | Zone empty / “not pointing” until activation |
-| Long-term FTP/zip instead of Git **for marketing** | Breaks official GitHub workflow |
+| Long-term FTP instead of **Path M** GitHub for marketing | Breaks official classic Git workflow |
+| Classic Git (Advanced → Git) as ops **runtime** | Wrong product; Next needs Node.js Web App |
+| Treating Path Z zip as “unofficial” | Zip is Hostinger official source #2; Path G is preferred when build works |
+| Forcing Path G while monorepo build EACCES | Wastes deploys; use Path Z until unblocked |
 | Flat ops zip (`entry.cjs` / root `server.js` only) | Breaks `require('next')`; use `pnpm ops:pack` monorepo layout |
 | `zip` without materializing / symlink-safe pack | Orphan `next` → missing `@swc/helpers` / `react` |
-| Hostinger source `pnpm build` for monorepo ops | esbuild **EACCES** on shared Node |
+| Hostinger source `pnpm build` for monorepo ops (Path G today) | esbuild **EACCES** on shared Node |
 | Baking `.env` into deploy zip | Secret leak; pack must refuse |
 | Guessing `OWNER_EMAIL` / `OWNER_PASSWORD` | Read `apps/ops/.env.local` only if user needs them; never invent |
 | Claiming prod login works without Neon + hPanel env + seed | Localhost DB ≠ prod |
@@ -426,7 +572,7 @@ Classic Git deploys **entire repo** into marketing `public_html`. Without deny r
 ## Agent workflow preferences
 
 1. **Read** this file, `docs/DEPLOY.md`, `docs/OPS_DEPLOY_CHECKLIST.md`, `docs/HOSTINGER_SUPPORT_DNS.md`, `docs/ENV.md` before hosting/ops deploy work.
-2. **Ship code** via commits to `main` when user wants marketing Git live; ops zip deploy is separate (`pnpm ops:pack` + Node app).
+2. **Ship via GitHub:** marketing always **Path M** (`git push origin main`). Ops: **Path G** if last Node GitHub build green; else **Path Z** (`pnpm ops:pack` + Node upload/MCP). Never classic Git for ops runtime.
 3. For DNS issues: verify WHOIS NS, public `dig`, Hostinger zone, then hPanel Live DNS Checkup — not random A-record hacks at GoDaddy.
 4. Prefer small, clear commits and keep the coming soon page **single viewport / no page scroll** until the full site replaces it.
 5. Do not claim marketing “live” until `https://perfumeaura.com` serves this project; do not claim ops “live” until `/login` works **and** auth API is not 500 **and** owner can sign in against Neon prod.
@@ -447,7 +593,7 @@ Classic Git deploys **entire repo** into marketing `public_html`. Without deny r
 - [ ] DNS managed only at Hostinger (nameserver method: `lunar` / `solar`)
 - [ ] Apex DNS matches current Plan details / CDN (do not hardcode stale IP forever)
 - [ ] SSL valid on apex, `www`, and `app`
-- [ ] Ops Path B Git auto-deploy (optional later; zip path is current)
+- [ ] Ops Path G GitHub auto-deploy (preferred; Path Z zip is current workable)
 
 ## Official references
 
