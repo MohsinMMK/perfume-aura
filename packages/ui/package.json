@@ -11,6 +11,9 @@
     "./hooks/*": "./src/hooks/*.ts",
     "./components/*": "./src/components/*.tsx"
   },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
   "peerDependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

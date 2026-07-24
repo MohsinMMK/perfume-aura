@@ -348,9 +348,19 @@ Everyday then: `git push origin main`. Until green, **ignore** any Path G field 
 
 ### Path B — CI artifact (packaging only)
 
-- Workflow: `.github/workflows/ops-pack.yml` → `pnpm ops:pack` on Ubuntu → Actions artifact `ops-standalone-zip`
+- Workflow: `.github/workflows/ops-pack.yml` → exact Node `24.18.0`, quality
+  and PostgreSQL 16 integration gates → `pnpm ops:pack` on Ubuntu
+- Package/native/server/static-asset smoke runs for pull requests, `main`
+  pushes, and manual runs; only a `main` push or a manual run explicitly
+  targeting `main` may upload the 14-day deploy-shaped artifact
+- Artifact: `ops-standalone-<12-character-commit>` with ZIP, SHA-256 sidecar,
+  and runtime/source manifest; 14-day retention
+- Packaging starts only after the same workflow's quality and complete
+  integration jobs pass; no test suite may skip for a missing database URL
 - The workflow has no provider credentials and no deploy job
-- Download the artifact and manually upload it in hPanel using the Path Z fields
+- Download all three files, verify checksum/manifest, retain the prior
+  production-known-good artifact, and manually upload the ZIP in hPanel using
+  the Path Z fields
 - A green artifact job is **not** a Hostinger deployment
 
 ### Path Z — Ops Node via prebuilt zip (current workable / official option #2)
@@ -359,7 +369,8 @@ Use while Path G monorepo build is blocked. Still a **Node.js Web App** on `app.
 
 ```bash
 pnpm ops:pack
-# → dist/perfume-aura-standalone_YYYYMMDD.zip
+# clean tree → dist/perfume-aura-standalone_<12-character-commit>.zip
+# dirty tree → unique <commit>-dirty-<UTC>-<pid> suffix
 ```
 
 Then manually upload it in hPanel **Settings and redeploy** with Hostinger Node
@@ -434,20 +445,22 @@ scripts/pack-ops-standalone.sh       ← ops:pack
 
 ```bash
 pnpm ops:pack
-# → dist/perfume-aura-standalone_YYYYMMDD.zip
+# clean tree → dist/perfume-aura-standalone_<12-character-commit>.zip
+# dirty tree → unique <commit>-dirty-<UTC>-<pid> suffix
 ```
 
 Script: [`scripts/pack-ops-standalone.sh`](scripts/pack-ops-standalone.sh)
 
 | Behavior | Detail |
 |----------|--------|
-| Build runtime | Exact Node **24.18.0**; the pack script fails closed on drift |
+| Build runtime | Exact Node **24.18.0**, npm **11.16.0**, pnpm **11.1.3**; the pack script fails closed on drift |
 | Layout | Monorepo standalone: entry **`apps/ops/server.js`** |
 | Modules | **Materializes** `apps/ops/node_modules` (real dirs) — **primary** Hostinger portability fix |
 | Zip | `zip -qry` secondary; do not treat `-y` alone as the fix |
-| Smoke | Stage + extract must `require('next')` + `require('sharp')` + `.next/static` or pack **fails** |
+| Smoke | Stage + extract must verify Next/Sharp/static, then the extracted server must return `200` for login/readiness/auth and one real `/_next/static/…` asset |
 | Secrets | **Never** bake `.env`/keys into zip (pack refuses) |
-| Sharp | Linux x64 glibc + sibling deps (`semver`, `detect-libc`, …) |
+| Sharp | Linux x64 glibc subtree from committed `scripts/ops-runtime-deps/package-lock.json` via official `npm ci --ignore-scripts`; lock hash is recorded and verified |
+| Publication | Candidate ZIP/sidecars live in a unique same-filesystem temporary workspace; failures clean it, existing final names are refused, and validated sidecars then ZIP are atomically renamed |
 | Server | Keep extracted `node_modules` — empty root deps mean install is no-op; clean wipe breaks boot |
 
 ### hPanel manual ZIP settings (exact)
@@ -581,6 +594,8 @@ Classic Git deploys **entire repo** into marketing `public_html`. Without deny r
 - [x] `https://perfumeaura.com` serves coming soon (marketing)
 - [x] Marketing monorepo paths denied over HTTP (`.htaccess` 403) — still prefer artifact-only later
 - [x] `https://app.perfumeaura.com/login` serves Next login shell
+- [ ] Phase 06 PR and `main` quality/integration checks green and reviewed
+- [ ] Phase 06 ZIP/checksum/manifest artifact retained with prior known-good
 - [ ] Ops hPanel env (Neon `DATABASE_URL` + `BETTER_AUTH_*`) set
 - [ ] Prod migrate + MAIN seed + owner `seed:owner` against Neon
 - [ ] Owner can sign in on prod (not “invalid password” from auth 500)

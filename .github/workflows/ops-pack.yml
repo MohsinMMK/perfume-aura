@@ -1,76 +1,261 @@
-# Path B — CI builds the Hostinger Path Z standalone zip as an artifact.
-# This workflow never deploys. Ops deployment is a manual hPanel ZIP upload.
-# Marketing Path M stays classic Git (separate).
-name: ops-pack
-# CI builds with Node 24.18.0 from .nvmrc; Hostinger runs Node 24.x.
+# Release gate and Path B artifact builder.
+# This workflow has no provider credentials and never deploys. The ZIP remains
+# an input to the official manual Hostinger Path Z hPanel workflow.
+name: ci-and-ops-artifact
 
 on:
   push:
     branches: [main]
-    paths:
-      - "apps/ops/**"
-      - "packages/**"
-      - "scripts/pack-ops-standalone.sh"
-      - "pnpm-lock.yaml"
-      - "package.json"
-      - "pnpm-workspace.yaml"
-      - ".nvmrc"
-      - ".node-version"
-      - ".github/workflows/ops-pack.yml"
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
-  group: ops-pack-${{ github.ref }}
+  group: ci-and-ops-artifact-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
-  actions: read
+
+env:
+  EXACT_NODE_VERSION: 24.18.0
+  EXACT_NPM_VERSION: 11.16.0
+  EXACT_PNPM_VERSION: 11.1.3
 
 jobs:
-  pack:
-    name: pack standalone zip
+  quality:
+    name: quality
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      # Public build-time origin only. The packer creates and scans a random
-      # per-run auth-secret canary; the real runtime secret stays in hPanel.
-      BETTER_AUTH_URL: https://app.perfumeaura.com
+    timeout-minutes: 25
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 11.1.3
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Setup exact Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
 
-      - name: Install
-        run: pnpm install --frozen-lockfile
-
-      - name: Pack ops standalone (Path Z)
-        run: pnpm ops:pack
-
-      - name: Assert zip looks like full standalone
+      - name: Verify runtime contract
         run: |
           set -euo pipefail
-          ZIP="$(ls -1t dist/perfume-aura-standalone_*.zip | head -1)"
-          BYTES="$(wc -c < "$ZIP" | tr -d ' ')"
-          MB="$(python3 -c "print(round($BYTES/1024/1024, 1))")"
-          echo "zip=$ZIP bytes=$BYTES (${MB}MB)"
-          # Full standalone should be well above tiny broken flats (~9MB)
-          test "$BYTES" -gt 15000000
+          test "$(node -p 'process.versions.node')" = "$EXACT_NODE_VERSION"
+          test "$(npm --version)" = "$EXACT_NPM_VERSION"
+          test "$(pnpm --version)" = "$EXACT_PNPM_VERSION"
+          test "$(tr -d '[:space:]' < .nvmrc)" = "$EXACT_NODE_VERSION"
+          test "$(tr -d '[:space:]' < .node-version)" = "$EXACT_NODE_VERSION"
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Frozen install
+        run: pnpm install --frozen-lockfile
+
+      - name: Marketing publish surface
+        run: pnpm marketing:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Workspace typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test:unit
+
+      - name: Production dependency audit
+        run: pnpm security:audit
+
+      - name: Ops production build
+        env:
+          BETTER_AUTH_URL: https://app.perfumeaura.com
+        run: pnpm build:ops
+
+  integration:
+    name: postgresql-16-integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: perfume_aura_phase06_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d perfume_aura_phase06_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_ci
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_ci
+      DATABASE_URL_DIRECT: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_ci
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
-          name: ops-standalone-zip
-          path: dist/perfume-aura-standalone_*.zip
+          version: 11.1.3
+
+      - name: Setup exact Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Verify runtime contract
+        run: |
+          set -euo pipefail
+          test "$(node -p 'process.versions.node')" = "$EXACT_NODE_VERSION"
+          test "$(npm --version)" = "$EXACT_NPM_VERSION"
+          test "$(pnpm --version)" = "$EXACT_PNPM_VERSION"
+
+      - name: Frozen install
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply forward migrations
+        run: pnpm db:migrate
+
+      - name: Complete integration suite (no skips)
+        run: pnpm test:integration
+
+  dependency-review:
+    name: dependency-review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Review changed dependencies
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+
+  package:
+    name: verified-hostinger-zip
+    needs:
+      - quality
+      - integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: perfume_aura_phase06_package
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d perfume_aura_phase06_package"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_package
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_package
+      DATABASE_URL_DIRECT: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_package
+      BETTER_AUTH_URL: https://app.perfumeaura.com
+      STANDALONE_REQUIRE_SERVER_SMOKE: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 11.1.3
+
+      - name: Setup exact Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Verify runtime contract
+        run: |
+          set -euo pipefail
+          test "$(node -p 'process.versions.node')" = "$EXACT_NODE_VERSION"
+          test "$(npm --version)" = "$EXACT_NPM_VERSION"
+          test "$(pnpm --version)" = "$EXACT_PNPM_VERSION"
+
+      - name: Frozen install
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply forward migrations for server smoke
+        run: pnpm db:migrate
+
+      - name: Build and verify standalone archive
+        run: |
+          set -euo pipefail
+          export STANDALONE_SOURCE_COMMIT="$GITHUB_SHA"
+          export STANDALONE_STAMP="${GITHUB_SHA:0:12}"
+          pnpm ops:pack
+
+      - name: Verify checksum and release metadata
+        id: artifact
+        run: |
+          set -euo pipefail
+          SHORT_SHA="${GITHUB_SHA:0:12}"
+          ZIP="dist/perfume-aura-standalone_${SHORT_SHA}.zip"
+          CHECKSUM="${ZIP}.sha256"
+          MANIFEST="dist/perfume-aura-standalone_${SHORT_SHA}.manifest.json"
+          test -f "$ZIP"
+          test -f "$CHECKSUM"
+          test -f "$MANIFEST"
+          (cd dist && sha256sum --check "$(basename "$CHECKSUM")")
+          node - "$MANIFEST" "$GITHUB_SHA" <<'NODE'
+          const assert = require("node:assert/strict");
+          const crypto = require("node:crypto");
+          const fs = require("node:fs");
+          const [manifestPath, sourceCommit] = process.argv.slice(2);
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+          assert.equal(manifest.source.commit, sourceCommit);
+          assert.equal(manifest.source.dirty, false);
+          assert.equal(manifest.runtime.node, "24.18.0");
+          assert.equal(manifest.runtime.npm, "11.16.0");
+          assert.equal(manifest.runtime.pnpm, "11.1.3");
+          assert.equal(manifest.runtime.next, "16.2.11");
+          assert.equal(manifest.runtime.sharp, "0.35.3");
+          assert.equal(manifest.runtime.postcss, "8.5.22");
+          const runtimeLockSha256 = crypto
+            .createHash("sha256")
+            .update(fs.readFileSync("scripts/ops-runtime-deps/package-lock.json"))
+            .digest("hex");
+          assert.deepEqual(manifest.runtimeDependencyLock, {
+            source: "scripts/ops-runtime-deps/package-lock.json",
+            artifact: "runtime-package-lock.json",
+            sha256: runtimeLockSha256,
+          });
+          assert.ok(manifest.archive.bytes <= 50_000_000);
+          NODE
+          echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
+          echo "checksum=$CHECKSUM" >> "$GITHUB_OUTPUT"
+          echo "manifest=$MANIFEST" >> "$GITHUB_OUTPUT"
+
+      - name: Upload inspected artifact
+        if: >-
+          github.ref == 'refs/heads/main' &&
+          (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ops-standalone-${{ steps.artifact.outputs.short_sha }}
+          path: |
+            ${{ steps.artifact.outputs.zip }}
+            ${{ steps.artifact.outputs.checksum }}
+            ${{ steps.artifact.outputs.manifest }}
           if-no-files-found: error
+          compression-level: 0
           retention-days: 14

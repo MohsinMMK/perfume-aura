@@ -8,20 +8,17 @@ import { after, before, describe, it } from "node:test";
 import { verifyPassword } from "better-auth/crypto";
 import { requireDisposableTestDatabaseUrl } from "../../../packages/db/src/test-database-guard";
 
-const testDatabaseUrl = process.env.TEST_DATABASE_URL
-  ? requireDisposableTestDatabaseUrl(process.env.TEST_DATABASE_URL)
-  : undefined;
-const hasDatabase = Boolean(testDatabaseUrl);
+const testDatabaseUrl = requireDisposableTestDatabaseUrl(
+  process.env.TEST_DATABASE_URL,
+);
 const baseUrl = "http://localhost:3000";
 const testPrefix = `phase04-${Date.now()}-${randomUUID().slice(0, 8)}`;
 
-if (testDatabaseUrl) {
-  process.env.DATABASE_URL = testDatabaseUrl;
-  process.env.BETTER_AUTH_SECRET =
-    "phase04-local-test-secret-that-is-at-least-thirty-two-characters";
-  process.env.BETTER_AUTH_URL = baseUrl;
-  process.env.NODE_ENV = "test";
-}
+process.env.DATABASE_URL = testDatabaseUrl;
+process.env.BETTER_AUTH_SECRET =
+  "phase04-local-test-secret-that-is-at-least-thirty-two-characters";
+process.env.BETTER_AUTH_URL = baseUrl;
+process.env.NODE_ENV = "test";
 
 function postRequest(path: string, body: unknown): Request {
   return new Request(`${baseUrl}/api/auth${path}`, {
@@ -45,7 +42,7 @@ function sessionCookie(response: Response): string {
 
 describe(
   "Phase 04 Better Auth and owner maintenance",
-  { skip: !hasDatabase, concurrency: false },
+  { concurrency: false },
   () => {
     let api: typeof import("@perfume-aura/db");
     let auth: typeof import("./auth").auth;
@@ -620,9 +617,3 @@ describe(
     });
   },
 );
-
-if (!hasDatabase) {
-  process.stdout.write(
-    "[auth.integration] skipped — set a guarded local TEST_DATABASE_URL\n",
-  );
-}

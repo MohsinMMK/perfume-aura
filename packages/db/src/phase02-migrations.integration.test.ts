@@ -20,9 +20,7 @@ import { requireDisposableTestDatabaseUrl } from "./test-database-guard";
 
 const currentDirectory = dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = resolve(currentDirectory, "../drizzle");
-const configuredAdminUrl = process.env.TEST_DATABASE_URL
-  ? requireDisposableTestDatabaseUrl()
-  : undefined;
+const configuredAdminUrl = requireDisposableTestDatabaseUrl();
 
 const freshDatabaseName = "perfume_aura_phase02_fresh";
 const upgradeDatabaseName = "perfume_aura_phase02_upgrade";
@@ -1259,7 +1257,7 @@ async function seedReconciliationDetectionMatrix(pool: Pool) {
 
 describe(
   "Phase 02 migration set",
-  { skip: !configuredAdminUrl, concurrency: false },
+  { concurrency: false },
   () => {
     let adminPool: Pool;
     let exact0002Folder: string;
@@ -1943,9 +1941,3 @@ describe(
     });
   },
 );
-
-if (!configuredAdminUrl) {
-  process.stdout.write(
-    "[phase02-migrations] skipped — set a guarded local TEST_DATABASE_URL\n",
-  );
-}

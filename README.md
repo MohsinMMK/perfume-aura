@@ -67,10 +67,25 @@ Phase 1 routes: `/login`, `/dashboard`, `/products`, `/products/new`, `/products
 ### Tests
 
 ```bash
-pnpm test                 # unit (qty math, money) + Neon integration (if DATABASE_URL set)
+pnpm check                # marketing + lint + typechecks + unit tests + ops build + production audit
+pnpm test:inventory       # every *.test.ts assigned exactly once
 pnpm test:unit            # no DB required
-pnpm test:integration     # concurrent oversell + TX rollback (needs Neon)
+
+# Integration is fail-closed and accepts only a guarded disposable loopback DB.
+TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_local \
+DATABASE_URL_DIRECT=postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_local \
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_local \
+  pnpm db:migrate
+TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_local \
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_local \
+  pnpm test:integration
 ```
+
+CI supplies PostgreSQL 16 and runs every integration suite with no missing-URL
+skip. Package suites use quoted Node 24 discovery globs; the inventory guard
+rejects unassigned, multiply assigned, or unsupported-root `*.test.ts` files.
+`pnpm test` means the complete unit plus integration contract and therefore also
+requires that guarded database environment.
 
 ## Production (Hostinger)
 
@@ -83,13 +98,16 @@ pnpm test:integration     # concurrent oversell + TX rollback (needs Neon)
 
 ```bash
 pnpm ops:pack
-# → dist/perfume-aura-standalone_YYYYMMDD.zip
+# clean tree → dist/perfume-aura-standalone_<12-character-commit>.zip
+# dirty tree → unique <commit>-dirty-<UTC>-<pid> suffix
 # hPanel Node Web App: Node 24.x · entry apps/ops/server.js · build echo prebuilt-standalone
 # Then Neon migrate + db seed + seed:owner + hPanel env (see docs)
 ```
 
-**Path B:** GitHub Actions packs and retains the ZIP artifact only. Download it
-and use the same manual hPanel Path Z upload; the workflow never deploys.
+**Path B:** GitHub Actions runs package/native/server smoke on pull requests too.
+Only `main` push or `main`-targeted manual runs upload the retained ZIP artifact.
+Download it and use the same manual hPanel Path Z upload; the workflow never
+deploys.
 
 **Path G** (GitHub source build on Node) stays blocked on shared Node (esbuild EACCES) — do not force it.
 
@@ -104,12 +122,15 @@ pnpm start:ops
 pnpm ops:pack          # Path Z Hostinger zip (materialize + smoke)
 pnpm db:generate
 pnpm db:migrate
-pnpm test
+pnpm typecheck
+pnpm test:unit
+pnpm test:integration   # guarded disposable PostgreSQL required
+pnpm security:audit
 
 # Marketing: edit apps/marketing/* then publish root surface for Hostinger Path M
 pnpm marketing:sync
 pnpm marketing:check   # also runs in GitHub Actions CI
-pnpm check             # marketing:check + unit tests
+pnpm check             # marketing + lint + typechecks + unit tests + ops build + production audit
 ```
 
 ## Add a shadcn component (official only — when needed)

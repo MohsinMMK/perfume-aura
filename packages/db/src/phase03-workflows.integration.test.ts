@@ -8,15 +8,11 @@ import { after, before, describe, it } from "node:test";
 import { and, eq, inArray } from "drizzle-orm";
 import { requireDisposableTestDatabaseUrl } from "./test-database-guard";
 
-const testDatabaseUrl = process.env.TEST_DATABASE_URL
-  ? requireDisposableTestDatabaseUrl()
-  : undefined;
-const hasDatabase = Boolean(testDatabaseUrl);
-
-if (testDatabaseUrl) process.env.DATABASE_URL = testDatabaseUrl;
+const testDatabaseUrl = requireDisposableTestDatabaseUrl();
+process.env.DATABASE_URL = testDatabaseUrl;
 process.env.BUSINESS_TIMEZONE = "Asia/Karachi";
 
-describe("Phase 03 transactional workflows", { skip: !hasDatabase }, () => {
+describe("Phase 03 transactional workflows", () => {
   let api: typeof import("./index");
   const productIds = new Set<string>();
   const invoiceIds = new Set<string>();
@@ -1438,9 +1434,3 @@ describe("Phase 03 transactional workflows", { skip: !hasDatabase }, () => {
     assert.equal(snapshot.cogsSnapshotDefectCount, 0);
   });
 });
-
-if (!hasDatabase) {
-  console.log(
-    "[phase03-workflows] skipped — set a guarded local TEST_DATABASE_URL",
-  );
-}

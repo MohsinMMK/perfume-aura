@@ -13,11 +13,14 @@
 From monorepo root:
 
 ```bash
-# Everything (guarded DB integration skips if TEST_DATABASE_URL is absent)
+# Everything (fails closed unless the guarded DB URL is present)
 pnpm test
 
 # Unit only (no DB)
 pnpm test:unit
+
+# Deterministic discovery contract
+pnpm test:inventory
 
 # Integration only (requires a disposable loopback PostgreSQL database)
 TEST_DATABASE_URL='postgresql://...@127.0.0.1:55432/perfume_aura_phase04_root_admin' \
@@ -35,6 +38,12 @@ Integration never loads `apps/ops/.env.local`. The shared guard rejects
 missing, remote/provider, query-parameter, ambiguous, and production-like
 targets; use only a disposable loopback database named
 `perfume_aura_phaseNN_<purpose>`.
+
+Package unit and integration scripts use quoted Node 24 glob patterns. Files
+ending in `.integration.test.ts` belong only to integration; every other
+`*.test.ts` under the supported ops/DB roots belongs only to unit. The
+repository-wide inventory command fails if a test is unmatched, overlaps, or
+appears under an unsupported root.
 
 ---
 
@@ -116,16 +125,15 @@ Production smoke: [OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIST.md).
 
 ---
 
-## CI recommendations (when GitHub Actions added)
+## CI release gate
 
-```yaml
-# sketch only — not committed yet
-- pnpm install
-- pnpm test:unit
-- pnpm --filter @perfume-aura/ops lint
-- pnpm build:ops
-# integration: only against an isolated disposable PostgreSQL service
-```
+`.github/workflows/ops-pack.yml` runs exact Node `24.18.0`, npm `11.16.0`, and
+pnpm `11.1.3` with frozen locks. Quality covers marketing drift, lint, every
+workspace typecheck, inventory-checked unit discovery, both production audits,
+and the optimized ops build. The separate PostgreSQL 16 job applies all forward
+migrations and runs every inventory-checked DB/auth integration suite. Missing
+`TEST_DATABASE_URL` is an error, not a skipped test. The complete packaging and
+runtime smoke job also runs on pull requests; artifact upload remains main-only.
 
 Never run repository integration tests against Neon or any provider database.
 

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import {
   disposableTestDatabaseNamePattern,
@@ -87,5 +88,28 @@ describe("requireDisposableTestDatabaseUrl", () => {
         /production-like target/,
       );
     }
+  });
+
+  it("guards the standalone server smoke before the URL reaches the server", () => {
+    const packer = readFileSync(
+      new URL("../../../scripts/pack-ops-standalone.sh", import.meta.url),
+      "utf8",
+    );
+    const guardCall = packer.indexOf("requireDisposableTestDatabaseUrl()");
+    const serverDatabaseAssignment = packer.indexOf(
+      'DATABASE_URL="$TEST_DATABASE_URL"',
+      guardCall,
+    );
+
+    assert.notEqual(guardCall, -1, "packer must invoke the repository guard");
+    assert.notEqual(
+      serverDatabaseAssignment,
+      -1,
+      "packer must pass the validated URL to the extracted server",
+    );
+    assert.ok(
+      guardCall < serverDatabaseAssignment,
+      "packer must validate TEST_DATABASE_URL before starting the server",
+    );
   });
 });

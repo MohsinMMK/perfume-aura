@@ -23,9 +23,7 @@ import { requireDisposableTestDatabaseUrl } from "./test-database-guard";
 
 const currentDirectory = dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = resolve(currentDirectory, "../drizzle");
-const configuredAdminUrl = process.env.TEST_DATABASE_URL
-  ? requireDisposableTestDatabaseUrl()
-  : undefined;
+const configuredAdminUrl = requireDisposableTestDatabaseUrl();
 
 const freshDatabaseName = "perfume_aura_phase04_fresh";
 const upgradeDatabaseName = "perfume_aura_phase04_upgrade";
@@ -358,7 +356,7 @@ async function createContractFixtures(pool: Pool): Promise<{
 
 describe(
   "Phase 04 auth expansion and Phase 03 contract migrations",
-  { skip: !configuredAdminUrl, concurrency: false },
+  { concurrency: false },
   () => {
     let adminPool: Pool;
     let through0006Folder: string;
@@ -734,9 +732,3 @@ describe(
     });
   },
 );
-
-if (!configuredAdminUrl) {
-  process.stdout.write(
-    "[phase04-migrations] skipped — set a guarded local TEST_DATABASE_URL\n",
-  );
-}

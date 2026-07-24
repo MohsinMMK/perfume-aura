@@ -7,9 +7,9 @@ Official Node guide: https://www.hostinger.com/support/how-to-deploy-a-nodejs-we
 
 | Field | Value |
 |-------|--------|
-| Updated | 2026-07-24 |
+| Updated | 2026-07-25 |
 | Related | [DEPLOY.md](./DEPLOY.md) · [ENV.md](./ENV.md) · [SECURITY.md](./SECURITY.md) |
-| Pack script | Node **24.18.0** + `pnpm ops:pack` → `dist/perfume-aura-standalone_YYYYMMDD.zip` (**materialize** `apps/ops/node_modules` primary; zip `-y` secondary; version/native smoke; no `.env`) |
+| Pack script | Node **24.18.0** + `pnpm ops:pack` → clean short-commit stamp or unique dirty suffix (**materialize** `apps/ops/node_modules` primary; locked Linux Sharp tree; atomic no-overwrite publication; version/native/server/static smoke; no `.env`) |
 
 ## Live account snapshot (updated 2026-07-22 via Hostinger MCP)
 
@@ -105,7 +105,8 @@ Click **Save and redeploy**. If build is green but site still Hostinger HTML: **
 
 ```bash
 pnpm ops:pack
-# → dist/perfume-aura-standalone_YYYYMMDD.zip
+# clean tree → dist/perfume-aura-standalone_<12-character-commit>.zip
+# dirty tree → unique <commit>-dirty-<UTC>-<pid> suffix
 # zip root must contain:
 #   apps/ops/server.js
 #   apps/ops/.next/static/
@@ -160,11 +161,18 @@ DATABASE_URL_DIRECT=          # Neon direct (migrate job only)
 
 ### Path B — CI artifact (packaging only)
 
-GitHub Actions [ops-pack.yml](../.github/workflows/ops-pack.yml) runs `pnpm ops:pack` on ops-related `main` pushes.
+GitHub Actions [ops-pack.yml](../.github/workflows/ops-pack.yml) is the release
+gate for pull requests and `main`. Package/native/server/static smoke runs on
+pull requests, `main`, and manual runs after quality and complete PostgreSQL 16
+integration pass. Upload occurs only for a `main` push or a manual run targeting
+`main`; other branches and pull requests cannot expose a deploy-shaped artifact.
 
 | Step | Detail |
 |------|--------|
-| Artifact | Actions run → **ops-standalone-zip** |
+| Runtime | Exact Node `24.18.0` · npm `11.16.0` · pnpm `11.1.3` |
+| Gates | Frozen installs · test-inventory assignment · marketing · lint · all workspace typechecks · unit · pnpm+narrow-npm high production audits · build · complete PostgreSQL 16 integration |
+| Artifact | **ops-standalone-\<12-character-commit\>** · ZIP + SHA-256 sidecar + manifest · 14-day retention |
+| Package proof | Audited Sharp runtime-lock hash · required/forbidden checks · exact Next `16.2.11` / Sharp `0.35.3` / PostCSS `8.5.22` · Linux Sharp load · extracted server login/readiness/auth/static asset `200` · atomic no-overwrite publication |
 | Provider deploy | **None** — workflow has no credentials or deploy job |
 | Manual | Download artifact → hPanel upload on Node 24.x (same entry/build as Path Z) |
 
@@ -239,11 +247,24 @@ Root `index.html` + `styles.css` are interim marketing mirrors only.
 2. Owner login works  
 3. Dashboard metrics load  
 4. Create product → receive stock → low stock list  
-5. Concurrent oversell remains enforced (already covered by integration test against Neon)
+5. Concurrent oversell remains enforced (covered in CI against disposable
+   PostgreSQL 16; never point repository integration tests at Neon)
 
 ## Rollback
 
-- **Path Z:** keep prior `dist/perfume-aura-standalone_*.zip` · re-upload · same entry `apps/ops/server.js` · redeploy  
+- **Before upload:** retain the current production-known-good ZIP, manifest,
+  checksum, workflow run URL, source commit, and runtime settings in the
+  approved operator backup location. The Actions copy expires after 14 days.
+- **Verify custody:** check the retained checksum before relying on it. A ZIP
+  without matching manifest/checksum is not an approved rollback artifact.
+- **Path Z:** before a contract migration/post-cutover write, re-upload the
+  retained schema-compatible production-known-good ZIP · same entry
+  `apps/ops/server.js` · redeploy.
+- **After contract activation:** follow
+  `DATABASE_MIGRATION_AND_ROLE_RUNBOOK.md`; do not blindly run an older ZIP
+  against a contracted schema and do not use destructive down migrations.
+- **Never restore** a Hostinger API token/script/job as rollback; manual hPanel
+  Path Z remains the only supported provider mutation.
 - Path G (when live): redeploy previous Git commit on the Node Web App  
 - Or disable the Node site temporarily; marketing remains independent  
 

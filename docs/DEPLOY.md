@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| Updated | 2026-07-24 |
+| Updated | 2026-07-25 |
 | Ops checklist | [OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIST.md) |
 | DNS support | [HOSTINGER_SUPPORT_DNS.md](./HOSTINGER_SUPPORT_DNS.md) |
 | Ops pack | `pnpm ops:pack` → Path Z prebuilt zip |
@@ -83,19 +83,59 @@ Full field table + status board: [OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIS
 
 #### Path B — CI artifact (packaging only)
 
-GitHub Actions builds the same Path Z ZIP on every ops-related push to `main`.
-It does not hold provider credentials and cannot deploy to Hostinger.
+GitHub Actions runs release gates and builds/smokes the same Path Z ZIP on pull
+requests, `main`, and manual runs. Only `main` pushes or manual runs explicitly
+targeting `main` upload the deploy-shaped artifact; branch-selectable manual
+runs and pull requests retain no downloadable ZIP. The workflow does not hold
+provider credentials and cannot deploy to Hostinger.
 
-1. Workflow: [`.github/workflows/ops-pack.yml`](../.github/workflows/ops-pack.yml) → `pnpm ops:pack` on `ubuntu-latest`
-2. Artifact: **ops-standalone-zip** (Actions → run → Artifacts), retention 14 days
-3. Download the artifact and manually upload it in the hPanel Node Web App,
+1. Workflow: [`.github/workflows/ops-pack.yml`](../.github/workflows/ops-pack.yml)
+   uses exact Node `24.18.0`, npm `11.16.0`, frozen pnpm `11.1.3`, full-SHA action pins, least
+   permissions, quality/audit/build gates, and complete PostgreSQL 16 integration
+   with no skipped suite.
+2. The package job depends on quality and integration in that same workflow. It
+   extracts and validates the archive, loads Linux x64 glibc Sharp, starts the
+   exact standalone server against disposable PostgreSQL, and requires `200`
+   from `/login`, `/api/health/ready`, `/api/auth/get-session`, and one real
+   `/_next/static/…` asset.
+3. Artifact: **ops-standalone-\<12-character-commit\>**, retained 14 days, with:
+   - the ZIP (maximum `50,000,000` bytes);
+   - `<zip>.sha256`;
+   - `<zip-stem>.manifest.json` recording full source commit, dirty flag,
+     Node/npm/pnpm/Next/Sharp/PostCSS versions, the audited narrow runtime-lock
+     hash, target, required paths, size, and checksum.
+4. Download all three files, verify the checksum and manifest, and manually
+   upload only the ZIP in the hPanel Node Web App,
    using Hostinger Node 24.x, entry `apps/ops/server.js`, and build command
    `echo prebuilt-standalone`
-4. Runtime env, Neon migration, and `seed:owner` remain explicit operator steps
+5. Runtime env, Neon migration, and `seed:owner` remain explicit operator steps
    and are never baked into the ZIP
 
 API, MCP, Connector, and GitHub-source deployment must be separately proven
 before any automated provider mutation is restored to this repository.
+
+##### Path B verification and rollback retention
+
+From the downloaded artifact directory:
+
+```bash
+sha256sum --check perfume-aura-standalone_<commit>.zip.sha256
+# macOS:
+shasum -a 256 -c perfume-aura-standalone_<commit>.zip.sha256
+```
+
+Before any manual Path Z upload, record the workflow run URL, full source commit,
+manifest, checksum, and current production artifact identifier. Copy the
+previous production-known-good ZIP plus its manifest/checksum to the approved
+operator backup location before changing the app. Actions retention is only
+14 days and deleting a workflow run also deletes its artifacts; an Actions
+artifact alone is not durable rollback custody.
+
+If the new archive fails before any contract migration or post-cutover write,
+re-upload the retained production-known-good ZIP with its original runtime
+settings. After the Phase 07 contract migration, use the database-aware
+expand/code/contract rollback rules; do not assume an older ZIP remains schema
+compatible. Never restore the deleted provider API/token job as a rollback.
 
 
 **Forbidden deploy artifacts**

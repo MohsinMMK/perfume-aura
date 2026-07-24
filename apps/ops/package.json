@@ -10,9 +10,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "seed:owner": "tsx scripts/seed-owner.ts",
     "recover:owner": "tsx scripts/recover-owner.ts",
-    "test": "tsx --test lib/**/*.test.ts"
+    "test": "pnpm test:unit && pnpm test:integration",
+    "test:unit": "tsx --test \"lib/**/!(*.integration).test.ts\"",
+    "test:integration": "tsx --test \"lib/**/*.integration.test.ts\""
   },
   "dependencies": {
     "@hugeicons/core-free-icons": "^4.2.2",

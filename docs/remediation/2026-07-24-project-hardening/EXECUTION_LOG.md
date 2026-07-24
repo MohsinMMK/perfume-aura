@@ -208,12 +208,36 @@ For each phase, append:
 
 ## Phase 06 — CI and standalone packaging
 
-Status: pending
-Implementation agent: pending
-Independent reviewer: pending
-CI run URLs: pending
-Artifact name/size/SHA-256/manifest: pending
-Rollback artifact: pending
+| Item | Evidence |
+|---|---|
+| Status | Complete and root-approved locally; real PR/`main` runs remain external follow-up evidence |
+| Started from | Phase 05 commit `c5e775ec7238538ea872c4b9193cf325686daab7` |
+| Local implementation completed | 2026-07-25 02:19 IST |
+| Root approval completed | 2026-07-25 03:16 IST |
+| Root agent | `/root` |
+| Implementation agent | `/root/ui_ci_deploy_research` — Phase 06 CI, workspace test/typecheck contracts, packaging, artifact/runbook, and local disposable verification only |
+| Independent reviewer | `/root/security_auth_research` — initial verdict not approved with four P2 release-integrity findings; final current-tree verdict approved with no P0–P2 finding |
+| Official workflow | GitHub workflow/service-container/SHA-pin/artifact/dependency-review guidance; pnpm CI/filtering; Next standalone/self-hosting; Hostinger Node 24 ZIP upload; Neon `pg` Pool/provider-boundary guidance |
+| Skills used | `vercel-react-best-practices` for the optimized production-build gate and `neon-postgres` for long-running `pg` Pool plus disposable PostgreSQL-only CI |
+| Workflow result | One artifact-only workflow owns PR/`main` gates: exact Node `24.18.0`, npm `11.16.0`, pnpm `11.1.3`, `contents: read`, full-SHA actions, quality, PostgreSQL 16 integration, PR dependency review, and package `needs` quality+integration. Package/native/server/static smoke runs on PR/manual/main; upload alone requires `refs/heads/main` and push or workflow dispatch. |
+| Workspace contracts | DB/UI/validators/ops typechecks; root `check` includes optimized build and both high production audits after unit tests; quoted Node 24 discovery globs plus an exact-once repository inventory; missing/unsafe `TEST_DATABASE_URL` fails rather than skips |
+| Local quality gate | Frozen install, root `check` (marketing, lint, all four typechecks, 95/95 unit tests with zero skip, optimized build, audits), pnpm audit 0 critical/0 high/1 moderate, narrow npm lock audit 0 vulnerabilities, Bash/JSON/YAML parse, and official `actionlint v1.7.9` passed |
+| Local PostgreSQL gate | PostgreSQL `16.14`; all forward migrations; 49/49 integration tests with zero skip across inventory, Phase 02/03/04 migration/workflow, and Better Auth suites |
+| Packaging contract | Exact Node/npm/pnpm/Next `16.2.11`/Sharp `0.35.3`/PostCSS `8.5.22`; committed/audited narrow Sharp npm lock and verified hash; Linux x64 glibc native load; explicit required/forbidden paths; static-asset/server smoke; 50,000,000-byte ceiling; unique candidate workspace and atomic no-overwrite publication |
+| Phase 06 local artifact | Ignored `dist/perfume-aura-standalone_20260725-phase06-local.zip`; 26,267,078 bytes; 3,639 paths; SHA-256 `381d1c1267e6e2906232d118a3009975416aa0076cd67757107da352ea91f2ca`; 117-byte checksum; 1,133-byte manifest; local `dirty: true`, so not promotable |
+| Final packer safety corrections | Every setup-node step reads committed `.nvmrc` and asserts exact `24.18.0`; the shared repository guard validates `TEST_DATABASE_URL` before extracted-server smoke; unsafe remote URLs and `../unsafe` artifact stamps fail closed; normal Git porcelain includes untracked source changes in manifest dirtiness |
+| Linux/native/server proof | Linux/amd64 Node `24.18.0` loaded Next `16.2.11`, Sharp `0.35.3`, libvips `8.18.3`, PostCSS `8.5.22`; extracted server against disposable PostgreSQL returned `200` for `/login`, `/api/health/ready`, and `/api/auth/get-session` |
+| Current-tree correction artifact | Ignored `dist/perfume-aura-standalone_20260725-phase06-duplicate-audit.zip`; 26,270,957 bytes; 3,640 paths; SHA-256 `8e09cb8483b0f1aa80125c6279844d649f9e3c89d8b3b092a8fb51ee7540d659`; 127-byte checksum; 1,428-byte schema-2 manifest; local `dirty: true`, not promotable |
+| Root current-tree artifact | Ignored `dist/perfume-aura-standalone_20260725-phase06-root-final.zip`; 26,271,008 bytes; 3,640 paths; SHA-256 `b16d8b8b960e88c8c03a4c69dcf44cf51a0c529ae4e9ca163e1ede53cbb8f044`; checksum, external schema-2 manifest, embedded runtime lock, forbidden-path scan, and 50,000,000-byte ceiling passed; local `dirty: true`, not promotable |
+| Patched-block duplicate audit | Current source has exactly one build auth-secret assignment, optional-root comment, and verifier `$VERIFY` argument; no adjacent exact duplicate remains. Fresh syntax + unique-stamp pack passed candidate checksum/manifest, PostgreSQL server endpoints, and the Next static asset. |
+| Review correction proof | All 25 test files assigned exactly once (20 unit/5 integration); PostgreSQL 16.14 integration 49/49 zero skip; locked runtime SHA-256 `59ec5b45083851bd3c6015af04ed5e67dc2feef93a0145e4d8ecc66427cbaebb`; macOS and Linux server/static asset `200`; overwrite refusal preserved hash; late failure left no final or temporary output; branch upload condition is main-only |
+| Unsupported automation removal | No active `HOSTINGER_API_TOKEN`, `ops:deploy`, deploy script/job, provider credential, `continue-on-error`, floating action reference, or provider mutation contract remains |
+| Prior local artifact custody | Preserved ignored `dist/perfume-aura-standalone_20260725-phase05-known-good.zip`; 26,465,028 bytes; SHA-256 `ec2f6d8cb74769b80d860be87519faf7c11b43eb7fbb70eed9bcc3552ca49c2f`; local regression rollback only, not production-byte proof |
+| CI run URLs | Pending root push/PR; no GitHub mutation was authorized or performed |
+| Provider changes | None — no GitHub push, Neon, Hostinger, production, staging, DNS, SMTP, secret, upload, or deploy access |
+| Accepted residual risk | GitHub-hosted action/service/artifact behavior and Dependency Review repository eligibility require the first PR/`main` runs; 14-day artifacts require external operator custody; Hostinger behavior remains Phase 07 |
+| Rollback | Revert the Phase 06 workflow/package/test/packer/docs revision together; preserve the last reviewed artifact and runtime metadata; never restore provider API/token automation |
+| Root gate | Approved. Exact Node `24.18.0`/npm `11.16.0`/pnpm `11.1.3`; frozen install; marketing check; lint; all four workspace typechecks; 95/95 unit and 49/49 PostgreSQL integration tests with zero skip; optimized build; zero-high production audits; `actionlint`; Bash syntax; `git diff --check`; checksum/manifest/forbidden-path proof; packaged server and static asset `200`; Linux/amd64 native load of Next `16.2.11`, Sharp `0.35.3`/libvips `8.18.3`, and PostCSS `8.5.22`; disposable containers/listeners removed. |
 
 ## Phase 07 — Production recovery and verification
 

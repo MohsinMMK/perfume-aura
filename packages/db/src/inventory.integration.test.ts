@@ -3,7 +3,7 @@
  * (pg Pool + interactive TX).
  *
  * Requires an explicitly safe TEST_DATABASE_URL. Never loads app or package
- * dotenv files. Skip when unset so CI without local PostgreSQL still runs.
+ * dotenv files. Missing or unsafe targets fail closed.
  */
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -11,16 +11,10 @@ import { describe, it, before, after } from "node:test";
 import { eq } from "drizzle-orm";
 import { requireDisposableTestDatabaseUrl } from "./test-database-guard";
 
-const testDatabaseUrl = process.env.TEST_DATABASE_URL
-  ? requireDisposableTestDatabaseUrl()
-  : undefined;
-const hasDb = Boolean(testDatabaseUrl);
+const testDatabaseUrl = requireDisposableTestDatabaseUrl();
+process.env.DATABASE_URL = testDatabaseUrl;
 
-if (testDatabaseUrl) {
-  process.env.DATABASE_URL = testDatabaseUrl;
-}
-
-describe("applyMovement integration", { skip: !hasDb }, () => {
+describe("applyMovement integration", () => {
   let applyMovement: typeof import("./inventory").applyMovement;
   let InventoryError: typeof import("./inventory").InventoryError;
   let archiveProduct: typeof import("./product-workflows").archiveProduct;
@@ -645,9 +639,3 @@ describe("applyMovement integration", { skip: !hasDb }, () => {
       .where(eq(productVariants.id, variantId));
   });
 });
-
-if (!hasDb) {
-  console.log(
-    "[inventory.integration] skipped — set a guarded local TEST_DATABASE_URL to run",
-  );
-}
