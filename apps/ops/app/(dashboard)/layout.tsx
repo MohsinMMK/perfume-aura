@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/app-shell";
 import { requireOwnerSession } from "@/lib/session";
-import { getDashboardStats } from "@/lib/stock";
+import { getLowStockCount } from "@/lib/stock";
 import { safeDbQuery } from "@/lib/db-safe";
 
 export default async function DashboardLayout({
@@ -10,8 +10,8 @@ export default async function DashboardLayout({
 }) {
   await requireOwnerSession({ redirectToLogin: true });
 
-  const stats = await safeDbQuery(() => getDashboardStats());
-  const lowStockCount = stats.data?.lowStockCount ?? 0;
+  const lowStock = await safeDbQuery(() => getLowStockCount());
+  const lowStockCount = lowStock.data ?? 0;
 
   return <AppShell lowStockCount={lowStockCount}>{children}</AppShell>;
 }

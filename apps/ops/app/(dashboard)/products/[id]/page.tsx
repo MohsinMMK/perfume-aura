@@ -20,8 +20,9 @@ import { getProduct } from "@/lib/products";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatPkr, formatQty } from "@/lib/money";
 import { AddVariantForm } from "@/components/products/add-variant-form";
-import { ArchiveProductButton } from "@/components/products/archive-product-button";
-import { VariantStockDialogs } from "@/components/stock/variant-stock-dialogs";
+import { ProductLifecycleActions } from "@/components/products/product-lifecycle-actions";
+import { ProductEditDialog } from "@/components/products/product-edit-dialog";
+import { VariantActions } from "@/components/products/variant-actions";
 import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -89,12 +90,25 @@ export default async function ProductDetailPage({ params }: Props) {
             </p>
           ) : null}
         </div>
-        {product.status === "active" ? (
-          <ArchiveProductButton
+        <div className="flex flex-wrap items-center gap-2">
+          <ProductEditDialog
+            key={product.updatedAt.toISOString()}
+            product={{
+              id: product.id,
+              name: product.name,
+              brand: product.brand,
+              category: product.category,
+              description: product.description,
+              updatedAt: product.updatedAt.toISOString(),
+            }}
+          />
+          <ProductLifecycleActions
             productId={product.id}
             productName={product.name}
+            status={product.status}
+            expectedUpdatedAt={product.updatedAt.toISOString()}
           />
-        ) : null}
+        </div>
       </div>
 
       <Card className="overflow-hidden py-0">
@@ -160,14 +174,13 @@ export default async function ProductDetailPage({ params }: Props) {
                         {formatPkr(v.retailCents)}
                       </TableCell>
                       <TableCell>
-                        {v.status === "active" ? (
-                          <VariantStockDialogs
-                            variantId={v.id}
-                            label={`${product.name} — ${v.sku} (${v.sizeMl} ml)`}
-                          />
-                        ) : (
-                          "—"
-                        )}
+                        <VariantActions
+                          key={`${v.id}:${v.version}:${v.status}`}
+                          productId={product.id}
+                          productName={product.name}
+                          productStatus={product.status}
+                          variant={v}
+                        />
                       </TableCell>
                     </TableRow>
                   );

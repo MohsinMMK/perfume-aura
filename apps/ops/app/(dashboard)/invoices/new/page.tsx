@@ -7,8 +7,13 @@ import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewInvoicePage() {
+export default async function NewInvoicePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ customerId?: string }>;
+}) {
   await requireOwnerSession({ redirectToLogin: true });
+  const { customerId } = await searchParams;
 
   const result = await safeDbQuery(() => listActiveCustomersForSelect());
 
@@ -33,7 +38,10 @@ export default async function NewInvoicePage() {
           first.
         </p>
       ) : (
-        <CreateInvoiceForm customers={result.data} />
+        <CreateInvoiceForm
+          customers={result.data}
+          initialCustomerId={customerId}
+        />
       )}
     </div>
   );

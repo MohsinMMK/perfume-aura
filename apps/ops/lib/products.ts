@@ -2,6 +2,7 @@
 
 import {
   and,
+  archiveProductVariant,
   archiveProduct,
   count,
   createProductVariant,
@@ -15,14 +16,24 @@ import {
   postgresSqlState,
   products,
   productVariants,
+  reactivateProduct,
+  reactivateProductVariant,
   sql,
+  updateProduct,
+  updateProductVariant,
 } from "@perfume-aura/db";
 import {
   createProductSchema,
   createVariantSchema,
   archiveProductSchema,
+  reactivateProductSchema,
+  updateProductSchema,
+  updateVariantSchema,
+  variantLifecycleSchema,
   type CreateProductInput,
   type CreateVariantInput,
+  type UpdateProductInput,
+  type UpdateVariantInput,
 } from "@perfume-aura/validators";
 import { revalidatePath } from "next/cache";
 import { requireOwnerSession } from "@/lib/session";
@@ -33,6 +44,13 @@ import {
   zodFieldErrors,
 } from "@/lib/action-result";
 import { rupeesToCents } from "@/lib/money";
+import {
+  normalizePageSize,
+  pageOffset,
+  paginatedResult,
+  parsePage,
+  type PaginatedResult,
+} from "@/lib/pagination";
 import { shortId, slugify } from "@/lib/slug";
 
 export type ProductListItem = {
@@ -58,6 +76,7 @@ export type VariantRow = {
   quantityOnHand: number;
   qtyReserved: number;
   reorderLevel: number;
+  version: number;
   status: "active" | "archived";
 };
 
@@ -91,6 +110,8 @@ export type ListProductsFilter = {
   q?: string;
   /** Default: active only. Use "all" to include archived. */
   status?: "active" | "archived" | "all";
+  page?: number;
+  pageSize?: number;
 };
 
 /**
@@ -98,11 +119,13 @@ export type ListProductsFilter = {
  */
 export async function listProducts(
   filter: ListProductsFilter = {},
-): Promise<ProductListItem[]> {
+): Promise<PaginatedResult<ProductListItem>> {
   await requireOwnerSession();
 
   const q = filter.q?.trim() ?? "";
   const status = filter.status ?? "active";
+  const page = parsePage(filter.page);
+  const pageSize = normalizePageSize(filter.pageSize);
 
   const conditions = [];
   if (status !== "all") {
@@ -131,25 +154,33 @@ export async function listProducts(
         ? conditions[0]
         : and(...conditions);
 
-  const rows = await db
-    .select({
-      id: products.id,
-      name: products.name,
-      slug: products.slug,
-      brand: products.brand,
-      category: products.category,
-      status: products.status,
-      createdAt: products.createdAt,
-      variantCount: count(productVariants.id),
-      totalOnHand: sql<number>`coalesce(sum(${productVariants.quantityOnHand}), 0)::int`,
-    })
-    .from(products)
-    .leftJoin(productVariants, eq(productVariants.productId, products.id))
-    .where(whereClause)
-    .groupBy(products.id)
-    .orderBy(desc(products.createdAt));
+  const [rows, totalRows] = await Promise.all([
+    db
+      .select({
+        id: products.id,
+        name: products.name,
+        slug: products.slug,
+        brand: products.brand,
+        category: products.category,
+        status: products.status,
+        createdAt: products.createdAt,
+        variantCount: count(productVariants.id),
+        totalOnHand: sql<number>`coalesce(sum(${productVariants.quantityOnHand}), 0)::int`,
+      })
+      .from(products)
+      .leftJoin(productVariants, eq(productVariants.productId, products.id))
+      .where(whereClause)
+      .groupBy(products.id)
+      .orderBy(desc(products.createdAt), desc(products.id))
+      .limit(pageSize)
+      .offset(pageOffset(page, pageSize)),
+    db
+      .select({ total: count(products.id) })
+      .from(products)
+      .where(whereClause),
+  ]);
 
-  return rows.map((r) => ({
+  const items = rows.map((r) => ({
     id: r.id,
     name: r.name,
     slug: r.slug,
@@ -160,6 +191,12 @@ export async function listProducts(
     variantCount: Number(r.variantCount),
     totalOnHand: Number(r.totalOnHand),
   }));
+  return paginatedResult(
+    items,
+    Number(totalRows[0]?.total ?? 0),
+    page,
+    pageSize,
+  );
 }
 
 export async function getProduct(id: string): Promise<ProductDetail | null> {
@@ -185,11 +222,12 @@ export async function getProduct(id: string): Promise<ProductDetail | null> {
       quantityOnHand: productVariants.quantityOnHand,
       qtyReserved: productVariants.qtyReserved,
       reorderLevel: productVariants.reorderLevel,
+      version: productVariants.version,
       status: productVariants.status,
     })
     .from(productVariants)
     .where(eq(productVariants.productId, id))
-    .orderBy(productVariants.sizeMl);
+    .orderBy(productVariants.sizeMl, productVariants.id);
 
   return {
     id: product.id,
@@ -329,12 +367,11 @@ export async function archiveProductAction(
   }
 
   try {
-    await archiveProduct(parsed.data.productId);
+    await archiveProduct(parsed.data.productId, {
+      expectedUpdatedAt: new Date(parsed.data.expectedUpdatedAt),
+    });
 
-    revalidatePath("/products");
-    revalidatePath(`/products/${parsed.data.productId}`);
-    revalidatePath("/dashboard");
-    revalidatePath("/stock/low");
+    revalidateProductPaths(parsed.data.productId);
 
     return actionOk();
   } catch (err) {
@@ -342,6 +379,160 @@ export async function archiveProductAction(
     if (err instanceof DomainError) return actionError(err.message);
     return actionError(dbErrorMessage(err));
   }
+}
+
+export async function updateProductAction(
+  raw: unknown,
+): Promise<ActionResult<{ updatedAt: string }>> {
+  try {
+    await requireOwnerSession();
+  } catch {
+    return actionError("You must be signed in");
+  }
+
+  const parsed = updateProductSchema.safeParse(raw);
+  if (!parsed.success) {
+    return actionError("Please fix the form errors", zodFieldErrors(parsed.error));
+  }
+  const data: UpdateProductInput = parsed.data;
+
+  try {
+    const result = await updateProduct({
+      productId: data.productId,
+      expectedUpdatedAt: new Date(data.expectedUpdatedAt),
+      name: data.name,
+      brand: emptyToNull(data.brand),
+      category: emptyToNull(data.category),
+      description: emptyToNull(data.description),
+    });
+    revalidateProductPaths(data.productId);
+    return actionOk({ updatedAt: result.updatedAt.toISOString() });
+  } catch (error) {
+    return productActionFailure(error, "Could not update product");
+  }
+}
+
+export async function reactivateProductAction(
+  raw: unknown,
+): Promise<ActionResult<{ updatedAt: string }>> {
+  try {
+    await requireOwnerSession();
+  } catch {
+    return actionError("You must be signed in");
+  }
+
+  const parsed = reactivateProductSchema.safeParse(raw);
+  if (!parsed.success) return actionError("Invalid product");
+
+  try {
+    const result = await reactivateProduct({
+      productId: parsed.data.productId,
+      expectedUpdatedAt: new Date(parsed.data.expectedUpdatedAt),
+    });
+    revalidateProductPaths(parsed.data.productId);
+    return actionOk({ updatedAt: result.updatedAt.toISOString() });
+  } catch (error) {
+    return productActionFailure(error, "Could not reactivate product");
+  }
+}
+
+export async function updateVariantAction(
+  raw: unknown,
+): Promise<ActionResult<{ version: number }>> {
+  try {
+    await requireOwnerSession();
+  } catch {
+    return actionError("You must be signed in");
+  }
+
+  const parsed = updateVariantSchema.safeParse(raw);
+  if (!parsed.success) {
+    return actionError("Please fix the form errors", zodFieldErrors(parsed.error));
+  }
+  const data: UpdateVariantInput = parsed.data;
+
+  try {
+    const result = await updateProductVariant({
+      productId: data.productId,
+      variantId: data.variantId,
+      expectedVersion: data.expectedVersion,
+      sku: data.sku.trim(),
+      barcode: emptyToNull(data.barcode),
+      sizeMl: data.sizeMl,
+      costCents: rupeesToCents(data.cost),
+      retailCents: rupeesToCents(data.retail),
+      reorderLevel: data.reorderLevel,
+    });
+    revalidateProductPaths(data.productId);
+    return actionOk({ version: result.version });
+  } catch (error) {
+    if (error instanceof DomainError && error.code === "SKU_CONFLICT") {
+      return actionError(error.message, {
+        sku: ["This SKU is already in use"],
+      });
+    }
+    return productActionFailure(error, "Could not update variant");
+  }
+}
+
+export async function archiveVariantAction(
+  raw: unknown,
+): Promise<ActionResult<{ version: number }>> {
+  return setVariantStatusAction(raw, "archived");
+}
+
+export async function reactivateVariantAction(
+  raw: unknown,
+): Promise<ActionResult<{ version: number }>> {
+  return setVariantStatusAction(raw, "active");
+}
+
+async function setVariantStatusAction(
+  raw: unknown,
+  status: "active" | "archived",
+): Promise<ActionResult<{ version: number }>> {
+  try {
+    await requireOwnerSession();
+  } catch {
+    return actionError("You must be signed in");
+  }
+
+  const parsed = variantLifecycleSchema.safeParse(raw);
+  if (!parsed.success) return actionError("Invalid variant");
+
+  try {
+    const operation =
+      status === "active" ? reactivateProductVariant : archiveProductVariant;
+    const result = await operation(parsed.data);
+    revalidateProductPaths(parsed.data.productId);
+    return actionOk({ version: result.version });
+  } catch (error) {
+    return productActionFailure(
+      error,
+      status === "active"
+        ? "Could not reactivate variant"
+        : "Could not archive variant",
+    );
+  }
+}
+
+function revalidateProductPaths(productId: string): void {
+  revalidatePath("/products");
+  revalidatePath(`/products/${productId}`);
+  revalidatePath("/stock");
+  revalidatePath("/stock/low");
+  revalidatePath("/dashboard");
+  revalidatePath("/finance");
+  revalidatePath("/invoices");
+}
+
+function productActionFailure(
+  error: unknown,
+  fallback: string,
+): ActionResult<never> {
+  if (error instanceof DomainError) return actionError(error.message);
+  console.error(`[product-action] ${fallback}`, error);
+  return actionError(dbErrorMessage(error));
 }
 
 /** Active variants for stock forms (label + id). */
@@ -375,7 +566,7 @@ export async function listActiveVariantsForSelect(): Promise<
         eq(products.status, "active"),
       ),
     )
-    .orderBy(products.name, productVariants.sizeMl);
+    .orderBy(products.name, productVariants.sizeMl, productVariants.id);
 
   return rows.map((r) => ({
     id: r.id,

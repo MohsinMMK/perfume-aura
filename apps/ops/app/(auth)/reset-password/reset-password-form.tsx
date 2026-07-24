@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
-import { Button } from "@perfume-aura/ui/components/button";
+import {
+  Button,
+  buttonVariants,
+} from "@perfume-aura/ui/components/button";
 import {
   Field,
   FieldDescription,
@@ -19,6 +22,7 @@ import {
   AUTH_PASSWORD_MAX_LENGTH,
   AUTH_PASSWORD_MIN_LENGTH,
 } from "@/lib/auth-policy";
+import { cn } from "@perfume-aura/ui/lib/utils";
 
 function ResetPasswordFormInner() {
   const router = useRouter();
@@ -81,11 +85,13 @@ function ResetPasswordFormInner() {
 
   if (success) {
     return (
-      <div className="space-y-5 text-center">
+      <div className="flex flex-col gap-5 text-center">
         <p className="text-sm text-muted-foreground" role="status">
           Your password has been reset. Existing sessions were revoked.
         </p>
-        <Button render={<Link href="/login" />}>Sign in</Button>
+        <Link href="/login" className={buttonVariants()}>
+          Sign in
+        </Link>
       </div>
     );
   }
@@ -136,19 +142,18 @@ function ResetPasswordFormInner() {
           type="submit"
           className="w-full"
           disabled={pending || !token || Boolean(callbackError)}
+          focusableWhenDisabled={pending}
         >
           {pending ? <Spinner data-icon="inline-start" /> : null}
           {pending ? "Resetting…" : "Reset password"}
         </Button>
 
-        <Button
-          render={<Link href="/login" />}
-          type="button"
-          variant="ghost"
-          className="w-full"
+        <Link
+          href="/login"
+          className={cn(buttonVariants({ variant: "ghost" }), "w-full")}
         >
           Back to sign in
-        </Button>
+        </Link>
       </FieldGroup>
     </form>
   );

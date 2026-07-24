@@ -23,7 +23,9 @@ Phases 01–04 interfaces stable. Use the migrated validators/actions rather tha
 - Invoice forms use raw labels/select composition instead of the installed `Field` and `NativeSelect`.
 - Browser `confirm()`/`alert()` are used for destructive or result feedback.
 - Some pending spinners lack `data-icon`.
-- Multiple button-like links use `buttonVariants()` rather than Base UI's `Button render`.
+- Multiple button-like links were incorrectly composed through Base Button.
+  Current shadcn Base Button guidance requires a real link styled with
+  `buttonVariants()` because Base Button otherwise forces button semantics.
 - The print page uses forbidden `space-y-*`.
 - Dashboard layout validates the session and then loads the entire dashboard stats query for every protected route; downstream data functions validate the same session again.
 - Lists are unbounded; growing products/customers/invoices/payments/movements will increase render and query cost.
@@ -34,14 +36,25 @@ Phases 01–04 interfaces stable. Use the migrated validators/actions rather tha
 2. Refactor invoice/customer forms to `FieldGroup` → `Field` → `FieldLabel`/control/`FieldError`, with `data-invalid` and `aria-invalid`.
 3. Replace destructive confirms with Base UI `AlertDialog`; use its `render` API, not Radix `asChild`. Disable the action while pending and restore focus after close.
 4. Replace result alerts with the existing Sonner toaster. Use `Alert` for persistent form-level errors.
-5. Add `data-icon="inline-start"` to pending spinners and use `Button render={<Link ... />}` with `nativeButton={false}` for button links.
+5. Add `data-icon="inline-start"` to pending spinners. Keep a focused pending
+   Base Button in the tab order with `focusableWhenDisabled`. Render button-like
+   navigation as a real `Link` styled with `buttonVariants()`; reserve Base
+   `render` composition for Dialog/AlertDialog triggers and other non-link
+   primitives.
 6. Replace `space-y-*` with flex/grid gaps. Preserve a documented print-only neutral palette; use semantic tokens elsewhere.
 7. Implement product and variant edit plus variant archive/restore using authenticated server actions and shared validators. Never hard-delete.
 8. Archive a product and its active variants atomically even when stock remains, without changing balances. Keep archived stock visible in detail/history and the ledger, exclude it from new transaction selectors, and require explicit per-variant reactivation after the product is reactivated.
-9. Add status filters that make archived records discoverable without mixing them into default active lists.
-10. Add bounded server pagination with URL search params and stable database ordering for products, customers, invoices, payments, and movements. Preserve filtering terms across pages.
-11. Wrap per-request session lookup in React `cache()` and reuse it. Replace the layout's full dashboard-stat fetch with a purpose-specific low-stock count or defer it behind a small server component/Suspense boundary.
-12. Keep independent reads parallel with `Promise.all`; do not serialize them accidentally. Keep Server Components by default and minimize client props/bundles.
+9. Enforce archived state in domain transactions, not only selectors. Manual
+   receive/adjust locks product then variant and requires both active; exact
+   idempotent retries remain replayable. Draft line selection locks invoice,
+   product, then variant. An already-issued invoice may still fulfill against
+   an archived SKU as the documented in-flight exception.
+10. Add status filters that make archived records discoverable without mixing them into default active lists.
+11. Add bounded server pagination with URL search params and stable database ordering for products, customers, invoices, payments, and movements. Preserve filtering terms across pages. Invoice detail uses a dedicated `paymentsPage` parameter, total metadata, and canonical redirect rather than truncating payment history.
+12. Wrap per-request session lookup in React `cache()` and reuse it. Replace the layout's full dashboard-stat fetch with a purpose-specific low-stock count or defer it behind a small server component/Suspense boundary.
+13. Keep independent reads parallel with `Promise.all`; do not serialize them accidentally. Keep Server Components by default and minimize client props/bundles.
+14. Give simultaneously mounted controls distinct DOM IDs while preserving
+   their submitted field names; verify labels resolve to exactly one control.
 
 ## Affected subsystems
 
@@ -55,6 +68,8 @@ Product/customer/invoice components and actions, shared UI package, route pages/
 - Field: https://ui.shadcn.com/docs/components/base/field
 - Alert: https://ui.shadcn.com/docs/components/base/alert
 - Spinner: https://ui.shadcn.com/docs/components/base/spinner
+- Button as link: https://ui.shadcn.com/docs/components/base/button#as-link
+- Base UI Button usage: https://base-ui.com/react/components/button#usage-guidelines
 - Next.js server/client components: https://nextjs.org/docs/app/getting-started/server-and-client-components
 - Next.js data fetching: https://nextjs.org/docs/app/getting-started/fetching-data
 - React `cache`: https://react.dev/reference/react/cache
@@ -78,7 +93,11 @@ pnpm test:unit
 pnpm build:ops
 ```
 
-Browser tests cover keyboard-only dialog use, focus return, invalid fields, pending double-submit prevention, archived-stock visibility and selector exclusion, product/variant edit/archive/restore, pagination/filter URLs, responsive widths, print view, login redirect, and no console/hydration errors.
+Browser tests cover keyboard-only dialog use, focus return, invalid fields,
+pending double-submit prevention, archived-stock visibility and selector
+exclusion, product/variant edit/archive/restore, global and invoice-scoped
+pagination/filter URLs, responsive widths, print view, login redirect,
+duplicate IDs/label targets, and no console/hydration errors.
 
 ## Rollback
 

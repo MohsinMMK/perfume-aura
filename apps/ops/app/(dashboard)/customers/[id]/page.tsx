@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@perfume-aura/ui/components/badge";
 import { buttonVariants } from "@perfume-aura/ui/components/button";
-import { cn } from "@perfume-aura/ui/lib/utils";
 import { getCustomer } from "@/lib/customers";
 import { safeDbQuery } from "@/lib/db-safe";
 import { CustomerForm } from "@/components/customers/customer-form";
@@ -50,7 +49,7 @@ export default async function CustomerDetailPage({
         <div className="flex flex-wrap gap-2">
           <Link
             href={`/invoices/new?customerId=${c.id}`}
-            className={cn(buttonVariants())}
+            className={buttonVariants()}
           >
             New invoice
           </Link>

@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| Updated | 2026-07-24 |
+| Updated | 2026-07-25 |
 | Runner | Node.js built-in `node:test` via `tsx --test` |
 | TRD ref | §9 |
 
@@ -64,6 +64,9 @@ targets; use only a disposable loopback database named
 | Concurrent sell last unit | Exactly one success; on_hand = 0; one sale row |
 | Failed outbound | No orphan movement; qty unchanged (TX rollback) |
 | Idempotency key | Second call returns same movement; no double receive |
+| Archived manual mutation | Receive/adjust reject archived product or variant without a ledger row |
+| Archived retry | Exact receive/adjust replay remains idempotent after archive; conflicting key reuse fails |
+| Archive race | Concurrent receive/adjust versus product archive has only serially valid outcomes |
 
 Test-owner cleanup uses transaction-local trigger bypass only after assertions;
 runtime append-only behavior is independently proven as SQLSTATE `55000`.
@@ -77,6 +80,9 @@ runtime append-only behavior is independently proven as SQLSTATE `55000`.
 | `apps/ops/lib/mail.test.ts` | Hostinger TLS/STARTTLS mapping, escaped mail, origin validation, redacted failure |
 | `apps/ops/lib/auth-source-contract.test.ts` | protected-page owner checks, static login, reset success and unavailable-session ordering |
 | `packages/db/src/phase04-migrations.integration.test.ts` | fresh and exact-`0006` bounded paths, pre/post journal count/hash verification, exact `0007` stop boundary, already-`0008` refusal without success output, final `0008` checks/nullability/trigger |
+| `packages/db/src/phase03-workflows.integration.test.ts` | product/variant edits preserve balances, version/timestamp stale-write rejection, atomic archive, product-only reactivation, explicit per-variant restore, add-line/archive serialization, and the explicit archived-SKU fulfillment exception |
+| `apps/ops/lib/pagination.test.ts` | positive-page parsing, bounded page size, stable offsets/totals, custom page parameters, and preserved query state |
+| `apps/ops/lib/phase05-ui-contract.test.ts` | no native confirm/alert, Radix `asChild`, Base Button-rendered links, `space-y-*`, or pending spinners without `data-icon`; pending Base Buttons preserve focus; all growing lists stay bounded and stable; invoice payment history is paginated; simultaneous stock labels have unique targets; layout uses cached session plus low-stock-only query |
 
 ---
 
@@ -85,12 +91,16 @@ runtime append-only behavior is independently proven as SQLSTATE `55000`.
 1. Local disposable DB: `pnpm db:migrate` · DB seed · `seed:owner`.
    Production uses the staged `0007`/deploy/reconcile/`0008` runbook.
 2. `pnpm dev:ops` → login  
-3. New product + variant  
+3. New product + variant; edit both
 4. Receive stock → on-hand up  
 5. Adjust −1 with note → movement log  
 6. Set reorder above on-hand → appears on `/stock/low`  
 7. Dashboard numbers update  
-8. Product search `?q=` finds by name/SKU  
+8. Product search/status filter preserves terms across paginated URLs
+9. Archive product → balances/history stay visible → reactivate product →
+   explicitly reactivate the reviewed variant
+10. Keyboard-open and cancel/confirm each consequential Alert Dialog; verify
+    focus returns to its trigger and errors stay announced
 
 Production smoke: [OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIST.md).
 
@@ -100,7 +110,7 @@ Production smoke: [OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIST.md).
 
 | Test | When |
 |------|------|
-| E2E login → product → receive → low stock | Later (Playwright optional) |
+| Full browser lifecycle regression suite | Phase 05 uses Playwright CLI against a disposable local PostgreSQL app; keep production/provider browser proof for Phase 07 |
 | Real browser owner/non-owner routes | Phase 07 against isolated deployed state |
 | Hostinger mailbox receipt/reset link | Phase 07 root-only provider verification |
 

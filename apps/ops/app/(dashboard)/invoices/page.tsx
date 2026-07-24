@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -13,16 +14,22 @@ import {
   TableHeader,
   TableRow,
 } from "@perfume-aura/ui/components/table";
-import { cn } from "@perfume-aura/ui/lib/utils";
 import { listInvoices } from "@/lib/invoices";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatPkr } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { requireOwnerSession } from "@/lib/session";
+import {
+  canonicalPage,
+  paginationHref,
+  parsePage,
+} from "@/lib/pagination";
+import { PaginationNav } from "@/components/pagination-nav";
+import { cn } from "@perfume-aura/ui/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-type SearchParams = Promise<{ status?: string }>;
+type SearchParams = Promise<{ status?: string; page?: string }>;
 
 function parseStatus(
   raw: string | undefined,
@@ -61,7 +68,22 @@ export default async function InvoicesPage({
   await requireOwnerSession({ redirectToLogin: true });
   const sp = await searchParams;
   const status = parseStatus(sp.status);
-  const result = await safeDbQuery(() => listInvoices({ status }));
+  const page = parsePage(sp.page);
+  const result = await safeDbQuery(() => listInvoices({ status, page }));
+  if (result.data) {
+    const canonical = canonicalPage(
+      result.data.page,
+      result.data.totalPages,
+      result.data.total,
+    );
+    if (canonical) {
+      redirect(
+        paginationHref("/invoices", canonical, {
+          status: status === "all" ? undefined : status,
+        }),
+      );
+    }
+  }
 
   const filters = [
     { key: "all", label: "All" },
@@ -94,20 +116,20 @@ export default async function InvoicesPage({
         {filters.map((f) => (
           <Link
             key={f.key}
-            href={f.key === "all" ? "/invoices" : `/invoices?status=${f.key}`}
-            className={cn(
-              buttonVariants({
-                variant: status === f.key ? "default" : "outline",
-                size: "sm",
-              }),
-            )}
+            href={
+              f.key === "all" ? "/invoices" : `/invoices?status=${f.key}`
+            }
+            className={buttonVariants({
+              variant: status === f.key ? "default" : "outline",
+              size: "sm",
+            })}
           >
             {f.label}
           </Link>
         ))}
         <Link
           href="/invoices/ar"
-          className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}
+          className={buttonVariants({ variant: "secondary", size: "sm" })}
         >
           AR list
         </Link>
@@ -115,7 +137,7 @@ export default async function InvoicesPage({
 
       {result.error || !result.data ? (
         <DbUnavailableState message={result.error ?? "No data"} />
-      ) : result.data.length === 0 ? (
+      ) : result.data.items.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             No invoices.{" "}
@@ -138,7 +160,7 @@ export default async function InvoicesPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {result.data.map((inv) => (
+                {result.data.items.map((inv) => (
                   <TableRow key={inv.id}>
                     <TableCell>
                       <Link
@@ -167,6 +189,13 @@ export default async function InvoicesPage({
               </TableBody>
             </Table>
           </CardContent>
+          <PaginationNav
+            pathname="/invoices"
+            page={result.data.page}
+            totalPages={result.data.totalPages}
+            total={result.data.total}
+            search={{ status: status === "all" ? undefined : status }}
+          />
         </Card>
       )}
     </div>

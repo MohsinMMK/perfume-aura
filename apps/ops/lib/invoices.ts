@@ -2,6 +2,7 @@
 
 import {
   addInvoiceLine,
+  count,
   createInvoiceDraft,
   customers,
   db,
@@ -36,6 +37,13 @@ import {
   type ActionResult,
   zodFieldErrors,
 } from "@/lib/action-result";
+import {
+  normalizePageSize,
+  pageOffset,
+  paginatedResult,
+  parsePage,
+  type PaginatedResult,
+} from "@/lib/pagination";
 
 export type InvoiceListItem = {
   id: string;
@@ -102,9 +110,13 @@ function expectedDomainFailure(error: unknown, fallback: string) {
 
 export async function listInvoices(opts?: {
   status?: "draft" | "issued" | "paid" | "void" | "all" | "ar";
-}): Promise<InvoiceListItem[]> {
+  page?: number;
+  pageSize?: number;
+}): Promise<PaginatedResult<InvoiceListItem>> {
   await requireOwnerSession();
   const status = opts?.status ?? "all";
+  const page = parsePage(opts?.page);
+  const pageSize = normalizePageSize(opts?.pageSize);
   const where =
     status === "ar"
       ? eq(invoices.status, "issued")
@@ -112,30 +124,41 @@ export async function listInvoices(opts?: {
         ? undefined
         : eq(invoices.status, status);
 
-  const rows = await db
-    .select({
-      id: invoices.id,
-      number: invoices.number,
-      status: invoices.status,
-      customerId: invoices.customerId,
-      customerName: customers.name,
-      totalCents: invoices.totalCents,
-      amountPaidCents: invoices.amountPaidCents,
-      issueDate: invoices.issueDate,
-      createdAt: invoices.createdAt,
-    })
-    .from(invoices)
-    .innerJoin(customers, eq(customers.id, invoices.customerId))
-    .where(where)
-    .orderBy(desc(invoices.createdAt));
+  const [rows, totalRows] = await Promise.all([
+    db
+      .select({
+        id: invoices.id,
+        number: invoices.number,
+        status: invoices.status,
+        customerId: invoices.customerId,
+        customerName: customers.name,
+        totalCents: invoices.totalCents,
+        amountPaidCents: invoices.amountPaidCents,
+        issueDate: invoices.issueDate,
+        createdAt: invoices.createdAt,
+      })
+      .from(invoices)
+      .innerJoin(customers, eq(customers.id, invoices.customerId))
+      .where(where)
+      .orderBy(desc(invoices.createdAt), desc(invoices.id))
+      .limit(pageSize)
+      .offset(pageOffset(page, pageSize)),
+    db.select({ total: count(invoices.id) }).from(invoices).where(where),
+  ]);
 
-  return rows.map((row) => ({
+  const items = rows.map((row) => ({
     ...row,
     balanceCents: invoiceBalanceCents(
       row.totalCents,
       row.amountPaidCents,
     ),
   }));
+  return paginatedResult(
+    items,
+    Number(totalRows[0]?.total ?? 0),
+    page,
+    pageSize,
+  );
 }
 
 export async function getOpenArTotalCents(): Promise<number> {

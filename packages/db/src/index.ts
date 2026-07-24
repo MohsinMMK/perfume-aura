@@ -45,8 +45,17 @@ export { allocateDocumentNumberInTransaction } from "./document-numbers";
 export {
   createProductWithInitialVariant,
   createProductVariant,
+  updateProduct,
+  updateProductVariant,
   archiveProduct,
+  reactivateProduct,
+  archiveProductVariant,
+  reactivateProductVariant,
   type CreateProductWithInitialVariantInput,
+  type UpdateProductInput,
+  type UpdateProductVariantInput,
+  type ProductLifecycleInput,
+  type VariantLifecycleInput,
 } from "./product-workflows";
 
 export {

@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@perfume-aura/ui/components/card";
-import { FieldGroup } from "@perfume-aura/ui/components/field";
+import { FieldError, FieldGroup } from "@perfume-aura/ui/components/field";
 import { Spinner } from "@perfume-aura/ui/components/spinner";
 import {
   createCustomerAction,
@@ -138,15 +138,15 @@ export function CustomerForm({ mode, customerId, defaults }: Props) {
               className="sm:col-span-2"
             />
           </FieldGroup>
-          {error ? (
-            <p className="mt-4 text-sm text-destructive" role="alert">
-              {error}
-            </p>
-          ) : null}
+          {error ? <FieldError className="mt-4">{error}</FieldError> : null}
         </CardContent>
         <CardFooter className="gap-2">
-          <Button type="submit" disabled={pending}>
-            {pending ? <Spinner /> : null}
+          <Button
+            type="submit"
+            disabled={pending}
+            focusableWhenDisabled={pending}
+          >
+            {pending ? <Spinner data-icon="inline-start" /> : null}
             {mode === "create" ? "Create" : "Save"}
           </Button>
         </CardFooter>

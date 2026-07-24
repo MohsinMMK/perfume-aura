@@ -8,7 +8,6 @@ import {
 } from "@perfume-aura/ui/components/card";
 import { Badge } from "@perfume-aura/ui/components/badge";
 import { buttonVariants } from "@perfume-aura/ui/components/button";
-import { cn } from "@perfume-aura/ui/lib/utils";
 import { getDashboardStats } from "@/lib/stock";
 import { getOpenArTotalCents } from "@/lib/invoices";
 import { getCashCollectedThisMonthCents } from "@/lib/payments";
@@ -131,36 +130,36 @@ export default async function DashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          <Link href="/products/new" className={cn(buttonVariants())}>
+          <Link href="/products/new" className={buttonVariants()}>
             New product
           </Link>
           <Link
             href="/stock"
-            className={cn(buttonVariants({ variant: "outline" }))}
+            className={buttonVariants({ variant: "outline" })}
           >
             Receive stock
           </Link>
           <Link
             href="/customers/new"
-            className={cn(buttonVariants({ variant: "outline" }))}
+            className={buttonVariants({ variant: "outline" })}
           >
             New customer
           </Link>
           <Link
             href="/invoices/new"
-            className={cn(buttonVariants({ variant: "secondary" }))}
+            className={buttonVariants({ variant: "secondary" })}
           >
             New invoice
           </Link>
           <Link
             href="/payments"
-            className={cn(buttonVariants({ variant: "outline" }))}
+            className={buttonVariants({ variant: "outline" })}
           >
             Payments
           </Link>
           <Link
             href="/stock/low"
-            className={cn(buttonVariants({ variant: "secondary" }))}
+            className={buttonVariants({ variant: "secondary" })}
           >
             Low stock
           </Link>

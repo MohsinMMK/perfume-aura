@@ -124,7 +124,12 @@ function LoginFormInner() {
           </Link>
         </div>
 
-        <Button type="submit" className="w-full" disabled={pending}>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={pending}
+          focusableWhenDisabled={pending}
+        >
           {pending ? <Spinner data-icon="inline-start" /> : null}
           {pending ? "Signing in…" : "Sign in"}
         </Button>

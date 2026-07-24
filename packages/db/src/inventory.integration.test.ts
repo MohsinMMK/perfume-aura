@@ -23,6 +23,7 @@ if (testDatabaseUrl) {
 describe("applyMovement integration", { skip: !hasDb }, () => {
   let applyMovement: typeof import("./inventory").applyMovement;
   let InventoryError: typeof import("./inventory").InventoryError;
+  let archiveProduct: typeof import("./product-workflows").archiveProduct;
   let db: typeof import("./client").db;
   let pool: typeof import("./client").pool;
   let products: typeof import("./schema/index").products;
@@ -36,6 +37,7 @@ describe("applyMovement integration", { skip: !hasDb }, () => {
 
   before(async () => {
     ({ applyMovement, InventoryError } = await import("./inventory"));
+    ({ archiveProduct } = await import("./product-workflows"));
     ({ db, pool } = await import("./client"));
     ({ products, productVariants, stockMovements } = await import(
       "./schema/index"
@@ -331,6 +333,316 @@ describe("applyMovement integration", { skip: !hasDb }, () => {
     assert.equal(movementsForKey.length, 1);
     assert.equal(movementsForKey[0]?.note, input.note);
     assert.equal(movementsForKey[0]?.createdBy, input.userId);
+  });
+
+  it("replays exact receive and adjust retries after archive while rejecting conflicting reuse", async () => {
+    await db
+      .update(products)
+      .set({ status: "active" })
+      .where(eq(products.id, productId));
+    await db
+      .update(productVariants)
+      .set({
+        status: "active",
+        quantityOnHand: 5,
+        qtyReserved: 0,
+      })
+      .where(eq(productVariants.id, variantId));
+
+    const receiveInput = {
+      variantId,
+      type: "receive" as const,
+      quantity: 2,
+      note: "Archive-safe receive replay",
+      idempotencyKey: randomUUID(),
+    };
+    const received = await applyMovement(receiveInput);
+    await archiveProduct(productId);
+    const receiveReplay = await applyMovement(receiveInput);
+    assert.equal(receiveReplay.idempotent, true);
+    assert.equal(receiveReplay.movementId, received.movementId);
+    assert.equal(receiveReplay.quantityAfter, received.quantityAfter);
+    await assert.rejects(
+      () => applyMovement({ ...receiveInput, quantity: 3 }),
+      (error: unknown) =>
+        error instanceof InventoryError &&
+        error.code === "IDEMPOTENCY_CONFLICT",
+    );
+
+    await db
+      .update(products)
+      .set({ status: "active" })
+      .where(eq(products.id, productId));
+    await db
+      .update(productVariants)
+      .set({
+        status: "active",
+        quantityOnHand: 8,
+        qtyReserved: 0,
+      })
+      .where(eq(productVariants.id, variantId));
+
+    const adjustInput = {
+      variantId,
+      type: "adjust" as const,
+      quantityDelta: -2,
+      note: "Archive-safe adjustment replay",
+      idempotencyKey: randomUUID(),
+    };
+    const adjusted = await applyMovement(adjustInput);
+    await archiveProduct(productId);
+    const adjustReplay = await applyMovement(adjustInput);
+    assert.equal(adjustReplay.idempotent, true);
+    assert.equal(adjustReplay.movementId, adjusted.movementId);
+    assert.equal(adjustReplay.quantityAfter, adjusted.quantityAfter);
+    await assert.rejects(
+      () =>
+        applyMovement({
+          ...adjustInput,
+          note: "Conflicting archived adjustment retry",
+        }),
+      (error: unknown) =>
+        error instanceof InventoryError &&
+        error.code === "IDEMPOTENCY_CONFLICT",
+    );
+
+    const replayRows = await db
+      .select()
+      .from(stockMovements)
+      .where(
+        eq(stockMovements.idempotencyKey, receiveInput.idempotencyKey),
+      );
+    const adjustReplayRows = await db
+      .select()
+      .from(stockMovements)
+      .where(
+        eq(stockMovements.idempotencyKey, adjustInput.idempotencyKey),
+      );
+    assert.equal(replayRows.length, 1);
+    assert.equal(adjustReplayRows.length, 1);
+
+    await db
+      .update(products)
+      .set({ status: "active" })
+      .where(eq(products.id, productId));
+    await db
+      .update(productVariants)
+      .set({ status: "active" })
+      .where(eq(productVariants.id, variantId));
+  });
+
+  it("serializes manual stock mutation against product archive", async () => {
+    for (let run = 0; run < 10; run += 1) {
+      await db
+        .update(products)
+        .set({ status: "active" })
+        .where(eq(products.id, productId));
+      await db
+        .update(productVariants)
+        .set({
+          status: "active",
+          quantityOnHand: 10,
+          qtyReserved: 0,
+        })
+        .where(eq(productVariants.id, variantId));
+
+      const beforeRows = await db
+        .select({ id: stockMovements.id })
+        .from(stockMovements)
+        .where(eq(stockMovements.variantId, variantId));
+      const movementInput =
+        run % 2 === 0
+          ? {
+              variantId,
+              type: "receive" as const,
+              quantity: 1,
+              note: `Archive race receive ${run}`,
+              idempotencyKey: randomUUID(),
+            }
+          : {
+              variantId,
+              type: "adjust" as const,
+              quantityDelta: 1,
+              note: `Archive race adjustment ${run}`,
+              idempotencyKey: randomUUID(),
+            };
+
+      const [movementResult, archiveResult] = await Promise.allSettled([
+        applyMovement(movementInput),
+        archiveProduct(productId),
+      ]);
+      assert.equal(archiveResult.status, "fulfilled");
+
+      const [product] = await db
+        .select({ status: products.status })
+        .from(products)
+        .where(eq(products.id, productId))
+        .limit(1);
+      const [variant] = await db
+        .select({
+          status: productVariants.status,
+          quantityOnHand: productVariants.quantityOnHand,
+        })
+        .from(productVariants)
+        .where(eq(productVariants.id, variantId))
+        .limit(1);
+      const afterRows = await db
+        .select({ id: stockMovements.id })
+        .from(stockMovements)
+        .where(eq(stockMovements.variantId, variantId));
+
+      assert.equal(product?.status, "archived");
+      assert.equal(variant?.status, "archived");
+      if (movementResult.status === "fulfilled") {
+        assert.equal(afterRows.length, beforeRows.length + 1);
+        assert.equal(variant.quantityOnHand, 11);
+      } else {
+        assert.ok(
+          movementResult.reason instanceof InventoryError &&
+            movementResult.reason.code === "INVALID_STATE",
+        );
+        assert.equal(afterRows.length, beforeRows.length);
+        assert.equal(variant?.quantityOnHand, 10);
+      }
+
+      await assert.rejects(
+        () =>
+          applyMovement({
+            variantId,
+            type: "receive",
+            quantity: 1,
+            note: "Stale post after archive",
+            idempotencyKey: randomUUID(),
+          }),
+        (error: unknown) =>
+          error instanceof InventoryError &&
+          error.code === "INVALID_STATE",
+      );
+      const afterStalePost = await db
+        .select({ id: stockMovements.id })
+        .from(stockMovements)
+        .where(eq(stockMovements.variantId, variantId));
+      assert.equal(afterStalePost.length, afterRows.length);
+    }
+
+    await db
+      .update(products)
+      .set({ status: "active" })
+      .where(eq(products.id, productId));
+    await db
+      .update(productVariants)
+      .set({ status: "active" })
+      .where(eq(productVariants.id, variantId));
+  });
+
+  it("rejects manual receive and adjust for archived variants or products", async () => {
+    await db
+      .update(products)
+      .set({ status: "active" })
+      .where(eq(products.id, productId));
+    await db
+      .update(productVariants)
+      .set({ status: "archived", quantityOnHand: 10, qtyReserved: 0 })
+      .where(eq(productVariants.id, variantId));
+
+    const attempts = [
+      {
+        label: "receive with archived variant",
+        input: {
+          variantId,
+          type: "receive" as const,
+          quantity: 1,
+          idempotencyKey: randomUUID(),
+        },
+      },
+      {
+        label: "adjust with archived variant",
+        input: {
+          variantId,
+          type: "adjust" as const,
+          quantityDelta: -1,
+          note: "Archived variant must not change",
+          idempotencyKey: randomUUID(),
+        },
+      },
+    ];
+
+    await db
+      .update(productVariants)
+      .set({ status: "active" })
+      .where(eq(productVariants.id, variantId));
+    await db
+      .update(products)
+      .set({ status: "archived" })
+      .where(eq(products.id, productId));
+    attempts.push(
+      {
+        label: "receive with archived product",
+        input: {
+          variantId,
+          type: "receive" as const,
+          quantity: 1,
+          idempotencyKey: randomUUID(),
+        },
+      },
+      {
+        label: "adjust with archived product",
+        input: {
+          variantId,
+          type: "adjust" as const,
+          quantityDelta: -1,
+          note: "Archived product must not change",
+          idempotencyKey: randomUUID(),
+        },
+      },
+    );
+
+    // Exercise each aggregate state independently so both movement types are
+    // rejected by the domain API, not merely hidden by the app selector.
+    for (const [index, attempt] of attempts.entries()) {
+      const archivedVariant = index < 2;
+      await db
+        .update(products)
+        .set({ status: archivedVariant ? "active" : "archived" })
+        .where(eq(products.id, productId));
+      await db
+        .update(productVariants)
+        .set({ status: archivedVariant ? "archived" : "active" })
+        .where(eq(productVariants.id, variantId));
+
+      const beforeMovements = await db
+        .select({ id: stockMovements.id })
+        .from(stockMovements)
+        .where(eq(stockMovements.variantId, variantId));
+      await assert.rejects(
+        () => applyMovement(attempt.input),
+        (error: unknown) =>
+          error instanceof InventoryError &&
+          error.code === "INVALID_STATE" &&
+          error.message.includes("active product and variant"),
+        attempt.label,
+      );
+      const afterMovements = await db
+        .select({ id: stockMovements.id })
+        .from(stockMovements)
+        .where(eq(stockMovements.variantId, variantId));
+      const [afterVariant] = await db
+        .select({ quantityOnHand: productVariants.quantityOnHand })
+        .from(productVariants)
+        .where(eq(productVariants.id, variantId))
+        .limit(1);
+      assert.equal(afterMovements.length, beforeMovements.length, attempt.label);
+      assert.equal(afterVariant?.quantityOnHand, 10, attempt.label);
+    }
+
+    await db
+      .update(products)
+      .set({ status: "active" })
+      .where(eq(products.id, productId));
+    await db
+      .update(productVariants)
+      .set({ status: "active" })
+      .where(eq(productVariants.id, variantId));
   });
 });
 

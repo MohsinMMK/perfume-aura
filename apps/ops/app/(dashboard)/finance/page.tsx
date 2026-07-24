@@ -8,7 +8,6 @@ import {
 } from "@perfume-aura/ui/components/card";
 import { Badge } from "@perfume-aura/ui/components/badge";
 import { buttonVariants } from "@perfume-aura/ui/components/button";
-import { cn } from "@perfume-aura/ui/lib/utils";
 import { getFinanceSummary } from "@/lib/finance";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatPkr } from "@/lib/money";
@@ -102,12 +101,10 @@ export default async function FinancePage({
             <Link
               key={d}
               href={d === 30 ? "/finance" : `/finance?days=${d}`}
-              className={cn(
-                buttonVariants({
-                  variant: days === d ? "default" : "outline",
-                  size: "sm",
-                }),
-              )}
+              className={buttonVariants({
+                variant: days === d ? "default" : "outline",
+                size: "sm",
+              })}
             >
               {d}d
             </Link>

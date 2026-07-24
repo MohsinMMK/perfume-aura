@@ -172,12 +172,39 @@ For each phase, append:
 
 ## Phase 05 — Product, UI, and performance alignment
 
-Status: pending
-Implementation agent: pending
-Independent reviewer: pending
-shadcn preset/CLI evidence: pending
-Browser/accessibility evidence: pending
-Performance evidence: pending
+| Item | Evidence |
+|---|---|
+| Status | Complete and root-approved locally; provider verification remains Phase 07 |
+| Started from | Phase 04 commit `896bd75` |
+| Completed locally | 2026-07-25 01:53 IST |
+| Root agent | `/root` |
+| Implementation agent | `/root/ui_ci_deploy_research` — Phase 05 product lifecycle, UI composition, query/pagination, tests, and local browser scope only |
+| Independent reviewer | `/root/security_auth_research` — multi-pass read-only review; final code verdict approved with no remaining P0–P2 finding |
+| Official workflow | Project `shadcn`, Vercel React/composition, and Playwright skills; official shadcn monorepo/CLI/component docs; Base UI Button guidance; official Next.js data/component/accessibility guidance; React `cache()` guidance |
+| shadcn evidence | `info` and `preset resolve` returned locked preset `b23PPibQOI` with no fallback; official docs resolved for Alert Dialog, Field, Native Select, Spinner, Button, and Sonner; dry-run and add placed only `packages/ui/src/components/alert-dialog.tsx` |
+| Product lifecycle | Transactional timestamp/version-guarded product and variant edits; product-first atomic archive preserving balances/history; product-only reactivation plus explicit per-variant restore; archived catalog remains discoverable but is excluded from new selectors |
+| Domain lifecycle safety | Manual receive/adjust locks product→variant and requires both active while replaying an exact prior idempotent result; draft add-line locks invoice→product→variant; concurrent archive tests prove only serially valid outcomes; fulfillment of an already-issued line remains the explicit archived-SKU exception |
+| UI/accessibility | Base Alert Dialog confirmations, Sonner feedback, Field/NativeSelect errors, real semantic links styled with `buttonVariants`, pending-focus preservation through `focusableWhenDisabled`, spinner icon metadata, no `space-y-*`, and unique IDs/label targets for simultaneously mounted forms |
+| Pagination/query result | Products, customers, invoices, AR, payments, stock movements, and invoice-scoped payment history use bounded count+row queries, stable ID tiebreakers, URL page state, filter preservation, and canonical out-of-range redirects; invoice detail uses dedicated `paymentsPage` and total metadata |
+| Performance evidence | Request session remains React-cached; protected layout changed from full three-query dashboard metrics to one purpose-specific low-stock count; independent dashboard reads and every list row/count pair use `Promise.all` |
+| Cost visibility | Stock ledger labels fulfillment-time captured unit cost separately from legacy-current estimates; finance separation remains unchanged |
+| Disposable DB gate | PostgreSQL 16, Node `24.18.0`: full `pnpm test:integration` passed 98/98 with no skip (DB 37/37; ops/auth 61/61). Coverage includes archived mutation rejection/replay, manual-mutation/archive races, add-line/archive races, and archived issued-invoice fulfillment. |
+| Unit/static gate | `pnpm test:unit` passed 75/75 (DB 23/23; ops 52/52); root lint, DB/ops typechecks, marketing sync check, optimized Next build, and `git diff --check` passed |
+| Browser lifecycle evidence | Disposable owner completed product/variant edit→archive→product reactivate→explicit variant reactivate; archived stock stayed visible and active stock/invoice selectors excluded it. Customer creation, preselected invoice creation, line add, issue, print, and partial payment flows rendered correctly. Native invalid controls received focus. Keyboard Alert Dialog opened with Cancel focused and Escape returned focus to the trigger. |
+| Pending-focus evidence | A held product lifecycle POST produced `aria-disabled="true"`, retained the action as `document.activeElement`, and showed `Reactivating…`; the request was intentionally aborted after the assertion so no duplicate mutation committed |
+| Pagination browser evidence | Product page 999 canonicalized to its last page with filters preserved. A 26-row disposable invoice history canonicalized `paymentsPage=999` to page 2 of 2, preserved `view=activity`, and generated a first-page Previous URL without the custom page parameter. |
+| Browser quality evidence | Optimized local server: signed-out `/products` redirected to `/login?next=%2Fproducts`; 375×812 stock view had no horizontal overflow; print media retained invoice content. DOM scans on stock, invoice detail, product detail, customer creation, invoice creation, and security found zero duplicate IDs and zero unresolved labels. Final multi-route console check returned 0 errors and 0 warnings. |
+| Review corrections | Fixed semantic Button/Link composition, stale variant lifecycle state, out-of-range canonical pages, payment-history truncation, archived direct stock mutation, add-line/archive lock ordering, archived idempotent replay/races, pending focus, and duplicate stock form IDs; final structural review was green |
+| Root dependency correction | The earlier scoped Next-only PostCSS override left shadcn/Tailwind tooling on `8.5.20`. Root changed the workspace override to global `postcss=8.5.22` and `sharp=0.35.3`; a fresh install plus frozen install and `pnpm why` prove exactly one Next `16.2.11`, one Sharp `0.35.3`, and one PostCSS `8.5.22` resolution. |
+| Root test/build gate | Disposable PostgreSQL 16 with every migration applied; exact Node `24.18.0`; complete `pnpm test` passed 143/143 with no skip (DB 82/82, ops/auth/UI 61/61). Frozen install, marketing check, root lint, DB/ops typechecks, production high audit gate, optimized build, official shadcn info/preset/dry-run, and `git diff --check` passed. Audit result remained 0 critical, 0 high, 1 moderate (esbuild development-server advisory). |
+| Root archive evidence | `dist/perfume-aura-standalone_20260725.zip`, 26,465,028 bytes, SHA-256 `ec2f6d8cb74769b80d860be87519faf7c11b43eb7fbb70eed9bcc3552ca49c2f`; stage/extract smoke proved Next `16.2.11`, Sharp `0.35.3`, PostCSS `8.5.22`, Linux Sharp tree, static assets, and entry `apps/ops/server.js`. No deployment occurred. |
+| Root browser gate | A separate disposable owner signed in, edited product metadata, received 5 units, and completed product archive → product-only reactivation → explicit variant reactivation. Cancel returned focus to the Archive trigger; archive preserved the 5-unit balance, hid Receive/Adjust, and removed the SKU from active selectors while the stock ledger retained it. Product and stock pages had no duplicate IDs or unresolved labels; 390×844 had no page overflow; signed-out `/` redirected to `/login`; live, ready, and login returned `200`; console finished at 0 errors and 0 warnings. |
+| Local credential incident | An implementation-agent dev form fallback placed the local-only owner password in transient local logs. Root rotated that retained local credential without echoing the replacement, revoked one local session, preserved `.env.local` mode `600`, and removed browser artifacts. No production/provider credential was read or changed. |
+| Accepted residual risk | No provider latency/query telemetry or production accessibility proof was attempted; Phase 07 must repeat health/auth/browser checks against isolated provider state |
+| Rollback | Revert the bounded Phase 05 source/docs changes; no schema migration or provider state was introduced |
+| Provider changes | None — no Neon, Hostinger, production, staging, DNS, email, GitHub push, or deployment action |
+| Root cleanup | Approved. Disposable PostgreSQL container/database, local dev server, browser daemons, port 3000 listener, and `.playwright-cli` artifacts were removed; the validated ZIP remains in ignored `dist/` for Phase 06 rollback work. |
+| Commit | The scoped Phase 05 commit containing this log, implementation, tests, official UI artifact, and durable product-design context |
 
 ## Phase 06 — CI and standalone packaging
 

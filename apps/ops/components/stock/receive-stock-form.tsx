@@ -159,6 +159,7 @@ export function ReceiveStockForm({
             <TextAreaField
               label="Note"
               name="note"
+              id="receive-note"
               placeholder="Optional — PO ref, supplier…"
               error={fe("note")}
               rows={2}
@@ -178,7 +179,11 @@ export function ReceiveStockForm({
           </FieldGroup>
         </CardContent>
         <CardFooter className="justify-end">
-          <Button type="submit" disabled={pending}>
+          <Button
+            type="submit"
+            disabled={pending}
+            focusableWhenDisabled={pending}
+          >
             {pending ? <Spinner data-icon="inline-start" /> : null}
             {pending ? "Receiving…" : "Receive"}
           </Button>

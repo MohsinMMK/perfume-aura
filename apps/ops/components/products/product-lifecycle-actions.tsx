@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "@perfume-aura/ui/components/sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,38 +17,59 @@ import {
 import { Button } from "@perfume-aura/ui/components/button";
 import { FieldError } from "@perfume-aura/ui/components/field";
 import { Spinner } from "@perfume-aura/ui/components/spinner";
-import { toast } from "@perfume-aura/ui/components/sonner";
-import { archiveCustomerAction } from "@/lib/customers";
+import {
+  archiveProductAction,
+  reactivateProductAction,
+} from "@/lib/products";
 
-export function ArchiveCustomerButton({ customerId }: { customerId: string }) {
+type Props = {
+  productId: string;
+  productName: string;
+  status: "active" | "archived";
+  expectedUpdatedAt: string;
+};
+
+export function ProductLifecycleActions({
+  productId,
+  productName,
+  status,
+  expectedUpdatedAt,
+}: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const archiving = status === "active";
 
-  async function onArchive() {
+  async function changeStatus() {
     setPending(true);
     setError(null);
-    let result: Awaited<ReturnType<typeof archiveCustomerAction>>;
+    const action = archiving
+      ? archiveProductAction
+      : reactivateProductAction;
+    let result: Awaited<ReturnType<typeof action>>;
     try {
-      result = await archiveCustomerAction({ customerId });
+      result = await action({ productId, expectedUpdatedAt });
     } catch {
-      const message = "The customer could not be archived";
+      const message = "The product action could not be completed";
       setError(message);
       toast.error(message);
       setPending(false);
       return;
     }
+
     if (!result.ok) {
       setError(result.error);
       toast.error(result.error);
       setPending(false);
       return;
     }
-    toast.success("Customer archived");
+
+    toast.success(
+      archiving ? "Product archived" : "Product reactivated",
+    );
     setOpen(false);
     setPending(false);
-    router.push("/customers");
     router.refresh();
   }
 
@@ -61,16 +83,25 @@ export function ArchiveCustomerButton({ customerId }: { customerId: string }) {
       }}
     >
       <AlertDialogTrigger
-        render={<Button type="button" variant="outline" />}
+        render={
+          <Button
+            type="button"
+            variant={archiving ? "destructive" : "outline"}
+            size="sm"
+          />
+        }
       >
-        Archive
+        {archiving ? "Archive" : "Reactivate"}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Archive customer?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {archiving ? "Archive product?" : "Reactivate product?"}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            The customer will be hidden from new invoice selectors. Existing
-            invoices and payment history remain available.
+            {archiving
+              ? `Archive “${productName}” and all of its variants? Stock balances and history are preserved.`
+              : `Reactivate “${productName}”? Its variants stay archived until you review and reactivate each SKU.`}
           </AlertDialogDescription>
         </AlertDialogHeader>
         {error ? <FieldError>{error}</FieldError> : null}
@@ -78,13 +109,19 @@ export function ArchiveCustomerButton({ customerId }: { customerId: string }) {
           <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             type="button"
-            variant="destructive"
+            variant={archiving ? "destructive" : "default"}
             disabled={pending}
             focusableWhenDisabled={pending}
-            onClick={onArchive}
+            onClick={changeStatus}
           >
             {pending ? <Spinner data-icon="inline-start" /> : null}
-            {pending ? "Archiving…" : "Archive customer"}
+            {pending
+              ? archiving
+                ? "Archiving…"
+                : "Reactivating…"
+              : archiving
+                ? "Archive product"
+                : "Reactivate product"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

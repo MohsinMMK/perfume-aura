@@ -135,11 +135,39 @@ export async function addInvoiceLine(input: {
       );
     }
 
-    const lockedLines = await lockInvoiceLines(tx, input.invoiceId);
     let description = input.description.trim();
     let unitPriceCents = input.unitPriceCents;
 
     if (input.variantId) {
+      // Discover the aggregate without taking a row lock, then share the
+      // product-first lock order used by lifecycle workflows. If archive wins
+      // the product lock, the locked re-read below observes archived state and
+      // this transaction cannot add a stale selection.
+      const [candidate] = await tx
+        .select({ productId: productVariants.productId })
+        .from(productVariants)
+        .where(eq(productVariants.id, input.variantId))
+        .limit(1);
+      if (!candidate) {
+        throw new DomainError(
+          "INVALID_STATE",
+          "Variant not found or inactive",
+        );
+      }
+
+      const [product] = await tx
+        .select({ name: products.name, status: products.status })
+        .from(products)
+        .where(eq(products.id, candidate.productId))
+        .for("update")
+        .limit(1);
+      if (!product || product.status !== "active") {
+        throw new DomainError(
+          "INVALID_STATE",
+          "Product not found or inactive",
+        );
+      }
+
       const [variant] = await tx
         .select({
           id: productVariants.id,
@@ -150,7 +178,12 @@ export async function addInvoiceLine(input: {
           status: productVariants.status,
         })
         .from(productVariants)
-        .where(eq(productVariants.id, input.variantId))
+        .where(
+          and(
+            eq(productVariants.id, input.variantId),
+            eq(productVariants.productId, candidate.productId),
+          ),
+        )
         .for("update")
         .limit(1);
 
@@ -158,18 +191,6 @@ export async function addInvoiceLine(input: {
         throw new DomainError(
           "INVALID_STATE",
           "Variant not found or inactive",
-        );
-      }
-
-      const [product] = await tx
-        .select({ name: products.name, status: products.status })
-        .from(products)
-        .where(eq(products.id, variant.productId))
-        .limit(1);
-      if (!product || product.status !== "active") {
-        throw new DomainError(
-          "INVALID_STATE",
-          "Product not found or inactive",
         );
       }
 
@@ -182,6 +203,7 @@ export async function addInvoiceLine(input: {
       throw new DomainError("INVALID_INPUT", "Description is required");
     }
 
+    const lockedLines = await lockInvoiceLines(tx, input.invoiceId);
     const position =
       lockedLines.reduce(
         (maximum, line) => Math.max(maximum, line.position),

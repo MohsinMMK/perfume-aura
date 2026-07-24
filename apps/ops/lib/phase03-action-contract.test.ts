@@ -45,6 +45,21 @@ describe("Phase 03 Server Action boundaries", () => {
         firstBusinessCall: "archiveProductSchema.safeParse",
       },
       {
+        source: files.products,
+        name: "updateProductAction",
+        firstBusinessCall: "updateProductSchema.safeParse",
+      },
+      {
+        source: files.products,
+        name: "reactivateProductAction",
+        firstBusinessCall: "reactivateProductSchema.safeParse",
+      },
+      {
+        source: files.products,
+        name: "updateVariantAction",
+        firstBusinessCall: "updateVariantSchema.safeParse",
+      },
+      {
         source: files.invoices,
         name: "createInvoiceDraftAction",
         firstBusinessCall: "createInvoiceDraftSchema.safeParse",

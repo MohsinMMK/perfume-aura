@@ -7,6 +7,7 @@ import {
 } from "./inventory-math";
 import {
   locations,
+  products,
   productVariants,
   stockMovements,
   stockMovementTypeEnum,
@@ -54,6 +55,7 @@ export type ApplyMovementResult = {
 
 type InventoryErrorCode =
   | "INVALID_INPUT"
+  | "INVALID_STATE"
   | "NOT_FOUND"
   | "INSUFFICIENT_STOCK"
   | "CONFLICT"
@@ -103,16 +105,19 @@ function existingMovementMatches(
 /**
  * Transaction-composable inventory mutation.
  *
- * The caller may already hold multiple sorted variant locks (fulfillment).
- * Re-locking one of those rows is harmless and ensures standalone calls use the
- * same invariant: variant lock first, idempotency check second, ledger insert,
- * then cached balance update.
+ * Fulfillment may enter with multiple sorted variant locks and deliberately
+ * permits an already-issued line to complete after archival. Manual receive or
+ * adjust instead discovers the aggregate, locks product then variant, replays
+ * an exact idempotent result when present, and otherwise requires both rows to
+ * remain active before the ledger/cache mutation.
  */
 export async function applyMovementInTransaction(
   tx: DbTransaction,
   input: ApplyMovementInput,
 ): Promise<ApplyMovementResult> {
   const delta = resolveDelta(input);
+  const requiresActiveCatalog =
+    input.type === "receive" || input.type === "adjust";
 
   let locationId = input.locationId;
   if (!locationId) {
@@ -139,10 +144,52 @@ export async function applyMovementInTransaction(
     }
   }
 
+  let lockedProductStatus: "active" | "archived" | undefined;
+  let expectedProductId: string | undefined;
+  if (requiresActiveCatalog) {
+    // Manual stock entry shares the product-first aggregate lock order used by
+    // lifecycle workflows. The unlocked lookup discovers the aggregate; the
+    // product lock then serializes this mutation against product/variant
+    // archive before the variant row is locked below.
+    const [candidate] = await tx
+      .select({ productId: productVariants.productId })
+      .from(productVariants)
+      .where(eq(productVariants.id, input.variantId))
+      .limit(1);
+    if (!candidate) {
+      throw new InventoryError(
+        `Variant not found: ${input.variantId}`,
+        "NOT_FOUND",
+      );
+    }
+    expectedProductId = candidate.productId;
+
+    const [product] = await tx
+      .select({ id: products.id, status: products.status })
+      .from(products)
+      .where(eq(products.id, expectedProductId))
+      .for("update")
+      .limit(1);
+    if (!product) {
+      throw new InventoryError(
+        `Product not found for variant: ${input.variantId}`,
+        "NOT_FOUND",
+      );
+    }
+    lockedProductStatus = product.status;
+  }
+
   const [variant] = await tx
     .select()
     .from(productVariants)
-    .where(eq(productVariants.id, input.variantId))
+    .where(
+      expectedProductId
+        ? and(
+            eq(productVariants.id, input.variantId),
+            eq(productVariants.productId, expectedProductId),
+          )
+        : eq(productVariants.id, input.variantId),
+    )
     .for("update")
     .limit(1);
 
@@ -179,6 +226,16 @@ export async function applyMovementInTransaction(
         idempotent: true,
       };
     }
+  }
+
+  if (
+    requiresActiveCatalog &&
+    (lockedProductStatus !== "active" || variant.status !== "active")
+  ) {
+    throw new InventoryError(
+      "Manual stock changes require an active product and variant",
+      "INVALID_STATE",
+    );
   }
 
   const quantityAfter = variant.quantityOnHand + delta;

@@ -129,7 +129,11 @@ export function ChangePasswordForm() {
           </p>
         ) : null}
 
-        <Button type="submit" disabled={pending}>
+        <Button
+          type="submit"
+          disabled={pending}
+          focusableWhenDisabled={pending}
+        >
           {pending ? <Spinner data-icon="inline-start" /> : null}
           {pending ? "Changing…" : "Change password"}
         </Button>

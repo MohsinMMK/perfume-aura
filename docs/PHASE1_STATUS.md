@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| Updated | 2026-07-22 |
+| Updated | 2026-07-25 |
 | Verdict | **Code + tests PASS**; production Node deploy **pending** |
 | Deploy | [OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIST.md) |
 
@@ -31,12 +31,12 @@
 
 | ID | Requirement | Status |
 |----|-------------|--------|
-| FR-INV-1 | CRUD products | ✅ create + list + detail + archive |
-| FR-INV-2 | CRUD variants/SKUs | ✅ create with product + add variant |
+| FR-INV-1 | Product lifecycle | ✅ create, list/detail, edit, archive, explicit reactivate; no hard-delete |
+| FR-INV-2 | Variant/SKU lifecycle | ✅ create, edit, archive, explicit reactivate; balances preserved |
 | FR-INV-3 | Qty only via movements | ✅ `applyMovement` only |
 | FR-INV-4 | Types: receive, sale, adjust, damage, return | ✅ in enum + math; UI: receive + adjust |
 | FR-INV-5 | delta, after, note, user, timestamp | ✅ |
-| FR-INV-6 | Atomic; no concurrent oversell | ✅ FOR UPDATE + integration test |
+| FR-INV-6 | Atomic; no concurrent oversell or archived manual mutation | ✅ product→variant locking + race/integration tests |
 | FR-INV-7 | Low-stock list | ✅ `/stock/low` + badge |
 | FR-INV-8 | Dashboard metrics | ✅ |
 | FR-INV-9 | Search/filter | ✅ products `?q=` / `?status=` |
@@ -58,10 +58,10 @@
 |-------|---------|
 | `/login` | Owner sign-in |
 | `/dashboard` | Metrics + quick actions |
-| `/products` | Catalog list + search |
+| `/products` | Paginated catalog + search + active/archived filters |
 | `/products/new` | Create product (+ first variant) |
-| `/products/[id]` | Detail, variants, archive, stock dialogs |
-| `/stock` | Receive / adjust + recent movements |
+| `/products/[id]` | Product/variant edit, archive/reactivate, preserved archived stock, stock dialogs |
+| `/stock` | Receive / adjust + paginated movements with captured/legacy cost basis |
 | `/stock/low` | Reorder alerts |
 | `/api/auth/[...all]` | Better Auth handler |
 

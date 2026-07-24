@@ -136,6 +136,7 @@ export function AdjustStockForm({ variants, defaultVariantId }: Props) {
             <TextAreaField
               label="Note"
               name="note"
+              id="adjust-note"
               required
               placeholder="Reason for adjustment…"
               error={fe("note")}
@@ -156,7 +157,12 @@ export function AdjustStockForm({ variants, defaultVariantId }: Props) {
           </FieldGroup>
         </CardContent>
         <CardFooter className="justify-end">
-          <Button type="submit" variant="secondary" disabled={pending}>
+          <Button
+            type="submit"
+            variant="secondary"
+            disabled={pending}
+            focusableWhenDisabled={pending}
+          >
             {pending ? <Spinner data-icon="inline-start" /> : null}
             {pending ? "Saving…" : "Apply adjustment"}
           </Button>

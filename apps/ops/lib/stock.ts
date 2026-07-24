@@ -3,6 +3,7 @@
 import {
   and,
   applyMovement,
+  count,
   db,
   desc,
   eq,
@@ -28,6 +29,13 @@ import {
   zodFieldErrors,
 } from "@/lib/action-result";
 import { revalidateCommittedStockMutation } from "@/lib/stock-revalidation";
+import {
+  normalizePageSize,
+  pageOffset,
+  paginatedResult,
+  parsePage,
+  type PaginatedResult,
+} from "@/lib/pagination";
 
 export type LowStockRow = {
   variantId: string;
@@ -48,6 +56,8 @@ export type MovementRow = {
   quantityDelta: number;
   quantityAfter: number;
   note: string | null;
+  unitCostCents: number | null;
+  costBasis: "snapshot" | "legacy_current" | null;
   createdAt: Date;
   sku: string;
   productName: string;
@@ -91,58 +101,54 @@ export async function listLowStock(): Promise<LowStockRow[]> {
   return rows;
 }
 
-export async function listRecentMovements(
-  limit = 50,
-): Promise<MovementRow[]> {
+export async function listRecentMovements(opts?: {
+  page?: number;
+  pageSize?: number;
+}): Promise<PaginatedResult<MovementRow>> {
   await requireOwnerSession();
 
-  const rows = await db
-    .select({
-      id: stockMovements.id,
-      variantId: stockMovements.variantId,
-      type: stockMovements.type,
-      quantityDelta: stockMovements.quantityDelta,
-      quantityAfter: stockMovements.quantityAfter,
-      note: stockMovements.note,
-      createdAt: stockMovements.createdAt,
-      sku: productVariants.sku,
-      productName: products.name,
-      sizeMl: productVariants.sizeMl,
-    })
-    .from(stockMovements)
-    .innerJoin(
-      productVariants,
-      eq(productVariants.id, stockMovements.variantId),
-    )
-    .innerJoin(products, eq(products.id, productVariants.productId))
-    .orderBy(desc(stockMovements.createdAt))
-    .limit(limit);
+  const page = parsePage(opts?.page);
+  const pageSize = normalizePageSize(opts?.pageSize);
+  const [rows, totalRows] = await Promise.all([
+    db
+      .select({
+        id: stockMovements.id,
+        variantId: stockMovements.variantId,
+        type: stockMovements.type,
+        quantityDelta: stockMovements.quantityDelta,
+        quantityAfter: stockMovements.quantityAfter,
+        note: stockMovements.note,
+        unitCostCents: stockMovements.unitCostCents,
+        costBasis: stockMovements.costBasis,
+        createdAt: stockMovements.createdAt,
+        sku: productVariants.sku,
+        productName: products.name,
+        sizeMl: productVariants.sizeMl,
+      })
+      .from(stockMovements)
+      .innerJoin(
+        productVariants,
+        eq(productVariants.id, stockMovements.variantId),
+      )
+      .innerJoin(products, eq(products.id, productVariants.productId))
+      .orderBy(desc(stockMovements.createdAt), desc(stockMovements.id))
+      .limit(pageSize)
+      .offset(pageOffset(page, pageSize)),
+    db.select({ total: count(stockMovements.id) }).from(stockMovements),
+  ]);
 
-  return rows;
+  return paginatedResult(
+    rows,
+    Number(totalRows[0]?.total ?? 0),
+    page,
+    pageSize,
+  );
 }
 
-export async function getDashboardStats(): Promise<DashboardStats> {
+export async function getLowStockCount(): Promise<number> {
   await requireOwnerSession();
-
-  const [productRow] = await db
-    .select({
-      productCount: sql<number>`count(*)::int`,
-    })
-    .from(products)
-    .where(eq(products.status, "active"));
-
-  const [stockRow] = await db
-    .select({
-      totalUnits: sql<number>`coalesce(sum(${productVariants.quantityOnHand}), 0)::int`,
-      inventoryCostCents: sql<number>`coalesce(sum(${productVariants.quantityOnHand} * ${productVariants.costCents}), 0)::bigint`,
-    })
-    .from(productVariants)
-    .where(eq(productVariants.status, "active"));
-
-  const [lowRow] = await db
-    .select({
-      lowStockCount: sql<number>`count(*)::int`,
-    })
+  const [row] = await db
+    .select({ lowStockCount: sql<number>`count(*)::int` })
     .from(productVariants)
     .innerJoin(products, eq(products.id, productVariants.productId))
     .where(
@@ -152,11 +158,33 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         lte(productVariants.quantityOnHand, productVariants.reorderLevel),
       ),
     );
+  return Number(row?.lowStockCount ?? 0);
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  await requireOwnerSession();
+
+  const [[productRow], [stockRow], lowStockCount] = await Promise.all([
+    db
+      .select({
+        productCount: sql<number>`count(*)::int`,
+      })
+      .from(products)
+      .where(eq(products.status, "active")),
+    db
+      .select({
+        totalUnits: sql<number>`coalesce(sum(${productVariants.quantityOnHand}), 0)::int`,
+        inventoryCostCents: sql<number>`coalesce(sum(${productVariants.quantityOnHand} * ${productVariants.costCents}), 0)::bigint`,
+      })
+      .from(productVariants)
+      .where(eq(productVariants.status, "active")),
+    getLowStockCount(),
+  ]);
 
   return {
     productCount: Number(productRow?.productCount ?? 0),
     totalUnits: Number(stockRow?.totalUnits ?? 0),
-    lowStockCount: Number(lowRow?.lowStockCount ?? 0),
+    lowStockCount,
     inventoryCostCents: Number(stockRow?.inventoryCostCents ?? 0),
   };
 }

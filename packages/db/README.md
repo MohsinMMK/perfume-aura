@@ -171,10 +171,15 @@ await applyMovement({
 ### Rules
 
 1. Single write path: **`applyMovement()` only** for balance changes.
-2. One transaction: lock variant → insert movement → update `quantity_on_hand` + `version`.
+2. One transaction: manual receive/adjust locks product then variant; other
+   movements lock the variant; ledger insert and cached balance update commit
+   together.
 3. Never go negative on-hand.
 4. Sales also respect available = `on_hand - qty_reserved`.
 5. `idempotencyKey` returns the prior result without double-applying.
+6. Manual receive/adjust requires both product and variant to be active.
+   Fulfillment is the deliberate exception: an already-issued invoice may
+   finish against an archived SKU, preserving the in-flight sales contract.
 
 ## Package exports
 

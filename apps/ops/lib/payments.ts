@@ -2,6 +2,7 @@
 
 import {
   businessMonthBounds,
+  count,
   customers,
   db,
   desc,
@@ -23,6 +24,13 @@ import {
   type ActionResult,
   zodFieldErrors,
 } from "@/lib/action-result";
+import {
+  normalizePageSize,
+  pageOffset,
+  paginatedResult,
+  parsePage,
+  type PaginatedResult,
+} from "@/lib/pagination";
 
 export type PaymentListItem = {
   id: string;
@@ -51,32 +59,51 @@ function revalidatePaymentPaths(invoiceId: string) {
 
 export async function listPayments(opts?: {
   invoiceId?: string;
-}): Promise<PaymentListItem[]> {
+  page?: number;
+  pageSize?: number;
+}): Promise<PaginatedResult<PaymentListItem>> {
   await requireOwnerSession();
 
   const where = opts?.invoiceId
     ? eq(payments.invoiceId, opts.invoiceId)
     : undefined;
-  return db
-    .select({
-      id: payments.id,
-      number: payments.number,
-      invoiceId: payments.invoiceId,
-      invoiceNumber: invoices.number,
-      customerId: payments.customerId,
-      customerName: customers.name,
-      method: payments.method,
-      amountCents: payments.amountCents,
-      paidAt: payments.paidAt,
-      reference: payments.reference,
-      note: payments.note,
-      createdAt: payments.createdAt,
-    })
-    .from(payments)
-    .innerJoin(invoices, eq(invoices.id, payments.invoiceId))
-    .leftJoin(customers, eq(customers.id, payments.customerId))
-    .where(where)
-    .orderBy(desc(payments.paidAt), desc(payments.createdAt));
+  const page = parsePage(opts?.page);
+  const pageSize = normalizePageSize(opts?.pageSize);
+  const [rows, totalRows] = await Promise.all([
+    db
+      .select({
+        id: payments.id,
+        number: payments.number,
+        invoiceId: payments.invoiceId,
+        invoiceNumber: invoices.number,
+        customerId: payments.customerId,
+        customerName: customers.name,
+        method: payments.method,
+        amountCents: payments.amountCents,
+        paidAt: payments.paidAt,
+        reference: payments.reference,
+        note: payments.note,
+        createdAt: payments.createdAt,
+      })
+      .from(payments)
+      .innerJoin(invoices, eq(invoices.id, payments.invoiceId))
+      .leftJoin(customers, eq(customers.id, payments.customerId))
+      .where(where)
+      .orderBy(
+        desc(payments.paidAt),
+        desc(payments.createdAt),
+        desc(payments.id),
+      )
+      .limit(pageSize)
+      .offset(pageOffset(page, pageSize)),
+    db.select({ total: count(payments.id) }).from(payments).where(where),
+  ]);
+  return paginatedResult(
+    rows,
+    Number(totalRows[0]?.total ?? 0),
+    page,
+    pageSize,
+  );
 }
 
 export async function getCashCollectedCents(

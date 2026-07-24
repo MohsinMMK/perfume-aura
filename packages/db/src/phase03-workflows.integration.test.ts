@@ -371,6 +371,69 @@ describe("Phase 03 transactional workflows", { skip: !hasDatabase }, () => {
     }
   });
 
+  it("serializes add-line against product archive without accepting an already-archived SKU", async () => {
+    for (let run = 0; run < 10; run += 1) {
+      const fixture = await createVariantFixture();
+      const draft = await createDraftWithLines([]);
+
+      const [lineResult, archiveResult] = await Promise.allSettled([
+        api.addInvoiceLine({
+          invoiceId: draft.invoiceId,
+          variantId: fixture.variantId,
+          description: "",
+          quantity: 1,
+          unitPriceCents: 0,
+        }),
+        api.archiveProduct(fixture.productId),
+      ]);
+
+      assert.equal(archiveResult.status, "fulfilled");
+      const [product] = await api.db
+        .select({ status: api.products.status })
+        .from(api.products)
+        .where(eq(api.products.id, fixture.productId))
+        .limit(1);
+      const [variant] = await api.db
+        .select({ status: api.productVariants.status })
+        .from(api.productVariants)
+        .where(eq(api.productVariants.id, fixture.variantId))
+        .limit(1);
+      const state = await rowsForInvoice(draft.invoiceId);
+
+      assert.equal(product?.status, "archived");
+      assert.equal(variant?.status, "archived");
+      if (lineResult.status === "fulfilled") {
+        // Add-line held the product/variant locks first, so the line committed
+        // against active rows before archive serialized behind it.
+        assert.equal(state.lines.length, 1);
+        assert.equal(state.lines[0]?.id, lineResult.value.lineId);
+      } else {
+        assert.ok(
+          lineResult.reason instanceof api.DomainError &&
+            lineResult.reason.code === "INVALID_STATE",
+        );
+        assert.equal(state.lines.length, 0);
+      }
+
+      const countBeforeStalePost = state.lines.length;
+      await assert.rejects(
+        () =>
+          api.addInvoiceLine({
+            invoiceId: draft.invoiceId,
+            variantId: fixture.variantId,
+            description: "",
+            quantity: 1,
+            unitPriceCents: 0,
+          }),
+        (error: unknown) =>
+          error instanceof api.DomainError &&
+          error.code === "INVALID_STATE",
+      );
+      const afterStalePost = await rowsForInvoice(draft.invoiceId);
+      assert.equal(afterStalePost.lines.length, countBeforeStalePost);
+    }
+  });
+
   it("parallel draft-line writes get unique positions and atomic totals", async () => {
     const draft = await api.createInvoiceDraft({ customerId });
     invoiceIds.add(draft.invoiceId);
@@ -514,6 +577,158 @@ describe("Phase 03 transactional workflows", { skip: !hasDatabase }, () => {
       );
     assert.equal(activeRows.length, 0);
     assert.equal((await api.archiveProduct(fixture.productId)).idempotent, true);
+  });
+
+  it("guards product and variant edits against stale writes without changing stock", async () => {
+    const fixture = await createVariantFixture({
+      quantityOnHand: 11,
+      qtyReserved: 4,
+      costCents: 300,
+      sizeMl: 41,
+    });
+    const [beforeProduct] = await api.db
+      .select()
+      .from(api.products)
+      .where(eq(api.products.id, fixture.productId));
+    const [beforeVariant] = await api.db
+      .select()
+      .from(api.productVariants)
+      .where(eq(api.productVariants.id, fixture.variantId));
+    assert.ok(beforeProduct);
+    assert.ok(beforeVariant);
+
+    await api.updateProduct({
+      productId: fixture.productId,
+      expectedUpdatedAt: beforeProduct.updatedAt,
+      name: "Updated lifecycle product",
+      brand: "Perfume Aura",
+      category: "Test",
+      description: "Edited without touching lifecycle state",
+    });
+
+    await assert.rejects(
+      () =>
+        api.updateProduct({
+          productId: fixture.productId,
+          expectedUpdatedAt: beforeProduct.updatedAt,
+          name: "Stale product edit",
+        }),
+      (error: unknown) =>
+        error instanceof api.DomainError && error.code === "STALE_WRITE",
+    );
+
+    await api.updateProductVariant({
+      productId: fixture.productId,
+      variantId: fixture.variantId,
+      expectedVersion: beforeVariant.version,
+      sku: `${fixture.sku}-EDIT`,
+      barcode: "1234567890",
+      sizeMl: 42,
+      costCents: 350,
+      retailCents: 1_200,
+      reorderLevel: 5,
+    });
+
+    const [afterVariant] = await api.db
+      .select()
+      .from(api.productVariants)
+      .where(eq(api.productVariants.id, fixture.variantId));
+    assert.ok(afterVariant);
+    assert.equal(afterVariant.quantityOnHand, 11);
+    assert.equal(afterVariant.qtyReserved, 4);
+    assert.equal(afterVariant.version, beforeVariant.version + 1);
+    assert.equal(afterVariant.costCents, 350);
+
+    await assert.rejects(
+      () =>
+        api.updateProductVariant({
+          productId: fixture.productId,
+          variantId: fixture.variantId,
+          expectedVersion: beforeVariant.version,
+          sku: `${fixture.sku}-STALE`,
+          sizeMl: 43,
+          costCents: 400,
+          retailCents: 1_300,
+          reorderLevel: 5,
+        }),
+      (error: unknown) =>
+        error instanceof api.DomainError && error.code === "STALE_WRITE",
+    );
+  });
+
+  it("requires explicit per-variant restore after product reactivation", async () => {
+    const fixture = await createVariantFixture({
+      quantityOnHand: 8,
+      qtyReserved: 2,
+    });
+    const [beforeProduct] = await api.db
+      .select()
+      .from(api.products)
+      .where(eq(api.products.id, fixture.productId));
+    assert.ok(beforeProduct);
+
+    await api.archiveProduct(fixture.productId, {
+      expectedUpdatedAt: beforeProduct.updatedAt,
+    });
+
+    const [archivedProduct] = await api.db
+      .select()
+      .from(api.products)
+      .where(eq(api.products.id, fixture.productId));
+    const [archivedVariant] = await api.db
+      .select()
+      .from(api.productVariants)
+      .where(eq(api.productVariants.id, fixture.variantId));
+    assert.ok(archivedProduct);
+    assert.ok(archivedVariant);
+    assert.equal(archivedVariant.status, "archived");
+
+    await api.reactivateProduct({
+      productId: fixture.productId,
+      expectedUpdatedAt: archivedProduct.updatedAt,
+    });
+
+    const [stillArchivedVariant] = await api.db
+      .select()
+      .from(api.productVariants)
+      .where(eq(api.productVariants.id, fixture.variantId));
+    assert.ok(stillArchivedVariant);
+    assert.equal(stillArchivedVariant.status, "archived");
+    assert.equal(stillArchivedVariant.quantityOnHand, 8);
+    assert.equal(stillArchivedVariant.qtyReserved, 2);
+
+    const restored = await api.reactivateProductVariant({
+      productId: fixture.productId,
+      variantId: fixture.variantId,
+      expectedVersion: stillArchivedVariant.version,
+    });
+    assert.equal(restored.version, stillArchivedVariant.version + 1);
+
+    await assert.rejects(
+      () =>
+        api.archiveProductVariant({
+          productId: fixture.productId,
+          variantId: fixture.variantId,
+          expectedVersion: stillArchivedVariant.version,
+        }),
+      (error: unknown) =>
+        error instanceof api.DomainError && error.code === "STALE_WRITE",
+    );
+
+    const archivedAgain = await api.archiveProductVariant({
+      productId: fixture.productId,
+      variantId: fixture.variantId,
+      expectedVersion: restored.version,
+    });
+    assert.equal(archivedAgain.version, restored.version + 1);
+
+    const [finalVariant] = await api.db
+      .select()
+      .from(api.productVariants)
+      .where(eq(api.productVariants.id, fixture.variantId));
+    assert.equal(finalVariant?.status, "archived");
+    assert.equal(finalVariant?.quantityOnHand, 8);
+    assert.equal(finalVariant?.qtyReserved, 2);
   });
 
   it("allocates 20 unique payment numbers in parallel", async () => {
@@ -828,6 +1043,43 @@ describe("Phase 03 transactional workflows", { skip: !hasDatabase }, () => {
       .from(api.productVariants)
       .where(eq(api.productVariants.id, variant.variantId));
     assert.equal(after?.quantityOnHand, 6);
+  });
+
+  it("fulfills an already-issued invoice after its product and variant are archived", async () => {
+    const fixture = await createVariantFixture({ quantityOnHand: 2 });
+    const issued = await createIssuedInvoice({
+      lines: [
+        {
+          variantId: fixture.variantId,
+          quantity: 1,
+          unitPriceCents: 1_000,
+        },
+      ],
+    });
+
+    await api.archiveProduct(fixture.productId);
+    const [archivedProduct] = await api.db
+      .select({ status: api.products.status })
+      .from(api.products)
+      .where(eq(api.products.id, fixture.productId))
+      .limit(1);
+    const [archivedVariant] = await api.db
+      .select({ status: api.productVariants.status })
+      .from(api.productVariants)
+      .where(eq(api.productVariants.id, fixture.variantId))
+      .limit(1);
+    assert.equal(archivedProduct?.status, "archived");
+    assert.equal(archivedVariant?.status, "archived");
+
+    const result = await api.fulfillInvoice({ invoiceId: issued.invoiceId });
+    assert.equal(result.fulfilledLines, 1);
+    assert.equal(result.idempotent, false);
+
+    const state = await rowsForInvoice(issued.invoiceId);
+    assert.equal(state.lines[0]?.quantityFulfilled, 1);
+    assert.equal(state.movements.length, 1);
+    assert.equal(state.movements[0]?.type, "sale");
+    assert.equal(state.movements[0]?.quantityAfter, 1);
   });
 
   it("validates every selected line belongs to the target invoice", async () => {

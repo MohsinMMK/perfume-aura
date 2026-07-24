@@ -2,6 +2,9 @@
 
 Internal ops app (inventory → invoicing → payments → finance).
 
+Product intent, user journeys, and design principles are defined in
+[`PRODUCT.md`](./PRODUCT.md).
+
 ## Dev
 
 From monorepo root:
@@ -36,6 +39,28 @@ Health endpoints:
 
 - `/api/health/live` — process only
 - `/api/health/ready` — generic database readiness
+
+## Catalog and operations behavior
+
+- Products and variants support create, edit, archive, and explicit
+  reactivation. Records are never hard-deleted.
+- Product archive is atomic across its active variants and preserves stock
+  balances and movement history. Reactivating a product does not silently
+  reactivate its variants; each SKU must be reviewed and restored explicitly.
+- Archived products and variants remain visible in catalog detail/history but
+  are excluded from new stock and invoice selectors.
+- Manual receive/adjust also rechecks active product and variant state inside
+  the database transaction. Exact retries remain replayable after archival;
+  already-issued invoice lines may still fulfill as the explicit in-flight
+  exception.
+- Products, customers, invoices, payments, and stock movements use bounded
+  server pagination with URL-backed filters and stable ordering.
+- Invoice detail paginates its own payment history with `paymentsPage`, total
+  metadata, and canonical URL recovery instead of presenting a truncated list.
+- Sale movements label captured fulfillment-time COGS separately from
+  migration-time legacy estimates.
+- Protected layouts use the cached request session and only the low-stock count;
+  full dashboard metrics are loaded on `/dashboard`.
 
 ## shadcn (official only)
 

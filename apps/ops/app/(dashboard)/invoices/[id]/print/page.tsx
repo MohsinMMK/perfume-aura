@@ -86,7 +86,7 @@ export default async function InvoicePrintPage({
         </tbody>
       </table>
 
-      <div className="ml-auto w-48 space-y-1 text-sm">
+      <div className="ml-auto flex w-48 flex-col gap-1 text-sm">
         <div className="flex justify-between">
           <span>Subtotal</span>
           <span className="tabular-nums">{formatPkr(inv.subtotalCents)}</span>

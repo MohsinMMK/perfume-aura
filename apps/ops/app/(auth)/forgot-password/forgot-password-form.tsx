@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
-import { Button } from "@perfume-aura/ui/components/button";
+import {
+  Button,
+  buttonVariants,
+} from "@perfume-aura/ui/components/button";
 import {
   Field,
   FieldDescription,
@@ -12,6 +15,7 @@ import {
 import { Input } from "@perfume-aura/ui/components/input";
 import { Spinner } from "@perfume-aura/ui/components/spinner";
 import { authClient } from "@/lib/auth-client";
+import { cn } from "@perfume-aura/ui/lib/utils";
 
 const GENERIC_RESET_MESSAGE =
   "If that email belongs to the owner account, a reset link will be sent.";
@@ -41,7 +45,7 @@ export function ForgotPasswordForm() {
 
   if (submitted) {
     return (
-      <div className="space-y-5 text-center">
+      <div className="flex flex-col gap-5 text-center">
         <p
           className="text-sm text-muted-foreground"
           role="status"
@@ -49,9 +53,12 @@ export function ForgotPasswordForm() {
         >
           {GENERIC_RESET_MESSAGE}
         </p>
-        <Button render={<Link href="/login" />} variant="outline">
+        <Link
+          href="/login"
+          className={buttonVariants({ variant: "outline" })}
+        >
           Back to sign in
-        </Button>
+        </Link>
       </div>
     );
   }
@@ -76,19 +83,22 @@ export function ForgotPasswordForm() {
           </FieldDescription>
         </Field>
 
-        <Button type="submit" className="w-full" disabled={pending}>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={pending}
+          focusableWhenDisabled={pending}
+        >
           {pending ? <Spinner data-icon="inline-start" /> : null}
           {pending ? "Requesting…" : "Send reset link"}
         </Button>
 
-        <Button
-          render={<Link href="/login" />}
-          type="button"
-          variant="ghost"
-          className="w-full"
+        <Link
+          href="/login"
+          className={cn(buttonVariants({ variant: "ghost" }), "w-full")}
         >
           Back to sign in
-        </Button>
+        </Link>
       </FieldGroup>
     </form>
   );

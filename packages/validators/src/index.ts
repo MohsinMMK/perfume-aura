@@ -79,6 +79,30 @@ export const createVariantSchema = variantFormSchema.extend({
 
 export const archiveProductSchema = z.object({
   productId: z.string().uuid(),
+  expectedUpdatedAt: z.string().datetime(),
+});
+
+export const updateProductSchema = z.object({
+  productId: z.string().uuid(),
+  expectedUpdatedAt: z.string().datetime(),
+  name: z.string().trim().min(1, "Name is required").max(200),
+  brand: z.string().max(200).optional(),
+  category: z.string().max(100).optional(),
+  description: z.string().max(5000).optional(),
+});
+
+export const reactivateProductSchema = archiveProductSchema;
+
+export const updateVariantSchema = variantFormSchema.extend({
+  productId: z.string().uuid(),
+  variantId: z.string().uuid(),
+  expectedVersion: z.number().int().min(0),
+});
+
+export const variantLifecycleSchema = z.object({
+  productId: z.string().uuid(),
+  variantId: z.string().uuid(),
+  expectedVersion: z.number().int().min(0),
 });
 
 export const receiveStockSchema = z.object({
@@ -101,6 +125,8 @@ export const adjustStockSchema = z.object({
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type CreateVariantInput = z.infer<typeof createVariantSchema>;
+export type UpdateProductInput = z.infer<typeof updateProductSchema>;
+export type UpdateVariantInput = z.infer<typeof updateVariantSchema>;
 export type ReceiveStockInput = z.infer<typeof receiveStockSchema>;
 export type AdjustStockInput = z.infer<typeof adjustStockSchema>;
 
