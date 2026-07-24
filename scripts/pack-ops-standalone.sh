@@ -361,6 +361,40 @@ if [[ -n "$SECRET_FIND" ]]; then
   exit 1
 fi
 
+# Sharp is packed for TARGET_OS (linux on Hostinger). Local Mac cannot dlopen linux
+# natives — so require('sharp') only when host matches target; otherwise verify tree.
+smoke_sharp_tree() {
+  local root="$1" label="$2"
+  local nm="$root/node_modules"
+  test -f "$nm/sharp/package.json"
+  test -d "$nm/semver" || test -f "$nm/semver/package.json"
+  test -d "$nm/detect-libc" || test -f "$nm/detect-libc/package.json"
+  # linux Hostinger target must ship @img linux binaries
+  if [[ "$TARGET_OS" == "linux" ]]; then
+    shopt -s nullglob
+    local imgs=( "$nm"/@img/sharp-linux-* "$nm"/@img/sharp-libvips-linux-* )
+    shopt -u nullglob
+    if [[ "${#imgs[@]}" -lt 1 ]]; then
+      echo "ERROR: ${label}: missing @img/sharp-linux-* natives for Hostinger" >&2
+      return 1
+    fi
+  fi
+  local host_os
+  case "$(uname -s)" in
+    Linux*) host_os=linux ;;
+    Darwin*) host_os=darwin ;;
+    *) host_os=other ;;
+  esac
+  if [[ "$host_os" == "$TARGET_OS" ]]; then
+    (
+      cd "$root"
+      node -e "require('sharp'); console.log('${label}: sharp native ok')"
+    )
+  else
+    echo "${label}: sharp tree ok (skip native require; host=${host_os} target=${TARGET_OS})"
+  fi
+}
+
 echo "==> Stage smoke (next + sharp + static from apps/ops)…"
 (
   cd "$STAGE/apps/ops"
@@ -368,8 +402,8 @@ echo "==> Stage smoke (next + sharp + static from apps/ops)…"
   test -d node_modules/next
   test -d .next/static
   node -e "require('next'); require('next/dist/shared/lib/constants'); console.log('stage-smoke: next ok')"
-  node -e "require('sharp'); console.log('stage-smoke: sharp ok')"
 )
+smoke_sharp_tree "$STAGE/apps/ops" "stage-smoke"
 
 echo "==> Zipping → $ZIP_PATH"
 mkdir -p "$OUT_DIR"
@@ -408,8 +442,8 @@ fi
     exit 1
   fi
   node -e "require('next'); require('next/dist/shared/lib/constants'); console.log('zip-smoke: next ok')"
-  node -e "require('sharp'); console.log('zip-smoke: sharp ok')"
 )
+smoke_sharp_tree "$VERIFY/apps/ops" "zip-smoke"
 rm -rf "$VERIFY"
 
 # Cleanup stage (keep zip only)
