@@ -113,11 +113,29 @@ For each phase, append:
 
 ## Phase 03 — Transactional business workflows
 
-Status: pending
-Implementation agent: pending
-Independent reviewer: pending
-Concurrency/idempotency evidence: pending
-Rollback evidence: pending
+| Item | Evidence |
+|---|---|
+| Status | Completed and root-approved |
+| Started from | Phase 02 commit `cc0e76e` |
+| Completed | 2026-07-24 22:16 IST |
+| Root agent | `/root` |
+| Implementation agent | `/root/db_integrity_research` — Phase 03 transactions, domain workflows, server-action adapters, timezone handling, and tests only |
+| Independent reviewer | `/root/security_auth_research` — two correction rounds plus final read-only approval; no provider access or edits |
+| Official workflow | Drizzle interactive transactions over `pg`; explicit PostgreSQL `READ COMMITTED` and read-write mode; complete-transaction retry only for SQLSTATE `40001`/`40P01`; Next.js Server Actions authenticate before validation/domain work and revalidate only after commit |
+| Domain result | Atomic product plus initial variant, invoice line totals, invoice issue/numbering, payment/numbering/cache reconciliation, whole-request fulfillment, void, product archive, and inventory movement primitives |
+| Concurrency result | Fixed aggregate/child/variant/counter lock order; counter upsert instead of `max + 1`; competing payment/void and fulfillment/void races end in one valid state; multi-line fulfillment rolls back wholly; aggregate same-variant demand is checked before writes |
+| Idempotency result | Exact payment replay validates invoice, amount, method, and effective time; manual receive/adjust use stable client UUIDs and full normalized payload checks; fulfillment keys are deterministic; cache invalidation cannot turn a committed stock mutation into an action failure |
+| Cost/time result | New sale movements capture cost snapshots; finance separates captured COGS, legacy-current estimates, and missing-snapshot defects; strict datetime-local parsing and all business displays use validated `BUSINESS_TIMEZONE` with default `Asia/Karachi` |
+| Root PostgreSQL gate | Fresh PostgreSQL `16.14`, migrations through `0006`, Node `24.18.0`; Phase 03 37/37 and full DB 72/72 passed; ops 15/15 passed |
+| Root application gate | Frozen install, production high audit gate, marketing check, lint, DB and ops typechecks, Next production build, standalone pack smoke, and `git diff --check` passed |
+| Root package artifact | `dist/perfume-aura-standalone_20260724.zip`, 26,137,944 bytes, SHA-256 `18745be1eff092d52d80fbc2849493467fd9c501d7c5a54fc84b246486f6ba66`; local verification only, not deployed |
+| Root-gate correction | The first root run correctly refused `perfume_aura_phase03_root_admin` because the disposable guard still hard-coded Phase 02. The guard was tightened to exact loopback `perfume_aura_phaseNN_<purpose>` names, retained Phase 02 compatibility, and passed an independent fresh Phase 02 migration proof. |
+| Review disposition | Initial P1 for manual stock retry duplication was corrected with end-to-end UUID idempotency and best-effort post-commit revalidation; final workflow and guard reviews approved |
+| Accepted residual risk | Final required payment/cost constraints and stock append-only trigger remain intentionally ordered after the Phase 04 Better Auth expansion migration; payment immutability remains deferred until a valid reversal model exists; legacy COGS remains explicitly an estimate |
+| Disposable infrastructure | Implementation, review, guard-compatibility, and root PostgreSQL containers removed and verified absent |
+| Provider changes | None — no Neon, Hostinger, production, staging, DNS, email, GitHub push, or deployment access |
+| Rollback evidence | Revert this scoped commit before provider rollout; Phase 03 adds no migration and has not changed any external database. Phase 02-compatible schema remains usable by the pre-Phase-03 code if the whole commit is reverted. |
+| Commit | The scoped Phase 03 commit containing this log |
 
 ## Phase 04 — Authentication security and recovery
 

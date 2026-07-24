@@ -1,27 +1,30 @@
 "use server";
 
 import {
-  and,
-  applyMovement,
+  addInvoiceLine,
+  createInvoiceDraft,
   customers,
   db,
   desc,
+  DomainError,
   eq,
-  InventoryError,
+  fulfillInvoice,
   invoiceBalanceCents,
   invoiceLines,
   invoices,
-  lineTotalCents,
-  productVariants,
-  products,
-  remainingToFulfill,
+  issueInvoice,
+  parseBusinessDateTime,
+  recordRemainingInvoiceBalance,
+  removeInvoiceLine,
   sql,
+  voidInvoice,
 } from "@perfume-aura/db";
 import {
   createInvoiceDraftSchema,
   fulfillInvoiceSchema,
   invoiceIdSchema,
   invoiceLineSchema,
+  markInvoicePaidSchema,
   removeInvoiceLineSchema,
 } from "@perfume-aura/validators";
 import { revalidatePath } from "next/cache";
@@ -91,53 +94,10 @@ function revalidateInvoicePaths(invoiceId?: string) {
   }
 }
 
-async function recalcInvoiceTotals(invoiceId: string) {
-  const lines = await db
-    .select({ lineTotalCents: invoiceLines.lineTotalCents })
-    .from(invoiceLines)
-    .where(eq(invoiceLines.invoiceId, invoiceId));
-
-  const subtotal = lines.reduce((s, l) => s + l.lineTotalCents, 0);
-  await db
-    .update(invoices)
-    .set({
-      subtotalCents: subtotal,
-      taxCents: 0,
-      totalCents: subtotal,
-      updatedAt: new Date(),
-    })
-    .where(eq(invoices.id, invoiceId));
-}
-
-async function assertDraft(invoiceId: string) {
-  const [inv] = await db
-    .select({ status: invoices.status })
-    .from(invoices)
-    .where(eq(invoices.id, invoiceId))
-    .limit(1);
-  if (!inv) throw new Error("Invoice not found");
-  if (inv.status !== "draft") throw new Error("Only draft invoices can be edited");
-  return inv;
-}
-
-/** Next INV-YYYY-#### within a transaction-friendly query. */
-async function allocateInvoiceNumber(): Promise<string> {
-  const year = new Date().getFullYear();
-  const prefix = `INV-${year}-`;
-  const [row] = await db
-    .select({
-      maxNum: sql<string | null>`max(${invoices.number})`,
-    })
-    .from(invoices)
-    .where(sql`${invoices.number} like ${prefix + "%"}`);
-
-  let next = 1;
-  if (row?.maxNum) {
-    const tail = row.maxNum.slice(prefix.length);
-    const n = Number.parseInt(tail, 10);
-    if (Number.isFinite(n)) next = n + 1;
-  }
-  return `${prefix}${String(next).padStart(4, "0")}`;
+function expectedDomainFailure(error: unknown, fallback: string) {
+  if (error instanceof DomainError) return actionError(error.message);
+  console.error(`[invoice-action] ${fallback}`, error);
+  return actionError(fallback);
 }
 
 export async function listInvoices(opts?: {
@@ -145,20 +105,12 @@ export async function listInvoices(opts?: {
 }): Promise<InvoiceListItem[]> {
   await requireSession();
   const status = opts?.status ?? "all";
-
-  const conditions = [];
-  if (status === "ar") {
-    conditions.push(eq(invoices.status, "issued"));
-  } else if (status !== "all") {
-    conditions.push(eq(invoices.status, status));
-  }
-
   const where =
-    conditions.length === 0
-      ? undefined
-      : conditions.length === 1
-        ? conditions[0]
-        : and(...conditions);
+    status === "ar"
+      ? eq(invoices.status, "issued")
+      : status === "all"
+        ? undefined
+        : eq(invoices.status, status);
 
   const rows = await db
     .select({
@@ -177,9 +129,12 @@ export async function listInvoices(opts?: {
     .where(where)
     .orderBy(desc(invoices.createdAt));
 
-  return rows.map((r) => ({
-    ...r,
-    balanceCents: invoiceBalanceCents(r.totalCents, r.amountPaidCents),
+  return rows.map((row) => ({
+    ...row,
+    balanceCents: invoiceBalanceCents(
+      row.totalCents,
+      row.amountPaidCents,
+    ),
   }));
 }
 
@@ -194,12 +149,10 @@ export async function getOpenArTotalCents(): Promise<number> {
   return Number(row?.total ?? 0);
 }
 
-export async function getInvoice(
-  id: string,
-): Promise<InvoiceDetail | null> {
+export async function getInvoice(id: string): Promise<InvoiceDetail | null> {
   await requireSession();
 
-  const [inv] = await db
+  const [invoice] = await db
     .select({
       id: invoices.id,
       number: invoices.number,
@@ -225,7 +178,7 @@ export async function getInvoice(
     .where(eq(invoices.id, id))
     .limit(1);
 
-  if (!inv) return null;
+  if (!invoice) return null;
 
   const lines = await db
     .select({
@@ -243,8 +196,11 @@ export async function getInvoice(
     .orderBy(invoiceLines.position, invoiceLines.createdAt);
 
   return {
-    ...inv,
-    balanceCents: invoiceBalanceCents(inv.totalCents, inv.amountPaidCents),
+    ...invoice,
+    balanceCents: invoiceBalanceCents(
+      invoice.totalCents,
+      invoice.amountPaidCents,
+    ),
     lines,
   };
 }
@@ -261,35 +217,22 @@ export async function createInvoiceDraftAction(
 
   const parsed = createInvoiceDraftSchema.safeParse(raw);
   if (!parsed.success) {
-    return actionError("Please fix the form errors", zodFieldErrors(parsed.error));
+    return actionError(
+      "Please fix the form errors",
+      zodFieldErrors(parsed.error),
+    );
   }
 
   try {
-    const [cust] = await db
-      .select({ id: customers.id, status: customers.status })
-      .from(customers)
-      .where(eq(customers.id, parsed.data.customerId))
-      .limit(1);
-    if (!cust || cust.status !== "active") {
-      return actionError("Select an active customer");
-    }
-
-    const [inv] = await db
-      .insert(invoices)
-      .values({
-        customerId: parsed.data.customerId,
-        status: "draft",
-        notes: parsed.data.notes?.trim() || null,
-        createdBy: session.user.id,
-      })
-      .returning({ id: invoices.id });
-
-    if (!inv) return actionError("Failed to create invoice");
-    revalidateInvoicePaths(inv.id);
-    return actionOk({ invoiceId: inv.id });
-  } catch (err) {
-    console.error("[createInvoiceDraft]", err);
-    return actionError("Could not create invoice");
+    const result = await createInvoiceDraft({
+      customerId: parsed.data.customerId,
+      notes: parsed.data.notes?.trim() || null,
+      createdBy: session.user.id,
+    });
+    revalidateInvoicePaths(result.invoiceId);
+    return actionOk(result);
+  } catch (error) {
+    return expectedDomainFailure(error, "Could not create invoice");
   }
 }
 
@@ -304,72 +247,24 @@ export async function addInvoiceLineAction(
 
   const parsed = invoiceLineSchema.safeParse(raw);
   if (!parsed.success) {
-    return actionError("Please fix the form errors", zodFieldErrors(parsed.error));
+    return actionError(
+      "Please fix the form errors",
+      zodFieldErrors(parsed.error),
+    );
   }
 
   try {
-    await assertDraft(parsed.data.invoiceId);
-
-    let description = parsed.data.description.trim();
-    const variantId: string | null =
-      parsed.data.variantId && parsed.data.variantId.length > 0
-        ? parsed.data.variantId
-        : null;
-    let unitPriceCents = rupeesToCents(parsed.data.unitPrice);
-
-    if (variantId) {
-      const [v] = await db
-        .select({
-          id: productVariants.id,
-          sku: productVariants.sku,
-          sizeMl: productVariants.sizeMl,
-          retailCents: productVariants.retailCents,
-          productName: products.name,
-          status: productVariants.status,
-        })
-        .from(productVariants)
-        .innerJoin(products, eq(products.id, productVariants.productId))
-        .where(eq(productVariants.id, variantId))
-        .limit(1);
-
-      if (!v || v.status !== "active") {
-        return actionError("Variant not found or inactive");
-      }
-      description =
-        description ||
-        `${v.productName} · ${v.sizeMl}ml · ${v.sku}`;
-      if (parsed.data.unitPrice === 0) {
-        unitPriceCents = v.retailCents;
-      }
-    }
-
-    const [posRow] = await db
-      .select({
-        maxPos: sql<number>`coalesce(max(${invoiceLines.position}), -1)::int`,
-      })
-      .from(invoiceLines)
-      .where(eq(invoiceLines.invoiceId, parsed.data.invoiceId));
-
-    const position = Number(posRow?.maxPos ?? -1) + 1;
-    const total = lineTotalCents(parsed.data.quantity, unitPriceCents);
-
-    await db.insert(invoiceLines).values({
+    await addInvoiceLine({
       invoiceId: parsed.data.invoiceId,
-      position,
-      variantId,
-      description,
+      variantId: parsed.data.variantId || null,
+      description: parsed.data.description,
       quantity: parsed.data.quantity,
-      unitPriceCents,
-      lineTotalCents: total,
-      quantityFulfilled: 0,
+      unitPriceCents: rupeesToCents(parsed.data.unitPrice),
     });
-
-    await recalcInvoiceTotals(parsed.data.invoiceId);
     revalidateInvoicePaths(parsed.data.invoiceId);
     return actionOk();
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Could not add line";
-    return actionError(msg);
+  } catch (error) {
+    return expectedDomainFailure(error, "Could not add line");
   }
 }
 
@@ -386,21 +281,11 @@ export async function removeInvoiceLineAction(
   if (!parsed.success) return actionError("Invalid line");
 
   try {
-    await assertDraft(parsed.data.invoiceId);
-    await db
-      .delete(invoiceLines)
-      .where(
-        and(
-          eq(invoiceLines.id, parsed.data.lineId),
-          eq(invoiceLines.invoiceId, parsed.data.invoiceId),
-        ),
-      );
-    await recalcInvoiceTotals(parsed.data.invoiceId);
+    await removeInvoiceLine(parsed.data);
     revalidateInvoicePaths(parsed.data.invoiceId);
     return actionOk();
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Could not remove line";
-    return actionError(msg);
+  } catch (error) {
+    return expectedDomainFailure(error, "Could not remove line");
   }
 }
 
@@ -417,34 +302,11 @@ export async function issueInvoiceAction(
   if (!parsed.success) return actionError("Invalid invoice");
 
   try {
-    const detail = await getInvoice(parsed.data.invoiceId);
-    if (!detail) return actionError("Invoice not found");
-    if (detail.status !== "draft") {
-      return actionError("Only draft invoices can be issued");
-    }
-    if (detail.lines.length === 0) {
-      return actionError("Add at least one line before issuing");
-    }
-
-    const number = await allocateInvoiceNumber();
-    const today = new Date().toISOString().slice(0, 10);
-
-    await db
-      .update(invoices)
-      .set({
-        status: "issued",
-        number,
-        issueDate: today,
-        issuedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(invoices.id, parsed.data.invoiceId));
-
+    const result = await issueInvoice(parsed.data.invoiceId);
     revalidateInvoicePaths(parsed.data.invoiceId);
-    return actionOk({ number });
-  } catch (err) {
-    console.error("[issueInvoice]", err);
-    return actionError("Could not issue invoice");
+    return actionOk({ number: result.number });
+  } catch (error) {
+    return expectedDomainFailure(error, "Could not issue invoice");
   }
 }
 
@@ -461,102 +323,46 @@ export async function voidInvoiceAction(
   if (!parsed.success) return actionError("Invalid invoice");
 
   try {
-    const [inv] = await db
-      .select({
-        status: invoices.status,
-        id: invoices.id,
-      })
-      .from(invoices)
-      .where(eq(invoices.id, parsed.data.invoiceId))
-      .limit(1);
-
-    if (!inv) return actionError("Invoice not found");
-    if (inv.status !== "issued") {
-      return actionError("Only issued invoices can be voided");
-    }
-
-    const lines = await db
-      .select({ quantityFulfilled: invoiceLines.quantityFulfilled })
-      .from(invoiceLines)
-      .where(eq(invoiceLines.invoiceId, inv.id));
-
-    const anyFulfilled = lines.some((l) => l.quantityFulfilled > 0);
-    if (anyFulfilled) {
-      return actionError(
-        "Cannot void: stock already fulfilled. Reverse stock with receive/return first.",
-      );
-    }
-
-    await db
-      .update(invoices)
-      .set({
-        status: "void",
-        voidedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(invoices.id, inv.id));
-
-    revalidateInvoicePaths(inv.id);
+    await voidInvoice(parsed.data.invoiceId);
+    revalidateInvoicePaths(parsed.data.invoiceId);
     return actionOk();
-  } catch (err) {
-    console.error("[voidInvoice]", err);
-    return actionError("Could not void invoice");
+  } catch (error) {
+    return expectedDomainFailure(error, "Could not void invoice");
   }
 }
 
-/**
- * Mark remaining balance as paid via a cash payment row (Phase 3 path).
- * Prefer explicit recordPaymentAction for partials / other methods.
- */
+/** Record the authoritative remaining balance through the payment primitive. */
 export async function markInvoicePaidAction(
   raw: unknown,
 ): Promise<ActionResult> {
+  let session;
   try {
-    await requireSession();
+    session = await requireSession();
   } catch {
     return actionError("You must be signed in");
   }
 
-  const parsed = invoiceIdSchema.safeParse(raw);
-  if (!parsed.success) return actionError("Invalid invoice");
+  const parsed = markInvoicePaidSchema.safeParse(raw);
+  if (!parsed.success) return actionError("Invalid payment request");
 
   try {
-    const [inv] = await db
-      .select()
-      .from(invoices)
-      .where(eq(invoices.id, parsed.data.invoiceId))
-      .limit(1);
-
-    if (!inv) return actionError("Invoice not found");
-    if (inv.status !== "issued") {
-      return actionError("Only issued invoices can be marked paid");
-    }
-
-    const remaining = inv.totalCents - inv.amountPaidCents;
-    if (remaining <= 0) {
-      return actionError("Nothing left to pay");
-    }
-
-    // Delegate to payment ledger (no stock side effects)
-    const { recordPaymentAction } = await import("@/lib/payments");
-    const result = await recordPaymentAction({
-      invoiceId: inv.id,
-      amount: remaining / 100,
+    await recordRemainingInvoiceBalance({
+      invoiceId: parsed.data.invoiceId,
+      idempotencyKey: parsed.data.idempotencyKey,
       method: "cash",
+      paidAt: parseBusinessDateTime(parsed.data.paidAt),
       note: "Marked paid (full remaining balance)",
+      createdBy: session.user.id,
     });
-    if (!result.ok) return result;
+    revalidateInvoicePaths(parsed.data.invoiceId);
+    revalidatePath("/payments");
+    revalidatePath("/finance");
     return actionOk();
-  } catch (err) {
-    console.error("[markInvoicePaid]", err);
-    return actionError("Could not mark paid");
+  } catch (error) {
+    return expectedDomainFailure(error, "Could not mark paid");
   }
 }
 
-/**
- * Fulfill remaining (or selected) variant lines → sale movements with invoice ref.
- * Does not run on free-text lines (no variant).
- */
 export async function fulfillInvoiceAction(
   raw: unknown,
 ): Promise<ActionResult<{ fulfilledLines: number }>> {
@@ -571,78 +377,18 @@ export async function fulfillInvoiceAction(
   if (!parsed.success) return actionError("Invalid request");
 
   try {
-    const [inv] = await db
-      .select({ id: invoices.id, status: invoices.status })
-      .from(invoices)
-      .where(eq(invoices.id, parsed.data.invoiceId))
-      .limit(1);
-
-    if (!inv) return actionError("Invoice not found");
-    if (inv.status !== "issued" && inv.status !== "paid") {
-      return actionError("Only issued or paid invoices can be fulfilled");
-    }
-
-    let lines = await db
-      .select()
-      .from(invoiceLines)
-      .where(eq(invoiceLines.invoiceId, inv.id));
-
-    if (parsed.data.lineIds && parsed.data.lineIds.length > 0) {
-      const set = new Set(parsed.data.lineIds);
-      lines = lines.filter((l) => set.has(l.id));
-    }
-
-    let fulfilledLines = 0;
-
-    for (const line of lines) {
-      if (!line.variantId) continue;
-      const remaining = remainingToFulfill(
-        line.quantity,
-        line.quantityFulfilled,
-      );
-      if (remaining <= 0) continue;
-
-      try {
-        await applyMovement({
-          variantId: line.variantId,
-          type: "sale",
-          quantity: remaining,
-          note: `Fulfill invoice ${inv.id.slice(0, 8)}`,
-          userId: session.user.id,
-          refType: "invoice",
-          refId: inv.id,
-          idempotencyKey: `fulfill:${line.id}:${line.quantityFulfilled + remaining}`,
-        });
-      } catch (err) {
-        if (err instanceof InventoryError) {
-          return actionError(
-            `Stock: ${err.message} (line: ${line.description})`,
-          );
-        }
-        throw err;
-      }
-
-      await db
-        .update(invoiceLines)
-        .set({ quantityFulfilled: line.quantityFulfilled + remaining })
-        .where(eq(invoiceLines.id, line.id));
-
-      fulfilledLines += 1;
-    }
-
-    if (fulfilledLines === 0) {
-      return actionError(
-        "Nothing to fulfill (no variant lines with remaining qty)",
-      );
-    }
-
-    revalidateInvoicePaths(inv.id);
+    const result = await fulfillInvoice({
+      invoiceId: parsed.data.invoiceId,
+      lineIds: parsed.data.lineIds,
+      userId: session.user.id,
+    });
+    revalidateInvoicePaths(parsed.data.invoiceId);
     revalidatePath("/stock");
     revalidatePath("/stock/low");
     revalidatePath("/products");
-    return actionOk({ fulfilledLines });
-  } catch (err) {
-    console.error("[fulfillInvoice]", err);
-    return actionError("Fulfill failed");
+    revalidatePath("/finance");
+    return actionOk({ fulfilledLines: result.fulfilledLines });
+  } catch (error) {
+    return expectedDomainFailure(error, "Fulfill failed");
   }
 }

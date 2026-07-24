@@ -82,12 +82,14 @@ export const archiveProductSchema = z.object({
 });
 
 export const receiveStockSchema = z.object({
+  idempotencyKey: z.string().uuid(),
   variantId: z.string().uuid("Select a variant"),
   quantity: z.number().int().positive("Quantity must be a positive integer"),
   note: z.string().max(1000).optional(),
 });
 
 export const adjustStockSchema = z.object({
+  idempotencyKey: z.string().uuid(),
   variantId: z.string().uuid("Select a variant"),
   /** Signed delta: positive adds, negative removes. */
   quantityDelta: z
@@ -149,6 +151,12 @@ export const invoiceIdSchema = z.object({
   invoiceId: z.string().uuid(),
 });
 
+export const markInvoicePaidSchema = invoiceIdSchema.extend({
+  idempotencyKey: z.string().uuid(),
+  /** Stable UTC instant generated once per client request. */
+  paidAt: z.string().datetime({ offset: true }),
+});
+
 export const fulfillInvoiceSchema = z.object({
   invoiceId: z.string().uuid(),
   /** If empty, fulfill all remaining variant lines. */
@@ -172,11 +180,13 @@ export const paymentMethodSchema = z.enum([
 
 export const recordPaymentSchema = z.object({
   invoiceId: z.string().uuid(),
+  /** Stable across retries/double submissions; never generated server-side. */
+  idempotencyKey: z.string().uuid(),
   /** Major PKR (rupees) */
   amount: z.number().positive("Amount must be positive"),
   method: paymentMethodSchema.default("cash"),
-  /** ISO date or datetime string; default now server-side if omitted */
-  paidAt: z.string().optional(),
+  /** Stable ISO instant or datetime-local value, fixed for request retries. */
+  paidAt: z.string().min(1, "Payment date/time is required"),
   reference: z.string().max(120).optional(),
   note: z.string().max(1000).optional(),
 });

@@ -27,6 +27,7 @@ import {
   type ActionResult,
   zodFieldErrors,
 } from "@/lib/action-result";
+import { revalidateCommittedStockMutation } from "@/lib/stock-revalidation";
 
 export type LowStockRow = {
   variantId: string;
@@ -160,14 +161,14 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   };
 }
 
-function revalidateStockPaths(productId?: string) {
-  revalidatePath("/stock");
-  revalidatePath("/stock/low");
-  revalidatePath("/dashboard");
-  revalidatePath("/products");
-  if (productId) {
-    revalidatePath(`/products/${productId}`);
-  }
+function revalidateStockPaths(productId: string) {
+  revalidateCommittedStockMutation(
+    productId,
+    revalidatePath,
+    (error, path) => {
+      console.error(`[stock action] revalidation failed for ${path}`, error);
+    },
+  );
 }
 
 export async function receiveStockAction(
@@ -185,28 +186,29 @@ export async function receiveStockAction(
     return actionError("Please fix the form errors", zodFieldErrors(parsed.error));
   }
 
-  const { variantId, quantity, note }: ReceiveStockInput = parsed.data;
+  const {
+    idempotencyKey,
+    variantId,
+    quantity,
+    note,
+  }: ReceiveStockInput = parsed.data;
 
+  let result: Awaited<ReturnType<typeof applyMovement>>;
   try {
-    const result = await applyMovement({
+    result = await applyMovement({
       variantId,
       type: "receive",
       quantity,
       note: note?.trim() || undefined,
       userId: session.user.id,
+      idempotencyKey,
     });
-
-    const [v] = await db
-      .select({ productId: productVariants.productId })
-      .from(productVariants)
-      .where(eq(productVariants.id, variantId))
-      .limit(1);
-
-    revalidateStockPaths(v?.productId);
-    return actionOk({ quantityAfter: result.quantityAfter });
   } catch (err) {
     return movementError(err);
   }
+
+  revalidateStockPaths(result.productId);
+  return actionOk({ quantityAfter: result.quantityAfter });
 }
 
 export async function adjustStockAction(
@@ -224,28 +226,29 @@ export async function adjustStockAction(
     return actionError("Please fix the form errors", zodFieldErrors(parsed.error));
   }
 
-  const { variantId, quantityDelta, note }: AdjustStockInput = parsed.data;
+  const {
+    idempotencyKey,
+    variantId,
+    quantityDelta,
+    note,
+  }: AdjustStockInput = parsed.data;
 
+  let result: Awaited<ReturnType<typeof applyMovement>>;
   try {
-    const result = await applyMovement({
+    result = await applyMovement({
       variantId,
       type: "adjust",
       quantityDelta,
       note: note.trim(),
       userId: session.user.id,
+      idempotencyKey,
     });
-
-    const [v] = await db
-      .select({ productId: productVariants.productId })
-      .from(productVariants)
-      .where(eq(productVariants.id, variantId))
-      .limit(1);
-
-    revalidateStockPaths(v?.productId);
-    return actionOk({ quantityAfter: result.quantityAfter });
   } catch (err) {
     return movementError(err);
   }
+
+  revalidateStockPaths(result.productId);
+  return actionOk({ quantityAfter: result.quantityAfter });
 }
 
 function movementError(err: unknown): ActionResult<never> {

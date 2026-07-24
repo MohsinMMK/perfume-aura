@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { Button } from "@perfume-aura/ui/components/button";
 import {
   Card,
@@ -29,6 +29,10 @@ export function RecordPaymentForm({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [okMsg, setOkMsg] = useState<string | null>(null);
+  const requestRef = useRef<{
+    idempotencyKey: string;
+    paidAt: string;
+  } | null>(null);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -36,15 +40,20 @@ export function RecordPaymentForm({
     setError(null);
     setOkMsg(null);
     const fd = new FormData(e.currentTarget);
+    requestRef.current ??= {
+      idempotencyKey: crypto.randomUUID(),
+      paidAt: String(fd.get("paidAt") ?? "") || new Date().toISOString(),
+    };
     const result = await recordPaymentAction({
       invoiceId,
+      idempotencyKey: requestRef.current.idempotencyKey,
       amount: Number(fd.get("amount")),
       method: String(fd.get("method") ?? "cash") as
         | "cash"
         | "bank_transfer"
         | "card"
         | "other",
-      paidAt: String(fd.get("paidAt") ?? "") || undefined,
+      paidAt: requestRef.current.paidAt,
       reference: String(fd.get("reference") ?? "").trim() || undefined,
       note: String(fd.get("note") ?? "").trim() || undefined,
     });
@@ -53,6 +62,7 @@ export function RecordPaymentForm({
       setError(result.error);
       return;
     }
+    requestRef.current = null;
     setOkMsg(
       result.data?.fullyPaid
         ? "Payment recorded — invoice fully paid."

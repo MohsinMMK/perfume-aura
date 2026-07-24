@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@perfume-aura/ui/components/button";
 import { cn } from "@perfume-aura/ui/lib/utils";
@@ -23,6 +23,10 @@ export function InvoiceStatusActions({
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const markPaidRequest = useRef<{
+    idempotencyKey: string;
+    paidAt: string;
+  } | null>(null);
 
   async function run(
     fn: () => Promise<{ ok: boolean; error?: string }>,
@@ -63,10 +67,16 @@ export function InvoiceStatusActions({
               type="button"
               disabled={pending}
               onClick={() =>
-                run(
-                  () => markInvoicePaidAction({ invoiceId }),
-                  "Mark fully paid (manual Phase 2)?",
-                )
+                run(() => {
+                  markPaidRequest.current ??= {
+                    idempotencyKey: crypto.randomUUID(),
+                    paidAt: new Date().toISOString(),
+                  };
+                  return markInvoicePaidAction({
+                    invoiceId,
+                    ...markPaidRequest.current,
+                  });
+                }, "Record the full remaining balance as a cash payment?")
               }
             >
               Mark paid

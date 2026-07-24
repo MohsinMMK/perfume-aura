@@ -6,6 +6,7 @@
  * dotenv files. Skip when unset so CI without local PostgreSQL still runs.
  */
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { describe, it, before, after } from "node:test";
 import { eq } from "drizzle-orm";
 import { requireDisposableTestDatabaseUrl } from "./test-database-guard";
@@ -199,30 +200,32 @@ describe("applyMovement integration", { skip: !hasDb }, () => {
     assert.equal(v?.quantityOnHand, 2);
   });
 
-  it("idempotency key does not double-apply", async () => {
+  it("exact receive replay returns the original movement without double-applying", async () => {
     await db
       .update(productVariants)
       .set({ quantityOnHand: 5, qtyReserved: 0 })
       .where(eq(productVariants.id, variantId));
 
-    const key = `idem-${variantId}-receive-1`;
-    const first = await applyMovement({
+    const key = randomUUID();
+    const input = {
       variantId,
-      type: "receive",
+      type: "receive" as const,
       quantity: 1,
+      note: "PO-RECEIVE-1",
+      userId: "stock-user-a",
+      refType: "manual-receive",
+      refId: "receive-request-1",
       idempotencyKey: key,
-    });
-    const second = await applyMovement({
-      variantId,
-      type: "receive",
-      quantity: 1,
-      idempotencyKey: key,
-    });
+    };
+    const first = await applyMovement(input);
+    const second = await applyMovement(input);
 
     assert.equal(first.idempotent, false);
     assert.equal(second.idempotent, true);
     assert.equal(first.movementId, second.movementId);
     assert.equal(first.quantityAfter, second.quantityAfter);
+    assert.equal(first.productId, productId);
+    assert.equal(second.productId, productId);
 
     const [v] = await db
       .select({ quantityOnHand: productVariants.quantityOnHand })
@@ -231,6 +234,95 @@ describe("applyMovement integration", { skip: !hasDb }, () => {
       .limit(1);
 
     assert.equal(v?.quantityOnHand, 6);
+
+    const conflicts = [
+      { ...input, quantity: 2 },
+      { ...input, note: "different receive note" },
+      { ...input, userId: "stock-user-b" },
+      { ...input, refId: "different-receive-request" },
+    ];
+
+    for (const conflict of conflicts) {
+      await assert.rejects(
+        () => applyMovement(conflict),
+        (error: unknown) =>
+          error instanceof InventoryError &&
+          error.code === "IDEMPOTENCY_CONFLICT",
+      );
+    }
+
+    const [afterConflict] = await db
+      .select({ quantityOnHand: productVariants.quantityOnHand })
+      .from(productVariants)
+      .where(eq(productVariants.id, variantId))
+      .limit(1);
+    assert.equal(afterConflict?.quantityOnHand, 6);
+
+    const movementsForKey = await db
+      .select()
+      .from(stockMovements)
+      .where(eq(stockMovements.idempotencyKey, key));
+    assert.equal(movementsForKey.length, 1);
+    assert.equal(movementsForKey[0]?.note, input.note);
+    assert.equal(movementsForKey[0]?.createdBy, input.userId);
+  });
+
+  it("exact adjustment replay is idempotent and mismatched key reuse is rejected", async () => {
+    await db
+      .update(productVariants)
+      .set({ quantityOnHand: 10, qtyReserved: 0 })
+      .where(eq(productVariants.id, variantId));
+
+    const key = randomUUID();
+    const input = {
+      variantId,
+      type: "adjust" as const,
+      quantityDelta: -2,
+      note: "Cycle count correction",
+      userId: "stock-user-a",
+      idempotencyKey: key,
+    };
+
+    const first = await applyMovement(input);
+    const second = await applyMovement(input);
+
+    assert.equal(first.idempotent, false);
+    assert.equal(second.idempotent, true);
+    assert.equal(first.movementId, second.movementId);
+    assert.equal(first.quantityAfter, 8);
+    assert.equal(second.quantityAfter, 8);
+    assert.equal(first.productId, productId);
+    assert.equal(second.productId, productId);
+
+    const conflicts = [
+      { ...input, quantityDelta: -3 },
+      { ...input, note: "Different adjustment reason" },
+      { ...input, userId: "stock-user-b" },
+    ];
+
+    for (const conflict of conflicts) {
+      await assert.rejects(
+        () => applyMovement(conflict),
+        (error: unknown) =>
+          error instanceof InventoryError &&
+          error.code === "IDEMPOTENCY_CONFLICT",
+      );
+    }
+
+    const [variant] = await db
+      .select({ quantityOnHand: productVariants.quantityOnHand })
+      .from(productVariants)
+      .where(eq(productVariants.id, variantId))
+      .limit(1);
+    assert.equal(variant?.quantityOnHand, 8);
+
+    const movementsForKey = await db
+      .select()
+      .from(stockMovements)
+      .where(eq(stockMovements.idempotencyKey, key));
+    assert.equal(movementsForKey.length, 1);
+    assert.equal(movementsForKey[0]?.note, input.note);
+    assert.equal(movementsForKey[0]?.createdBy, input.userId);
   });
 });
 

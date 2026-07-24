@@ -16,6 +16,7 @@ import { listPayments } from "@/lib/payments";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatPkr } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { formatBusinessDateTime } from "@/lib/business-date";
 
 export const dynamic = "force-dynamic";
 
@@ -30,13 +31,6 @@ function methodLabel(m: string) {
     default:
       return "Cash";
   }
-}
-
-function formatWhen(d: Date) {
-  return new Intl.DateTimeFormat("en-PK", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(d);
 }
 
 export default async function PaymentsPage() {
@@ -96,7 +90,7 @@ export default async function PaymentsPage() {
                       <Badge variant="secondary">{methodLabel(p.method)}</Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {formatWhen(p.paidAt)}
+                      {formatBusinessDateTime(p.paidAt)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatPkr(p.amountCents)}

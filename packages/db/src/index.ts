@@ -4,11 +4,73 @@ export * from "./schema";
 
 export {
   applyMovement,
+  applyMovementInTransaction,
   InventoryError,
   type ApplyMovementInput,
   type ApplyMovementResult,
   type StockMovementType,
 } from "./inventory";
+
+export {
+  DomainError,
+  domainErrorCodes,
+  type DomainErrorCode,
+} from "./domain-errors";
+
+export {
+  runDomainTransaction,
+  domainTransactionConfig,
+  retryableTransactionSqlStates,
+  MAX_TRANSACTION_ATTEMPTS,
+  postgresSqlState,
+  postgresConstraint,
+  isUniqueViolation,
+  type DbTransaction,
+} from "./transactions";
+
+export {
+  BUSINESS_TIMEZONE,
+  DEFAULT_BUSINESS_TIMEZONE,
+  validateBusinessTimeZone,
+  businessDateAt,
+  businessYearAt,
+  zonedDateTimeToInstant,
+  parseBusinessDateTime,
+  businessPeriodBounds,
+  businessMonthBounds,
+} from "./business-time";
+
+export { allocateDocumentNumberInTransaction } from "./document-numbers";
+
+export {
+  createProductWithInitialVariant,
+  createProductVariant,
+  archiveProduct,
+  type CreateProductWithInitialVariantInput,
+} from "./product-workflows";
+
+export {
+  createInvoiceDraft,
+  addInvoiceLine,
+  removeInvoiceLine,
+  recalculateInvoiceTotalsInTransaction,
+  issueInvoice,
+  voidInvoice,
+  fulfillInvoice,
+} from "./invoice-workflows";
+
+export {
+  recordPayment,
+  recordRemainingInvoiceBalance,
+  type PaymentMethod,
+  type RecordPaymentInput,
+  type PaymentOperationResult,
+} from "./payment-workflows";
+
+export {
+  getFinanceSnapshot,
+  type FinanceSnapshot,
+} from "./finance-workflows";
 
 export {
   availableQuantity,

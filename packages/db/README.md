@@ -97,7 +97,10 @@ TEST_DATABASE_URL='postgresql://...@127.0.0.1:55432/perfume_aura_phase02_admin' 
 ```
 
 The guard rejects missing, remote/provider, ambiguous, and production-like
-targets. It never loads `apps/ops/.env.local`.
+targets. It never loads `apps/ops/.env.local`. The shared guard accepts only
+lowercase names matching `perfume_aura_phaseNN_<purpose>` on loopback, so the
+Phase 02 tooling above remains compatible while later phase suites can use
+explicit names such as `perfume_aura_phase03_root_admin`.
 
 | Script | Purpose |
 |--------|---------|

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getInvoice } from "@/lib/invoices";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatPkr, formatQty } from "@/lib/money";
+import { formatBusinessDate } from "@/lib/business-date";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,9 @@ export default async function InvoicePrintPage({
           </p>
           <p className="text-sm uppercase tracking-wide">{inv.status}</p>
           {inv.issueDate ? (
-            <p className="text-sm text-neutral-600">Issued {inv.issueDate}</p>
+            <p className="text-sm text-neutral-600">
+              Issued {formatBusinessDate(inv.issueDate)}
+            </p>
           ) : null}
         </div>
       </div>

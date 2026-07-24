@@ -1,15 +1,17 @@
 "use server";
 
 import {
+  businessMonthBounds,
   customers,
   db,
   desc,
+  DomainError,
   eq,
   invoices,
-  isFullyPaid,
+  parseBusinessDateTime,
   payments,
+  recordPayment,
   sql,
-  wouldOverpay,
 } from "@perfume-aura/db";
 import { recordPaymentSchema } from "@perfume-aura/validators";
 import { revalidatePath } from "next/cache";
@@ -42,27 +44,9 @@ function revalidatePaymentPaths(invoiceId: string) {
   revalidatePath("/invoices");
   revalidatePath("/invoices/ar");
   revalidatePath("/dashboard");
+  revalidatePath("/finance");
   revalidatePath(`/invoices/${invoiceId}`);
   revalidatePath(`/invoices/${invoiceId}/print`);
-}
-
-async function allocatePaymentNumber(): Promise<string> {
-  const year = new Date().getFullYear();
-  const prefix = `PAY-${year}-`;
-  const [row] = await db
-    .select({
-      maxNum: sql<string | null>`max(${payments.number})`,
-    })
-    .from(payments)
-    .where(sql`${payments.number} like ${prefix + "%"}`);
-
-  let next = 1;
-  if (row?.maxNum) {
-    const tail = row.maxNum.slice(prefix.length);
-    const n = Number.parseInt(tail, 10);
-    if (Number.isFinite(n)) next = n + 1;
-  }
-  return `${prefix}${String(next).padStart(4, "0")}`;
 }
 
 export async function listPayments(opts?: {
@@ -73,8 +57,7 @@ export async function listPayments(opts?: {
   const where = opts?.invoiceId
     ? eq(payments.invoiceId, opts.invoiceId)
     : undefined;
-
-  const rows = await db
+  return db
     .select({
       id: payments.id,
       number: payments.number,
@@ -94,11 +77,8 @@ export async function listPayments(opts?: {
     .leftJoin(customers, eq(customers.id, payments.customerId))
     .where(where)
     .orderBy(desc(payments.paidAt), desc(payments.createdAt));
-
-  return rows;
 }
 
-/** Sum of payments with paid_at in [start, end). */
 export async function getCashCollectedCents(
   from: Date,
   to: Date,
@@ -114,17 +94,10 @@ export async function getCashCollectedCents(
 }
 
 export async function getCashCollectedThisMonthCents(): Promise<number> {
-  const now = new Date();
-  const from = new Date(now.getFullYear(), now.getMonth(), 1);
-  const to = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const { from, to } = businessMonthBounds();
   return getCashCollectedCents(from, to);
 }
 
-/**
- * Record a manual payment against an invoice.
- * Syncs invoices.amount_paid_cents and status (issued → paid when full).
- * Never touches stock.
- */
 export async function recordPaymentAction(
   raw: unknown,
 ): Promise<ActionResult<{ paymentId: string; fullyPaid: boolean }>> {
@@ -137,80 +110,31 @@ export async function recordPaymentAction(
 
   const parsed = recordPaymentSchema.safeParse(raw);
   if (!parsed.success) {
-    return actionError("Please fix the form errors", zodFieldErrors(parsed.error));
-  }
-
-  const amountCents = rupeesToCents(parsed.data.amount);
-  if (amountCents <= 0) {
-    return actionError("Amount must be greater than zero");
+    return actionError(
+      "Please fix the form errors",
+      zodFieldErrors(parsed.error),
+    );
   }
 
   try {
-    const [inv] = await db
-      .select()
-      .from(invoices)
-      .where(eq(invoices.id, parsed.data.invoiceId))
-      .limit(1);
-
-    if (!inv) return actionError("Invoice not found");
-    if (inv.status === "draft") {
-      return actionError("Issue the invoice before recording payment");
-    }
-    if (inv.status === "void") {
-      return actionError("Cannot pay a void invoice");
-    }
-    if (inv.status === "paid") {
-      return actionError("Invoice is already fully paid");
-    }
-
-    if (wouldOverpay(inv.totalCents, inv.amountPaidCents, amountCents)) {
-      const remaining = inv.totalCents - inv.amountPaidCents;
-      return actionError(
-        `Payment exceeds balance. Remaining: ${(remaining / 100).toFixed(2)} PKR`,
-      );
-    }
-
-    let paidAt = new Date();
-    if (parsed.data.paidAt) {
-      const d = new Date(parsed.data.paidAt);
-      if (!Number.isNaN(d.getTime())) paidAt = d;
-    }
-
-    const number = await allocatePaymentNumber();
-    const newPaid = inv.amountPaidCents + amountCents;
-    const fullyPaid = isFullyPaid(inv.totalCents, newPaid);
-
-    const [payment] = await db
-      .insert(payments)
-      .values({
-        number,
-        invoiceId: inv.id,
-        customerId: inv.customerId,
-        method: parsed.data.method,
-        amountCents,
-        paidAt,
-        reference: parsed.data.reference?.trim() || null,
-        note: parsed.data.note?.trim() || null,
-        createdBy: session.user.id,
-      })
-      .returning({ id: payments.id });
-
-    if (!payment) return actionError("Failed to record payment");
-
-    await db
-      .update(invoices)
-      .set({
-        amountPaidCents: newPaid,
-        status: fullyPaid ? "paid" : "issued",
-        paidAt: fullyPaid ? paidAt : inv.paidAt,
-        updatedAt: new Date(),
-      })
-      .where(eq(invoices.id, inv.id));
-
-    revalidatePaymentPaths(inv.id);
-    return actionOk({ paymentId: payment.id, fullyPaid });
-  } catch (err) {
-    console.error("[recordPayment]", err);
+    const result = await recordPayment({
+      invoiceId: parsed.data.invoiceId,
+      idempotencyKey: parsed.data.idempotencyKey,
+      amountCents: rupeesToCents(parsed.data.amount),
+      method: parsed.data.method,
+      paidAt: parseBusinessDateTime(parsed.data.paidAt),
+      reference: parsed.data.reference?.trim() || null,
+      note: parsed.data.note?.trim() || null,
+      createdBy: session.user.id,
+    });
+    revalidatePaymentPaths(parsed.data.invoiceId);
+    return actionOk({
+      paymentId: result.paymentId,
+      fullyPaid: result.fullyPaid,
+    });
+  } catch (error) {
+    if (error instanceof DomainError) return actionError(error.message);
+    console.error("[recordPayment]", error);
     return actionError("Could not record payment");
   }
 }

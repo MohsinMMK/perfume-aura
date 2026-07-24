@@ -27,15 +27,9 @@ import {
 } from "@/components/invoices/invoice-actions";
 import { RecordPaymentForm } from "@/components/invoices/record-payment-form";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { formatBusinessDateTime } from "@/lib/business-date";
 
 export const dynamic = "force-dynamic";
-
-function formatWhen(d: Date) {
-  return new Intl.DateTimeFormat("en-PK", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(d);
-}
 
 export default async function InvoiceDetailPage({
   params,
@@ -211,7 +205,7 @@ export default async function InvoiceDetailPage({
                       <Badge variant="secondary">{p.method}</Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {formatWhen(p.paidAt)}
+                      {formatBusinessDateTime(p.paidAt)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatPkr(p.amountCents)}

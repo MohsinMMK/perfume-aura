@@ -2,12 +2,17 @@
 
 import {
   and,
+  archiveProduct,
   count,
+  createProductVariant,
+  createProductWithInitialVariant,
   db,
   desc,
+  DomainError,
   eq,
   ilike,
   or,
+  postgresSqlState,
   products,
   productVariants,
   sql,
@@ -225,59 +230,40 @@ export async function createProductAction(
   try {
     const slug = await uniqueSlug(data.name);
 
-    const [product] = await db
-      .insert(products)
-      .values({
-        name: data.name.trim(),
-        slug,
-        brand: emptyToNull(data.brand),
-        category: emptyToNull(data.category),
-        description: emptyToNull(data.description),
-        status: "active",
-      })
-      .returning({ id: products.id });
-
-    if (!product) {
-      return actionError("Failed to create product");
-    }
-
-    if (data.withVariant !== false && data.sku) {
-      const costCents = rupeesToCents(Number(data.cost ?? 0));
-      const retailCents = rupeesToCents(Number(data.retail ?? 0));
-      const sizeMl = Number(data.sizeMl);
-      const reorderLevel = Number(data.reorderLevel ?? 0);
-
-      try {
-        await db.insert(productVariants).values({
-          productId: product.id,
-          sku: data.sku.trim(),
-          barcode: emptyToNull(data.barcode),
-          sizeMl,
-          costCents,
-          retailCents,
-          reorderLevel: Number.isFinite(reorderLevel) ? reorderLevel : 0,
-          status: "active",
-        });
-      } catch (err) {
-        // Roll back product if SKU conflict so UI can retry cleanly
-        await db.delete(products).where(eq(products.id, product.id));
-        const msg = err instanceof Error ? err.message : String(err);
-        if (msg.includes("unique") || msg.includes("duplicate")) {
-          return actionError("SKU already exists", {
-            sku: ["This SKU is already in use"],
-          });
-        }
-        throw err;
-      }
-    }
+    const created = await createProductWithInitialVariant({
+      name: data.name.trim(),
+      slug,
+      brand: emptyToNull(data.brand),
+      category: emptyToNull(data.category),
+      description: emptyToNull(data.description),
+      initialVariant:
+        data.withVariant !== false && data.sku
+          ? {
+              sku: data.sku.trim(),
+              barcode: emptyToNull(data.barcode),
+              sizeMl: Number(data.sizeMl),
+              costCents: rupeesToCents(Number(data.cost ?? 0)),
+              retailCents: rupeesToCents(Number(data.retail ?? 0)),
+              reorderLevel: Number(data.reorderLevel ?? 0),
+            }
+          : undefined,
+    });
 
     revalidatePath("/products");
     revalidatePath("/dashboard");
-    revalidatePath(`/products/${product.id}`);
+    revalidatePath(`/products/${created.productId}`);
 
-    return actionOk({ productId: product.id });
+    return actionOk({ productId: created.productId });
   } catch (err) {
     console.error("[createProductAction]", err);
+    if (err instanceof DomainError) {
+      if (err.code === "SKU_CONFLICT") {
+        return actionError(err.message, {
+          sku: ["This SKU is already in use"],
+        });
+      }
+      return actionError(err.message);
+    }
     return actionError(dbErrorMessage(err));
   }
 }
@@ -299,47 +285,30 @@ export async function createVariantAction(
   const data: CreateVariantInput = parsed.data;
 
   try {
-    const [product] = await db
-      .select({ id: products.id, status: products.status })
-      .from(products)
-      .where(eq(products.id, data.productId))
-      .limit(1);
-
-    if (!product) {
-      return actionError("Product not found");
-    }
-
-    const [variant] = await db
-      .insert(productVariants)
-      .values({
-        productId: data.productId,
+    const variant = await createProductVariant(data.productId, {
         sku: data.sku.trim(),
         barcode: emptyToNull(data.barcode),
         sizeMl: data.sizeMl,
         costCents: rupeesToCents(data.cost),
         retailCents: rupeesToCents(data.retail),
         reorderLevel: data.reorderLevel ?? 0,
-        status: "active",
-      })
-      .returning({ id: productVariants.id });
-
-    if (!variant) {
-      return actionError("Failed to create variant");
-    }
+      });
 
     revalidatePath("/products");
     revalidatePath(`/products/${data.productId}`);
     revalidatePath("/stock");
     revalidatePath("/dashboard");
 
-    return actionOk({ variantId: variant.id });
+    return actionOk({ variantId: variant.variantId });
   } catch (err) {
     console.error("[createVariantAction]", err);
-    const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("unique") || msg.includes("duplicate")) {
-      return actionError("SKU already exists", {
-        sku: ["This SKU is already in use"],
-      });
+    if (err instanceof DomainError) {
+      if (err.code === "SKU_CONFLICT") {
+        return actionError(err.message, {
+          sku: ["This SKU is already in use"],
+        });
+      }
+      return actionError(err.message);
     }
     return actionError(dbErrorMessage(err));
   }
@@ -360,20 +329,7 @@ export async function archiveProductAction(
   }
 
   try {
-    const [updated] = await db
-      .update(products)
-      .set({ status: "archived", updatedAt: new Date() })
-      .where(eq(products.id, parsed.data.productId))
-      .returning({ id: products.id });
-
-    if (!updated) {
-      return actionError("Product not found");
-    }
-
-    await db
-      .update(productVariants)
-      .set({ status: "archived", updatedAt: new Date() })
-      .where(eq(productVariants.productId, parsed.data.productId));
+    await archiveProduct(parsed.data.productId);
 
     revalidatePath("/products");
     revalidatePath(`/products/${parsed.data.productId}`);
@@ -383,6 +339,7 @@ export async function archiveProductAction(
     return actionOk();
   } catch (err) {
     console.error("[archiveProductAction]", err);
+    if (err instanceof DomainError) return actionError(err.message);
     return actionError(dbErrorMessage(err));
   }
 }
@@ -412,7 +369,12 @@ export async function listActiveVariantsForSelect(): Promise<
     })
     .from(productVariants)
     .innerJoin(products, eq(products.id, productVariants.productId))
-    .where(eq(productVariants.status, "active"))
+    .where(
+      and(
+        eq(productVariants.status, "active"),
+        eq(products.status, "active"),
+      ),
+    )
     .orderBy(products.name, productVariants.sizeMl);
 
   return rows.map((r) => ({
@@ -426,14 +388,8 @@ export async function listActiveVariantsForSelect(): Promise<
 }
 
 function dbErrorMessage(err: unknown): string {
-  const msg = err instanceof Error ? err.message : String(err);
-  if (
-    msg.includes("ECONNREFUSED") ||
-    msg.includes("DATABASE_URL") ||
-    msg.includes("connect") ||
-    msg.includes("password authentication") ||
-    msg.includes("invalid")
-  ) {
+  const sqlState = postgresSqlState(err);
+  if (sqlState?.startsWith("08") || sqlState === "28P01") {
     return "Database unavailable. Check DATABASE_URL and try again.";
   }
   return "Something went wrong. Please try again.";

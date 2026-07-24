@@ -28,15 +28,9 @@ import { formatQty } from "@/lib/money";
 import { ReceiveStockForm } from "@/components/stock/receive-stock-form";
 import { AdjustStockForm } from "@/components/stock/adjust-stock-form";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { formatBusinessDateTime } from "@/lib/business-date";
 
 export const dynamic = "force-dynamic";
-
-function formatWhen(d: Date): string {
-  return new Intl.DateTimeFormat("en-PK", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(d);
-}
 
 function typeBadgeVariant(
   type: string,
@@ -128,7 +122,7 @@ export default async function StockPage() {
                     {movements.map((m) => (
                       <TableRow key={m.id}>
                         <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                          {formatWhen(m.createdAt)}
+                          {formatBusinessDateTime(m.createdAt)}
                         </TableCell>
                         <TableCell>
                           <Badge variant={typeBadgeVariant(m.type)}>

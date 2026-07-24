@@ -18,6 +18,7 @@ import { listInvoices, getOpenArTotalCents } from "@/lib/invoices";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatPkr } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { formatBusinessDate } from "@/lib/business-date";
 
 export const dynamic = "force-dynamic";
 
@@ -91,7 +92,9 @@ export default async function ArPage() {
                     </TableCell>
                     <TableCell>{inv.customerName}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {inv.issueDate ?? "—"}
+                      {inv.issueDate
+                        ? formatBusinessDate(inv.issueDate)
+                        : "—"}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatPkr(inv.totalCents)}

@@ -1,12 +1,33 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { requireDisposableTestDatabaseUrl } from "./test-database-guard";
+import {
+  disposableTestDatabaseNamePattern,
+  phase02TestDatabasePrefix,
+  requireDisposableTestDatabaseUrl,
+} from "./test-database-guard";
 
 describe("requireDisposableTestDatabaseUrl", () => {
-  it("accepts an explicitly named loopback Phase 02 database", () => {
-    const url =
-      "postgresql://phase02_test:local-only@127.0.0.1:55432/perfume_aura_phase02_fresh";
-    assert.equal(requireDisposableTestDatabaseUrl(url), url);
+  it("accepts explicitly scoped Phase 02, Phase 03, and Phase 04 loopback databases", () => {
+    const urls = [
+      "postgresql://phase02_test:local-only@127.0.0.1:55432/perfume_aura_phase02_fresh",
+      "postgresql://phase03_test:local-only@127.0.0.1:55434/perfume_aura_phase03_root_admin",
+      "postgres://phase04_test:local-only@localhost:55435/perfume_aura_phase04_workflow_test",
+      "postgresql://phase04_test:local-only@[::1]:55435/perfume_aura_phase04_admin",
+    ];
+
+    for (const url of urls) {
+      assert.equal(requireDisposableTestDatabaseUrl(url), url);
+    }
+  });
+
+  it("retains the Phase 02 compatibility export", () => {
+    assert.equal(phase02TestDatabasePrefix, "perfume_aura_phase02_");
+    assert.equal(
+      disposableTestDatabaseNamePattern.test(
+        "perfume_aura_phase02_reconciliation_matrix",
+      ),
+      true,
+    );
   });
 
   it("rejects a missing URL", () => {
@@ -20,39 +41,51 @@ describe("requireDisposableTestDatabaseUrl", () => {
     assert.throws(
       () =>
         requireDisposableTestDatabaseUrl(
-          "postgresql://user:redacted@ep-example-pooler.us-east-2.aws.neon.tech/perfume_aura_phase02_test",
+          "postgresql://user:redacted@ep-example-pooler.us-east-2.aws.neon.tech/perfume_aura_phase03_root_admin",
         ),
       /loopback PostgreSQL/,
     );
   });
 
-  it("rejects a local URL with an ambiguous database name", () => {
-    assert.throws(
-      () =>
-        requireDisposableTestDatabaseUrl(
-          "postgresql://phase02_test:local-only@localhost:55432/postgres",
-        ),
-      /database name must start/,
-    );
+  it("rejects local URLs with ambiguous or malformed database names", () => {
+    const urls = [
+      "postgresql://phase03_test:local-only@localhost:55432/postgres",
+      "postgresql://phase03_test:local-only@localhost:55432/perfume_aura_test",
+      "postgresql://phase03_test:local-only@localhost:55432/perfume_aura_phase3_root_admin",
+      "postgresql://phase03_test:local-only@localhost:55432/perfume_aura_phase03",
+      "postgresql://phase03_test:local-only@localhost:55432/perfume_aura_phase03_root-admin",
+    ];
+
+    for (const url of urls) {
+      assert.throws(
+        () => requireDisposableTestDatabaseUrl(url),
+        /database name must match/,
+      );
+    }
   });
 
   it("rejects connection query parameters that could override the target", () => {
     assert.throws(
       () =>
         requireDisposableTestDatabaseUrl(
-          "postgresql://phase02_test:local-only@localhost:55432/perfume_aura_phase02_test?host=remote.example",
+          "postgresql://phase03_test:local-only@localhost:55432/perfume_aura_phase03_root_admin?host=remote.example",
         ),
       /query parameters are not allowed/,
     );
   });
 
-  it("rejects a production-like database name even on loopback", () => {
-    assert.throws(
-      () =>
-        requireDisposableTestDatabaseUrl(
-          "postgresql://phase02_test:local-only@localhost:55432/perfume_aura_phase02_prod",
-        ),
-      /production-like target/,
-    );
+  it("rejects production-like phase databases even on loopback", () => {
+    const urls = [
+      "postgresql://phase03_test:local-only@localhost:55432/perfume_aura_phase03_prod",
+      "postgresql://phase03_test:local-only@localhost:55432/perfume_aura_phase03_root_production",
+      "postgresql://phase04_test:local-only@localhost:55432/perfume_aura_phase04_prod_snapshot",
+    ];
+
+    for (const url of urls) {
+      assert.throws(
+        () => requireDisposableTestDatabaseUrl(url),
+        /production-like target/,
+      );
+    }
   });
 });
