@@ -1,9 +1,9 @@
-# Future database contract after Phase 04
+# Database contract applied after the Phase 04 auth expansion
 
-> Design only — do not apply in Phase 02 and do not assign a Drizzle journal
-> number yet. Phase 04 must first generate its additive Better Auth/rate-limit
-> migration. The SQL below is the exact contract/test target to review again
-> after compatible Phase 03/04 code is live.
+> Implemented locally as `0008_phase03_contract`, ordered immediately after
+> additive Better Auth/rate-limit migration `0007_phase04_auth_expansion`.
+> Provider application remains reserved for the Phase 07 write-freeze gate.
+> The SQL below remains the reviewed contract and test target.
 
 ## Precondition
 
@@ -16,7 +16,7 @@ already write payment idempotency keys and sale cost snapshots, must use atomic
 counters, and must never clean up stock movements with update/delete. Payment
 immutability remains deferred as described below.
 
-## Planned check and nullability SQL
+## Applied check and nullability SQL
 
 ```sql
 ALTER TABLE "product_variants"
@@ -235,7 +235,7 @@ but is invalid. Preflight, reconciliation, and the application must separately
 require zero line and invoice-referenced sale fulfillment for both `draft` and
 `void` invoices.
 
-## Planned stock-ledger trigger SQL
+## Applied stock-ledger trigger SQL
 
 ```sql
 CREATE FUNCTION "prevent_stock_movement_mutation"()

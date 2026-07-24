@@ -16,7 +16,7 @@ import {
   type CustomerFormInput,
 } from "@perfume-aura/validators";
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/lib/session";
+import { requireOwnerSession } from "@/lib/session";
 import {
   actionError,
   actionOk,
@@ -50,7 +50,7 @@ export async function listCustomers(opts?: {
   q?: string;
   status?: "active" | "archived" | "all";
 }): Promise<CustomerListItem[]> {
-  await requireSession();
+  await requireOwnerSession();
 
   const q = opts?.q?.trim() ?? "";
   const status = opts?.status ?? "active";
@@ -98,7 +98,7 @@ export async function listCustomers(opts?: {
 export async function getCustomer(
   id: string,
 ): Promise<CustomerDetail | null> {
-  await requireSession();
+  await requireOwnerSession();
   const [row] = await db
     .select()
     .from(customers)
@@ -122,7 +122,7 @@ export async function getCustomer(
 export async function listActiveCustomersForSelect(): Promise<
   { id: string; name: string }[]
 > {
-  await requireSession();
+  await requireOwnerSession();
   return db
     .select({ id: customers.id, name: customers.name })
     .from(customers)
@@ -134,7 +134,7 @@ export async function createCustomerAction(
   raw: unknown,
 ): Promise<ActionResult<{ customerId: string }>> {
   try {
-    await requireSession();
+    await requireOwnerSession();
   } catch {
     return actionError("You must be signed in");
   }
@@ -173,7 +173,7 @@ export async function updateCustomerAction(
   raw: unknown,
 ): Promise<ActionResult> {
   try {
-    await requireSession();
+    await requireOwnerSession();
   } catch {
     return actionError("You must be signed in");
   }
@@ -212,7 +212,7 @@ export async function archiveCustomerAction(
   raw: unknown,
 ): Promise<ActionResult> {
   try {
-    await requireSession();
+    await requireOwnerSession();
   } catch {
     return actionError("You must be signed in");
   }

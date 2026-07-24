@@ -18,6 +18,7 @@ import { listInvoices } from "@/lib/invoices";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatPkr } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,7 @@ export default async function InvoicesPage({
 }: {
   searchParams: SearchParams;
 }) {
+  await requireOwnerSession({ redirectToLogin: true });
   const sp = await searchParams;
   const status = parseStatus(sp.status);
   const result = await safeDbQuery(() => listInvoices({ status }));

@@ -19,6 +19,7 @@ import { listCustomers } from "@/lib/customers";
 import { safeDbQuery } from "@/lib/db-safe";
 import { ProductFilters } from "@/components/products/product-filters";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,7 @@ export default async function CustomersPage({
 }: {
   searchParams: SearchParams;
 }) {
+  await requireOwnerSession({ redirectToLogin: true });
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const status = parseStatus(sp.status);

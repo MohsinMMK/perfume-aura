@@ -15,7 +15,7 @@ import {
 } from "@perfume-aura/db";
 import { recordPaymentSchema } from "@perfume-aura/validators";
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/lib/session";
+import { requireOwnerSession } from "@/lib/session";
 import { rupeesToCents } from "@/lib/money";
 import {
   actionError,
@@ -52,7 +52,7 @@ function revalidatePaymentPaths(invoiceId: string) {
 export async function listPayments(opts?: {
   invoiceId?: string;
 }): Promise<PaymentListItem[]> {
-  await requireSession();
+  await requireOwnerSession();
 
   const where = opts?.invoiceId
     ? eq(payments.invoiceId, opts.invoiceId)
@@ -83,7 +83,7 @@ export async function getCashCollectedCents(
   from: Date,
   to: Date,
 ): Promise<number> {
-  await requireSession();
+  await requireOwnerSession();
   const [row] = await db
     .select({
       total: sql<number>`coalesce(sum(${payments.amountCents}), 0)::bigint`,
@@ -103,7 +103,7 @@ export async function recordPaymentAction(
 ): Promise<ActionResult<{ paymentId: string; fullyPaid: boolean }>> {
   let session;
   try {
-    session = await requireSession();
+    session = await requireOwnerSession();
   } catch {
     return actionError("You must be signed in");
   }

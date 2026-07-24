@@ -18,7 +18,7 @@
     "lint": "pnpm -r lint",
     "test": "pnpm --filter @perfume-aura/db test && pnpm --filter @perfume-aura/ops test",
     "test:unit": "pnpm --filter @perfume-aura/db test:unit && pnpm --filter @perfume-aura/ops test",
-    "test:integration": "pnpm --filter @perfume-aura/db test:integration",
+    "test:integration": "pnpm --filter @perfume-aura/db test:integration && pnpm --filter @perfume-aura/ops test",
     "check": "pnpm marketing:check && pnpm test:unit"
   }
 }

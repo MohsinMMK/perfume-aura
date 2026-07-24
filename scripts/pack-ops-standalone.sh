@@ -65,7 +65,16 @@ ZIP_NAME="perfume-aura-standalone_${STAMP}.zip"
 ZIP_PATH="$OUT_DIR/$ZIP_NAME"
 
 echo "==> Building @perfume-aura/ops (standalone)…"
-pnpm --filter @perfume-aura/ops build
+# The production build must not inherit a local .env auth origin or secret.
+# This known random poison value overrides .env.local for the build process.
+# The auth resolver intentionally ignores it during NEXT_PHASE and creates its
+# own per-process ephemeral secret; staging fails if this canary is serialized.
+BUILD_ONLY_AUTH_SECRET="$(
+  node -e "process.stdout.write(require('node:crypto').randomBytes(48).toString('base64'))"
+)"
+BETTER_AUTH_URL="https://app.perfumeaura.com" \
+BETTER_AUTH_SECRET="$BUILD_ONLY_AUTH_SECRET" \
+  pnpm --filter @perfume-aura/ops build
 
 STANDALONE="$ROOT/apps/ops/.next/standalone"
 STATIC="$ROOT/apps/ops/.next/static"
@@ -394,14 +403,51 @@ Required env (hPanel only — never bake into zip):
   DATABASE_URL=<Neon pooled production>
   BETTER_AUTH_SECRET=<openssl rand -base64 32>
   BETTER_AUTH_URL=https://app.perfumeaura.com
-  NEXT_PUBLIC_BETTER_AUTH_URL=https://app.perfumeaura.com
+  SMTP_HOST=smtp.hostinger.com
+  SMTP_PORT=465
+  SMTP_SECURE=true
+  SMTP_USER=<Hostinger mailbox>
+  SMTP_PASSWORD=<mailbox password>
+  SMTP_FROM=<approved sender>
+  BUSINESS_TIMEZONE=Asia/Karachi
   NODE_ENV=production
   PORT=3000
 
-After deploy (outside zip):
-  DATABASE_URL_DIRECT=… pnpm db:migrate
-  DATABASE_URL=… pnpm --filter @perfume-aura/db seed
-  OWNER_EMAIL=… OWNER_PASSWORD=… pnpm --filter @perfume-aura/ops seed:owner
+Phase 07 staged rollout (run from the reviewed repository, outside this zip):
+  Read the direct URL without echoing it, then reuse the exported value:
+  read -rsp "Neon direct migration URL: " DATABASE_URL_DIRECT; printf "\n"
+  export DATABASE_URL_DIRECT
+  1. Apply only expansions through 0007:
+  pnpm --filter @perfume-aura/db migrate:through-auth-expansion
+  2. Verify the journal boundary:
+  psql "$DATABASE_URL_DIRECT" -v ON_ERROR_STOP=1 -AtF '|' -c \
+    "SELECT (SELECT count(*) FROM drizzle.__drizzle_migrations), hash, created_at FROM drizzle.__drizzle_migrations WHERE created_at = 1784912984473"
+  Expect exactly:
+  8|49bede137e6fd29d1c87a84170502e4f4e1329ab36521a9e37d2fc5f3d5dfa7f|1784912984473
+  3. Upload/redeploy this compatible archive; require /api/health/ready = 200
+     and /api/auth/get-session to be non-500 while the write freeze remains.
+  test "$(curl -sS -o /dev/null -w '%{http_code}' \
+    https://app.perfumeaura.com/api/health/ready)" = "200"
+  test "$(curl -sS -o /dev/null -w '%{http_code}' \
+    https://app.perfumeaura.com/api/auth/get-session)" != "500"
+  4. Reconcile; every returned count must be zero:
+  psql "$DATABASE_URL_DIRECT" -v ON_ERROR_STOP=1 \
+    -f packages/db/sql/phase02-reconciliation.sql
+  5. With only 0008 pending, apply the full official journal:
+  pnpm db:migrate
+  6. Verify the final journal:
+  psql "$DATABASE_URL_DIRECT" -v ON_ERROR_STOP=1 -AtF '|' -c \
+    "SELECT (SELECT count(*) FROM drizzle.__drizzle_migrations), hash, created_at FROM drizzle.__drizzle_migrations WHERE created_at = 1784913049848"
+  Expect exactly:
+  9|3f7d6d86e395cfc2e996cdfe81c0820bb93b4dfd7b6c7cebe78d8ee239e45e56|1784913049848
+  7. Only now seed MAIN and the owner:
+  DATABASE_URL='<Neon pooled production>' pnpm --filter @perfume-aura/db seed
+  DATABASE_URL='<Neon pooled production>' \
+    BETTER_AUTH_SECRET='<same hPanel runtime secret>' \
+    BETTER_AUTH_URL=https://app.perfumeaura.com \
+    OWNER_EMAIL=… OWNER_PASSWORD=… \
+    pnpm --filter @perfume-aura/ops seed:owner
+  unset DATABASE_URL_DIRECT
 
 Do NOT use root entry.cjs / flat server.js experiments.
 Smoke: https://app.perfumeaura.com/login
@@ -420,6 +466,16 @@ if [[ -n "$SECRET_FIND" ]]; then
   echo "$SECRET_FIND" >&2
   exit 1
 fi
+
+# A random per-pack canary proves no build-time auth secret was serialized into
+# the deployable tree. Do this after all staged text files are created.
+if LC_ALL=C grep -R -a -F -l -- "$BUILD_ONLY_AUTH_SECRET" "$STAGE" \
+  >/dev/null 2>&1; then
+  echo "ERROR: build-only auth canary was embedded in the staged archive" >&2
+  exit 1
+fi
+echo "stage-secret-scan: build-only auth canary absent"
+unset BUILD_ONLY_AUTH_SECRET
 
 # Sharp is packed for TARGET_OS (linux on Hostinger). Local Mac cannot dlopen linux
 # natives — so require('sharp') only when host matches target; otherwise verify tree.

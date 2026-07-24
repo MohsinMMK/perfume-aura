@@ -22,6 +22,7 @@ import { formatPkr, formatQty } from "@/lib/money";
 import { AddVariantForm } from "@/components/products/add-variant-form";
 import { ArchiveProductButton } from "@/components/products/archive-product-button";
 import { VariantStockDialogs } from "@/components/stock/variant-stock-dialogs";
+import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ type Props = {
 };
 
 export default async function ProductDetailPage({ params }: Props) {
+  await requireOwnerSession({ redirectToLogin: true });
   const { id } = await params;
   const result = await safeDbQuery(() => getProduct(id));
 

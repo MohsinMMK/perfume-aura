@@ -83,7 +83,12 @@ Then **Environment Variables → Add**:
 DATABASE_URL=<Neon pooled production URL>
 BETTER_AUTH_SECRET=<openssl rand -base64 32>
 BETTER_AUTH_URL=https://app.perfumeaura.com
-NEXT_PUBLIC_BETTER_AUTH_URL=https://app.perfumeaura.com
+SMTP_HOST=smtp.hostinger.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=<Hostinger mailbox>
+SMTP_PASSWORD=<mailbox password>
+SMTP_FROM=<approved sender>
 NODE_ENV=production
 PORT=3000
 ```
@@ -92,8 +97,6 @@ Optional (not required to boot app):
 
 ```text
 DATABASE_URL_DIRECT=<Neon direct, migrate only>
-# BETTER_AUTH_TRUSTED_ORIGINS=
-# NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=
 ```
 
 Click **Save and redeploy**. If build is green but site still Hostinger HTML: **Restart** app; confirm entry path is exactly `apps/ops/server.js` (try `./apps/ops/server.js` only if panel requires it).
@@ -121,8 +124,8 @@ Do **not** `rm -rf node_modules && pnpm i` on Hostinger after extract — empty 
 - [ ] Neon **production** project (or branch) ready
 - [ ] `DATABASE_URL` = pooled Neon connection  
 - [ ] `DATABASE_URL_DIRECT` = direct (for migrate only)
-- [ ] Migrations applied against prod:  
-      `DATABASE_URL_DIRECT=… pnpm db:migrate`
+- [ ] Staged `0007` expansion / compatible deploy / reconciliation / `0008`
+      contract completed exactly per `DATABASE_MIGRATION_AND_ROLE_RUNBOOK.md`
 - [ ] Seed MAIN location: `DATABASE_URL=… pnpm --filter @perfume-aura/db seed`
 - [ ] Seed owner (once):  
       `DATABASE_URL=… BETTER_AUTH_SECRET=… BETTER_AUTH_URL=https://app.perfumeaura.com OWNER_EMAIL=… OWNER_PASSWORD=… pnpm --filter @perfume-aura/ops seed:owner`
@@ -135,7 +138,12 @@ Copy names from `apps/ops/.env.example`. **Runtime required** on Node app:
 DATABASE_URL=                 # Neon pooled
 BETTER_AUTH_SECRET=           # openssl rand -base64 32  (≥32 chars)
 BETTER_AUTH_URL=https://app.perfumeaura.com
-NEXT_PUBLIC_BETTER_AUTH_URL=https://app.perfumeaura.com
+SMTP_HOST=smtp.hostinger.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=
+SMTP_PASSWORD=
+SMTP_FROM=
 NODE_ENV=production
 PORT=3000
 ```
@@ -144,8 +152,6 @@ Optional / one-off:
 
 ```text
 DATABASE_URL_DIRECT=          # Neon direct (migrate job only)
-# BETTER_AUTH_TRUSTED_ORIGINS=
-# NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=
 ```
 
 ## Hostinger — Node.js Web App paths

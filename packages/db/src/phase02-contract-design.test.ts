@@ -79,7 +79,11 @@ describe("Phase 02 future-contract safety design", () => {
     assert.doesNotMatch(runbook, /ON ALL SEQUENCES/);
     assert.match(
       runbook,
-      /GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE[\s\S]*?"verification"[\s\S]*?TO :"runtime_role"/,
+      /GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE[\s\S]*?"verification",[\s\S]*?"rate_limit"[\s\S]*?TO :"runtime_role"/,
+    );
+    assert.match(
+      runbook,
+      /\('verification'\),[\s\S]*?\('rate_limit'\)[\s\S]*?mutable_with_delete/,
     );
     assert.match(
       runbook,

@@ -50,6 +50,20 @@
       "when": 1784905780962,
       "tag": "0006_phase02_remaining_integrity_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784912984473,
+      "tag": "0007_phase04_auth_expansion",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784913049848,
+      "tag": "0008_phase03_contract",
+      "breakpoints": true
     }
   ]
 }

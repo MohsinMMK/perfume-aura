@@ -11,6 +11,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed:owner": "tsx scripts/seed-owner.ts",
+    "recover:owner": "tsx scripts/recover-owner.ts",
     "test": "tsx --test lib/**/*.test.ts"
   },
   "dependencies": {
@@ -19,9 +20,10 @@
     "@perfume-aura/db": "workspace:*",
     "@perfume-aura/ui": "workspace:*",
     "@perfume-aura/validators": "workspace:*",
-    "better-auth": "1.6.23",
+    "better-auth": "1.6.25",
     "drizzle-orm": "0.45.2",
     "next": "16.2.11",
+    "nodemailer": "^9.0.3",
     "pg": "^8.22.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -30,6 +32,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24.13.3",
+    "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",

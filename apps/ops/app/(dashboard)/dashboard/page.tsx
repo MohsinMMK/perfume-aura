@@ -15,10 +15,13 @@ import { getCashCollectedThisMonthCents } from "@/lib/payments";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatPkr, formatQty } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  await requireOwnerSession({ redirectToLogin: true });
+
   const [result, arResult, cashResult] = await Promise.all([
     safeDbQuery(() => getDashboardStats()),
     safeDbQuery(() => getOpenArTotalCents()),

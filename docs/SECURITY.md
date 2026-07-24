@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|--------|
-| Updated | 2026-07-23 |
-| Scope | Phase 1 owner-only ops |
+| Updated | 2026-07-24 |
+| Scope | Owner-only ops through local Phase 04 hardening |
 | Skills | better-auth-best-practices, better-auth-security-best-practices, email-and-password-best-practices |
 
 ---
@@ -30,11 +30,13 @@ v1 assumes a **single trusted owner**. Staff RBAC is deferred.
 | Max password | 256 |
 | Secret | `BETTER_AUTH_SECRET` ≥ 32 chars at runtime |
 | Sessions | 7d expire, 1d updateAge |
-| Cookies | Better Auth + `nextCookies()` plugin |
-| Trusted origins | `baseURL` + optional `BETTER_AUTH_TRUSTED_ORIGINS` |
-| Rate limit | Global + stricter `/sign-in/email` (5/min) |
-| Role field | `user.role` default `owner`, `input: false` |
-| Owner seed | CLI `seed:owner` only |
+| Cookies | Secure in production; no cross-subdomain cookies; `nextCookies()` plugin |
+| CSRF/origin | Both checks enabled; production trusts only `https://app.perfumeaura.com`; development/test trust only exact `localhost:3000` and `127.0.0.1:3000` origins |
+| Rate limit | Durable `rate_limit` table; sign-in 5/min, reset request 3/min, reset/change 5/min |
+| Role field | `user.role` defaults to `user`; server-owned; owner is explicit |
+| Authorization | Every protected page/loader/action requires a verified `owner` session |
+| Recovery | Single-use 30-minute Better Auth reset token; all sessions revoked on reset |
+| Owner maintenance | Atomic idempotent seed/repair; confirmed break-glass recovery revokes all sessions |
 
 File: `apps/ops/lib/auth.ts`.
 
@@ -44,8 +46,8 @@ File: `apps/ops/lib/auth.ts`.
 
 ```text
 1. proxy.ts — cookie presence gate (optimistic only)
-2. Dashboard layout — getSession() or redirect /login
-3. Server Actions / loaders — requireSession() / getSession()
+2. Dashboard pages/layout — requireOwnerSession() or redirect /login
+3. Server Actions / loaders — requireOwnerSession() before all business work
 4. Zod — all mutations validated
 5. Drizzle parameterized SQL — no string SQL concat for user input
 ```
@@ -58,12 +60,12 @@ File: `apps/ops/lib/auth.ts`.
 
 | ID | Requirement | Status |
 |----|-------------|--------|
-| SEC-1 | Session required for ops routes | ✅ layout + proxy |
-| SEC-2 | Cookie gate optimistic; full session in actions | ✅ |
+| SEC-1 | Owner session required for ops routes | ✅ pages/layout/actions + proxy hint |
+| SEC-2 | Cookie gate optimistic; full owner session in actions | ✅ |
 | SEC-3 | Zod on mutations | ✅ validators package |
 | SEC-4 | Parameterized SQL only | ✅ Drizzle |
 | SEC-5 | No secrets in client / marketing | ✅ |
-| SEC-6 | `serverActions.allowedOrigins` includes prod host | ✅ next.config |
+| SEC-6 | Better Auth exact-origin/CSRF checks and same-origin client | ✅ |
 | SEC-7 | Marketing must not expose ops source | ✅ root `.htaccess` deny `/apps` `/packages` `/docs` / lockfiles / `*.md` / `.git` / `.env` / `.gitignore` (**403** via `[F,L]` + FilesMatch); prefer artifact-only CI later |
 
 ---
@@ -77,6 +79,10 @@ File: `apps/ops/lib/auth.ts`.
 5. Use Neon pooled URL for app; do not expose DB to the public internet beyond Neon controls.  
 6. **Never** bake `.env` into `pnpm ops:pack` zip. Pack smoke rejects `.env*`, keys, and `entry.cjs` in artifact. Verify marketing with **403** (not “must be 404”).  
 7. Classic Git still places monorepo files on marketing disk; `.htaccess` blocks HTTP access until artifact-only deploy.
+8. SMTP credentials and sender remain environment-only. Port `465` uses
+   implicit TLS; `587` is an explicit STARTTLS fallback only.
+9. Login distinguishes an unavailable auth/database service from invalid
+   credentials without revealing backend details.
 
 ---
 
@@ -98,8 +104,14 @@ See [TESTING.md](./TESTING.md) and `packages/db/src/inventory.ts`.
 | Item | Expectation |
 |------|-------------|
 | Production | HTTPS only (Hostinger SSL) |
-| HSTS | Prefer Hostinger/panel defaults |
-| Cookies | Better Auth secure defaults on HTTPS |
+| HSTS | App emits one-year HSTS in production |
+| CSP | Enforced app-wide; no objects or framing |
+| Headers | nosniff, DENY framing, strict referrer, restrictive permissions |
+| Cookies | Better Auth secure production cookies, no cross-subdomain scope |
+
+`/api/health/live` proves only process liveness. `/api/health/ready` performs a
+generic database `SELECT 1` and returns only `ready` or `unavailable`; neither
+endpoint exposes configuration or dependency details.
 
 ---
 
@@ -107,10 +119,10 @@ See [TESTING.md](./TESTING.md) and `packages/db/src/inventory.ts`.
 
 | Topic | When |
 |-------|------|
-| Staff role enforcement | Later persona |
+| Staff roles/RBAC | Later persona; non-owner sessions are denied today |
 | Audit log UI | Phase 2+ |
 | 2FA | Optional hardening |
-| Email verification flow | If multi-user |
+| Email verification flow | If a future multi-user workflow is approved |
 
 ---
 

@@ -20,7 +20,7 @@ import {
   type AdjustStockInput,
 } from "@perfume-aura/validators";
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/lib/session";
+import { requireOwnerSession } from "@/lib/session";
 import {
   actionError,
   actionOk,
@@ -62,7 +62,7 @@ export type DashboardStats = {
 };
 
 export async function listLowStock(): Promise<LowStockRow[]> {
-  await requireSession();
+  await requireOwnerSession();
 
   const rows = await db
     .select({
@@ -94,7 +94,7 @@ export async function listLowStock(): Promise<LowStockRow[]> {
 export async function listRecentMovements(
   limit = 50,
 ): Promise<MovementRow[]> {
-  await requireSession();
+  await requireOwnerSession();
 
   const rows = await db
     .select({
@@ -122,7 +122,7 @@ export async function listRecentMovements(
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
-  await requireSession();
+  await requireOwnerSession();
 
   const [productRow] = await db
     .select({
@@ -176,7 +176,7 @@ export async function receiveStockAction(
 ): Promise<ActionResult<{ quantityAfter: number }>> {
   let session;
   try {
-    session = await requireSession();
+    session = await requireOwnerSession();
   } catch {
     return actionError("You must be signed in");
   }
@@ -216,7 +216,7 @@ export async function adjustStockAction(
 ): Promise<ActionResult<{ quantityAfter: number }>> {
   let session;
   try {
-    session = await requireSession();
+    session = await requireOwnerSession();
   } catch {
     return actionError("You must be signed in");
   }

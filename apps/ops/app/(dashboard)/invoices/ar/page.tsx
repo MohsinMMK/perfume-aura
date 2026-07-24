@@ -19,10 +19,13 @@ import { safeDbQuery } from "@/lib/db-safe";
 import { formatPkr } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { formatBusinessDate } from "@/lib/business-date";
+import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function ArPage() {
+  await requireOwnerSession({ redirectToLogin: true });
+
   const [listResult, totalResult] = await Promise.all([
     safeDbQuery(() => listInvoices({ status: "ar" })),
     safeDbQuery(() => getOpenArTotalCents()),

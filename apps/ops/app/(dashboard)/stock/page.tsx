@@ -29,6 +29,7 @@ import { ReceiveStockForm } from "@/components/stock/receive-stock-form";
 import { AdjustStockForm } from "@/components/stock/adjust-stock-form";
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { formatBusinessDateTime } from "@/lib/business-date";
+import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,8 @@ function typeBadgeVariant(
 }
 
 export default async function StockPage() {
+  await requireOwnerSession({ redirectToLogin: true });
+
   // Independent loaders — parallelize (vercel-react-best-practices: async-parallel)
   const [variantsResult, movementsResult] = await Promise.all([
     safeDbQuery(() => listActiveVariantsForSelect()),

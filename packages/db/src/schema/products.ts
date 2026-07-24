@@ -1,4 +1,6 @@
+import { sql } from "drizzle-orm";
 import {
+  check,
   index,
   integer,
   pgEnum,
@@ -83,5 +85,16 @@ export const productVariants = pgTable(
       table.sizeMl,
     ),
     index("product_variants_status_idx").on(table.status),
+    check(
+      "product_variants_values_check",
+      sql`${table.sizeMl} > 0
+        AND ${table.costCents} >= 0
+        AND ${table.retailCents} >= 0
+        AND ${table.quantityOnHand} >= 0
+        AND ${table.qtyReserved} >= 0
+        AND ${table.reorderLevel} >= 0
+        AND ${table.version} >= 0
+        AND ${table.qtyReserved} <= ${table.quantityOnHand}`,
+    ),
   ],
 );

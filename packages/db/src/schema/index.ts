@@ -3,6 +3,10 @@ export {
   session,
   account,
   verification,
+  rateLimit,
+  userRelations,
+  sessionRelations,
+  accountRelations,
 } from "./auth";
 
 export {

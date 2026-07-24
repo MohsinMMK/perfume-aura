@@ -25,7 +25,7 @@ import {
   type CreateVariantInput,
 } from "@perfume-aura/validators";
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/lib/session";
+import { requireOwnerSession } from "@/lib/session";
 import {
   actionError,
   actionOk,
@@ -99,7 +99,7 @@ export type ListProductsFilter = {
 export async function listProducts(
   filter: ListProductsFilter = {},
 ): Promise<ProductListItem[]> {
-  await requireSession();
+  await requireOwnerSession();
 
   const q = filter.q?.trim() ?? "";
   const status = filter.status ?? "active";
@@ -163,7 +163,7 @@ export async function listProducts(
 }
 
 export async function getProduct(id: string): Promise<ProductDetail | null> {
-  await requireSession();
+  await requireOwnerSession();
 
   const [product] = await db
     .select()
@@ -215,7 +215,7 @@ export async function createProductAction(
   raw: unknown,
 ): Promise<ActionResult<{ productId: string }>> {
   try {
-    await requireSession();
+    await requireOwnerSession();
   } catch {
     return actionError("You must be signed in");
   }
@@ -272,7 +272,7 @@ export async function createVariantAction(
   raw: unknown,
 ): Promise<ActionResult<{ variantId: string }>> {
   try {
-    await requireSession();
+    await requireOwnerSession();
   } catch {
     return actionError("You must be signed in");
   }
@@ -318,7 +318,7 @@ export async function archiveProductAction(
   raw: unknown,
 ): Promise<ActionResult> {
   try {
-    await requireSession();
+    await requireOwnerSession();
   } catch {
     return actionError("You must be signed in");
   }
@@ -355,7 +355,7 @@ export async function listActiveVariantsForSelect(): Promise<
     retailCents: number;
   }[]
 > {
-  await requireSession();
+  await requireOwnerSession();
 
   const rows = await db
     .select({

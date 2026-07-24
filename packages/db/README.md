@@ -59,17 +59,26 @@ Package scripts:
 
 | Table | Purpose |
 |-------|---------|
-| `user`, `session`, `account`, `verification` | Better Auth (+ `user.role` default `owner`) |
+| `user`, `session`, `account`, `verification` | Better Auth (`user.role` defaults to non-privileged `user`) |
+| `rate_limit` | Better Auth durable rate-limit counters |
 | `products` | Perfume catalog |
 | `product_variants` | SKU × size; `quantity_on_hand`, `version` |
 | `locations` | Warehouses (`MAIN` seeded) |
 | `stock_movements` | Append-only ledger |
 | `document_number_counters` | Atomic `(kind, year)` invoice/payment numbering |
 
-Phase 02 expansion adds nullable `payments.idempotency_key` and nullable sale
-`stock_movements.unit_cost_cents` / `cost_basis`. Existing rows are
-deterministically backfilled. They remain nullable until compatible workflow
-code is deployed and the later post-auth contract migration is activated.
+Phase 02 expansion added nullable `payments.idempotency_key` and nullable sale
+`stock_movements.unit_cost_cents` / `cost_basis`; existing rows were
+deterministically backfilled. Migration `0007_phase04_auth_expansion` adds the
+official Better Auth `rate_limit` model, changes the role default to `user`,
+and adds the generated verification lookup index.
+
+Migration `0008_phase03_contract` is the separately ordered contract:
+validated financial/inventory/lifecycle checks, required payment number and
+idempotency key, and the `stock_movements` update/delete trigger. Historical
+stock rows are append-only; corrections use compensating movements. Payment
+immutability remains deliberately deferred until a linked reversal model
+exists.
 Invoice line ordering is protected by the named unique index
 `invoice_lines_invoice_id_position_unique` on `(invoice_id, position)`;
 preflight and reconciliation block duplicate legacy positions before it is
@@ -110,10 +119,20 @@ explicit names such as `perfume_aura_phase03_root_admin`.
 | `preflight:phase02` | Exact-`0002` rollout blocker |
 | `reconcile:phase02` | Post-expansion cleanup/contract readiness |
 
-Operator role separation and the unnumbered later contract are documented in
+Operator role separation and the ordered auth-expansion/contract boundary are documented in
 [`docs/DATABASE_MIGRATION_AND_ROLE_RUNBOOK.md`](../../docs/DATABASE_MIGRATION_AND_ROLE_RUNBOOK.md)
 and
 [`docs/PHASE02_FUTURE_DATABASE_CONTRACT.md`](../../docs/PHASE02_FUTURE_DATABASE_CONTRACT.md).
+
+Phase 04 migration proof:
+
+```bash
+TEST_DATABASE_URL='postgresql://...@127.0.0.1:55432/perfume_aura_phase04_root_admin' \
+  pnpm --filter @perfume-aura/db test:phase04-migrations
+```
+
+This covers a fresh database and a clean exact-`0006` upgrade. The full
+business integration suite expects migrations through `0008`.
 
 ## Inventory API
 
@@ -178,6 +197,8 @@ import {
   count,
   desc,
   eq,
+  inArray,
+  like,
   lte,
   sql,
 } from "@perfume-aura/db";

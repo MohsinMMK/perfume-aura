@@ -28,6 +28,7 @@ import {
 import { RecordPaymentForm } from "@/components/invoices/record-payment-form";
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { formatBusinessDateTime } from "@/lib/business-date";
+import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,7 @@ export default async function InvoiceDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireOwnerSession({ redirectToLogin: true });
   const { id } = await params;
   const [invResult, variantsResult, paymentsResult] = await Promise.all([
     safeDbQuery(() => getInvoice(id)),

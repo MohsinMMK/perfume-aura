@@ -1,4 +1,6 @@
+import { sql } from "drizzle-orm";
 import {
+  check,
   date,
   index,
   integer,
@@ -64,6 +66,74 @@ export const invoices = pgTable(
     ),
     index("invoices_status_issued_at_idx").on(table.status, table.issuedAt),
     index("invoices_created_at_idx").on(table.createdAt),
+    check(
+      "invoices_money_check",
+      sql`${table.subtotalCents} >= 0
+        AND ${table.taxCents} >= 0
+        AND ${table.totalCents} >= 0
+        AND ${table.amountPaidCents} >= 0
+        AND ${table.totalCents}::bigint
+          = ${table.subtotalCents}::bigint + ${table.taxCents}::bigint
+        AND ${table.amountPaidCents} <= ${table.totalCents}`,
+    ),
+    check(
+      "invoices_number_format_check",
+      sql`CASE
+        WHEN ${table.number} IS NULL THEN true
+        WHEN ${table.number} !~ '^INV-[0-9]{4}-[0-9]{4,}$' THEN false
+        WHEN coalesce(
+          nullif(ltrim(substring(${table.number} from '-([0-9]+)$'), '0'), ''),
+          '0'
+        ) = '0' THEN false
+        WHEN length(
+          ltrim(substring(${table.number} from '-([0-9]+)$'), '0')
+        ) < 10 THEN true
+        WHEN length(
+          ltrim(substring(${table.number} from '-([0-9]+)$'), '0')
+        ) = 10
+          AND ltrim(substring(${table.number} from '-([0-9]+)$'), '0')
+            COLLATE "C" <= '2147483647' COLLATE "C"
+        THEN true
+        ELSE false
+      END`,
+    ),
+    check(
+      "invoices_lifecycle_check",
+      sql`(
+        (
+          ${table.status} = 'draft'
+          AND ${table.number} IS NULL
+          AND ${table.issuedAt} IS NULL
+          AND ${table.paidAt} IS NULL
+          AND ${table.voidedAt} IS NULL
+          AND ${table.amountPaidCents} = 0
+        )
+        OR (
+          ${table.status} = 'issued'
+          AND ${table.number} IS NOT NULL
+          AND ${table.issuedAt} IS NOT NULL
+          AND ${table.paidAt} IS NULL
+          AND ${table.voidedAt} IS NULL
+          AND ${table.amountPaidCents} < ${table.totalCents}
+        )
+        OR (
+          ${table.status} = 'paid'
+          AND ${table.number} IS NOT NULL
+          AND ${table.issuedAt} IS NOT NULL
+          AND ${table.paidAt} IS NOT NULL
+          AND ${table.voidedAt} IS NULL
+          AND ${table.amountPaidCents} = ${table.totalCents}
+        )
+        OR (
+          ${table.status} = 'void'
+          AND ${table.number} IS NOT NULL
+          AND ${table.issuedAt} IS NOT NULL
+          AND ${table.paidAt} IS NULL
+          AND ${table.voidedAt} IS NOT NULL
+          AND ${table.amountPaidCents} = 0
+        )
+      )`,
+    ),
   ],
 );
 
@@ -95,5 +165,18 @@ export const invoiceLines = pgTable(
       table.position,
     ),
     index("invoice_lines_variant_id_idx").on(table.variantId),
+    check(
+      "invoice_lines_values_check",
+      sql`${table.quantity} > 0
+        AND ${table.unitPriceCents} >= 0
+        AND ${table.lineTotalCents} >= 0
+        AND ${table.lineTotalCents}::bigint
+          = ${table.quantity}::bigint * ${table.unitPriceCents}::bigint
+        AND ${table.quantityFulfilled} BETWEEN 0 AND ${table.quantity}
+        AND (
+          ${table.variantId} IS NOT NULL
+          OR ${table.quantityFulfilled} = 0
+        )`,
+    ),
   ],
 );

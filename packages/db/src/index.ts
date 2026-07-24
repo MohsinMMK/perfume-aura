@@ -118,6 +118,8 @@ export {
   eq,
   gte,
   ilike,
+  inArray,
+  like,
   lt,
   lte,
   or,

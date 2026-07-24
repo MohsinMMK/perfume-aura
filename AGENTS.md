@@ -489,9 +489,9 @@ Hostinger may still run `pnpm install` on deploy; pack root `package.json` has *
 | Local creds | Live in **`apps/ops/.env.local`** only (gitignored). Read file if user asks — **do not guess** |
 | Local DB | `.env.local` `DATABASE_URL` is typically **localhost** — owner exists only on that DB after local seed |
 | Prod login | Needs hPanel env + owner seeded on **Neon prod**. Same email/password as local **only if** prod was seeded with them |
-| Prod auth down | `/api/auth/*` **500** if `BETTER_AUTH_SECRET` / `DATABASE_URL` missing on Hostinger → UI often shows “Invalid email or password” |
+| Prod auth down | `/api/auth/*` **500** if `BETTER_AUTH_SECRET` / `DATABASE_URL` is missing; login reports service unavailability separately from invalid credentials |
 | Login URL | https://app.perfumeaura.com/login (shell SSR + client form; wait for hydrate) |
-| Root `/` on ops | Calls `getSession()` → **500** without working DB/auth env; use `/login` |
+| Root `/` on ops | Calls `getOwnerSession()` → **500** without working DB/auth env; use `/login` |
 
 **Required hPanel env (ops Node app) — never commit:**
 
@@ -499,7 +499,12 @@ Hostinger may still run `pnpm install` on deploy; pack root `package.json` has *
 DATABASE_URL=<Neon pooled production>
 BETTER_AUTH_SECRET=<openssl rand -base64 32>
 BETTER_AUTH_URL=https://app.perfumeaura.com
-NEXT_PUBLIC_BETTER_AUTH_URL=https://app.perfumeaura.com
+SMTP_HOST=smtp.hostinger.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=<Hostinger mailbox>
+SMTP_PASSWORD=<mailbox password>
+SMTP_FROM=<approved sender>
 NODE_ENV=production
 PORT=3000
 ```
@@ -507,11 +512,12 @@ PORT=3000
 Then migrate + seed against prod (human provides Neon URLs):
 
 ```bash
-DATABASE_URL_DIRECT=… pnpm db:migrate
+# Follow docs/DATABASE_MIGRATION_AND_ROLE_RUNBOOK.md:
+# expansions through 0007 → compatible deploy/reconcile → contract 0008
 DATABASE_URL=… pnpm --filter @perfume-aura/db seed
 DATABASE_URL=… BETTER_AUTH_SECRET=… BETTER_AUTH_URL=https://app.perfumeaura.com \
   OWNER_EMAIL=… OWNER_PASSWORD=… pnpm --filter @perfume-aura/ops seed:owner
-# OWNER_PASSWORD min 12 chars (matches auth)
+# OWNER_PASSWORD 12–256 chars (matches auth)
 ```
 
 ### Marketing leak (SEC-7)

@@ -1265,6 +1265,7 @@ describe(
     let exact0002Folder: string;
     let through0004Folder: string;
     let through0005Folder: string;
+    let through0006Folder: string;
 
     before(async () => {
       assert.ok(configuredAdminUrl);
@@ -1276,6 +1277,7 @@ describe(
       exact0002Folder = await makeMigrationFolderThrough(2, "0002");
       through0004Folder = await makeMigrationFolderThrough(4, "0004");
       through0005Folder = await makeMigrationFolderThrough(5, "0005");
+      through0006Folder = await makeMigrationFolderThrough(6, "0006");
       assert.deepEqual(
         JSON.parse(
           await readFile(join(exact0002Folder, "meta/_journal.json"), "utf8"),
@@ -1307,11 +1309,14 @@ describe(
       if (through0005Folder) {
         await rm(through0005Folder, { recursive: true, force: true });
       }
+      if (through0006Folder) {
+        await rm(through0006Folder, { recursive: true, force: true });
+      }
     });
 
     it("migrates a fresh database through every ordered Phase 02 entry", async () => {
       const connectionString = databaseUrl(freshDatabaseName);
-      await migrateFolder(connectionString, migrationsFolder);
+      await migrateFolder(connectionString, through0006Folder);
 
       const pool = new Pool({ connectionString, max: 1 });
       try {
@@ -1513,7 +1518,7 @@ describe(
         );
 
         await assert.rejects(
-          () => migrateFolder(connectionString, migrationsFolder),
+          () => migrateFolder(connectionString, through0006Folder),
           (error: unknown) => postgresErrorCode(error) === "23505",
         );
 
@@ -1544,7 +1549,7 @@ describe(
 
         await migrateFolder(connectionString, through0005Folder);
         await assert.rejects(
-          () => migrateFolder(connectionString, migrationsFolder),
+          () => migrateFolder(connectionString, through0006Folder),
           (error: unknown) => postgresErrorCode(error) === "23505",
         );
 
@@ -1560,7 +1565,7 @@ describe(
           [],
         );
 
-        await migrateFolder(connectionString, migrationsFolder);
+        await migrateFolder(connectionString, through0006Folder);
         await assertExpansionCatalog(pool);
 
         await assert.rejects(
@@ -1877,7 +1882,7 @@ describe(
 
     it("turns every required reconciliation category nonzero", async () => {
       const connectionString = databaseUrl(reconciliationDatabaseName);
-      await migrateFolder(connectionString, migrationsFolder);
+      await migrateFolder(connectionString, through0006Folder);
 
       const pool = new Pool({ connectionString, max: 1 });
       try {

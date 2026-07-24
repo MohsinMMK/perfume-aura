@@ -88,7 +88,7 @@ describe("Phase 03 Server Action boundaries", () => {
 
     for (const action of actions) {
       const body = exportedFunction(action.source, action.name);
-      const auth = body.indexOf("await requireSession()");
+      const auth = body.indexOf("await requireOwnerSession()");
       const business = body.indexOf(action.firstBusinessCall);
       assert.ok(auth >= 0, `${action.name} must authenticate`);
       assert.ok(

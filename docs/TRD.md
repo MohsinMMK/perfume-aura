@@ -154,8 +154,12 @@ DATABASE_URL=                 # pooled Neon for app
 DATABASE_URL_DIRECT=          # direct for drizzle-kit migrate
 BETTER_AUTH_SECRET=
 BETTER_AUTH_URL=https://app.perfumeaura.com
-NEXT_PUBLIC_BETTER_AUTH_URL=https://app.perfumeaura.com
-NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=   # recommended multi-instance
+SMTP_HOST=smtp.hostinger.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=
+SMTP_PASSWORD=
+SMTP_FROM=
 ```
 
 ## 9. Testing (Phase 1)

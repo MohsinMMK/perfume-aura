@@ -8,6 +8,7 @@ import { safeDbQuery } from "@/lib/db-safe";
 import { CustomerForm } from "@/components/customers/customer-form";
 import { ArchiveCustomerButton } from "@/components/customers/archive-customer-button";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ export default async function CustomerDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireOwnerSession({ redirectToLogin: true });
   const { id } = await params;
   const result = await safeDbQuery(() => getCustomer(id));
 

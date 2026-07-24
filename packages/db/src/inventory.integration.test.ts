@@ -78,15 +78,23 @@ describe("applyMovement integration", { skip: !hasDb }, () => {
   });
 
   after(async () => {
-    if (!variantId) {
-      await pool.end().catch(() => undefined);
-      return;
+    if (variantId) {
+      // Test-owner cleanup bypasses user triggers only for this transaction.
+      // Runtime behavior is still append-only and is tested separately.
+      await pool.query("BEGIN");
+      try {
+        await pool.query("SET LOCAL session_replication_role = replica");
+        await pool.query(
+          "DELETE FROM stock_movements WHERE variant_id = $1",
+          [variantId],
+        );
+        await pool.query("DELETE FROM products WHERE id = $1", [productId]);
+        await pool.query("COMMIT");
+      } catch (error) {
+        await pool.query("ROLLBACK");
+        throw error;
+      }
     }
-    // Clean test rows (product cascade deletes variants; movements need FK order)
-    await db
-      .delete(stockMovements)
-      .where(eq(stockMovements.variantId, variantId));
-    await db.delete(products).where(eq(products.id, productId));
     await pool.end().catch(() => undefined);
   });
 

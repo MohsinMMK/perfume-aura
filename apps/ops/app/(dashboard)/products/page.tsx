@@ -23,6 +23,7 @@ import {
   DbUnavailableState,
 } from "@/components/db-empty-state";
 import { ProductFilters } from "@/components/products/product-filters";
+import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,7 @@ export default async function ProductsPage({
 }: {
   searchParams: SearchParams;
 }) {
+  await requireOwnerSession({ redirectToLogin: true });
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const status = parseStatus(sp.status);

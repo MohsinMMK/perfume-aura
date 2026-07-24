@@ -3,10 +3,13 @@ import { listActiveCustomersForSelect } from "@/lib/customers";
 import { safeDbQuery } from "@/lib/db-safe";
 import { CreateInvoiceForm } from "@/components/invoices/create-invoice-form";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewInvoicePage() {
+  await requireOwnerSession({ redirectToLogin: true });
+
   const result = await safeDbQuery(() => listActiveCustomersForSelect());
 
   if (result.error || !result.data) {

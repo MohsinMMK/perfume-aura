@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { CreateProductForm } from "@/components/products/create-product-form";
+import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-export default function NewProductPage() {
+export default async function NewProductPage() {
+  await requireOwnerSession({ redirectToLogin: true });
+
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <div>

@@ -33,11 +33,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      # Build-time only — never production secrets. Runtime secret stays hPanel.
+      # Public build-time origin only. The packer creates and scans a random
+      # per-run auth-secret canary; the real runtime secret stays in hPanel.
       BETTER_AUTH_URL: https://app.perfumeaura.com
-      NEXT_PUBLIC_BETTER_AUTH_URL: https://app.perfumeaura.com
-      # Satisfy modules that read env at import during next build
-      BETTER_AUTH_SECRET: ci-build-only-not-for-runtime-use-32b
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -25,7 +25,7 @@
 |----|-------------|--------|
 | FR-AUTH-1 | Authenticated only; no public registration | ✅ `disableSignUp: true` |
 | FR-AUTH-2 | Secure session; logout | ✅ Better Auth + sign-out |
-| FR-AUTH-3 | Role field ready; enforce owner-only v1 | 🟡 `role` column + default; staff RBAC later |
+| FR-AUTH-3 | Enforce owner-only v1 | ✅ explicit owner role required in protected pages/loaders/actions; default is `user` |
 
 ### Inventory
 

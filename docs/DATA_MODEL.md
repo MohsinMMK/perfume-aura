@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| Updated | 2026-07-22 |
+| Updated | 2026-07-24 |
 | ORM | Drizzle 0.45 · Neon PostgreSQL |
 | Package | `packages/db` |
 | Migrations | `packages/db/drizzle/` |
@@ -18,10 +18,11 @@ This document is the human-readable contract.
 
 | Table | Purpose |
 |-------|---------|
-| `user` | Owner account; `role` text default `owner` (server-owned) |
+| `user` | Auth identity; `role` defaults to non-privileged `user`; owner is assigned explicitly |
 | `session` | Session tokens |
 | `account` | Credential provider linkage |
-| `verification` | Email verification tokens (unused for public sign-up) |
+| `verification` | Single-use verification/password-reset values |
+| `rate_limit` | Durable Better Auth rate-limit counters |
 
 ### Catalog
 

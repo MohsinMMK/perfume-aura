@@ -188,9 +188,6 @@ describe("Phase 03 transactional workflows", { skip: !hasDatabase }, () => {
     const trackedInvoices = [...invoiceIds];
     if (trackedInvoices.length > 0) {
       await api.db
-        .delete(api.stockMovements)
-        .where(inArray(api.stockMovements.refId, trackedInvoices));
-      await api.db
         .delete(api.payments)
         .where(inArray(api.payments.invoiceId, trackedInvoices));
       await api.db
@@ -203,23 +200,33 @@ describe("Phase 03 transactional workflows", { skip: !hasDatabase }, () => {
 
     const trackedProducts = [...productIds];
     if (trackedProducts.length > 0) {
-      const variants = await api.db
-        .select({ id: api.productVariants.id })
-        .from(api.productVariants)
-        .where(inArray(api.productVariants.productId, trackedProducts));
-      if (variants.length > 0) {
-        await api.db
-          .delete(api.stockMovements)
-          .where(
-            inArray(
-              api.stockMovements.variantId,
-              variants.map((variant) => variant.id),
-            ),
-          );
+      // Test-owner cleanup bypasses user triggers only for this transaction.
+      // Application/runtime sessions still receive SQLSTATE 55000.
+      await api.pool.query("BEGIN");
+      try {
+        await api.pool.query(
+          "SET LOCAL session_replication_role = replica",
+        );
+        await api.pool.query(
+          `
+            DELETE FROM stock_movements
+            WHERE variant_id IN (
+              SELECT id
+              FROM product_variants
+              WHERE product_id = ANY($1::uuid[])
+            )
+          `,
+          [trackedProducts],
+        );
+        await api.pool.query(
+          "DELETE FROM products WHERE id = ANY($1::uuid[])",
+          [trackedProducts],
+        );
+        await api.pool.query("COMMIT");
+      } catch (error) {
+        await api.pool.query("ROLLBACK");
+        throw error;
       }
-      await api.db
-        .delete(api.products)
-        .where(inArray(api.products.id, trackedProducts));
     }
 
     if (customerIds.size > 0) {
@@ -1106,7 +1113,7 @@ describe("Phase 03 transactional workflows", { skip: !hasDatabase }, () => {
     assert.equal(counter?.lastValue, 9_999);
   });
 
-  it("finance separates snapshot, legacy, and missing-cost defects", async () => {
+  it("finance separates snapshot and legacy while contract rejects missing cost", async () => {
     const variant = await createVariantFixture({
       quantityOnHand: 20,
       costCents: 999,
@@ -1135,18 +1142,40 @@ describe("Phase 03 transactional workflows", { skip: !hasDatabase }, () => {
         idempotencyKey: randomUUID(),
         createdAt,
       },
-      {
-        variantId: variant.variantId,
-        locationId: mainLocationId,
-        type: "sale",
-        quantityDelta: -1,
-        quantityAfter: 14,
-        unitCostCents: null,
-        costBasis: null,
-        idempotencyKey: randomUUID(),
-        createdAt,
-      },
     ]);
+
+    await assert.rejects(
+      () =>
+        api.db.insert(api.stockMovements).values({
+          variantId: variant.variantId,
+          locationId: mainLocationId,
+          type: "sale",
+          quantityDelta: -1,
+          quantityAfter: 14,
+          unitCostCents: null,
+          costBasis: null,
+          idempotencyKey: randomUUID(),
+          createdAt,
+        }),
+      (error: unknown) => {
+        let current = error;
+        for (let depth = 0; depth < 5; depth += 1) {
+          if (
+            current &&
+            typeof current === "object" &&
+            "constraint" in current &&
+            current.constraint === "stock_movements_cost_snapshot_check"
+          ) {
+            return true;
+          }
+          current =
+            current && typeof current === "object" && "cause" in current
+              ? current.cause
+              : undefined;
+        }
+        return false;
+      },
+    );
 
     const snapshot = await api.getFinanceSnapshot(2, {
       now: new Date("2100-01-11T10:00:00.000Z"),
@@ -1154,7 +1183,7 @@ describe("Phase 03 transactional workflows", { skip: !hasDatabase }, () => {
     assert.equal(snapshot.cogsSnapshotCents, 200);
     assert.equal(snapshot.cogsLegacyCurrentCents, 600);
     assert.equal(snapshot.cogsTotalCents, 800);
-    assert.equal(snapshot.cogsSnapshotDefectCount, 1);
+    assert.equal(snapshot.cogsSnapshotDefectCount, 0);
   });
 });
 

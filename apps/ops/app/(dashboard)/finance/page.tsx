@@ -14,6 +14,7 @@ import { safeDbQuery } from "@/lib/db-safe";
 import { formatPkr } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { formatBusinessDate } from "@/lib/business-date";
+import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,7 @@ export default async function FinancePage({
 }: {
   searchParams: SearchParams;
 }) {
+  await requireOwnerSession({ redirectToLogin: true });
   const sp = await searchParams;
   const daysRaw = Number(sp.days ?? 30);
   const days = [7, 30, 90].includes(daysRaw) ? daysRaw : 30;

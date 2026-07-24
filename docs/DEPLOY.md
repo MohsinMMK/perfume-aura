@@ -65,11 +65,11 @@ When (and only when) a monorepo/source build has been proven green on this Hosti
 2. hPanel → **app.perfumeaura.com** → Deploy Web App → **Settings and redeploy**  
 3. Upload zip · Framework Other · Hostinger Node **24.x** · Root `./`
 4. Build: `echo prebuilt-standalone` · **Entry file:** `apps/ops/server.js` · Output empty  
-5. Env in **hPanel only** (never bake `.env` into zip): [ENV.md](./ENV.md) — include `PORT=3000`, `NODE_ENV=production`, `NEXT_PUBLIC_BETTER_AUTH_URL`  
+5. Env in **hPanel only** (never bake `.env` into zip): [ENV.md](./ENV.md) — include `PORT=3000`, `NODE_ENV=production`, exact `BETTER_AUTH_URL`, and `SMTP_*` recovery settings
 6. **Save and redeploy** · restart Node if offered  
 7. **Neon go-live (required for real login — not optional):**  
    ```bash
-   DATABASE_URL_DIRECT=… pnpm db:migrate
+   # Follow DATABASE_MIGRATION_AND_ROLE_RUNBOOK.md for the 0007/0008 gate.
    DATABASE_URL=… pnpm --filter @perfume-aura/db seed
    DATABASE_URL=… BETTER_AUTH_SECRET=… BETTER_AUTH_URL=https://app.perfumeaura.com \
      OWNER_EMAIL=… OWNER_PASSWORD=… pnpm --filter @perfume-aura/ops seed:owner

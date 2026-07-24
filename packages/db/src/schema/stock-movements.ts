@@ -1,4 +1,6 @@
+import { sql } from "drizzle-orm";
 import {
+  check,
   index,
   integer,
   pgEnum,
@@ -47,8 +49,8 @@ export const stockMovements = pgTable(
     note: text("note"),
     idempotencyKey: text("idempotency_key").unique(),
     /**
-     * Historical per-unit cost for a sale. Nullable until Phase 03 writes
-     * snapshots and the later post-auth contract migration tightens it.
+     * Historical per-unit cost for a sale. The column remains nullable because
+     * non-sale rows must omit it; the contract check requires it on every sale.
      */
     unitCostCents: integer("unit_cost_cents"),
     costBasis: stockCostBasisEnum("cost_basis"),
@@ -76,5 +78,42 @@ export const stockMovements = pgTable(
     ),
     /** Supports the unfiltered recent-movements list and date-only scans. */
     index("stock_movements_created_at_idx").on(table.createdAt),
+    check(
+      "stock_movements_quantity_check",
+      sql`${table.quantityDelta} <> 0 AND ${table.quantityAfter} >= 0`,
+    ),
+    check(
+      "stock_movements_direction_check",
+      sql`(
+        (${table.type} IN ('receive', 'return') AND ${table.quantityDelta} > 0)
+        OR (${table.type} IN ('sale', 'damage') AND ${table.quantityDelta} < 0)
+        OR ${table.type} = 'adjust'
+      )`,
+    ),
+    check(
+      "stock_movements_adjust_note_check",
+      sql`${table.type} <> 'adjust'
+        OR (${table.note} IS NOT NULL AND btrim(${table.note}) <> '')`,
+    ),
+    check(
+      "stock_movements_reference_pair_check",
+      sql`(${table.refType} IS NULL) = (${table.refId} IS NULL)`,
+    ),
+    check(
+      "stock_movements_cost_snapshot_check",
+      sql`(
+        (
+          ${table.type} = 'sale'
+          AND ${table.unitCostCents} IS NOT NULL
+          AND ${table.unitCostCents} >= 0
+          AND ${table.costBasis} IS NOT NULL
+        )
+        OR (
+          ${table.type} <> 'sale'
+          AND ${table.unitCostCents} IS NULL
+          AND ${table.costBasis} IS NULL
+        )
+      )`,
+    ),
   ],
 );

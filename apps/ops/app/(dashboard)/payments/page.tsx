@@ -17,6 +17,7 @@ import { safeDbQuery } from "@/lib/db-safe";
 import { formatPkr } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { formatBusinessDateTime } from "@/lib/business-date";
+import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,8 @@ function methodLabel(m: string) {
 }
 
 export default async function PaymentsPage() {
+  await requireOwnerSession({ redirectToLogin: true });
+
   const result = await safeDbQuery(() => listPayments());
 
   return (

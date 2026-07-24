@@ -1,4 +1,6 @@
+import { sql } from "drizzle-orm";
 import {
+  check,
   index,
   integer,
   pgEnum,
@@ -26,7 +28,7 @@ export const payments = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     /** PAY-YYYY-#### when recorded */
-    number: text("number").unique(),
+    number: text("number").notNull().unique(),
     invoiceId: uuid("invoice_id")
       .notNull()
       .references(() => invoices.id, { onDelete: "restrict" }),
@@ -38,11 +40,8 @@ export const payments = pgTable(
     paidAt: timestamp("paid_at", { withTimezone: true }).notNull().defaultNow(),
     reference: text("reference"),
     note: text("note"),
-    /**
-     * Nullable during the expansion window so the pre-Phase-03 application
-     * can still write. Existing rows are deterministically backfilled.
-     */
-    idempotencyKey: text("idempotency_key").unique(),
+    /** Stable retry key supplied by the caller for exactly-once semantics. */
+    idempotencyKey: text("idempotency_key").notNull().unique(),
     createdBy: text("created_by"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -55,5 +54,32 @@ export const payments = pgTable(
     ),
     index("payments_customer_id_idx").on(table.customerId),
     index("payments_paid_at_idx").on(table.paidAt),
+    check(
+      "payments_values_check",
+      sql`${table.amountCents} > 0
+        AND CASE
+          WHEN ${table.number} IS NULL THEN false
+          WHEN ${table.number} !~ '^PAY-[0-9]{4}-[0-9]{4,}$' THEN false
+          WHEN coalesce(
+            nullif(
+              ltrim(substring(${table.number} from '-([0-9]+)$'), '0'),
+              ''
+            ),
+            '0'
+          ) = '0' THEN false
+          WHEN length(
+            ltrim(substring(${table.number} from '-([0-9]+)$'), '0')
+          ) < 10 THEN true
+          WHEN length(
+            ltrim(substring(${table.number} from '-([0-9]+)$'), '0')
+          ) = 10
+            AND ltrim(substring(${table.number} from '-([0-9]+)$'), '0')
+              COLLATE "C" <= '2147483647' COLLATE "C"
+          THEN true
+          ELSE false
+        END
+        AND ${table.idempotencyKey} IS NOT NULL
+        AND btrim(${table.idempotencyKey}) <> ''`,
+    ),
   ],
 );

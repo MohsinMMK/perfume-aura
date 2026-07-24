@@ -5,25 +5,27 @@
 | Verdict | Recommend (locked) |
 | Score | 5/5 |
 | Docs | https://better-auth.com/docs · Drizzle adapter · Next.js integration |
-| As-built | Better Auth **1.6.x** · `apps/ops/lib/auth.ts` |
+| As-built | Better Auth **1.6.25** · `apps/ops/lib/auth.ts` |
 
 ## Config
 
-- Self-hosted Better Auth 1.6.x  
-- Drizzle adapter + Postgres (`@perfume-aura/db` tables)  
-- `emailAndPassword.disableSignUp: true`  
-- Route: `app/api/auth/[...all]`  
-- Plugin: `nextCookies()`  
-- Min password length: **12**  
-- Rate limit: enabled; stricter sign-in  
-- `trustedOrigins`: baseURL + optional env list  
-- `user.role` additional field (`input: false`, default `owner`)  
+- Self-hosted Better Auth 1.6.25
+- Drizzle adapter + Postgres (`@perfume-aura/db` tables)
+- `emailAndPassword.disableSignUp: true`
+- Route: `app/api/auth/[...all]`
+- Plugin: `nextCookies()`
+- Min password length: **12**
+- Durable database rate limit; stricter sign-in/reset endpoints
+- `trustedOrigins`: production only `https://app.perfumeaura.com`; development/test only the exact localhost pair
+- `user.role` additional field (`input: false`, default `user`)
+- Hostinger SMTP forgot/reset flow; 30-minute single-use token
+- Password reset revokes existing sessions
 
 ## Security
 
-- Cookie middleware / `proxy.ts` is **optimistic only**  
-- Always `auth.api.getSession` / `getSession` / `requireSession` in pages and Server Actions  
-- Secret ≥ 32 chars at runtime  
+- Cookie middleware / `proxy.ts` is **optimistic only**
+- Always `getOwnerSession` / `requireOwnerSession` in protected pages, loaders, and Server Actions
+- Secret ≥ 32 chars at runtime
 
 Full checklist: [../../SECURITY.md](../../SECURITY.md).
 
@@ -33,6 +35,9 @@ Full checklist: [../../SECURITY.md](../../SECURITY.md).
 pnpm --filter @perfume-aura/ops seed:owner
 # needs DATABASE_URL, BETTER_AUTH_SECRET, OWNER_EMAIL, OWNER_PASSWORD
 ```
+
+Normal recovery uses `/forgot-password`. `recover:owner` is confirmed
+break-glass maintenance and revokes every owner session.
 
 ## Reject
 

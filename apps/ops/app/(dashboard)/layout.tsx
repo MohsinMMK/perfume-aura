@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
-import { getSession } from "@/lib/session";
+import { requireOwnerSession } from "@/lib/session";
 import { getDashboardStats } from "@/lib/stock";
 import { safeDbQuery } from "@/lib/db-safe";
 
@@ -9,10 +8,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSession();
-  if (!session) {
-    redirect("/login");
-  }
+  await requireOwnerSession({ redirectToLogin: true });
 
   const stats = await safeDbQuery(() => getDashboardStats());
   const lowStockCount = stats.data?.lowStockCount ?? 0;
