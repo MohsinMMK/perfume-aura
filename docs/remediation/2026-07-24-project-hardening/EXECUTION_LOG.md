@@ -241,17 +241,35 @@ For each phase, append:
 
 ## Phase 07 — Production recovery and verification
 
-Status: pending
-Read-only preparation agent: pending
-Independent evidence reviewer: pending
-Root operator: pending
-Neon restore point: pending, identifier must be non-secret
-Isolated Neon branch evidence: pending
-Migration/runtime-role evidence: pending
-Hostinger deployment/build evidence: pending
-Owner login and reset evidence: pending
-Marketing continuity evidence: pending
-Rollback result: pending
+| Item | Evidence |
+|---|---|
+| Status | In progress. Read-only production inventory and isolated Neon pre-production validation are complete; production database migration, Hostinger environment/deployment, SMTP delivery, proxy/IP proof, and final cutover are not complete. |
+| Started from | Clean Phase 06 commit `1f68928c6c9f29e9f8baad105c59a7fd26ad17f3` on local branch `codex/project-hardening`; `main`/`origin/main` still point to the pre-hardening revision, so no production artifact is represented by the source-of-truth branch yet. |
+| Root operator | `/root`; all provider mutations remained root-controlled. |
+| Read-only preparation agent | `/root/db_integrity_research` — verified the clean artifact/public/provider boundary and identified the unresolved GitHub custody/main-CI gate; no provider mutation. |
+| Independent evidence reviewer | Pending until after an actual production cutover; must be a different normal read-only agent. |
+| Official workflows rechecked | Current Neon CLI/API branching and role endpoints; official Neon branching/restore/pooling guidance; official Hostinger Node Web App ZIP, Node `24.x`, environment, redeploy, and SMTP guidance; official Better Auth rate-limit/security guidance. |
+| Clean candidate | `dist/perfume-aura-standalone_1f68928c6c9f.zip`, 26,270,975 bytes, SHA-256 `e1455ac120134638f75f6e81bd7ef0581bc9dd3cd32f56bcba244d0ced5275f2`; external/embedded manifests record the exact full source commit and `dirty: false`. Local packaged endpoints and static assets passed before provider work. |
+| Public preflight | Marketing `/` returned `200`; protected marketing paths returned `403`; ops `/login` returned `200`, while `/`, `/api/auth/get-session`, and the old deployment's auth/database path remained broken. New health/recovery routes were absent on the old deployment. DNS resolved through the established Hostinger nameservers; no DNS change was warranted. |
+| Hostinger inventory | Exact website `app.perfumeaura.com`, hosting user `u602723373`, latest deployment `019f8f41-3783-73ad-8190-6525bf739d90`; old deployment uses Node `20`, root `./`, entry `apps/ops/server.js`, and a prebuilt archive. Build logs showed the no-op install and `echo prebuilt-standalone` path. No environment value was read or printed. |
+| Neon target | Project `aged-star-64023346` (`perfume-aura`), production branch `br-ancient-boat-azyjtmnj` (`main`), PostgreSQL `17`, database `neondb`. Production initially had exactly the three reviewed migrations through `0002`; the production read-only preflight returned zero for all 22 categories. |
+| Restore evidence | Named production snapshot `snap-bold-moon-azlxqhqn` (`phase07-pre-hardening-20260725`) created before migration work; isolated expiring branch `br-summer-hill-az81q4rb` (`phase07-preprod-20260725`) created from production with endpoint `ep-spring-boat-az9a9mri`. Both are scheduled to expire on 2026-08-02. |
+| Provider credential incident | The Neon branch-create command unexpectedly printed an inherited owner URI. Root immediately reset the owner password independently on production and pre-production, suppressed all replacements, and verified that both new secrets exist and differ. No exposed value was reused. |
+| Pre-production expansion | Exact-`0002` preflight: 22/22 zero. The bounded Drizzle migrator reached exactly eight rows through `0007_phase04_auth_expansion`; a repeat verifier under exact Node `24.18.0` proved `before=8`, `after=8`, target hash `49bede137e6fd29d1c87a84170502e4f4e1329ab36521a9e37d2fc5f3d5dfa7f`, with `0008` pending. |
+| Runtime role discovery | A role created through Neon's role API inherited `neon_superuser`, `CREATEROLE`, `CREATEDB`, and `BYPASSRLS`; the catalog gate rejected it. Root revoked its object grants, deleted it through the API, and recreated `perfume_aura_runtime` directly in SQL as required by the runbook. |
+| Runtime role proof | SQL-defined role is `LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS`, has zero memberships, can connect/use `public`, cannot create schema/temp objects, has zero unexpected/missing table grants, zero sequence privileges, and cannot update/delete payments or stock movements. Broad database `TEMPORARY` was removed from `PUBLIC` on the isolated branch and retained explicitly for the inventoried Neon provider/admin roles. |
+| Expansion-code compatibility | The exact clean ZIP booted under Node `24.18.0` against the eight-row schema using only the restricted pooled runtime role. `/login`, `/api/health/live`, `/api/health/ready`, and `/api/auth/get-session` all returned `200`. |
+| Contract migration | Expansion reconciliation returned 27/27 zero. The ordinary Drizzle migrator applied only `0008_phase03_contract`; the journal then contained exactly nine rows and contract hash `3f7d6d86e395cfc2e996cdfe81c0820bb93b4dfd7b6c7cebe78d8ee239e45e56`. Post-contract reconciliation remained 27/27 zero. |
+| Contract catalog proof | All 11 contract checks are validated; payment number/idempotency columns are required; the enabled `stock_movements_append_only` trigger is present; its function is executable only by the owner; the runtime grant matrix remains exact. Payment trigger remains intentionally deferred to a linked reversal/credit-note model. |
+| Pre-production seed/browser proof | MAIN seed was already present. Owner break-glass recovery completed on the isolated branch, the clean package booted with the restricted role, and Playwright signed in successfully. Dashboard, products, stock, customers, invoices, payments, finance, and security each returned `200` with the expected heading and zero browser errors/warnings. |
+| Browser credential incident | A diagnostic Playwright snapshot unexpectedly rendered the filled owner form fields. Root closed the browser/server, deleted the generated artifacts, rotated `.env.local` to a new mode-`600` password, ran confirmed break-glass recovery on both pre-production and production, revoked all owner sessions, and repeated sign-in with credential-bearing CLI output fully suppressed. The exposed value is invalidated. |
+| Better Auth proxy gate | Current official Better Auth guidance says the default `X-Forwarded-For` value is not sufficient behind an appending proxy; production must use a provider-controlled single header or a proven right-to-left trusted proxy chain. Hostinger's public Node documentation does not define such a header/chain. Production needs redacted boundary observation plus spoof/two-network/restart tests before cutover can be approved. |
+| Hostinger browser gate | In-app browser remains at the unauthenticated Hostinger login page. Chrome is installed but not running; the browser skill requires user permission before launch. No hPanel setting, environment, mailbox, upload, restart, or deployment was changed. |
+| SMTP gate | No approved Hostinger SMTP credentials are present locally. `smtp.hostinger.com:465` is the approved default, but mailbox/password/from values must come from the authenticated account or user; they will not be guessed. No email was sent. |
+| GitHub custody gate | No push/PR/main run was authorized or performed. The candidate is clean and checksum-verified locally, but Phase 06 GitHub gates and `main` artifact custody remain unproven. Root needs explicit push/PR/merge authority or an explicit locally reviewed Path Z exception before production upload. |
+| Production mutations completed | Restore snapshot/branch creation; Neon owner-password rotation after URI exposure; confirmed owner break-glass password recovery/session revocation after browser exposure. No production migration, runtime role, Hostinger, SMTP, DNS, deployment, or business-ledger mutation occurred. |
+| Rollback state | Production database remains at its original three-migration schema; the named restore snapshot exists; prior Hostinger deployment remains active; the Phase 06 ZIP has not been uploaded. The isolated branch can be deleted after final evidence retention. |
+| Root gate | Not approved for production cutover. Await authenticated hPanel access/Chrome permission, approved SMTP mailbox credentials, trusted-proxy evidence, and GitHub artifact-custody direction. |
 
 ## Phase 08 — Documentation and operational handoff
 
