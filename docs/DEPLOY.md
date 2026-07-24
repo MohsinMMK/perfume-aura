@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| Updated | 2026-07-23 |
+| Updated | 2026-07-24 |
 | Ops checklist | [OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIST.md) |
 | DNS support | [HOSTINGER_SUPPORT_DNS.md](./HOSTINGER_SUPPORT_DNS.md) |
 | Ops pack | `pnpm ops:pack` → Path Z prebuilt zip |
@@ -29,47 +29,74 @@ Full dual-flow write-up for agents: **[AGENTS.md — GitHub → Hostinger](../AG
 
 ### Path M — Marketing (GitHub classic Git)
 
+**Edit** only `apps/marketing/` (`index.html`, `styles.css`, `.htaccess`).  
+**Publish** to monorepo root (Hostinger serves repo root in `public_html`):
+
 ```bash
-pnpm marketing:sync   # when apps/marketing changes
+pnpm marketing:sync   # copies source → root index.html, styles.css, .htaccess
+git add apps/marketing index.html styles.css .htaccess
+git commit -m "marketing: …"
 git push origin main  # Hostinger Advanced → Git auto-deploy → public_html
 ```
+
+Drift gate: `pnpm marketing:check` (CI on `main` / PRs). Do not hand-edit root HTML/CSS/htaccess.
 
 ### Ops deploy
 
 Full step-by-step + live account snapshot: **[OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIST.md)**.
 
-#### Path G — GitHub on Node Web App (official preferred / goal)
+#### Path G — GitHub on Node Web App (goal only — **do not attempt today**)
 
-hPanel → **app.perfumeaura.com** → Node.js Web App → source **GitHub** → repo `MohsinMMK/perfume-aura` → `main` → auto build on push.  
-**Blocked today:** shared Node monorepo source build → esbuild **EACCES**. Do not thrash failed Path G deploys; use Path Z until green.
+**Status: blocked.** Shared Node monorepo source build → esbuild **EACCES**.  
+Do **not** connect GitHub source build or thrash failed Path G deploys until unblocked. Use **Path Z** only.
+
+When (and only when) a monorepo/source build has been proven green on this Hostinger plan, reconnect GitHub on the Node Web App. Until then, ignore Path G field recipes elsewhere — they are historical targets, not runnable steps.
 
 #### Path Z — Prebuilt zip (current workable / official option #2)
 
 1. Local: `pnpm ops:pack` → `dist/perfume-aura-standalone_*.zip`  
-   - Pack uses **`zip -y`** + **materialized** `apps/ops/node_modules` (no broken symlink graph)  
-   - Smoke gate: extract zip and `require('next')` from `apps/ops` must pass  
+   - **Primary portability:** materialized real dirs under `apps/ops/node_modules` (`next`, `@swc/helpers`, `react`, linux `sharp` + siblings)  
+   - `zip -y` is secondary (preserves remaining symlinks); do not hand-zip standalone without materialize  
+   - Smoke gate: extract zip → `require('next')` + `require('sharp')` + `.next/static` from `apps/ops` must pass  
+   - Keep extracted `node_modules` on the server (root `package.json` empty deps = install no-op; clean wipe breaks boot)  
 2. hPanel → **app.perfumeaura.com** → Deploy Web App → **Settings and redeploy**  
 3. Upload zip · Framework Other · Node **20.x** · Root `./`  
 4. Build: `echo prebuilt-standalone` · **Entry file:** `apps/ops/server.js` · Output empty  
-5. Env in **hPanel only** (never bake `.env` into zip): [ENV.md](./ENV.md)  
-6. **Save and redeploy** · restart Node if offered · smoke `https://app.perfumeaura.com/login`  
+5. Env in **hPanel only** (never bake `.env` into zip): [ENV.md](./ENV.md) — include `PORT=3000`, `NODE_ENV=production`, `NEXT_PUBLIC_BETTER_AUTH_URL`  
+6. **Save and redeploy** · restart Node if offered  
+7. **Neon go-live (required for real login — not optional):**  
+   ```bash
+   DATABASE_URL_DIRECT=… pnpm db:migrate
+   DATABASE_URL=… pnpm --filter @perfume-aura/db seed
+   DATABASE_URL=… BETTER_AUTH_SECRET=… BETTER_AUTH_URL=https://app.perfumeaura.com \
+     OWNER_EMAIL=… OWNER_PASSWORD=… pnpm --filter @perfume-aura/ops seed:owner
+   ```  
+8. Smoke:  
+   - `https://app.perfumeaura.com/login` → Next HTML (200)  
+   - `https://app.perfumeaura.com/api/auth/get-session` → **not** 500  
+   - Owner can sign in  
+
+Full field table + status board: [OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIST.md).
 
 **Forbidden deploy artifacts**
 
 - Flat zip with root `server.js` / `entry.cjs` (missing monorepo layout → `Cannot find module 'next'`)  
+- Hand-zip of `.next/standalone` without `pnpm ops:pack` materialize  
 - Any zip containing `.env` / secrets  
-- Whole monorepo into marketing `public_html` without deny rules  
+- Whole monorepo into marketing `public_html` **without** root `.htaccess` deny rules (Path M still deploys whole tree; deny is required mitigate)  
 - Classic Git as ops **runtime** (wrong Hostinger product)  
+- `rm -rf node_modules && pnpm i` on Hostinger after Path Z extract  
 
 ### Marketing deploy safety
 
-- Prefer CI that uploads **only** marketing static files.  
-- Until CI exists, root `index.html` / `styles.css` keep classic Git working (`pnpm marketing:sync`).  
-- Classic Git still pulls the **whole monorepo** into `public_html`. Root **`.htaccess`** denies `/apps`, `/packages`, `/docs`, lockfiles, and `*.md` (SEC-7 mitigate).  
+- Prefer future CI that uploads **only** marketing static files (artifact-only).  
+- Today: root publish surface = generated from `apps/marketing` via `pnpm marketing:sync` (includes `.htaccess`).  
+- Classic Git still pulls the **whole monorepo** into `public_html`. Root **`.htaccess`** denies `/apps`, `/packages`, `/docs`, lockfiles, `*.md`, `.git`, `.env`, `.gitignore` (SEC-7 mitigate).  
 - After deploy verify:
 
 ```bash
-curl -sI -o /dev/null -w "%{http_code}\n" https://perfumeaura.com/apps/ops/package.json   # 403 or 404
+curl -sI -o /dev/null -w "%{http_code}\n" https://perfumeaura.com/apps/ops/package.json   # expect 403 (.htaccess [F,L])
+curl -sI -o /dev/null -w "%{http_code}\n" https://perfumeaura.com/.gitignore               # expect 403
 curl -sI -o /dev/null -w "%{http_code}\n" https://perfumeaura.com/                          # 200
 ```
 
@@ -148,7 +175,7 @@ dig A app.perfumeaura.com +short
 # after ops DNS: Node target
 
 curl -sI -L https://perfumeaura.com | head
-curl -sI https://perfumeaura.com/apps/ops/package.json | head -1   # expect 404
+curl -sI https://perfumeaura.com/apps/ops/package.json | head -1   # expect 403
 ```
 
 Propagation: https://dnschecker.org/#NS/perfumeaura.com
@@ -216,7 +243,7 @@ pnpm dev:ops
 | Thrashing nameservers | Resets validation |
 | Website Builder / Horizons for this repo | No official Git path for this stack |
 | Classic Git for Next.js ops | Wrong product; broken runtime |
-| Whole monorepo into `public_html` | Leaks ops source / secrets risk |
+| Whole monorepo into `public_html` without `.htaccess` deny | Leaks ops source / secrets risk (Path M still uses whole tree + deny) |
 | Vercel production | Hostinger-only policy |
 
 ## Related

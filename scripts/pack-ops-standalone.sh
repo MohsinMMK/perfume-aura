@@ -5,11 +5,15 @@
 # Layout (zip root = Hostinger extract root):
 #   apps/ops/server.js          ← ENTRY
 #   apps/ops/.next/static/      ← required assets
-#   apps/ops/node_modules/      ← materialized next + siblings (no symlink dependency)
+#   apps/ops/node_modules/      ← materialized next + siblings (PRIMARY portability fix)
 #   node_modules/.pnpm/         ← full standalone store
-#   package.json                ← build: echo prebuilt-standalone (no deps)
+#   package.json                ← build: echo prebuilt-standalone (empty deps)
+#
+# Hostinger-safe boot depends on materializing real dirs under apps/ops/node_modules.
+# zip -y is secondary (preserves any remaining symlinks); do not treat -y alone as the fix.
 #
 # Never bake .env into the zip. Set secrets in hPanel only.
+# Do not wipe extracted node_modules on the server (empty root deps = install no-op).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -31,6 +35,11 @@ SERVER_JS="$STANDALONE/apps/ops/server.js"
 
 if [[ ! -f "$SERVER_JS" ]]; then
   echo "ERROR: missing $SERVER_JS — standalone output incomplete" >&2
+  exit 1
+fi
+
+if [[ ! -d "$STATIC" ]]; then
+  echo "ERROR: missing $STATIC — run a full next build first" >&2
   exit 1
 fi
 
@@ -121,7 +130,6 @@ fi
 
 # @swc/helpers must expose package exports (not a dangling symlink)
 if [[ ! -f "$STAGE/apps/ops/node_modules/@swc/helpers/package.json" ]]; then
-  # pnpm nests as @swc/helpers under @swc/
   if [[ -e "$STAGE/apps/ops/node_modules/@swc/helpers" ]]; then
     :
   else
@@ -156,14 +164,15 @@ if [[ ! -d "$SHARP_SRC" ]]; then
   exit 1
 fi
 
+# sharp's npm tree puts runtime deps (semver, detect-libc, …) as siblings, not inside sharp/
 copy_sharp_into() {
   local dest_nm="$1"
+  local pkg base
   mkdir -p "$dest_nm"
   rm -rf "$dest_nm/sharp"
   cp -R "$SHARP_SRC" "$dest_nm/sharp"
   if [[ -d "$IMG_SRC" ]]; then
     mkdir -p "$dest_nm/@img"
-    local pkg base
     shopt -s nullglob
     for pkg in "$IMG_SRC"/sharp-linux-* "$IMG_SRC"/sharp-libvips-linux-* "$IMG_SRC"/colour; do
       base="$(basename "$pkg")"
@@ -172,6 +181,19 @@ copy_sharp_into() {
     done
     shopt -u nullglob
   fi
+  # Sibling deps required by sharp package resolution
+  shopt -s nullglob
+  for pkg in "$SHARP_TMP/node_modules"/*; do
+    base="$(basename "$pkg")"
+    case "$base" in
+      sharp|@img|.bin|.* ) continue ;;
+    esac
+    if [[ -d "$pkg" || -f "$pkg" ]]; then
+      rm -rf "$dest_nm/$base"
+      cp -R "$pkg" "$dest_nm/$base"
+    fi
+  done
+  shopt -u nullglob
 }
 
 # Place linux sharp where Next and Hostinger cwd resolve modules
@@ -189,10 +211,67 @@ done
 shopt -u nullglob
 rm -rf "$SHARP_TMP"
 
-# Drop darwin natives from the tree (wrong ABI + bloat)
+# Drop darwin natives (dirs, files, and broken symlink stubs)
+echo "==> Stripping darwin sharp/native stubs…"
 while IFS= read -r -d '' d; do
   rm -rf "$d"
-done < <(find "$STAGE/node_modules" "$STAGE/apps/ops/node_modules" -type d \( -name '*darwin*' -o -name '*Darwin*' \) -print0 2>/dev/null)
+done < <(find "$STAGE/node_modules" "$STAGE/apps/ops/node_modules" \
+  \( -name '*darwin*' -o -name '*Darwin*' \) -print0 2>/dev/null)
+
+# Remove broken symlinks left after darwin strip / pnpm relocate
+while IFS= read -r -d '' link; do
+  rm -f "$link"
+done < <(find "$STAGE/node_modules" "$STAGE/apps/ops/node_modules" -type l ! -e -print0 2>/dev/null || true)
+
+# Rewrite absolute build-machine paths baked into standalone manifests
+echo "==> Scrubbing absolute build paths from standalone manifests…"
+python3 - "$ROOT" "$STAGE" <<'PY'
+import os, sys
+root = os.path.abspath(sys.argv[1])
+stage = sys.argv[2]
+# Prefer relative monorepo root marker over machine path
+replacements = [
+    (root, "."),
+    (root + os.sep, "./"),
+]
+targets = []
+for dirpath, _, files in os.walk(os.path.join(stage, "apps", "ops")):
+    for name in files:
+        if name in ("server.js", "required-server-files.json") or name.endswith(".json"):
+            path = os.path.join(dirpath, name)
+            # Limit rewrite surface: server entry + required-server-files + next config dumps
+            base = os.path.basename(path)
+            if base in ("server.js", "required-server-files.json") or "required-server-files" in base:
+                targets.append(path)
+for path in targets:
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            text = f.read()
+    except (OSError, UnicodeDecodeError):
+        continue
+    orig = text
+    for old, new in replacements:
+        text = text.replace(old, new)
+    if text != orig:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(text)
+        print(f"  scrubbed paths in {os.path.relpath(path, stage)}")
+# Fail closed if machine home path still present in entry/config
+home_marker = os.path.expanduser("~")
+for path in targets:
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            body = f.read()
+    except OSError:
+        continue
+    if home_marker in body or "/Users/" in body or "/home/" in body:
+        # Allow only if not our monorepo root leftovers under common home prefixes
+        if root in body or "/Users/" in body:
+            # After replace, leftover /Users/ is still bad
+            if "/Users/" in body or root in body:
+                print(f"ERROR: absolute path still present in {path}", file=sys.stderr)
+                sys.exit(1)
+PY
 
 # Strip install bait: nested ops package.json must not list workspace:* deps
 cat > "$STAGE/apps/ops/package.json" << 'OPSPKG'
@@ -206,10 +285,12 @@ cat > "$STAGE/apps/ops/package.json" << 'OPSPKG'
 OPSPKG
 
 # Hostinger helper package.json — empty deps so install is a no-op
+# Keep extracted node_modules on the server; a clean wipe + install would empty the tree.
 cat > "$STAGE/package.json" << 'PKG'
 {
   "name": "perfume-aura-ops-standalone",
   "private": true,
+  "dependencies": {},
   "scripts": {
     "build": "echo prebuilt-standalone",
     "start": "node apps/ops/server.js",
@@ -244,6 +325,11 @@ Settings and redeploy:
   Output directory: (leave empty)
   Entry file: apps/ops/server.js
 
+IMPORTANT:
+  - Keep the extracted node_modules tree. Root package.json has empty deps on purpose
+    (install no-op). Do NOT rm -rf node_modules && pnpm i on the server.
+  - Portability comes from materialized apps/ops/node_modules (real dirs), not zip -y alone.
+
 Required env (hPanel only — never bake into zip):
   DATABASE_URL=<Neon pooled production>
   BETTER_AUTH_SECRET=<openssl rand -base64 32>
@@ -252,24 +338,37 @@ Required env (hPanel only — never bake into zip):
   NODE_ENV=production
   PORT=3000
 
+After deploy (outside zip):
+  DATABASE_URL_DIRECT=… pnpm db:migrate
+  DATABASE_URL=… pnpm --filter @perfume-aura/db seed
+  OWNER_EMAIL=… OWNER_PASSWORD=… pnpm --filter @perfume-aura/ops seed:owner
+
 Do NOT use root entry.cjs / flat server.js experiments.
 Smoke: https://app.perfumeaura.com/login
+       https://app.perfumeaura.com/api/auth/get-session  (not 500)
 TXT
 
-# Forbid secrets in stage
-if find "$STAGE" -type f \( -name '.env' -o -name '.env.*' -o -name '*.pem' \) 2>/dev/null | grep -q .; then
-  echo "ERROR: env/secret files found in stage — refuse to pack" >&2
-  find "$STAGE" -type f \( -name '.env' -o -name '.env.*' \) 2>/dev/null || true
+# Forbid secrets / credential files in stage
+SECRET_FIND="$(find "$STAGE" -type f \( \
+  -name '.env' -o -name '.env.*' -o -name '*.pem' -o -name '*.key' \
+  -o -name 'id_rsa' -o -name 'id_ed25519' -o -name '.envrc' \
+  -o -name '*credentials*.json' -o -name 'service-account*.json' \
+  -o -path '*/.neon/*' \
+\) 2>/dev/null || true)"
+if [[ -n "$SECRET_FIND" ]]; then
+  echo "ERROR: secret/credential files found in stage — refuse to pack" >&2
+  echo "$SECRET_FIND" >&2
   exit 1
 fi
 
-echo "==> Stage smoke (require next from apps/ops)…"
+echo "==> Stage smoke (next + sharp + static from apps/ops)…"
 (
   cd "$STAGE/apps/ops"
   test -f server.js
   test -d node_modules/next
   test -d .next/static
   node -e "require('next'); require('next/dist/shared/lib/constants'); console.log('stage-smoke: next ok')"
+  node -e "require('sharp'); console.log('stage-smoke: sharp ok')"
 )
 
 echo "==> Zipping → $ZIP_PATH"
@@ -277,23 +376,39 @@ mkdir -p "$OUT_DIR"
 rm -f "$ZIP_PATH"
 (
   cd "$STAGE"
-  # -y store symlinks as symlinks when present; tree is mostly real dirs after materialize
+  # -y keeps remaining symlinks as links; primary portability = materialize above
   zip -qry "$ZIP_PATH" .
 )
 
 echo "==> Zip extract smoke…"
 VERIFY="$(mktemp -d)"
 unzip -q "$ZIP_PATH" -d "$VERIFY"
-if unzip -l "$ZIP_PATH" | grep -E '(^|/)\.env(\.|$)|(^|/)entry\.cjs$'; then
-  echo "ERROR: zip contains .env or entry.cjs (forbidden)" >&2
+if unzip -l "$ZIP_PATH" | grep -E '(^|/)\.env(\.|$)|(^|/)\.envrc$|(^|/)entry\.cjs$|\.pem$|\.key$|(^|/)id_rsa$|(^|/)id_ed25519$'; then
+  echo "ERROR: zip contains forbidden secret/entry paths" >&2
   rm -rf "$VERIFY"
   exit 1
+fi
+if unzip -l "$ZIP_PATH" | grep -E '/Users/|/home/[^/]+/Documents' >/dev/null; then
+  # Soft warn: binary content can false-positive; hard-fail only entry manifests
+  if grep -R -l -E '/Users/|/home/' "$VERIFY/apps/ops/server.js" \
+      "$VERIFY/apps/ops/.next/required-server-files.json" 2>/dev/null | grep -q .; then
+    echo "ERROR: zip entry still embeds absolute home paths" >&2
+    rm -rf "$VERIFY"
+    exit 1
+  fi
 fi
 (
   cd "$VERIFY/apps/ops"
   test -f server.js
   test -d node_modules/next
+  test -d .next/static
+  # Prefer real dir (materialize); fail if next is a broken symlink
+  if [[ -L node_modules/next ]] && [[ ! -e node_modules/next ]]; then
+    echo "ERROR: apps/ops/node_modules/next is a broken symlink" >&2
+    exit 1
+  fi
   node -e "require('next'); require('next/dist/shared/lib/constants'); console.log('zip-smoke: next ok')"
+  node -e "require('sharp'); console.log('zip-smoke: sharp ok')"
 )
 rm -rf "$VERIFY"
 
@@ -304,4 +419,5 @@ BYTES="$(wc -c < "$ZIP_PATH" | tr -d ' ')"
 echo "==> Done: $ZIP_PATH ($BYTES bytes)"
 echo "    Entry file: apps/ops/server.js"
 echo "    Build cmd:  echo prebuilt-standalone"
+echo "    Keep server node_modules (do not clean-install empty root deps)"
 ls -lh "$ZIP_PATH"

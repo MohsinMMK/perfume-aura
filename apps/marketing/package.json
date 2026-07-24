@@ -2,7 +2,10 @@
   "name": "@perfume-aura/marketing",
   "private": true,
   "version": "0.0.0",
+  "description": "Public brand static site (perfumeaura.com). Source of truth for Path M publish surface.",
   "scripts": {
-    "build": "mkdir -p dist && cp index.html styles.css dist/"
+    "sync": "bash ../../scripts/sync-marketing.sh sync",
+    "check": "bash ../../scripts/sync-marketing.sh check",
+    "build": "bash ../../scripts/sync-marketing.sh sync"
   }
 }

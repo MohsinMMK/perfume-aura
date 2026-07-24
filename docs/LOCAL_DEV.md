@@ -45,7 +45,8 @@ openssl rand -base64 32
 | DB migrate | `pnpm db:migrate` |
 | Generate migration | `pnpm db:generate` |
 | Marketing preview | `npx serve apps/marketing` |
-| Sync marketing root mirror | `pnpm marketing:sync` |
+| Publish marketing to repo root (Path M) | `pnpm marketing:sync` (edit `apps/marketing` only) |
+| Check marketing publish drift | `pnpm marketing:check` |
 | Check mirror matches | `pnpm marketing:check` |
 
 ## shadcn

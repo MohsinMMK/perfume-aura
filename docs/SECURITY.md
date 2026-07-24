@@ -64,7 +64,7 @@ File: `apps/ops/lib/auth.ts`.
 | SEC-4 | Parameterized SQL only | ✅ Drizzle |
 | SEC-5 | No secrets in client / marketing | ✅ |
 | SEC-6 | `serverActions.allowedOrigins` includes prod host | ✅ next.config |
-| SEC-7 | Marketing must not expose ops source | ✅ root `.htaccess` deny `/apps` `/packages` `/docs` (403); prefer artifact-only CI later |
+| SEC-7 | Marketing must not expose ops source | ✅ root `.htaccess` deny `/apps` `/packages` `/docs` / lockfiles / `*.md` / `.git` / `.env` / `.gitignore` (**403** via `[F,L]` + FilesMatch); prefer artifact-only CI later |
 
 ---
 
@@ -75,7 +75,7 @@ File: `apps/ops/lib/auth.ts`.
 3. Rotate if leaked (including Hostinger API tokens left in `/tmp`).  
 4. Production `BETTER_AUTH_URL` must be HTTPS origin.  
 5. Use Neon pooled URL for app; do not expose DB to the public internet beyond Neon controls.  
-6. **Never** bake `.env` into `pnpm ops:pack` zip. Pack smoke rejects `.env*` in artifact.  
+6. **Never** bake `.env` into `pnpm ops:pack` zip. Pack smoke rejects `.env*`, keys, and `entry.cjs` in artifact. Verify marketing with **403** (not “must be 404”).  
 7. Classic Git still places monorepo files on marketing disk; `.htaccess` blocks HTTP access until artifact-only deploy.
 
 ---

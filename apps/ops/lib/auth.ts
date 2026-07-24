@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
@@ -9,11 +10,14 @@ import {
   verification,
 } from "@perfume-aura/db";
 
+/** Ephemeral build-only secret (module-scoped). Never a fixed public constant. */
+let buildOnlySecret: string | undefined;
+
 /**
  * Resolve auth secret for Better Auth.
  * - Runtime: require BETTER_AUTH_SECRET (or fail with a clear message).
- * - Next production build: allow a placeholder so `next build` typechecks
- *   without local secrets (never use this value in a real deploy).
+ * - Next production build: random per-process secret so `next build` can typecheck
+ *   without local secrets. Never a fixed string in the bundle; never use at runtime.
  */
 function resolveAuthSecret(): string {
   const fromEnv = process.env.BETTER_AUTH_SECRET;
@@ -23,7 +27,10 @@ function resolveAuthSecret(): string {
 
   const isNextBuild = process.env.NEXT_PHASE === "phase-production-build";
   if (isNextBuild) {
-    return "perfume-aura-build-placeholder-secret-32b";
+    if (!buildOnlySecret) {
+      buildOnlySecret = randomBytes(32).toString("base64");
+    }
+    return buildOnlySecret;
   }
 
   if (fromEnv) {

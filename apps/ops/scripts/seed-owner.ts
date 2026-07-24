@@ -35,8 +35,9 @@ async function main() {
       "OWNER_EMAIL and OWNER_PASSWORD are required (see apps/ops/.env.example)",
     );
   }
-  if (password.length < 8) {
-    throw new Error("OWNER_PASSWORD must be at least 8 characters");
+  // Match apps/ops/lib/auth.ts emailAndPassword.minPasswordLength
+  if (password.length < 12) {
+    throw new Error("OWNER_PASSWORD must be at least 12 characters");
   }
 
   // Dynamic import after env is loaded so auth/db see DATABASE_URL

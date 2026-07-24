@@ -17,15 +17,19 @@ Monorepo for **perfumeaura.com** (marketing) and the internal **ops** app (inven
 
 Key specs: [PRD](docs/PRD.md) · [TRD](docs/TRD.md) · [Architecture](docs/ARCHITECTURE.md) · [Roadmap](docs/ROADMAP.md) · [Phase 1 status](docs/PHASE1_STATUS.md) · [Ops deploy](docs/OPS_DEPLOY_CHECKLIST.md) · [Stack lock](docs/stack-research/RECOMMENDATION.md).
 
-## Layout
+## Layout (monorepo ownership)
 
 ```text
-apps/marketing   # public coming soon (also mirrored at repo root for Hostinger)
+apps/marketing   # SOURCE OF TRUTH — brand static site (edit here)
 apps/ops         # Next.js internal admin
 packages/ui      # shadcn shared components
 packages/db      # Drizzle schema + migrations
 packages/validators
-docs/
+scripts/         # marketing sync + ops pack (see scripts/README.md)
+docs/            # PRD / TRD / deploy runbooks
+
+# Path M publish surface (generated — do not hand-edit):
+index.html  styles.css  .htaccess   ← pnpm marketing:sync from apps/marketing
 ```
 
 ## Local development
@@ -71,10 +75,21 @@ pnpm test:integration     # concurrent oversell + TX rollback (needs Neon)
 
 | Site | Method | Domain |
 |------|--------|--------|
-| Marketing | Classic Git / marketing artifact → `public_html` | perfumeaura.com |
-| Ops | **Node.js Web App** (not classic Git) | app.perfumeaura.com |
+| Marketing | Classic Git (**Path M**) → `public_html` + root `.htaccess` SEC-7 | perfumeaura.com |
+| Ops | **Node.js Web App** — **Path Z** prebuilt zip today (not classic Git) | app.perfumeaura.com |
 
-Full rules: [docs/DEPLOY.md](docs/DEPLOY.md), [AGENTS.md](AGENTS.md).
+### Ops Path Z (current)
+
+```bash
+pnpm ops:pack
+# → dist/perfume-aura-standalone_YYYYMMDD.zip
+# hPanel Node Web App: entry apps/ops/server.js · build echo prebuilt-standalone
+# Then Neon migrate + db seed + seed:owner + hPanel env (see docs)
+```
+
+**Path G** (GitHub auto-build on Node) is the long-term goal but **blocked** on shared Node (esbuild EACCES) — do not force it.
+
+Full rules: [docs/DEPLOY.md](docs/DEPLOY.md) · [docs/OPS_DEPLOY_CHECKLIST.md](docs/OPS_DEPLOY_CHECKLIST.md) · [AGENTS.md](AGENTS.md).
 
 ## Scripts
 
@@ -82,13 +97,15 @@ Full rules: [docs/DEPLOY.md](docs/DEPLOY.md), [AGENTS.md](AGENTS.md).
 pnpm dev:ops
 pnpm build:ops
 pnpm start:ops
+pnpm ops:pack          # Path Z Hostinger zip (materialize + smoke)
 pnpm db:generate
 pnpm db:migrate
 pnpm test
 
-# Marketing source of truth is apps/marketing — sync root mirror for Hostinger classic Git
+# Marketing: edit apps/marketing/* then publish root surface for Hostinger Path M
 pnpm marketing:sync
-pnpm marketing:check
+pnpm marketing:check   # also runs in GitHub Actions CI
+pnpm check             # marketing:check + unit tests
 ```
 
 ## Add a shadcn component (official only — when needed)

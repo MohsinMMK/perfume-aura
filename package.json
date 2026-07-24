@@ -2,18 +2,20 @@
   "name": "perfume-aura",
   "private": true,
   "packageManager": "pnpm@11.1.3",
+  "description": "Perfume Aura monorepo — marketing (static) + ops (Next.js)",
   "scripts": {
     "dev:ops": "pnpm --filter @perfume-aura/ops dev",
     "build:ops": "pnpm --filter @perfume-aura/ops build",
     "start:ops": "pnpm --filter @perfume-aura/ops start",
+    "ops:pack": "bash scripts/pack-ops-standalone.sh",
+    "marketing:sync": "bash scripts/sync-marketing.sh sync",
+    "marketing:check": "bash scripts/sync-marketing.sh check",
     "db:generate": "pnpm --filter @perfume-aura/db generate",
     "db:migrate": "pnpm --filter @perfume-aura/db migrate",
     "lint": "pnpm -r lint",
     "test": "pnpm --filter @perfume-aura/db test && pnpm --filter @perfume-aura/ops test",
     "test:unit": "pnpm --filter @perfume-aura/db test:unit && pnpm --filter @perfume-aura/ops test",
     "test:integration": "pnpm --filter @perfume-aura/db test:integration",
-    "marketing:sync": "cp apps/marketing/index.html index.html && cp apps/marketing/styles.css styles.css",
-    "marketing:check": "diff -q apps/marketing/index.html index.html && diff -q apps/marketing/styles.css styles.css",
-    "ops:pack": "bash scripts/pack-ops-standalone.sh"
+    "check": "pnpm marketing:check && pnpm test:unit"
   }
 }

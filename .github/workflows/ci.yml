@@ -1,0 +1,42 @@
+# Lightweight monorepo gates (no secrets, no Hostinger deploy).
+# Marketing publish drift + unit tests. Integration tests need Neon (local/CI secrets).
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: marketing + unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.1.3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Marketing publish surface in sync
+        run: pnpm marketing:check
+
+      - name: Unit tests (no DB)
+        run: pnpm test:unit

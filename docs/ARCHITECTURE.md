@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| Updated | 2026-07-22 |
+| Updated | 2026-07-24 |
 | Complements | [PRD.md](./PRD.md), [TRD.md](./TRD.md), [DATA_MODEL.md](./DATA_MODEL.md) |
 
 ## Overview
@@ -12,18 +12,26 @@ Two surfaces, one monorepo, one Hostinger Business plan, one Neon Postgres:
 ```text
 GitHub monorepo (MohsinMMK/perfume-aura)
         │
-        ├── apps/marketing  → Hostinger classic Git → perfumeaura.com
-        │                      (static HTML/CSS; root index.html mirror interim)
+        ├── apps/marketing     SOURCE OF TRUTH (edit HTML/CSS/.htaccess here)
+        │         │
+        │         ▼  pnpm marketing:sync
+        │   repo root index.html + styles.css + .htaccess   ← Path M publish surface
+        │         │
+        │         ▼  Hostinger classic Git (whole repo → public_html)
+        │   perfumeaura.com
         │
-        └── apps/ops        → Hostinger Node.js Web App → app.perfumeaura.com
-                                    │
-                                    ▼
-                              Neon PostgreSQL
-                              (pg Pool + Drizzle)
+        ├── apps/ops           Next.js admin → Hostinger Node (Path Z zip / Path G later)
+        │         │
+        │         ▼  app.perfumeaura.com
+        │
+        ├── packages/{ui,db,validators}
+        ├── scripts/           pack + marketing sync (see scripts/README.md)
+        └── docs/              PRD/TRD/runbooks
 ```
 
 **Non-negotiable:** ops never deploys via classic Git into marketing `public_html`.  
-**Non-negotiable:** production is Hostinger-only (no Vercel).
+**Non-negotiable:** production is Hostinger-only (no Vercel).  
+**Edit rule:** change marketing only under `apps/marketing/`, then `pnpm marketing:sync`. Never hand-edit root `index.html` / `styles.css` / `.htaccess`.
 
 ---
 
@@ -56,10 +64,17 @@ Details: [DEPLOY.md](./DEPLOY.md), [HOSTINGER_SUPPORT_DNS.md](./HOSTINGER_SUPPOR
 | Package | Name | Role |
 |---------|------|------|
 | `apps/ops` | `@perfume-aura/ops` | Next.js 16 admin (App Router) |
-| `apps/marketing` | static | Brand coming soon |
+| `apps/marketing` | `@perfume-aura/marketing` | Brand static site (source of truth) |
 | `packages/ui` | `@perfume-aura/ui` | shadcn base-luma components + tokens |
 | `packages/db` | `@perfume-aura/db` | Schema, pool, `applyMovement`, migrations |
 | `packages/validators` | `@perfume-aura/validators` | Shared Zod schemas |
+
+### Marketing publish surface (Path M)
+
+Hostinger classic Git cannot filter to `apps/marketing` only (hPanel root dir = server `public_html`).  
+So monorepo root holds a **generated publish surface** kept in sync by `pnpm marketing:sync` / gated by `pnpm marketing:check` (CI).
+
+Long-term: artifact-only deploy of `apps/marketing` static files → drop root HTML/CSS copies.
 
 ### UI monorepo rules
 
