@@ -196,19 +196,13 @@ copy_sharp_into() {
   shopt -u nullglob
 }
 
-# Place linux sharp where Next and Hostinger cwd resolve modules
+# Place linux sharp only where require resolves after chdir(apps/ops).
+# Avoid cloning natives into every .pnpm path (blows past Hostinger 50MB API).
 copy_sharp_into "$STAGE/apps/ops/node_modules"
-copy_sharp_into "$STAGE/node_modules"
-shopt -s nullglob
-for nm in \
-  "$STAGE/node_modules/.pnpm/node_modules" \
-  "$STAGE/node_modules/.pnpm"/next@*/node_modules \
-  "$STAGE/node_modules/.pnpm"/sharp@*/node_modules
-do
-  [[ -d "$nm" ]] || continue
-  copy_sharp_into "$nm"
-done
-shopt -u nullglob
+# Optional root fallback if something resolves from zip root
+if [[ ! -e "$STAGE/node_modules/sharp" ]]; then
+  copy_sharp_into "$STAGE/node_modules"
+fi
 rm -rf "$SHARP_TMP"
 
 # Drop darwin natives (dirs, files, and broken symlink stubs)
@@ -405,13 +399,28 @@ echo "==> Stage smoke (next + sharp + static from apps/ops)…"
 )
 smoke_sharp_tree "$STAGE/apps/ops" "stage-smoke"
 
+echo "==> Pruning stage bloat (Hostinger from-archive ≤50MB when possible)…"
+# Safe deletes only — do not strip runtime .js/.node
+find "$STAGE/node_modules" "$STAGE/apps/ops/node_modules" -type f \( \
+  -name '*.map' -o -name '*.md' -o -name '*.markdown' \
+  -o -name 'LICENSE' -o -name 'LICENSE.txt' -o -name 'LICENSE.md' \
+  -o -name 'CHANGELOG' -o -name 'CHANGELOG.md' -o -name 'README.md' \
+\) -delete 2>/dev/null || true
+# Common non-runtime test/example trees inside dependencies
+find "$STAGE/node_modules" "$STAGE/apps/ops/node_modules" -type d \( \
+  -name 'test' -o -name 'tests' -o -name '__tests__' -o -name 'docs' \
+  -o -name 'examples' -o -name 'example' -o -name '.github' \
+\) -print0 2>/dev/null | while IFS= read -r -d '' d; do
+  rm -rf "$d"
+done || true
+
 echo "==> Zipping → $ZIP_PATH"
 mkdir -p "$OUT_DIR"
 rm -f "$ZIP_PATH"
 (
   cd "$STAGE"
   # -y keeps remaining symlinks as links; primary portability = materialize above
-  zip -qry "$ZIP_PATH" .
+  zip -qry9 "$ZIP_PATH" .
 )
 
 echo "==> Zip extract smoke…"
