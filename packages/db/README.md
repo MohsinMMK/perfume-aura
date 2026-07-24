@@ -64,6 +64,53 @@ Package scripts:
 | `product_variants` | SKU × size; `quantity_on_hand`, `version` |
 | `locations` | Warehouses (`MAIN` seeded) |
 | `stock_movements` | Append-only ledger |
+| `document_number_counters` | Atomic `(kind, year)` invoice/payment numbering |
+
+Phase 02 expansion adds nullable `payments.idempotency_key` and nullable sale
+`stock_movements.unit_cost_cents` / `cost_basis`. Existing rows are
+deterministically backfilled. They remain nullable until compatible workflow
+code is deployed and the later post-auth contract migration is activated.
+Invoice line ordering is protected by the named unique index
+`invoice_lines_invoice_id_position_unique` on `(invoice_id, position)`;
+preflight and reconciliation block duplicate legacy positions before it is
+created. The following migration similarly protects product-variant grain with
+`product_variants_product_id_size_ml_unique` and adds the reviewed
+`session.user_id`, `account.user_id`, and unfiltered `invoices.created_at`
+indexes.
+
+The same rollout checks require clean invoice subtotal caches, at least one line
+on every non-draft invoice, zero fulfillment on free-text lines and draft/void
+invoices, and aggregate fulfillment equality at `(invoice_id, variant_id)`. A
+matching nonzero line/sale aggregate does not make draft or void fulfillment
+valid. The aggregate comparison uses only invoice-referenced `sale` movements;
+returns are not netted until a linked reversal model exists. It cannot
+attribute multiple same-variant lines individually because movements have no
+`invoice_line_id`.
+
+## Phase 02 migration safety
+
+Only use an explicitly disposable loopback PostgreSQL URL for repository tests:
+
+```bash
+TEST_DATABASE_URL='postgresql://...@127.0.0.1:55432/perfume_aura_phase02_admin' \
+  pnpm --filter @perfume-aura/db test:phase02-migrations
+```
+
+The guard rejects missing, remote/provider, ambiguous, and production-like
+targets. It never loads `apps/ops/.env.local`.
+
+| Script | Purpose |
+|--------|---------|
+| `test:phase02-safety` | URL refusal tests |
+| `test:phase02-migrations` | Fresh and exact-`0002` migration/catalog tests |
+| `migrate:phase02-test` | Guarded Drizzle Kit migrate against local PostgreSQL |
+| `preflight:phase02` | Exact-`0002` rollout blocker |
+| `reconcile:phase02` | Post-expansion cleanup/contract readiness |
+
+Operator role separation and the unnumbered later contract are documented in
+[`docs/DATABASE_MIGRATION_AND_ROLE_RUNBOOK.md`](../../docs/DATABASE_MIGRATION_AND_ROLE_RUNBOOK.md)
+and
+[`docs/PHASE02_FUTURE_DATABASE_CONTRACT.md`](../../docs/PHASE02_FUTURE_DATABASE_CONTRACT.md).
 
 ## Inventory API
 

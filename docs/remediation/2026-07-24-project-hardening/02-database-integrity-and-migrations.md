@@ -10,7 +10,7 @@ Phases 00–01. Phase 01's final dependency graph and Node runtime must be stabl
 
 ## In scope
 
-- Drizzle schema, expansion migration, contract-migration design, constraints, indexes, counters, payment idempotency storage, cost snapshots, append-only triggers, migration tests, and runtime/migration role grants.
+- Drizzle schema, expansion migration, contract-migration design, constraints, indexes, counters, payment idempotency storage, cost snapshots, the future stock-ledger trigger, migration tests, and runtime/migration role grants.
 - A redacted role and migration runbook.
 
 ## Out of scope
@@ -25,40 +25,45 @@ Phases 00–01. Phase 01's final dependency graph and Node runtime must be stabl
 - Document numbers use `max(number) + 1`, which races.
 - Payments lack an idempotency key.
 - Finance computes COGS using the variant's current cost, so historical margin changes when a product cost changes.
-- `stock_movements` and `payments` are intended as ledgers but PostgreSQL permits update/delete.
+- `stock_movements` is a reversible quantity ledger and PostgreSQL permits update/delete.
+- Payments have no reversal/credit-note representation. A positive-only immutable payment table would make correction impossible and must not receive an append-only trigger yet.
 - Foreign-key/filter columns lack a complete indexing strategy.
 - Runtime and migration operations currently share connection-string assumptions.
 - Existing migration files `0000`–`0002` are committed history and must not be edited.
 
 ## Exact implementation decisions
 
-1. Add a `document_counters` table keyed by `(document_type, business_year)` with nonnegative `last_value`. Allocate numbers atomically with one PostgreSQL `INSERT ... ON CONFLICT ... DO UPDATE ... RETURNING`.
-2. Add `payments.idempotency_key`, backfill legacy rows as `legacy:payment:<payment-id>`, set it `NOT NULL`, and create a unique constraint.
+1. Add a `document_number_counters` table keyed by `(kind, year)`, limit `kind` to `invoice` or `payment`, require nonnegative `last_value`, and retain an updated timestamp. Allocate numbers atomically with one PostgreSQL `INSERT ... ON CONFLICT ... DO UPDATE ... RETURNING`.
+2. Add nullable `payments.idempotency_key`, backfill every existing row as `legacy:<payment-id>`, and create a unique constraint. It remains nullable only for pre-Phase-03 code compatibility during expansion; the later post-Phase-04 contract migration makes it required.
 3. Add sale cost snapshots to `stock_movements`:
    - nullable `unit_cost_cents`;
-   - nullable `cost_basis` constrained to `captured` or `legacy_current`;
+   - nullable `cost_basis` constrained to `snapshot` or `legacy_current`;
    - backfill existing sale rows from current variant cost and label them `legacy_current`;
-   - new sale movements write the locked variant cost and label it `captured`;
+   - new sale movements write the locked variant cost and label it `snapshot`;
    - finance reports must disclose that `legacy_current` values are estimates.
 4. Add explicit database checks:
-   - `product_variants`: positive size; nonnegative cost, retail, on-hand, reserved, reorder level, and version; reserved cannot exceed on-hand;
+   - `product_variants`: one row per `(product_id, size_ml)`, positive size; nonnegative cost, retail, on-hand, reserved, reorder level, and version; reserved cannot exceed on-hand;
    - `stock_movements`: nonzero delta, nonnegative resulting quantity, receive/return positive, sale/damage negative, adjust requires a nonblank note, reference type/id are both null or both present, and cost/cost-basis are mutually consistent;
-   - `invoice_lines`: positive quantity, nonnegative unit/line totals, `line_total_cents = quantity * unit_price_cents`, and fulfilled quantity between zero and ordered quantity;
-   - `invoices`: nonnegative subtotal/tax/total/paid, `total_cents = subtotal_cents + tax_cents`, paid not above total, and draft/issued/paid/void number/timestamp/amount lifecycle consistency;
+   - `invoice_lines`: one row per `(invoice_id, position)`, positive quantity, nonnegative unit/line totals, `line_total_cents = quantity * unit_price_cents`, fulfilled quantity between zero and ordered quantity, and zero fulfillment for free-text lines;
+   - `invoices`: nonnegative subtotal/tax/total/paid, `total_cents = subtotal_cents + tax_cents`, paid not above total, and draft/issued/paid/void number/timestamp/amount lifecycle consistency; void invoices require `amount_paid_cents = 0` and reconciliation must prove an authoritative payment sum of zero;
    - `payments`: positive amount, valid number format, and a nonblank idempotency key.
-5. Add indexes for every operational foreign key and frequent status/date/list predicate, including invoice/customer/status/created dates, line invoice/position, payment invoice/paid date, variant product/status, and movement variant/ref/created date. Avoid speculative duplicate indexes; verify with PostgreSQL catalog queries.
-6. Add append-only `BEFORE UPDATE OR DELETE` triggers for `stock_movements` and `payments`. Corrections must be compensating entries; a future reversal UI is separate work and must not mutate ledger rows.
-7. Refactor integration-test cleanup to transaction rollback or disposable databases because ledger delete triggers intentionally block row cleanup.
+5. Add indexes for every operational foreign key and frequent status/date/list predicate, including auth `session.user_id` / `account.user_id`, invoice/customer/status/created dates, a named unique index on invoice line `(invoice_id, position)`, payment invoice/paid date, a named unique product-variant index on `(product_id, size_ml)`, variant status, and movement variant/ref/created date. Avoid speculative duplicate indexes; verify ordered columns, uniqueness, and coverage with PostgreSQL catalog queries.
+6. Design an append-only `BEFORE UPDATE OR DELETE` trigger for `stock_movements`, but do not activate it in the expansion migrations. The later post-Phase-04 contract migration adds it only after compatible code and cleanup paths are live; stock corrections use compensating movements.
+7. **Intentional safety deviation:** do not design or activate a payments append-only trigger and do not claim that another positive payment can compensate for an error. Payment immutability is deferred until a linked reversal/credit-note representation, authorization rules, and authoritative net-sum semantics exist. Runtime still receives only `SELECT, INSERT` on payments; exceptional correction remains an audited administrator procedure until the reversal model is implemented.
 8. Define two role contracts:
    - migration/admin role via `DATABASE_URL_DIRECT`, allowed DDL/migrations;
-   - pooled runtime role via `DATABASE_URL`, no DDL, no direct ledger update/delete, and only table/sequence privileges required by the application and Better Auth.
+   - pooled runtime role via `DATABASE_URL`, no DDL, no stock-ledger update/delete, `SELECT, INSERT` only on payments, and only table privileges required by actual application and Better Auth operations. Sequence grants are deferred until the Phase 04 inventory proves one is required.
 9. Use an expand/code/contract sequence:
-   - Phase 02 commits one normal Drizzle expansion migration containing additive nullable fields/tables/indexes and deterministic backfills;
+   - Phase 02 commits an ordered Drizzle expansion set containing additive nullable fields/tables/indexes, deterministic backfills, the invoice-line position uniqueness correction, and the remaining product/auth/invoice index correction;
    - Phase 03 implements and proves compatible transaction code and prepares the tightening SQL, but deliberately does not place its contract migration ahead of Phase 04's required additive Better Auth schema;
-   - Phase 04 commits its additive Better Auth/rate-limit expansion migration first, then finalizes the subsequent contract migration containing Phase 03's `NOT NULL`/validated checks and append-only triggers;
+   - Phase 04 commits its additive Better Auth/rate-limit expansion migration first, then finalizes the subsequent contract migration containing Phase 03's `NOT NULL`/validated checks and the stock-movement append-only trigger;
    - record the expansion and contract migration identifiers and commit SHAs so Phase 07 can apply every expansion migration, including the Phase 04 auth expansion, before deploying code and apply only the later contract migration after the compatible ZIP is live.
-10. Express normal constraints/indexes in Drizzle schema and generate them with `drizzle-kit generate`. Use Drizzle's official custom-migration command for backfills, triggers, and grants that cannot be represented by the schema DSL.
-11. Test three explicit states on disposable PostgreSQL: Phase 02 domain expansion, domain plus Phase 04 auth expansion, and the final contract. Isolated Neon-branch validation is root-only in Phase 07.
+10. Express expansion-safe fields, the new-table checks, and indexes in Drizzle schema and generate them with `drizzle-kit generate`. Use Drizzle's official custom-migration command for deterministic legacy backfills. Preserve every generated journal entry as the ordered Phase 02 expansion set; never rewrite committed entries. Triggers, grants, `NOT NULL`, and legacy-table checks are exact design inputs for the later post-Phase-04 contract migration, not Phase 02 DDL.
+11. Test the Phase 02 expansion from both the exact `0002` baseline and a fresh empty disposable PostgreSQL database. Record future test expectations for domain plus Phase 04 auth expansion and the final contract, but do not create or number those migrations in Phase 02. Isolated Neon-branch validation is root-only in Phase 07.
+12. Keep two reconciliation stages distinct:
+   - `packages/db/sql/phase02-preflight-0002.sql` runs before expansion and references only the exact `0002` schema; any nonzero or ambiguous result halts rollout;
+   - `packages/db/sql/phase02-reconciliation.sql` runs after every Phase 02 expansion entry and must be clean before compatible code or the later contract is activated.
+13. Reconcile invoice caches and fulfillment before rollout: invoice subtotal must equal the sum of line totals; each non-draft invoice must have at least one line; free-text fulfillment must be zero; draft and void invoices must have zero line and authoritative sale fulfillment even when the two aggregates match; and summed line fulfillment must equal the negative sum of invoice-referenced sale deltas at `(invoice_id, variant_id)`. Returns are not netted. This is an aggregate rollout/application invariant—not a cross-row `CHECK`—because stock movements do not identify an invoice line, so multiple same-variant lines cannot be attributed individually.
 
 ## Affected subsystems
 
@@ -86,24 +91,30 @@ Phases 00–01. Phase 01's final dependency graph and Node runtime must be stabl
 
 ```bash
 pnpm db:generate
-pnpm --filter @perfume-aura/db exec drizzle-kit generate --custom --name append-only-ledgers
+pnpm --filter @perfume-aura/db exec drizzle-kit generate --custom --name phase02_legacy_backfill
 pnpm --filter @perfume-aura/db typecheck
 pnpm test:unit
+TEST_DATABASE_URL=postgresql://... pnpm --filter @perfume-aura/db preflight:phase02
 DATABASE_URL_DIRECT=postgresql://... pnpm db:migrate
+TEST_DATABASE_URL=postgresql://... pnpm --filter @perfume-aura/db reconcile:phase02
 DATABASE_URL=postgresql://... pnpm test:integration
 ```
 
 Required tests:
 
-- every check constraint rejects invalid direct SQL;
-- counter upsert returns unique contiguous values under concurrency;
+- expansion-safe new-table checks reject invalid counter kinds and negative values;
+- counter backfill starts after every valid legacy document number;
 - payment idempotency key is unique and legacy rows are labeled;
-- sale snapshots remain unchanged after variant cost changes;
 - legacy rows are `legacy_current`;
-- update/delete on both ledger tables fails;
-- runtime role cannot DDL or mutate ledger history but can run supported application/auth flows;
+- pre-Phase-03 inserts that omit the new nullable fields remain valid;
+- reconciliation reports every row that must be clean before contract activation;
 - migration succeeds from the exact `0002` baseline and a fresh empty database;
-- expansion-only and expansion-plus-contract upgrade paths both pass from the exact `0002` baseline.
+- duplicate invoice-line positions block exact-`0002` preflight and post-expansion reconciliation, the unique-index migration refuses unresolved duplicates, and the final catalog reports the named index as unique;
+- duplicate product-variant sizes likewise block preflight/reconciliation and make their unique-index migration refuse until cleaned;
+- the fixture matrix independently makes every required reconciliation category nonzero, including counters, number format/range/collision defects, invalid product/stock/payment rows, customer/idempotency/cost defects, inventory/payment/subtotal cache mismatches, missing non-draft lines, aggregate fulfillment mismatches, free-text fulfillment, and draft/void fulfillment;
+- the catalog test proves every reviewed index's exact ordered columns and uniqueness, including auth user foreign keys and unfiltered invoice creation date;
+- future contract tests specify that invalid direct SQL, stock-ledger mutation, missing payment idempotency, and missing sale snapshots must fail after the post-Phase-04 contract is activated, while confirming no payment trigger exists before the reversal model;
+- the redacted role design specifies that runtime cannot DDL or mutate ledger history while migration/admin can apply forward migrations, and verifies effective table privileges with `has_table_privilege` so inherited/`PUBLIC` access cannot be missed.
 
 ## Rollback
 
@@ -113,8 +124,8 @@ Phase 07 captures the Neon restore point and row counts. Before contract activat
 
 - Generated migration SQL is reviewed and matches schema decisions.
 - Fresh and baseline-upgrade migrations pass.
-- Constraint, counter, cost snapshot, trigger, and role tests pass.
-- Expansion-only and final migration journals/hashes are recorded for later Neon comparison.
+- Expansion constraints, counter initialization, deterministic backfills, indexes, and compatibility tests pass.
+- The ordered Phase 02 expansion migration journals/hashes and the unnumbered future contract design are recorded for later comparison.
 - No production mutation occurred before Phase 07.
 
 ## Prohibited shortcuts

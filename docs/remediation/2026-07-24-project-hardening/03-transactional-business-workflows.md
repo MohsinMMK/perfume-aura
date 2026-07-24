@@ -62,7 +62,7 @@ Phase 02 schema and migration tests complete. Phase 04 may proceed only after wo
 11. Void locks and revalidates the invoice, returns success only for an already-void invoice, and otherwise permits voiding only an `issued` invoice with zero authoritative payment sum and zero fulfilled quantity. Any payment or fulfillment blocks void.
 12. Archive operations lock and revalidate aggregate state. Product archive must preserve discoverability of on-hand/reserved inventory.
 13. Recompute financial caches from ledger sums inside the lock rather than trusting stale client/read values.
-14. After compatible code and tests pass, prepare the contract SQL with required payment/cost fields, validated checks, and append-only triggers. Phase 04 must first commit its additive Better Auth/rate-limit expansion migration; only then may this SQL be finalized as the next ordered Drizzle migration. All provider application remains deferred to Phase 07.
+14. After compatible code and tests pass, prepare the contract SQL with required payment/cost fields, validated checks, and a stock-movement append-only trigger. Do not add a payment trigger until the schema includes a linked reversal/credit representation and authoritative net-sum reconciliation; a second positive payment is not compensation. Phase 04 must first commit its additive Better Auth/rate-limit expansion migration; only then may this SQL be finalized as the next ordered Drizzle migration. All provider application remains deferred to Phase 07.
 
 ## Affected subsystems
 

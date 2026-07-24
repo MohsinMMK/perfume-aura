@@ -17,6 +17,7 @@ export { locations } from "./locations";
 export {
   stockMovements,
   stockMovementTypeEnum,
+  stockCostBasisEnum,
 } from "./stock-movements";
 
 export {
@@ -34,3 +35,9 @@ export {
   payments,
   paymentMethodEnum,
 } from "./payments";
+
+export {
+  documentNumberCounters,
+  documentNumberKinds,
+  type DocumentNumberKind,
+} from "./document-number-counters";

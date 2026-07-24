@@ -87,11 +87,29 @@ For each phase, append:
 
 ## Phase 02 — Database integrity and migrations
 
-Status: pending
-Implementation agent: pending
-Independent reviewer: pending
-Disposable PostgreSQL evidence: pending
-Rollback/restore evidence: pending
+| Item | Evidence |
+|---|---|
+| Status | Completed and root-approved |
+| Started from | Phase 01 commit `9733987` |
+| Completed | 2026-07-24 20:56 IST |
+| Root agent | `/root` |
+| Implementation agent | `/root/db_integrity_research` — Phase 02 schema, migration, reconciliation, role-design, and disposable-test scope only |
+| Independent reviewer | `/root/security_auth_research` — two-pass review only, no edits or provider access |
+| Expansion migrations | `0003_phase02_domain_expansion` (`when=1784902795186`, snapshot `ad7c7163-7482-4ffd-9b0e-d5db95d663ac`, SHA-256 `d9124906b28883dfedbe14fd329e47defb8df54a5a7ac6603fe632bb7e3e29f0`); `0004_phase02_legacy_backfill` (`when=1784902795825`, snapshot `f9248b89-ffc9-4dea-bd74-e39035f89fa0`, SHA-256 `e4e0d50bda7390a8f7580678fe98c5269e97e008a45e20d3475cddc159c21f54`); `0005_phase02_invoice_line_position_unique` (`when=1784905160582`, snapshot `614ec60b-ed4e-4484-b569-13da2b18e538`, SHA-256 `0a6941b3cf770886660906a31fa7360c026fa0e575f976da7b3c25c80469deb7`); `0006_phase02_remaining_integrity_indexes` (`when=1784905780962`, snapshot `7431f5a5-05b5-47b1-89b5-6967fb83340b`, SHA-256 `8546eec9b4c75d134f8c7c456affcdd06c6dd48db9cbdefb335637a2b258bbc0`) |
+| Immutable baseline | `0000`–`0004` SQL and snapshots remained byte-identical through the forward-only `0005`/`0006` correction; full snapshot `prevId` lineage verified |
+| Schema result | Atomic `(kind, year)` document counters; nullable unique payment idempotency; sale cost snapshot/basis expansion; deterministic legacy backfills; unique invoice-line position and product-size invariants; auth foreign-key, invoice-date, and query-backed indexes |
+| Reconciliation safety | Exact-`0002` preflight and post-expansion reconciliation cover 22 and 27 categories respectively, including malformed/over-range numbers, bigint-safe arithmetic, subtotal/payment cache mismatch, draft/void/empty/free-text lifecycle invalidity, aggregate invoice fulfillment versus invoice-referenced sale movements, inventory balance, duplicate line positions/product sizes, and legacy snapshot readiness |
+| Intentional safety deviation | Payment append-only trigger deferred until linked reversal/credit-note rows and authoritative net-sum semantics exist; a positive-only immutable payment table would have no valid correction path. The future stock-movement trigger remains specified. |
+| Runtime-role design | Exact table matrix, no DDL, no sequence privileges, counters have no `DELETE`, ledgers are `SELECT/INSERT`; `PUBLIC TEMPORARY` is inventoried and conditionally revoked only during root-controlled Phase 07 |
+| Root PostgreSQL gate | PostgreSQL `16.14`, Node `24.18.0`, pnpm `11.1.3`; all 37 DB tests passed, migration integration 3/3, all seven guarded migrations applied, exact-`0002` preflight all 22 zero, post-expansion reconciliation all 27 zero, and `drizzle-kit check` passed |
+| Root application gate | DB and ops typechecks, lint, Next production build, migration checksum checks, and `git diff --check` passed |
+| Privilege proof | Disposable effective-privilege catalog: runtime CONNECT/schema USAGE true; TEMP/schema CREATE/counter DELETE/ledger UPDATE/DELETE false; zero sequence privileges; exact table matrix returned zero mismatches; direct denied-operation probes passed |
+| Correction history | Initial local Phase 02 checkpoint `2ffb73a`; remaining integrity/index coverage was added forward-only and folded into the final scoped Phase 02 commit |
+| Review disposition | Seven initial P1/P2 findings plus the completeness audit findings were corrected; final independent re-review approved with no remaining P1/P2 blocker |
+| Disposable infrastructure | Implementation, review, and root PostgreSQL containers removed and verified absent |
+| Provider changes | None — no Neon, Hostinger, production, staging, DNS, email, GitHub push, or deployment access |
+| Rollback evidence | Revert this scoped commit before provider rollout; migrations are additive and have not been applied outside disposable local PostgreSQL |
+| Commit | The scoped Phase 02 commit containing this log |
 
 ## Phase 03 — Transactional business workflows
 

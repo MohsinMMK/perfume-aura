@@ -13,7 +13,13 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/**/*.test.ts",
     "test:unit": "tsx --test src/inventory-math.test.ts",
-    "test:integration": "tsx --test src/inventory.integration.test.ts"
+    "test:integration": "tsx --test src/inventory.integration.test.ts",
+    "test:phase02-design": "tsx --test src/phase02-contract-design.test.ts",
+    "test:phase02-safety": "tsx --test src/test-database-guard.test.ts",
+    "test:phase02-migrations": "tsx --test src/phase02-migrations.integration.test.ts",
+    "migrate:phase02-test": "drizzle-kit migrate --config=drizzle.phase02-test.config.ts",
+    "preflight:phase02": "tsx src/phase02-preflight.ts",
+    "reconcile:phase02": "tsx src/phase02-reconcile.ts"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",

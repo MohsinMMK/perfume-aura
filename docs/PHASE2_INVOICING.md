@@ -49,8 +49,11 @@ invoice_lines
   quantity             -- integer bottles / units
   unit_price_cents     -- retail snapshot at line time
   line_total_cents     -- quantity * unit_price_cents
-  -- optional Phase 2.1: fulfill_qty for partial ship
+  quantity_fulfilled   -- fulfilled units; zero for free-text lines
 ```
+
+`(invoice_id, position)` is unique: each invoice has one deterministic line at
+each ordering position.
 
 ### Stock ledger hooks (already on `stock_movements`)
 
@@ -62,6 +65,16 @@ invoice_lines
 **Invariant:** issuing an invoice does **not** change stock.  
 **Fulfill** action (button on issued invoice) calls `applyMovement({ type: 'sale', …, refType: 'invoice', refId })` per shipped line.  
 Payment (Phase 3) never touches stock.
+
+Fulfillment reconciliation compares each aggregate `(invoice_id, variant_id)`:
+summed line `quantity_fulfilled` must equal the negative sum of matching
+invoice-referenced `sale` movement deltas. Returns are deliberately excluded
+until a linked fulfillment-reversal model exists. Because movements do not
+carry `invoice_line_id`, two lines for the same variant can only be reconciled
+as one aggregate, not attributed line by line. A free-text line has no stock
+variant and must keep `quantity_fulfilled = 0`.
+Draft and void invoices must also have zero line and invoice-referenced sale
+fulfillment; equal nonzero aggregates are still invalid for either status.
 
 ## 3. Status machine
 
@@ -84,8 +97,11 @@ Payment (Phase 3) never touches stock.
 Rules:
 
 - Only **draft** is editable  
+- A draft has no fulfillment or invoice-referenced sale movements
 - **issue** requires ≥1 line, customer, and generates next `INV-YYYY-####`  
-- **void** only from issued (not paid); no stock reverse unless prior fulfill exists (then compensating receive/return)  
+- **void** only from issued (not paid) and only when line/sale fulfillment is
+  zero; a fulfilled invoice first needs an explicit compensating workflow that
+  preserves the original sale movement
 - **paid** from issued when owner confirms cash/bank received (Phase 2 manual)
 
 ## 4. Screens (ops app)
@@ -184,4 +200,3 @@ Prefer before coding Phase 2:
 - [PHASE3_PAYMENTS.md](./PHASE3_PAYMENTS.md) — payments after invoices  
 - [PHASE4_FINANCE.md](./PHASE4_FINANCE.md) — AR / revenue dashboards  
 - [TESTING.md](./TESTING.md) — extend with fulfill oversell cases  
-

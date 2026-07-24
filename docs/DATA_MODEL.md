@@ -121,7 +121,22 @@ invoice_lines   id, invoice_id, position, variant_id?, description, quantity,
                 unit_price_cents, line_total_cents, quantity_fulfilled
 ```
 
+`invoice_lines` enforces `UNIQUE (invoice_id, position)`, so line ordering is
+deterministic and one invoice cannot contain two rows at the same position.
+`product_variants` likewise enforces `UNIQUE (product_id, size_ml)`, so one
+product cannot have two variant rows for the same bottle size.
+
 Ledger hooks: `stock_movements.ref_type = 'invoice'`, `ref_id = invoices.id` on **fulfill**.
+
+Fulfillment is reconciled at `(invoice_id, variant_id)`: the sum of
+`invoice_lines.quantity_fulfilled` equals the negative sum of matching
+invoice-referenced `sale` movement deltas. This is aggregate-only because a
+movement has no `invoice_line_id`; multiple same-variant lines cannot be
+attributed individually. Returns do not net against fulfillment until a linked
+reversal model exists. Free-text lines (`variant_id IS NULL`) must remain
+unfulfilled. Draft and void invoices must also have zero line and
+invoice-referenced sale fulfillment, even when the two nonzero aggregates
+would otherwise match.
 
 ---
 
@@ -142,6 +157,31 @@ One payment row per receipt against one invoice (partials allowed via multiple r
 ## Phase 4
 
 No new core SoR tables required initially — **read models / SQL aggregates** over invoices, payments, stock, and variant costs. Optional materialized views later.
+
+---
+
+## Phase 02 hardening expansion
+
+Ordered migrations `0003_phase02_domain_expansion`,
+`0004_phase02_legacy_backfill`, and
+`0005_phase02_invoice_line_position_unique`, followed by
+`0006_phase02_remaining_integrity_indexes`, add:
+
+| Change | Expansion contract |
+|--------|--------------------|
+| `document_number_counters` | PK `(kind, year)`; kind `invoice|payment`; nonnegative `last_value`; `updated_at` |
+| `payments.idempotency_key` | UNIQUE and nullable during old-code compatibility; existing rows `legacy:<payment-id>` |
+| `stock_movements.unit_cost_cents` | Nullable during expansion; existing sale rows receive current variant cost |
+| `stock_movements.cost_basis` | `snapshot|legacy_current`; legacy sale rows use `legacy_current` |
+| Invoice line positions | Named unique index on `(invoice_id, position)` after duplicate preflight/reconciliation |
+| Product variant grain | Named unique index on `(product_id, size_ml)` after duplicate preflight/reconciliation |
+| Operational indexes | Reviewed FK and status/date/list predicates, including `session.user_id`, `account.user_id`, and unfiltered `invoices.created_at` |
+
+The later checks, `NOT NULL` clauses, and the stock-movement append-only trigger
+are intentionally not active in these expansion migrations. A payment trigger
+is deliberately deferred until payments have a linked reversal/credit model
+and invoice settlement is defined as a net authoritative sum. See
+[PHASE02_FUTURE_DATABASE_CONTRACT.md](./PHASE02_FUTURE_DATABASE_CONTRACT.md).
 
 ---
 

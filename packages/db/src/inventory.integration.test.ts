@@ -1,21 +1,23 @@
 /**
- * Integration tests against Neon/Postgres (pg Pool + interactive TX).
+ * Integration tests against a disposable local PostgreSQL database
+ * (pg Pool + interactive TX).
  *
- * Requires DATABASE_URL (loads apps/ops/.env.local when present).
- * Skip when unset so CI without secrets still runs unit tests.
+ * Requires an explicitly safe TEST_DATABASE_URL. Never loads app or package
+ * dotenv files. Skip when unset so CI without local PostgreSQL still runs.
  */
-import { config } from "dotenv";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import { describe, it, before, after } from "node:test";
 import { eq } from "drizzle-orm";
+import { requireDisposableTestDatabaseUrl } from "./test-database-guard";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-config({ path: resolve(__dirname, "../../../apps/ops/.env.local") });
-config(); // optional packages/db/.env
+const testDatabaseUrl = process.env.TEST_DATABASE_URL
+  ? requireDisposableTestDatabaseUrl()
+  : undefined;
+const hasDb = Boolean(testDatabaseUrl);
 
-const hasDb = Boolean(process.env.DATABASE_URL);
+if (testDatabaseUrl) {
+  process.env.DATABASE_URL = testDatabaseUrl;
+}
 
 describe("applyMovement integration", { skip: !hasDb }, () => {
   let applyMovement: typeof import("./inventory").applyMovement;
@@ -234,6 +236,6 @@ describe("applyMovement integration", { skip: !hasDb }, () => {
 
 if (!hasDb) {
   console.log(
-    "[inventory.integration] skipped — set DATABASE_URL (e.g. apps/ops/.env.local) to run",
+    "[inventory.integration] skipped — set a guarded local TEST_DATABASE_URL to run",
   );
 }
