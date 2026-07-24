@@ -26,5 +26,8 @@ yarn-error.log*
 # tooling / deploy artifacts
 .vercel
 .neon
+.claude/
+.pi/
+.pi-subagents/
 perfume-aura-standalone_*.zip
 *.standalone.zip

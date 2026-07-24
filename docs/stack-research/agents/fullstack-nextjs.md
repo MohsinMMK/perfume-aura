@@ -4,12 +4,14 @@
 |-------|--------|
 | Verdict | Recommend (locked) |
 | Score | 5/5 |
-| Docs | https://nextjs.org/docs (16.2.x as of research) |
-| As-built | Next.js **16.2.10** in `apps/ops` |
+| Docs | https://nextjs.org/docs |
+| As-built | Next.js **16.2.11** in `apps/ops` |
 
 ## Fit
 
-Full-stack App Router: Server Components for inventory lists; Server Actions for stock mutations; self-host via `next build` + `next start` on Hostinger Node.
+Full-stack App Router: Server Components for inventory lists; Server Actions for
+stock mutations; build the standalone artifact on Node 24.18.0 and manually
+upload it to the Hostinger Node 24.x Web App.
 
 ## Required config
 
@@ -17,9 +19,9 @@ Full-stack App Router: Server Components for inventory lists; Server Actions for
 - No `cacheComponents` in v1  
 - Dynamic inventory pages (`force-dynamic` where needed)  
 - Auth inside every Server Action (`requireSession`)  
-- Next 16 **`proxy.ts`** (cookie gate only)  
+- Next 16.2.11 **`proxy.ts`** (cookie gate only)
 - `serverActions.allowedOrigins` includes `app.perfumeaura.com`  
-- Optional `output: 'standalone'` if Hostinger requires it  
+- `output: 'standalone'` for the supported Path Z artifact
 
 ## Patterns in this repo
 

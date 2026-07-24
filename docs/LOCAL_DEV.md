@@ -2,18 +2,21 @@
 
 | Field | Value |
 |-------|--------|
-| Updated | 2026-07-22 |
+| Updated | 2026-07-24 |
 | Complements | [../README.md](../README.md), [ENV.md](./ENV.md) |
 
 ## Prerequisites
 
-- Node **20+** (22 OK)  
-- **pnpm** 11.x (`packageManager` in root `package.json`)  
+- Node **24.18.0** (`.nvmrc` and `.node-version`)
+- **pnpm 11.1.3** (`packageManager` in root `package.json`)
 - Neon project (or local Postgres with same schema)  
 
 ## First-time setup
 
 ```bash
+node --version
+# v24.18.0
+
 pnpm install
 
 cp apps/ops/.env.example apps/ops/.env.local

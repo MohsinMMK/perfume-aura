@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|--------|
 | Version | 1.1 |
-| Updated | 2026-07-22 |
+| Updated | 2026-07-24 |
 | Complements | [PRD.md](./PRD.md), [ARCHITECTURE.md](./ARCHITECTURE.md), [DATA_MODEL.md](./DATA_MODEL.md) |
 | Research | [stack-research/RECOMMENDATION.md](./stack-research/RECOMMENDATION.md) |
 
@@ -13,7 +13,7 @@
 |-------|--------|
 | Monorepo | pnpm workspaces (`apps/*`, `packages/*`) |
 | Marketing | Static HTML/CSS `apps/marketing` (+ root mirror interim) |
-| Ops | Next.js **16.2.x** App Router + TypeScript `apps/ops` |
+| Ops | Next.js **16.2.11** App Router + TypeScript `apps/ops` |
 | Ops host | Hostinger Node.js Web App → `app.perfumeaura.com` |
 | Marketing host | Hostinger classic Git → `perfumeaura.com` |
 | Base UI | **shadcn/ui** official CLI only (base-luma / preset **`b23PPibQOI`**, Tailwind v4) in `packages/ui` |
@@ -48,14 +48,15 @@ Vercel production, classic Git for Next, `output: 'export'`, Clerk, Prisma, Host
 
 | Item | Rule |
 |------|------|
-| Next.js | 16.x (as-built 16.2.10) |
-| Node (Hostinger) | 20.x or 22.x |
+| Next.js | Exact **16.2.11** |
+| Node (local/build/CI) | Exact **24.18.0** (`.nvmrc`, `.node-version`) |
+| Node (Hostinger) | **24.x** |
 | Drizzle | 0.45.x (Better Auth peer) |
 | Better Auth | 1.6.x |
 | TanStack Table | v8 (when added) |
 | Tailwind | v4 via shadcn |
 | `cacheComponents` | **off** in v1 |
-| Auth edge file | Next 16 `proxy.ts` |
+| Auth edge file | Next 16.2.11 `proxy.ts` |
 | Signup | `disableSignUp: true` |
 | shadcn preset | `b23PPibQOI` (no fallbacks on `preset resolve`) |
 
@@ -136,10 +137,12 @@ packages/validators/
 |---------|--------|
 | Website | Node.js Web App |
 | Domain | `app.perfumeaura.com` |
-| Framework | Next.js |
-| Root | monorepo or `apps/ops` (see checklist) |
-| Build | `pnpm --filter @perfume-aura/ops build` |
-| Start | `next start` (port 3000) |
+| Source | Manual upload of the prebuilt `pnpm ops:pack` ZIP |
+| Framework | Other (or Next.js) |
+| Node | 24.x |
+| Root | `./` |
+| Build | `echo prebuilt-standalone` |
+| Entry | `apps/ops/server.js` |
 | Env | See [ENV.md](./ENV.md) |
 
 Full steps: [OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIST.md) · overview: [DEPLOY.md](./DEPLOY.md).

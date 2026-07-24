@@ -24,6 +24,8 @@ Official docs:
 
 Hostinger Node sources (official order): **(1) GitHub** · **(2) zip upload** · **(3) Connector**.  
 Classic Git is **not** for Next.js. Do not put the ops app into marketing `public_html`.
+For this repository, only the **manual Path Z hPanel ZIP upload** is currently
+supported. GitHub source, API, MCP, and Connector deployment remain unproven.
 
 Full dual-flow write-up for agents: **[AGENTS.md — GitHub → Hostinger](../AGENTS.md#github--hostinger-official-dual-flow)**.
 
@@ -34,7 +36,7 @@ Full dual-flow write-up for agents: **[AGENTS.md — GitHub → Hostinger](../AG
 
 ```bash
 pnpm marketing:sync   # copies source → root index.html, styles.css, .htaccess
-git add apps/marketing index.html styles.css .htaccess
+git add apps/marketing/index.html apps/marketing/styles.css apps/marketing/.htaccess index.html styles.css .htaccess
 git commit -m "marketing: …"
 git push origin main  # Hostinger Advanced → Git auto-deploy → public_html
 ```
@@ -54,13 +56,14 @@ When (and only when) a monorepo/source build has been proven green on this Hosti
 
 #### Path Z — Prebuilt zip (current workable / official option #2)
 
-1. Local: `pnpm ops:pack` → `dist/perfume-aura-standalone_*.zip`  
+1. Under Node **24.18.0** (`.nvmrc` / `.node-version`), run
+   `pnpm ops:pack` → `dist/perfume-aura-standalone_*.zip`
    - **Primary portability:** materialized real dirs under `apps/ops/node_modules` (`next`, `@swc/helpers`, `react`, linux `sharp` + siblings)  
    - `zip -y` is secondary (preserves remaining symlinks); do not hand-zip standalone without materialize  
    - Smoke gate: extract zip → `require('next')` + `require('sharp')` + `.next/static` from `apps/ops` must pass  
    - Keep extracted `node_modules` on the server (root `package.json` empty deps = install no-op; clean wipe breaks boot)  
 2. hPanel → **app.perfumeaura.com** → Deploy Web App → **Settings and redeploy**  
-3. Upload zip · Framework Other · Node **20.x** · Root `./`  
+3. Upload zip · Framework Other · Hostinger Node **24.x** · Root `./`
 4. Build: `echo prebuilt-standalone` · **Entry file:** `apps/ops/server.js` · Output empty  
 5. Env in **hPanel only** (never bake `.env` into zip): [ENV.md](./ENV.md) — include `PORT=3000`, `NODE_ENV=production`, `NEXT_PUBLIC_BETTER_AUTH_URL`  
 6. **Save and redeploy** · restart Node if offered  
@@ -78,24 +81,21 @@ When (and only when) a monorepo/source build has been proven green on this Hosti
 
 Full field table + status board: [OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIST.md).
 
-#### Path B — CI artifact (autonomous pack + optional API deploy)
+#### Path B — CI artifact (packaging only)
 
-Goal: stop local-only pack. GitHub Actions builds the same Path Z zip on every ops-related push to `main`.
+GitHub Actions builds the same Path Z ZIP on every ops-related push to `main`.
+It does not hold provider credentials and cannot deploy to Hostinger.
 
 1. Workflow: [`.github/workflows/ops-pack.yml`](../.github/workflows/ops-pack.yml) → `pnpm ops:pack` on `ubuntu-latest`
 2. Artifact: **ops-standalone-zip** (Actions → run → Artifacts), retention 14 days
-3. Optional auto-deploy: set repo secret **`HOSTINGER_API_TOKEN`** (hPanel → API)
-   - Job calls `scripts/deploy-ops-hostinger.sh` → official `…/nodejs/builds/from-archive`
-   - Overrides: entry `apps/ops/server.js`, build `echo prebuilt-standalone`, Node 20
-   - Zip must stay **≤ 50MB** (Hostinger API limit)
-4. Without the secret: download artifact and upload in hPanel (same as local Path Z)
-5. Runtime env / Neon migrate / `seed:owner` still hPanel + human (never bake into zip)
+3. Download the artifact and manually upload it in the hPanel Node Web App,
+   using Hostinger Node 24.x, entry `apps/ops/server.js`, and build command
+   `echo prebuilt-standalone`
+4. Runtime env, Neon migration, and `seed:owner` remain explicit operator steps
+   and are never baked into the ZIP
 
-```bash
-# Local equivalent of CI deploy step:
-pnpm ops:pack
-HOSTINGER_API_TOKEN=… pnpm ops:deploy
-```
+API, MCP, Connector, and GitHub-source deployment must be separately proven
+before any automated provider mutation is restored to this repository.
 
 
 **Forbidden deploy artifacts**
@@ -223,7 +223,7 @@ Hostinger docs: [Deploy a Git repository](https://www.hostinger.com/support/1583
 
 ```bash
 pnpm marketing:sync   # if apps/marketing changed
-git add .
+git add apps/marketing/index.html apps/marketing/styles.css apps/marketing/.htaccess index.html styles.css .htaccess
 git commit -m "Describe your change"
 git push origin main
 ```

@@ -19,6 +19,45 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+EXPECTED_NODE_VERSION="24.18.0"
+EXPECTED_NEXT_VERSION="16.2.11"
+EXPECTED_SHARP_VERSION="0.35.3"
+EXPECTED_POSTCSS_VERSION="8.5.22"
+
+CURRENT_NODE_VERSION="$(node -p 'process.versions.node')"
+if [[ "$CURRENT_NODE_VERSION" != "$EXPECTED_NODE_VERSION" ]]; then
+  echo "ERROR: ops archive must be built with Node ${EXPECTED_NODE_VERSION}; found ${CURRENT_NODE_VERSION}" >&2
+  exit 1
+fi
+
+# Derive archive runtime versions from Next's installed dependency graph. The
+# targeted pnpm overrides remain the source of truth; the pack must not drift.
+RESOLVED_NEXT_VERSION="$(
+  cd "$ROOT/apps/ops"
+  node -p "require('next/package.json').version"
+)"
+RESOLVED_SHARP_VERSION="$(
+  cd "$ROOT/apps/ops"
+  node -e "const fs = require('node:fs'); const path = require('node:path'); const { createRequire } = require('node:module'); const fromNext = createRequire(require.resolve('next/package.json')); let dir = path.dirname(fromNext.resolve('sharp')); while (dir !== path.dirname(dir)) { const manifest = path.join(dir, 'package.json'); if (fs.existsSync(manifest)) { const pkg = JSON.parse(fs.readFileSync(manifest, 'utf8')); if (pkg.name === 'sharp') { process.stdout.write(pkg.version); process.exit(0); } } dir = path.dirname(dir); } throw new Error('cannot locate sharp package.json from Next.js dependency graph')"
+)"
+RESOLVED_POSTCSS_VERSION="$(
+  cd "$ROOT/apps/ops"
+  node -e "const { createRequire } = require('node:module'); const fromNext = createRequire(require.resolve('next/package.json')); process.stdout.write(fromNext('postcss/package.json').version)"
+)"
+
+if [[ "$RESOLVED_NEXT_VERSION" != "$EXPECTED_NEXT_VERSION" ]]; then
+  echo "ERROR: expected next@${EXPECTED_NEXT_VERSION}; resolved ${RESOLVED_NEXT_VERSION}" >&2
+  exit 1
+fi
+if [[ "$RESOLVED_SHARP_VERSION" != "$EXPECTED_SHARP_VERSION" ]]; then
+  echo "ERROR: expected Next.js to resolve sharp@${EXPECTED_SHARP_VERSION}; resolved ${RESOLVED_SHARP_VERSION}" >&2
+  exit 1
+fi
+if [[ "$RESOLVED_POSTCSS_VERSION" != "$EXPECTED_POSTCSS_VERSION" ]]; then
+  echo "ERROR: expected Next.js to resolve postcss@${EXPECTED_POSTCSS_VERSION}; resolved ${RESOLVED_POSTCSS_VERSION}" >&2
+  exit 1
+fi
+
 STAMP="${STANDALONE_STAMP:-$(date +%Y%m%d)}"
 OUT_DIR="${STANDALONE_OUT_DIR:-$ROOT/dist}"
 STAGE="$OUT_DIR/perfume-aura-standalone-stage"
@@ -141,13 +180,34 @@ if [[ ! -f "$STAGE/apps/ops/node_modules/@swc/helpers/package.json" ]]; then
   fi
 fi
 
+# Next's standalone trace can omit its build-time PostCSS package. Materialize
+# the exact dependency selected from Next's reviewed graph so the archive smoke
+# can prove the patched version without relying on the build machine.
+POSTCSS_MANIFEST="$(
+  cd "$ROOT/apps/ops"
+  node -e "const { createRequire } = require('node:module'); const fromNext = createRequire(require.resolve('next/package.json')); process.stdout.write(fromNext.resolve('postcss/package.json'))"
+)"
+POSTCSS_PACKAGE_DIR="${POSTCSS_MANIFEST%/package.json}"
+POSTCSS_NM="${POSTCSS_PACKAGE_DIR%/postcss}"
+if [[ ! -d "$POSTCSS_PACKAGE_DIR" ]]; then
+  echo "ERROR: cannot find resolved postcss@${RESOLVED_POSTCSS_VERSION} package directory" >&2
+  exit 1
+fi
+for pkg in "$POSTCSS_NM"/*; do
+  [[ -e "$pkg" ]] || continue
+  base="$(basename "$pkg")"
+  if [[ "$base" == "postcss" || ! -e "$STAGE/apps/ops/node_modules/$base" ]]; then
+    copy_real "$pkg" "$STAGE/apps/ops/node_modules/$base"
+  fi
+done
+
 # ---------------------------------------------------------------------------
 # Hostinger runs Linux x64. Local Mac standalone only ships darwin sharp.
 # ---------------------------------------------------------------------------
 TARGET_OS="${STANDALONE_TARGET_OS:-linux}"
 TARGET_CPU="${STANDALONE_TARGET_CPU:-x64}"
 TARGET_LIBC="${STANDALONE_TARGET_LIBC:-glibc}"
-SHARP_VERSION="${STANDALONE_SHARP_VERSION:-0.34.5}"
+SHARP_VERSION="$RESOLVED_SHARP_VERSION"
 echo "==> Installing sharp@${SHARP_VERSION} for ${TARGET_OS}/${TARGET_CPU}/${TARGET_LIBC}…"
 SHARP_TMP="$(mktemp -d)"
 (
@@ -272,6 +332,9 @@ cat > "$STAGE/apps/ops/package.json" << 'OPSPKG'
 {
   "name": "perfume-aura-ops-standalone-app",
   "private": true,
+  "engines": {
+    "node": ">=24.18.0 <25"
+  },
   "scripts": {
     "start": "node server.js"
   }
@@ -284,6 +347,9 @@ cat > "$STAGE/package.json" << 'PKG'
 {
   "name": "perfume-aura-ops-standalone",
   "private": true,
+  "engines": {
+    "node": ">=24.18.0 <25"
+  },
   "dependencies": {},
   "scripts": {
     "build": "echo prebuilt-standalone",
@@ -312,7 +378,7 @@ Hostinger Node.js Web App — prebuilt standalone (Perfume Aura ops)
 Settings and redeploy:
   Source: upload this zip
   Framework: Other (or Next.js)
-  Node: 20.x
+  Node: 24.x (archive built and validated with 24.18.0)
   Root directory: ./
   Build command: echo prebuilt-standalone
   Package manager: pnpm (or npm)
@@ -357,6 +423,62 @@ fi
 
 # Sharp is packed for TARGET_OS (linux on Hostinger). Local Mac cannot dlopen linux
 # natives — so require('sharp') only when host matches target; otherwise verify tree.
+smoke_package_versions() {
+  local root="$1" label="$2"
+  (
+    cd "$root"
+    node - "$EXPECTED_NEXT_VERSION" "$EXPECTED_SHARP_VERSION" "$EXPECTED_POSTCSS_VERSION" "$label" <<'NODE'
+const { createRequire } = require("node:module");
+const fs = require("node:fs");
+const path = require("node:path");
+
+const [expectedNext, expectedSharp, expectedPostcss, label] = process.argv.slice(2);
+const nextVersion = require("next/package.json").version;
+const fromNext = createRequire(require.resolve("next/package.json"));
+const postcssVersion = fromNext("postcss/package.json").version;
+let sharpRoot = path.dirname(require.resolve("sharp"));
+let sharpVersion;
+while (sharpRoot !== path.dirname(sharpRoot)) {
+  const manifest = path.join(sharpRoot, "package.json");
+  if (fs.existsSync(manifest)) {
+    const pkg = JSON.parse(fs.readFileSync(manifest, "utf8"));
+    if (pkg.name === "sharp") {
+      sharpVersion = pkg.version;
+      break;
+    }
+  }
+  sharpRoot = path.dirname(sharpRoot);
+}
+if (!sharpVersion) {
+  throw new Error(`${label}: cannot locate sharp package.json`);
+}
+
+const expected = {
+  next: expectedNext,
+  sharp: expectedSharp,
+  postcss: expectedPostcss,
+};
+const actual = {
+  next: nextVersion,
+  sharp: sharpVersion,
+  postcss: postcssVersion,
+};
+
+for (const name of Object.keys(expected)) {
+  if (actual[name] !== expected[name]) {
+    throw new Error(
+      `${label}: expected ${name}@${expected[name]}, found ${actual[name]}`,
+    );
+  }
+}
+
+console.log(
+  `${label}: package versions ok (next=${nextVersion}, sharp=${sharpVersion}, postcss=${postcssVersion})`,
+);
+NODE
+  )
+}
+
 smoke_sharp_tree() {
   local root="$1" label="$2"
   local nm="$root/node_modules"
@@ -397,9 +519,10 @@ echo "==> Stage smoke (next + sharp + static from apps/ops)…"
   test -d .next/static
   node -e "require('next'); require('next/dist/shared/lib/constants'); console.log('stage-smoke: next ok')"
 )
+smoke_package_versions "$STAGE/apps/ops" "stage-smoke"
 smoke_sharp_tree "$STAGE/apps/ops" "stage-smoke"
 
-echo "==> Pruning stage bloat (Hostinger from-archive ≤50MB when possible)…"
+echo "==> Pruning stage bloat for portable manual upload…"
 # Safe deletes only — do not strip runtime .js/.node
 find "$STAGE/node_modules" "$STAGE/apps/ops/node_modules" -type f \( \
   -name '*.map' -o -name '*.md' -o -name '*.markdown' \
@@ -452,6 +575,7 @@ fi
   fi
   node -e "require('next'); require('next/dist/shared/lib/constants'); console.log('zip-smoke: next ok')"
 )
+smoke_package_versions "$VERIFY/apps/ops" "zip-smoke"
 smoke_sharp_tree "$VERIFY/apps/ops" "zip-smoke"
 rm -rf "$VERIFY"
 

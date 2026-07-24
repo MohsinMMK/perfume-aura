@@ -7,7 +7,8 @@ Monorepo for **perfumeaura.com** (marketing) and the internal **ops** app (inven
 | Piece | Choice |
 |-------|--------|
 | Marketing | Static HTML/CSS → Hostinger classic Git |
-| Ops | Next.js 16 App Router → Hostinger Node.js Web App |
+| Ops | Next.js **16.2.11** App Router → Hostinger Node.js Web App |
+| Runtime | Node.js **24.18.0** locally/in CI; Hostinger Node **24.x** |
 | UI | shadcn/ui **base-luma** (preset `b23PPibQOI`, Hugeicons) + Tailwind v4 → `packages/ui` |
 | Auth | Better Auth |
 | DB | Neon Postgres + Drizzle + `pg` |
@@ -83,11 +84,12 @@ pnpm test:integration     # concurrent oversell + TX rollback (needs Neon)
 ```bash
 pnpm ops:pack
 # → dist/perfume-aura-standalone_YYYYMMDD.zip
-# hPanel Node Web App: entry apps/ops/server.js · build echo prebuilt-standalone
+# hPanel Node Web App: Node 24.x · entry apps/ops/server.js · build echo prebuilt-standalone
 # Then Neon migrate + db seed + seed:owner + hPanel env (see docs)
 ```
 
-**Path B:** GitHub Actions packs the zip on push (`ops-pack.yml`); set `HOSTINGER_API_TOKEN` for auto Hostinger upload.
+**Path B:** GitHub Actions packs and retains the ZIP artifact only. Download it
+and use the same manual hPanel Path Z upload; the workflow never deploys.
 
 **Path G** (GitHub source build on Node) stays blocked on shared Node (esbuild EACCES) — do not force it.
 

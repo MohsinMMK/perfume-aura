@@ -9,7 +9,7 @@ Official Node guide: https://www.hostinger.com/support/how-to-deploy-a-nodejs-we
 |-------|--------|
 | Updated | 2026-07-24 |
 | Related | [DEPLOY.md](./DEPLOY.md) · [ENV.md](./ENV.md) · [SECURITY.md](./SECURITY.md) |
-| Pack script | `pnpm ops:pack` → `dist/perfume-aura-standalone_YYYYMMDD.zip` (**materialize** `apps/ops/node_modules` primary; zip `-y` secondary; `next`+`sharp` smoke; no `.env`) |
+| Pack script | Node **24.18.0** + `pnpm ops:pack` → `dist/perfume-aura-standalone_YYYYMMDD.zip` (**materialize** `apps/ops/node_modules` primary; zip `-y` secondary; version/native smoke; no `.env`) |
 
 ## Live account snapshot (updated 2026-07-22 via Hostinger MCP)
 
@@ -56,7 +56,9 @@ Official Hostinger model = **one GitHub repo, two websites**:
 
 So push does **not** publish both until ops Node app is healthy. Classic Git cannot run Next.js. Do not merge ops into marketing `public_html`.
 
-**Workable ops path now:** local `pnpm ops:pack` → upload zip → entry `apps/ops/server.js` + env → Save and redeploy.  
+**Workable ops path now:** Node 24.18.0 local `pnpm ops:pack` → manual
+hPanel upload on Hostinger Node 24.x → entry `apps/ops/server.js` + env →
+Save and redeploy.
 **Later Git auto path:** when Hostinger can build monorepo (or CI ships artifact Hostinger pulls), reconnect GitHub on the Node app and drop zip uploads.
 
 ## hPanel Settings and redeploy (prebuilt zip)
@@ -67,7 +69,7 @@ Matches Hostinger **Settings and redeploy** UI. Use after `pnpm ops:pack` (or **
 |-------|--------|
 | **Source files** | **Upload new files** → `dist/perfume-aura-standalone_*.zip` · or **Use previous files** if same zip already on server |
 | **Framework preset** | **Other** (or Next.js if listed; either OK for standalone) |
-| **Node version** | **20.x** |
+| **Node version** | **24.x** |
 | **Root directory** | `./` |
 | **Build command** | `echo prebuilt-standalone` — **not** `pnpm run build` |
 | **Package manager** | `pnpm` (or npm) |
@@ -150,22 +152,24 @@ DATABASE_URL_DIRECT=          # Neon direct (migrate job only)
 
 > `app.perfumeaura.com` addon **already created**. Prefer **Settings and redeploy** on that site over creating a second website.
 
-### Path B — CI artifact (autonomous pack)
+### Path B — CI artifact (packaging only)
 
 GitHub Actions [ops-pack.yml](../.github/workflows/ops-pack.yml) runs `pnpm ops:pack` on ops-related `main` pushes.
 
 | Step | Detail |
 |------|--------|
 | Artifact | Actions run → **ops-standalone-zip** |
-| Auto deploy | Repo secret `HOSTINGER_API_TOKEN` → `pnpm ops:deploy` / `from-archive` API |
-| Manual | Download artifact → hPanel upload (same entry/build as Path Z) |
-| Limit | Zip ≤ **50MB** |
+| Provider deploy | **None** — workflow has no credentials or deploy job |
+| Manual | Download artifact → hPanel upload on Node 24.x (same entry/build as Path Z) |
+
+Do not treat a green artifact workflow as a Hostinger deployment. API, MCP,
+Connector, and GitHub-source deployment require separate proof before use.
 
 ### Path Z — Prebuilt zip (current workable; Hostinger official source #2)
 
 Works around shared-Node monorepo EACCES. Full agent write-up: [AGENTS.md Path Z](../AGENTS.md#path-z--ops-node-via-prebuilt-zip-current-workable--official-option-2).
 
-1. Local: `pnpm ops:pack`  
+1. Local on Node 24.18.0: `pnpm ops:pack`
 2. hPanel → **app.perfumeaura.com** → Deploy Web App → **Settings and redeploy**  
 3. Upload zip · set **Entry file** `apps/ops/server.js` · build `echo prebuilt-standalone` · env · **Save and redeploy**  
 4. SSL on if not already  
@@ -180,7 +184,7 @@ Works around shared-Node monorepo EACCES. Full agent write-up: [AGENTS.md Path Z
 
 Historical target fields (reference only, not a runbook):
 
-- Framework Next.js · Node 20 · monorepo root · install/build that Hostinger can exec without EACCES  
+- Framework Next.js · Node 24.x · monorepo root · install/build that Hostinger can exec without EACCES
 - Entry still **`apps/ops/server.js`** after standalone layout exists  
 - Same hPanel env as Path Z  
 

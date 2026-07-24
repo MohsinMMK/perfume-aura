@@ -1,9 +1,8 @@
-# Path B — CI builds Hostinger Path Z standalone zip (autonomous pack).
-# Optional deploy: set repo secret HOSTINGER_API_TOKEN to push zip via official API.
-#
-# Marketing Path M stays classic Git (separate). This workflow is ops-only.
+# Path B — CI builds the Hostinger Path Z standalone zip as an artifact.
+# This workflow never deploys. Ops deployment is a manual hPanel ZIP upload.
+# Marketing Path M stays classic Git (separate).
 name: ops-pack
-# CI uses Node 22 (pnpm 11). Hostinger runtime stays Node 20 for the prebuilt zip.
+# CI builds with Node 24.18.0 from .nvmrc; Hostinger runs Node 24.x.
 
 on:
   push:
@@ -12,17 +11,13 @@ on:
       - "apps/ops/**"
       - "packages/**"
       - "scripts/pack-ops-standalone.sh"
-      - "scripts/deploy-ops-hostinger.sh"
       - "pnpm-lock.yaml"
       - "package.json"
       - "pnpm-workspace.yaml"
+      - ".nvmrc"
+      - ".node-version"
       - ".github/workflows/ops-pack.yml"
   workflow_dispatch:
-    inputs:
-      deploy:
-        description: "Also deploy zip to Hostinger (needs HOSTINGER_API_TOKEN secret)"
-        type: boolean
-        default: true
 
 concurrency:
   group: ops-pack-${{ github.ref }}
@@ -55,7 +50,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install
@@ -73,15 +68,6 @@ jobs:
           echo "zip=$ZIP bytes=$BYTES (${MB}MB)"
           # Full standalone should be well above tiny broken flats (~9MB)
           test "$BYTES" -gt 15000000
-          LIMIT=$((50 * 1024 * 1024))
-          if [ "$BYTES" -gt "$LIMIT" ]; then
-            echo "NOTE: zip >50MB — Actions artifact OK; Hostinger from-archive API deploy will refuse until slimmed."
-            echo "API_DEPLOYABLE=false" >> "$GITHUB_ENV"
-          else
-            echo "API_DEPLOYABLE=true" >> "$GITHUB_ENV"
-          fi
-          echo "ZIP_PATH=$ZIP" >> "$GITHUB_ENV"
-          echo "ZIP_NAME=$(basename "$ZIP")" >> "$GITHUB_ENV"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -90,52 +76,3 @@ jobs:
           path: dist/perfume-aura-standalone_*.zip
           if-no-files-found: error
           retention-days: 14
-
-  deploy:
-    name: deploy to Hostinger (optional)
-    needs: pack
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    # Manual dispatch can disable; push always attempts when token secret exists
-    if: >
-      github.event_name == 'push' ||
-      (github.event_name == 'workflow_dispatch' && inputs.deploy == true)
-    env:
-      HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
-      # Optional overrides; script defaults username/domain if empty
-      HOSTINGER_USERNAME: ${{ secrets.HOSTINGER_USERNAME }}
-      HOSTINGER_OPS_DOMAIN: ${{ secrets.HOSTINGER_OPS_DOMAIN }}
-    steps:
-      - name: Checkout (deploy script only)
-        uses: actions/checkout@v4
-
-      - name: Skip if no API token
-        id: gate
-        run: |
-          if [ -z "${HOSTINGER_API_TOKEN}" ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "HOSTINGER_API_TOKEN secret not set — artifact only (download from Actions, upload in hPanel)."
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Download pack artifact
-        if: steps.gate.outputs.skip == 'false'
-        uses: actions/download-artifact@v4
-        with:
-          name: ops-standalone-zip
-          path: dist
-
-      - name: Deploy zip via Hostinger from-archive API
-        if: steps.gate.outputs.skip == 'false'
-        run: |
-          set -euo pipefail
-          chmod +x scripts/deploy-ops-hostinger.sh
-          OPS_ZIP="$(ls -1t dist/perfume-aura-standalone_*.zip | head -1)"
-          BYTES="$(wc -c < "$OPS_ZIP" | tr -d ' ')"
-          if [ "$BYTES" -gt $((50 * 1024 * 1024)) ]; then
-            echo "Zip ${BYTES}B exceeds Hostinger 50MB API limit — leaving artifact for manual hPanel upload."
-            exit 0
-          fi
-          export OPS_ZIP
-          bash scripts/deploy-ops-hostinger.sh
