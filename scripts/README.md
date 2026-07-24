@@ -6,6 +6,7 @@ Automation entrypoints for the monorepo. Prefer `pnpm <script>` from repo root.
 |--------|------|---------|
 | `sync-marketing.sh` | `marketing:sync` / `marketing:check` | Publish `apps/marketing` → repo root for Hostinger Path M |
 | `pack-ops-standalone.sh` | `ops:pack` | Build Path Z zip for Hostinger Node Web App |
+| `deploy-ops-hostinger.sh` | `ops:deploy` | Path B: upload zip via Hostinger `from-archive` API |
 
 ## Conventions
 
@@ -25,11 +26,19 @@ repo root index.html + styles.css + .htaccess
 perfumeaura.com
 ```
 
-## Ops pack model
+## Ops pack + Path B CI model
 
 ```text
-pnpm ops:pack
+pnpm ops:pack   (local or GitHub Actions ubuntu)
         │
-        ▼  dist/perfume-aura-standalone_YYYYMMDD.zip
-Hostinger Node Web App (entry apps/ops/server.js)
+        ▼  dist/perfume-aura-standalone_YYYYMMDD.zip  (≤50MB API limit)
+        │
+        ├── artifact on Actions (always)
+        └── optional: HOSTINGER_API_TOKEN → pnpm ops:deploy
+                    POST …/nodejs/builds/from-archive
+                    entry apps/ops/server.js · build echo prebuilt-standalone
 ```
+
+Workflow: `.github/workflows/ops-pack.yml`  
+Secret (repo → Settings → Secrets): `HOSTINGER_API_TOKEN`  
+Optional: `HOSTINGER_USERNAME`, `HOSTINGER_OPS_DOMAIN`

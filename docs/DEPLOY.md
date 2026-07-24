@@ -78,6 +78,26 @@ When (and only when) a monorepo/source build has been proven green on this Hosti
 
 Full field table + status board: [OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIST.md).
 
+#### Path B — CI artifact (autonomous pack + optional API deploy)
+
+Goal: stop local-only pack. GitHub Actions builds the same Path Z zip on every ops-related push to `main`.
+
+1. Workflow: [`.github/workflows/ops-pack.yml`](../.github/workflows/ops-pack.yml) → `pnpm ops:pack` on `ubuntu-latest`
+2. Artifact: **ops-standalone-zip** (Actions → run → Artifacts), retention 14 days
+3. Optional auto-deploy: set repo secret **`HOSTINGER_API_TOKEN`** (hPanel → API)
+   - Job calls `scripts/deploy-ops-hostinger.sh` → official `…/nodejs/builds/from-archive`
+   - Overrides: entry `apps/ops/server.js`, build `echo prebuilt-standalone`, Node 20
+   - Zip must stay **≤ 50MB** (Hostinger API limit)
+4. Without the secret: download artifact and upload in hPanel (same as local Path Z)
+5. Runtime env / Neon migrate / `seed:owner` still hPanel + human (never bake into zip)
+
+```bash
+# Local equivalent of CI deploy step:
+pnpm ops:pack
+HOSTINGER_API_TOKEN=… pnpm ops:deploy
+```
+
+
 **Forbidden deploy artifacts**
 
 - Flat zip with root `server.js` / `entry.cjs` (missing monorepo layout → `Cannot find module 'next'`)  

@@ -8,6 +8,7 @@
     "build:ops": "pnpm --filter @perfume-aura/ops build",
     "start:ops": "pnpm --filter @perfume-aura/ops start",
     "ops:pack": "bash scripts/pack-ops-standalone.sh",
+    "ops:deploy": "bash scripts/deploy-ops-hostinger.sh",
     "marketing:sync": "bash scripts/sync-marketing.sh sync",
     "marketing:check": "bash scripts/sync-marketing.sh check",
     "db:generate": "pnpm --filter @perfume-aura/db generate",

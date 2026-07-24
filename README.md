@@ -87,7 +87,9 @@ pnpm ops:pack
 # Then Neon migrate + db seed + seed:owner + hPanel env (see docs)
 ```
 
-**Path G** (GitHub auto-build on Node) is the long-term goal but **blocked** on shared Node (esbuild EACCES) — do not force it.
+**Path B:** GitHub Actions packs the zip on push (`ops-pack.yml`); set `HOSTINGER_API_TOKEN` for auto Hostinger upload.
+
+**Path G** (GitHub source build on Node) stays blocked on shared Node (esbuild EACCES) — do not force it.
 
 Full rules: [docs/DEPLOY.md](docs/DEPLOY.md) · [docs/OPS_DEPLOY_CHECKLIST.md](docs/OPS_DEPLOY_CHECKLIST.md) · [AGENTS.md](AGENTS.md).
 

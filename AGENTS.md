@@ -346,6 +346,14 @@ Everyday then: `git push origin main`. Until green, **ignore** any Path G field 
 
 ---
 
+### Path B — CI artifact (autonomous pack / optional API deploy)
+
+- Workflow: `.github/workflows/ops-pack.yml` → `pnpm ops:pack` on Ubuntu → Actions artifact `ops-standalone-zip`
+- Optional: secret `HOSTINGER_API_TOKEN` → `scripts/deploy-ops-hostinger.sh` (`from-archive` + entry `apps/ops/server.js`)
+- Still **not** Path G source build on Hostinger; still Path Z runtime contract
+- Without token: download artifact or local `pnpm ops:pack` + hPanel upload
+- Zip ≤ 50MB API cap
+
 ### Path Z — Ops Node via prebuilt zip (current workable / official option #2)
 
 Use while Path G monorepo build is blocked. Still a **Node.js Web App** on `app.perfumeaura.com` — not classic Git.
@@ -381,7 +389,9 @@ Marketing change?
 Ops change?
   → Path G unblocked (last GitHub Node build green)?
        yes → commit + git push origin main; watch Node deploy logs
-       no  → Path Z: pnpm ops:pack → upload/MCP deploy → entry apps/ops/server.js
+       no  → Path B: push ops paths → Actions ops-pack (artifact)
+             + if HOSTINGER_API_TOKEN set → auto from-archive deploy
+             else Path Z manual: download artifact / local pnpm ops:pack → hPanel
   → Always: hPanel env + Neon migrate/seed before claiming login works
 ```
 

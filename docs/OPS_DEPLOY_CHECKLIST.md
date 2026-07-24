@@ -150,6 +150,17 @@ DATABASE_URL_DIRECT=          # Neon direct (migrate job only)
 
 > `app.perfumeaura.com` addon **already created**. Prefer **Settings and redeploy** on that site over creating a second website.
 
+### Path B — CI artifact (autonomous pack)
+
+GitHub Actions [ops-pack.yml](../.github/workflows/ops-pack.yml) runs `pnpm ops:pack` on ops-related `main` pushes.
+
+| Step | Detail |
+|------|--------|
+| Artifact | Actions run → **ops-standalone-zip** |
+| Auto deploy | Repo secret `HOSTINGER_API_TOKEN` → `pnpm ops:deploy` / `from-archive` API |
+| Manual | Download artifact → hPanel upload (same entry/build as Path Z) |
+| Limit | Zip ≤ **50MB** |
+
 ### Path Z — Prebuilt zip (current workable; Hostinger official source #2)
 
 Works around shared-Node monorepo EACCES. Full agent write-up: [AGENTS.md Path Z](../AGENTS.md#path-z--ops-node-via-prebuilt-zip-current-workable--official-option-2).
