@@ -27,11 +27,16 @@ These are decisions or credentials that cannot be safely inferred.
 - [ ] Choose the SMTP mailbox for password-reset messages. Provide its address
   and `from` format through hPanel, or explicitly authorize creating/resetting
   a dedicated mailbox. Do not send mailbox passwords in chat or commit them.
-- [ ] Authorize GitHub source-of-truth publication: push
-  `codex/project-hardening`, open a PR, and state whether merge to `main` is
-  authorized after the required CI checks pass. The alternative is an explicit,
-  recorded exception to deploy the locally verified Path Z ZIP before `main`
-  artifact custody exists.
+- [x] GitHub source-of-truth branch is published as draft
+  [PR #1](https://github.com/MohsinMMK/perfume-aura/pull/1), based on
+  `codex/project-hardening`.
+- [ ] Enable GitHub's Dependency Graph in repository Settings → Advanced
+  Security, then rerun the PR checks. The current PR's quality, PostgreSQL
+  integration, and verified ZIP jobs passed; the blocking Dependency Review job
+  cannot run until this repository feature is active.
+- [ ] Authorize merge of PR #1 to `main` after every required check passes. The
+  alternative is an explicit, recorded exception to deploy the locally verified
+  Path Z ZIP before `main` artifact custody exists.
 - [ ] Be available with a second public network (for example mobile data) for
   the short rate-limit test. Two independent client buckets are required.
 
