@@ -3,6 +3,7 @@
 #
 # Marketing Path M stays classic Git (separate). This workflow is ops-only.
 name: ops-pack
+# CI uses Node 22 (pnpm 11). Hostinger runtime stays Node 20 for the prebuilt zip.
 
 on:
   push:
@@ -54,7 +55,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: Install
