@@ -8,10 +8,11 @@ dist
 out
 *.tsbuildinfo
 
-# env & secrets
+# env & secrets (keep *.example templates trackable)
 .env
-.env.local
-.env*.local
+.env.*
+!.env.example
+!.env*.example
 *.pem
 
 # logs & OS
@@ -22,20 +23,8 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# app-specific
-apps/ops/.next
-apps/marketing/dist
-
-# tooling
+# tooling / deploy artifacts
 .vercel
-dist/
+.neon
 perfume-aura-standalone_*.zip
 *.standalone.zip
-
-# neon / host secrets (never commit)
-.env.neon.prod
-.env.production
-.env.production.local
-
-# neonctl context
-.neon

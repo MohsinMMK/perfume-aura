@@ -1,6 +1,7 @@
-# Prefer root .gitignore; keep Next local overrides
+# Prefer root .gitignore; Next local overrides
 .next/
 out/
 node_modules/
 .env*
+!.env.example
 *.tsbuildinfo
