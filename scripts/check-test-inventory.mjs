@@ -26,11 +26,14 @@ const suites = [
     packageRoot: "apps/ops",
     unitGlob: "lib/**/!(*.integration).test.ts",
     integrationGlob: "lib/**/*.integration.test.ts",
+    integrationCommand: 'tsx --test "lib/**/*.integration.test.ts"',
   },
   {
     packageRoot: "packages/db",
     unitGlob: "src/**/!(*.integration).test.ts",
     integrationGlob: "src/**/*.integration.test.ts",
+    integrationCommand:
+      'tsx --test --test-concurrency=1 "src/**/*.integration.test.ts"',
   },
 ];
 
@@ -70,8 +73,8 @@ for (const suite of suites) {
   );
   assert.equal(
     manifest.scripts["test:integration"],
-    `tsx --test "${suite.integrationGlob}"`,
-    `${suite.packageRoot} must use its quoted Node 24 integration discovery glob`,
+    suite.integrationCommand,
+    `${suite.packageRoot} must use its quoted Node 24 integration discovery glob and required concurrency`,
   );
 }
 
