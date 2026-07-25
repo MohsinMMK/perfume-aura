@@ -8,7 +8,8 @@ Change stack only through an explicit reviewed decision. Production hosting rema
 |---|---|
 | Workspace | pnpm `11.1.3` monorepo |
 | Runtime | Node `24.18.0` local/CI/package; Hostinger Node `24.x` target |
-| Ops | Next.js `16.2.11`, App Router, React 19, TypeScript |
+| Ops | Next.js `16.2.11`, App Router, React 19, TypeScript `7.0.2` native CLI |
+| TypeScript compatibility | `@typescript/native` aliases TypeScript `7.0.2`; `typescript` aliases `@typescript/typescript6` for Next.js and ESLint compiler-API consumers |
 | UI | shadcn/ui, Base UI, Tailwind CSS 4, Hugeicons |
 | Auth | Better Auth email/password + Drizzle adapter |
 | Database | Neon PostgreSQL + Drizzle ORM/Kit + `pg` Pool |
@@ -23,6 +24,7 @@ Change stack only through an explicit reviewed decision. Production hosting rema
 |---|---|
 | shadcn/ui | Official CLI and monorepo docs |
 | Next.js | Current App Router docs |
+| TypeScript | Official TypeScript 7 side-by-side TypeScript 6 compatibility setup; `tsc` resolves to `7.0.2`, `tsc6` provides the compatibility CLI, and the aliased `typescript` package provides the temporary JavaScript API |
 | Better Auth | Official Next.js, Drizzle, email/password, security docs |
 | Drizzle | Official schema, Kit, migration, and PostgreSQL guides |
 | Neon | Official connection, branch, pooling, and role guidance |

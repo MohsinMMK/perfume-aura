@@ -75,7 +75,7 @@ Restore: `pnpm dlx skills experimental_install` (from `skills-lock.json`).
 | GitHub repo | https://github.com/MohsinMMK/perfume-aura |
 | Default branch | **`main`** |
 | Current phase | Product inventory-to-finance implemented; production cutover pending; documentation consolidated 2026-07-25 |
-| Stack | **pnpm monorepo** · marketing static · ops **Next.js 16.2.11** on Hostinger Node (target **24.x**; Path Z) |
+| Stack | **pnpm monorepo** · marketing static · ops **Next.js 16.2.11** + **TypeScript 7.0.2** on Hostinger Node (target **24.x**; Path Z) |
 | Docs | [index](docs/README.md) · [product](docs/PRODUCT.md) · [engineering](docs/ENGINEERING.md) · [operations](docs/OPERATIONS.md) · [roadmap](docs/ROADMAP.md) · [stack](docs/STACK.md) |
 
 ## Monorepo layout
@@ -598,13 +598,14 @@ Repo-ready artifact path (Node 24.18.0 Path Z) is **not** the same as the stale 
 ## Agent workflow preferences
 
 1. **Read** this file and `docs/OPERATIONS.md` before hosting, DNS, database cutover, or ops deploy work.
-2. **Ship via GitHub:** marketing always **Path M** (`git push origin main`). Ops currently uses **Path Z** only: build with Node 24.18.0, then manually upload the ZIP in hPanel on Node 24.x. Path G requires separate proof and a runbook update. Never use classic Git for the ops runtime.
-3. For DNS issues: verify WHOIS NS, public `dig`, Hostinger zone, then hPanel Live DNS Checkup — not random A-record hacks at GoDaddy.
-4. Prefer small, clear commits and keep the coming soon page **single viewport / no page scroll** until the full site replaces it.
-5. Do not claim marketing “live” until `https://perfumeaura.com` serves this project; do not claim ops “live” until `/login` works **and** auth API is not 500 **and** owner can sign in against Neon prod.
-6. **Provider tools:** normal sub-agents may prepare or inspect authorized read-only evidence only. Provider mutations remain root-operator Phase 07 work; repository automation must not deploy.
-7. **Ops debug order:** public curl `/login` → `/api/auth/get-session` → hPanel deployment entry + logs → hPanel restart if authorized → env present? → owner seeded on **that** `DATABASE_URL`?
-8. **Never print** full `DATABASE_URL` / API tokens in chat logs when avoidable; mask hosts. User-requested owner password from local `.env.local` is allowed when they ask for login creds explicitly.
+2. **Search with Graphify first:** when answering questions about repository content, architecture, symbols, dependencies, or file relationships, query the existing graph in `graphify-out/` before broad file searches. Use `graphify query "<question>"`; use `graphify path` or `graphify explain` for focused traversal. Rebuild only when explicitly requested or when the graph is stale.
+3. **Ship via GitHub:** marketing always **Path M** (`git push origin main`). Ops currently uses **Path Z** only: build with Node 24.18.0, then manually upload the ZIP in hPanel on Node 24.x. Path G requires separate proof and a runbook update. Never use classic Git for the ops runtime.
+4. For DNS issues: verify WHOIS NS, public `dig`, Hostinger zone, then hPanel Live DNS Checkup — not random A-record hacks at GoDaddy.
+5. Prefer small, clear commits and keep the coming soon page **single viewport / no page scroll** until the full site replaces it.
+6. Do not claim marketing “live” until `https://perfumeaura.com` serves this project; do not claim ops “live” until `/login` works **and** auth API is not 500 **and** owner can sign in against Neon prod.
+7. **Provider tools:** normal sub-agents may prepare or inspect authorized read-only evidence only. Provider mutations remain root-operator Phase 07 work; repository automation must not deploy.
+8. **Ops debug order:** public curl `/login` → `/api/auth/get-session` → hPanel deployment entry + logs → hPanel restart if authorized → env present? → owner seeded on **that** `DATABASE_URL`?
+9. **Never print** full `DATABASE_URL` / API tokens in chat logs when avoidable; mask hosts. User-requested owner password from local `.env.local` is allowed when they ask for login creds explicitly.
 
 ## Success criteria
 
