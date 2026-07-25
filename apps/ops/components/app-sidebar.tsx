@@ -15,6 +15,7 @@ import {
   UserGroupIcon,
   WarehouseIcon,
   Invoice01Icon,
+  LockPasswordIcon,
 } from "@hugeicons/core-free-icons";
 import {
   Sidebar,
@@ -156,6 +157,16 @@ export function AppSidebar({
 
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              isActive={isActive(pathname, "/settings/security")}
+              tooltip="Security"
+              render={<Link href="/settings/security" />}
+            >
+              <HugeiconsIcon icon={LockPasswordIcon} strokeWidth={2} />
+              <span>Security</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Sign out" onClick={handleSignOut}>
               <HugeiconsIcon icon={Logout01Icon} strokeWidth={2} />

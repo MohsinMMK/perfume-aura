@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/session";
+import { getOwnerSession } from "@/lib/session";
 
 /** Ops root: send people to the app, not a static landing. */
 export default async function Home() {
-  const session = await getSession();
+  const session = await getOwnerSession();
   redirect(session ? "/dashboard" : "/login");
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import {
   Card,
@@ -14,7 +15,6 @@ import {
   TableHeader,
   TableRow,
 } from "@perfume-aura/ui/components/table";
-import { cn } from "@perfume-aura/ui/lib/utils";
 import { listProducts } from "@/lib/products";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatQty } from "@/lib/money";
@@ -23,10 +23,18 @@ import {
   DbUnavailableState,
 } from "@/components/db-empty-state";
 import { ProductFilters } from "@/components/products/product-filters";
+import { requireOwnerSession } from "@/lib/session";
+import {
+  canonicalPage,
+  paginationHref,
+  parsePage,
+} from "@/lib/pagination";
+import { PaginationNav } from "@/components/pagination-nav";
+import { cn } from "@perfume-aura/ui/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-type SearchParams = Promise<{ q?: string; status?: string }>;
+type SearchParams = Promise<{ q?: string; status?: string; page?: string }>;
 
 function parseStatus(
   raw: string | undefined,
@@ -40,11 +48,28 @@ export default async function ProductsPage({
 }: {
   searchParams: SearchParams;
 }) {
+  await requireOwnerSession({ redirectToLogin: true });
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const status = parseStatus(sp.status);
+  const page = parsePage(sp.page);
 
-  const result = await safeDbQuery(() => listProducts({ q, status }));
+  const result = await safeDbQuery(() => listProducts({ q, status, page }));
+  if (result.data) {
+    const canonical = canonicalPage(
+      result.data.page,
+      result.data.totalPages,
+      result.data.total,
+    );
+    if (canonical) {
+      redirect(
+        paginationHref("/products", canonical, {
+          q: q || undefined,
+          status: status === "active" ? undefined : status,
+        }),
+      );
+    }
+  }
 
   const hasFilters = q.length > 0 || status !== "active";
 
@@ -73,7 +98,7 @@ export default async function ProductsPage({
 
       {result.error || !result.data ? (
         <DbUnavailableState message={result.error ?? "No data returned."} />
-      ) : result.data.length === 0 ? (
+      ) : result.data.items.length === 0 ? (
         hasFilters ? (
           <Card>
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
@@ -103,7 +128,7 @@ export default async function ProductsPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {result.data.map((p) => (
+                {result.data.items.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell>
                       <Link
@@ -141,6 +166,16 @@ export default async function ProductsPage({
               </TableBody>
             </Table>
           </CardContent>
+          <PaginationNav
+            pathname="/products"
+            page={result.data.page}
+            totalPages={result.data.totalPages}
+            total={result.data.total}
+            search={{
+              q: q || undefined,
+              status: status === "active" ? undefined : status,
+            }}
+          />
         </Card>
       )}
     </div>

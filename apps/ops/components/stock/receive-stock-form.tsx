@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { Button } from "@perfume-aura/ui/components/button";
 import {
   Card,
@@ -51,6 +51,7 @@ export function ReceiveStockForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const idempotencyKeyRef = useRef<string | null>(null);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -60,7 +61,9 @@ export function ReceiveStockForm({
     setFieldErrors({});
 
     const fd = new FormData(e.currentTarget);
+    idempotencyKeyRef.current ??= crypto.randomUUID();
     const payload = {
+      idempotencyKey: idempotencyKeyRef.current,
       variantId: String(fd.get("variantId") ?? ""),
       quantity: Number(fd.get("quantity")),
       note: String(fd.get("note") ?? "").trim(),
@@ -74,6 +77,7 @@ export function ReceiveStockForm({
         setPending(false);
         return;
       }
+      idempotencyKeyRef.current = null;
       setSuccess(`Received. On hand now: ${result.data?.quantityAfter}`);
       (e.target as HTMLFormElement).reset();
       setPending(false);
@@ -155,6 +159,7 @@ export function ReceiveStockForm({
             <TextAreaField
               label="Note"
               name="note"
+              id="receive-note"
               placeholder="Optional — PO ref, supplier…"
               error={fe("note")}
               rows={2}
@@ -174,7 +179,11 @@ export function ReceiveStockForm({
           </FieldGroup>
         </CardContent>
         <CardFooter className="justify-end">
-          <Button type="submit" disabled={pending}>
+          <Button
+            type="submit"
+            disabled={pending}
+            focusableWhenDisabled={pending}
+          >
             {pending ? <Spinner data-icon="inline-start" /> : null}
             {pending ? "Receiving…" : "Receive"}
           </Button>

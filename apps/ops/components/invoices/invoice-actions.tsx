@@ -1,10 +1,26 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import Link from "next/link";
-import { Button, buttonVariants } from "@perfume-aura/ui/components/button";
-import { cn } from "@perfume-aura/ui/lib/utils";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@perfume-aura/ui/components/alert-dialog";
+import {
+  Button,
+  buttonVariants,
+} from "@perfume-aura/ui/components/button";
+import { FieldError } from "@perfume-aura/ui/components/field";
+import { Spinner } from "@perfume-aura/ui/components/spinner";
+import { toast } from "@perfume-aura/ui/components/sonner";
 import {
   fulfillInvoiceAction,
   issueInvoiceAction,
@@ -13,6 +29,96 @@ import {
   voidInvoiceAction,
 } from "@/lib/invoices";
 
+type ActionResponse = Promise<{ ok: boolean; error?: string }>;
+
+type InvoiceActionConfig = {
+  label: string;
+  pendingLabel: string;
+  title: string;
+  description: string;
+  variant: "default" | "secondary" | "outline" | "destructive";
+  run: () => ActionResponse;
+};
+
+function InvoiceActionDialog({ action }: { action: InvoiceActionConfig }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function execute() {
+    setPending(true);
+    setError(null);
+    let result: Awaited<ReturnType<typeof action.run>>;
+    try {
+      result = await action.run();
+    } catch {
+      const message = "The invoice action could not be completed";
+      setError(message);
+      toast.error(message);
+      setPending(false);
+      return;
+    }
+    if (!result.ok) {
+      const message = result.error ?? "Action failed";
+      setError(message);
+      toast.error(message);
+      setPending(false);
+      return;
+    }
+    toast.success(`${action.label} completed`);
+    setOpen(false);
+    setPending(false);
+    router.refresh();
+  }
+
+  return (
+    <AlertDialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (pending) return;
+        setOpen(nextOpen);
+        if (!nextOpen) setError(null);
+      }}
+    >
+      <AlertDialogTrigger
+        render={
+          <Button
+            type="button"
+            variant={action.variant}
+            disabled={pending}
+            focusableWhenDisabled={pending}
+          />
+        }
+      >
+        {action.label}
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{action.title}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {action.description}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        {error ? <FieldError>{error}</FieldError> : null}
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            type="button"
+            variant={action.variant}
+            disabled={pending}
+            focusableWhenDisabled={pending}
+            onClick={execute}
+          >
+            {pending ? <Spinner data-icon="inline-start" /> : null}
+            {pending ? action.pendingLabel : action.label}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 export function InvoiceStatusActions({
   invoiceId,
   status,
@@ -20,113 +126,75 @@ export function InvoiceStatusActions({
   invoiceId: string;
   status: string;
 }) {
-  const router = useRouter();
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const markPaidRequest = useRef<{
+    idempotencyKey: string;
+    paidAt: string;
+  } | null>(null);
 
-  async function run(
-    fn: () => Promise<{ ok: boolean; error?: string }>,
-    confirmMsg?: string,
-  ) {
-    if (confirmMsg && !confirm(confirmMsg)) return;
-    setPending(true);
-    setError(null);
-    const result = await fn();
-    setPending(false);
-    if (!result.ok) {
-      setError(result.error ?? "Failed");
-      return;
-    }
-    router.refresh();
-  }
+  const issue: InvoiceActionConfig = {
+    label: "Issue",
+    pendingLabel: "Issuing…",
+    title: "Issue invoice?",
+    description:
+      "Issuing assigns the invoice number and locks its current lines.",
+    variant: "default",
+    run: () => issueInvoiceAction({ invoiceId }),
+  };
+  const markPaid: InvoiceActionConfig = {
+    label: "Mark paid",
+    pendingLabel: "Recording…",
+    title: "Record full cash payment?",
+    description:
+      "This records the full remaining balance as a cash payment. It does not move stock.",
+    variant: "default",
+    run: () => {
+      markPaidRequest.current ??= {
+        idempotencyKey: crypto.randomUUID(),
+        paidAt: new Date().toISOString(),
+      };
+      return markInvoicePaidAction({
+        invoiceId,
+        ...markPaidRequest.current,
+      });
+    },
+  };
+  const fulfill: InvoiceActionConfig = {
+    label: "Fulfill stock",
+    pendingLabel: "Fulfilling…",
+    title: "Fulfill remaining SKU lines?",
+    description:
+      "This decrements inventory for each remaining SKU quantity. The ledger records the cost snapshot.",
+    variant: "secondary",
+    run: () => fulfillInvoiceAction({ invoiceId }),
+  };
+  const voidAction: InvoiceActionConfig = {
+    label: "Void",
+    pendingLabel: "Voiding…",
+    title: "Void invoice?",
+    description:
+      "The invoice will remain in history, but no further payments or fulfillment can be recorded.",
+    variant: "destructive",
+    run: () => voidInvoiceAction({ invoiceId }),
+  };
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap gap-2">
-        {status === "draft" ? (
-          <Button
-            type="button"
-            disabled={pending}
-            onClick={() =>
-              run(
-                () => issueInvoiceAction({ invoiceId }),
-                "Issue this invoice? Lines will be locked.",
-              )
-            }
-          >
-            Issue
-          </Button>
-        ) : null}
-        {status === "issued" ? (
-          <>
-            <Button
-              type="button"
-              disabled={pending}
-              onClick={() =>
-                run(
-                  () => markInvoicePaidAction({ invoiceId }),
-                  "Mark fully paid (manual Phase 2)?",
-                )
-              }
-            >
-              Mark paid
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={pending}
-              onClick={() =>
-                run(
-                  () => fulfillInvoiceAction({ invoiceId }),
-                  "Fulfill remaining SKU lines (decrements stock)?",
-                )
-              }
-            >
-              Fulfill stock
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={pending}
-              onClick={() =>
-                run(
-                  () => voidInvoiceAction({ invoiceId }),
-                  "Void this issued invoice?",
-                )
-              }
-            >
-              Void
-            </Button>
-          </>
-        ) : null}
-        {status === "paid" ? (
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={pending}
-            onClick={() =>
-              run(
-                () => fulfillInvoiceAction({ invoiceId }),
-                "Fulfill remaining SKU lines (decrements stock)?",
-              )
-            }
-          >
-            Fulfill stock
-          </Button>
-        ) : null}
-        <Link
-          href={`/invoices/${invoiceId}/print`}
-          className={cn(buttonVariants({ variant: "outline" }))}
-          target="_blank"
-        >
-          Print / PDF
-        </Link>
-      </div>
-      {error ? (
-        <p className="text-sm text-destructive" role="alert">
-          {error}
-        </p>
+    <div className="flex flex-wrap gap-2">
+      {status === "draft" ? <InvoiceActionDialog action={issue} /> : null}
+      {status === "issued" ? (
+        <>
+          <InvoiceActionDialog action={markPaid} />
+          <InvoiceActionDialog action={fulfill} />
+          <InvoiceActionDialog action={voidAction} />
+        </>
       ) : null}
+      {status === "paid" ? <InvoiceActionDialog action={fulfill} /> : null}
+      <Link
+        href={`/invoices/${invoiceId}/print`}
+        target="_blank"
+        className={buttonVariants({ variant: "outline" })}
+      >
+        Print / PDF
+      </Link>
     </div>
   );
 }
@@ -139,28 +207,72 @@ export function RemoveLineButton({
   lineId: string;
 }) {
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function onClick() {
+  async function removeLine() {
     setPending(true);
-    const result = await removeInvoiceLineAction({ invoiceId, lineId });
-    setPending(false);
-    if (!result.ok) {
-      alert(result.error);
+    setError(null);
+    let result: Awaited<ReturnType<typeof removeInvoiceLineAction>>;
+    try {
+      result = await removeInvoiceLineAction({ invoiceId, lineId });
+    } catch {
+      const message = "The invoice line could not be removed";
+      setError(message);
+      toast.error(message);
+      setPending(false);
       return;
     }
+    if (!result.ok) {
+      setError(result.error);
+      toast.error(result.error);
+      setPending(false);
+      return;
+    }
+    toast.success("Invoice line removed");
+    setOpen(false);
+    setPending(false);
     router.refresh();
   }
 
   return (
-    <Button
-      type="button"
-      size="sm"
-      variant="ghost"
-      disabled={pending}
-      onClick={onClick}
+    <AlertDialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (pending) return;
+        setOpen(nextOpen);
+        if (!nextOpen) setError(null);
+      }}
     >
-      Remove
-    </Button>
+      <AlertDialogTrigger
+        render={<Button type="button" size="sm" variant="ghost" />}
+      >
+        Remove
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Remove invoice line?</AlertDialogTitle>
+          <AlertDialogDescription>
+            The draft total will be recalculated. This cannot be undone after
+            the line is removed.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        {error ? <FieldError>{error}</FieldError> : null}
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            type="button"
+            variant="destructive"
+            disabled={pending}
+            focusableWhenDisabled={pending}
+            onClick={removeLine}
+          >
+            {pending ? <Spinner data-icon="inline-start" /> : null}
+            {pending ? "Removing…" : "Remove line"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

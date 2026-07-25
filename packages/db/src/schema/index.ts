@@ -3,6 +3,10 @@ export {
   session,
   account,
   verification,
+  rateLimit,
+  userRelations,
+  sessionRelations,
+  accountRelations,
 } from "./auth";
 
 export {
@@ -17,6 +21,7 @@ export { locations } from "./locations";
 export {
   stockMovements,
   stockMovementTypeEnum,
+  stockCostBasisEnum,
 } from "./stock-movements";
 
 export {
@@ -34,3 +39,9 @@ export {
   payments,
   paymentMethodEnum,
 } from "./payments";
+
+export {
+  documentNumberCounters,
+  documentNumberKinds,
+  type DocumentNumberKind,
+} from "./document-number-counters";

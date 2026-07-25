@@ -8,11 +8,12 @@ import {
 } from "@perfume-aura/ui/components/card";
 import { Badge } from "@perfume-aura/ui/components/badge";
 import { buttonVariants } from "@perfume-aura/ui/components/button";
-import { cn } from "@perfume-aura/ui/lib/utils";
 import { getFinanceSummary } from "@/lib/finance";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatPkr } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { formatBusinessDate } from "@/lib/business-date";
+import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,7 @@ export default async function FinancePage({
 }: {
   searchParams: SearchParams;
 }) {
+  await requireOwnerSession({ redirectToLogin: true });
   const sp = await searchParams;
   const daysRaw = Number(sp.days ?? 30);
   const days = [7, 30, 90].includes(daysRaw) ? daysRaw : 30;
@@ -63,15 +65,21 @@ export default async function FinancePage({
           href: "/payments",
         },
         {
-          label: "COGS (approx)",
-          value: formatPkr(s.cogsApproxCents),
-          hint: "Sales × current cost",
+          label: "COGS (captured)",
+          value: formatPkr(s.cogsSnapshotCents),
+          hint: "Sales × cost captured at fulfillment",
           href: "/stock",
         },
         {
-          label: "Gross margin (approx)",
-          value: formatPkr(s.grossMarginApproxCents),
-          hint: "Revenue − COGS approx",
+          label: "Legacy COGS estimate",
+          value: formatPkr(s.cogsLegacyCurrentCents),
+          hint: "Pre-snapshot sales × migration-time current cost",
+          href: "/stock",
+        },
+        {
+          label: "Gross margin (incl. legacy estimate)",
+          value: formatPkr(s.grossMarginCents),
+          hint: "Revenue − captured COGS − legacy estimate",
           href: "/finance",
         },
       ]
@@ -93,12 +101,10 @@ export default async function FinancePage({
             <Link
               key={d}
               href={d === 30 ? "/finance" : `/finance?days=${d}`}
-              className={cn(
-                buttonVariants({
-                  variant: days === d ? "default" : "outline",
-                  size: "sm",
-                }),
-              )}
+              className={buttonVariants({
+                variant: days === d ? "default" : "outline",
+                size: "sm",
+              })}
             >
               {d}d
             </Link>
@@ -111,10 +117,17 @@ export default async function FinancePage({
       ) : (
         <>
           <p className="text-xs text-muted-foreground">
-            Period: {new Date(s.from).toLocaleDateString("en-PK")} →{" "}
-            {new Date(s.to).toLocaleDateString("en-PK")} · COGS uses current
-            unit cost (historical snapshot later).
+            Period: {formatBusinessDate(s.from)} →{" "}
+            {formatBusinessDate(s.to)} · Business timezone: {s.timeZone}.
+            Captured and legacy cost bases are reported separately.
           </p>
+          {s.cogsSnapshotDefectCount > 0 ? (
+            <p className="text-sm text-destructive" role="alert">
+              Data integrity warning: {s.cogsSnapshotDefectCount} sale{" "}
+              {s.cogsSnapshotDefectCount === 1 ? "movement is" : "movements are"}{" "}
+              missing a cost snapshot and excluded from COGS.
+            </p>
+          ) : null}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {cards.map((c) => (
               <Link key={c.label} href={c.href} className="group">

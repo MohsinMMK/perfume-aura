@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -18,17 +19,41 @@ import { listInvoices, getOpenArTotalCents } from "@/lib/invoices";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatPkr } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { formatBusinessDate } from "@/lib/business-date";
+import { requireOwnerSession } from "@/lib/session";
+import {
+  canonicalPage,
+  paginationHref,
+  parsePage,
+} from "@/lib/pagination";
+import { PaginationNav } from "@/components/pagination-nav";
 
 export const dynamic = "force-dynamic";
 
-export default async function ArPage() {
+export default async function ArPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  await requireOwnerSession({ redirectToLogin: true });
+  const page = parsePage((await searchParams).page);
+
   const [listResult, totalResult] = await Promise.all([
-    safeDbQuery(() => listInvoices({ status: "ar" })),
+    safeDbQuery(() => listInvoices({ status: "ar", page })),
     safeDbQuery(() => getOpenArTotalCents()),
   ]);
 
   const error = listResult.error ?? totalResult.error;
-  const rows = listResult.data ?? [];
+  const pageData = listResult.data;
+  if (pageData) {
+    const canonical = canonicalPage(
+      pageData.page,
+      pageData.totalPages,
+      pageData.total,
+    );
+    if (canonical) redirect(paginationHref("/invoices/ar", canonical));
+  }
+  const rows = pageData?.items ?? [];
   const openAr = totalResult.data ?? 0;
 
   return (
@@ -91,7 +116,9 @@ export default async function ArPage() {
                     </TableCell>
                     <TableCell>{inv.customerName}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {inv.issueDate ?? "—"}
+                      {inv.issueDate
+                        ? formatBusinessDate(inv.issueDate)
+                        : "—"}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatPkr(inv.totalCents)}
@@ -104,6 +131,14 @@ export default async function ArPage() {
               </TableBody>
             </Table>
           </CardContent>
+          {pageData ? (
+            <PaginationNav
+              pathname="/invoices/ar"
+              page={pageData.page}
+              totalPages={pageData.totalPages}
+              total={pageData.total}
+            />
+          ) : null}
         </Card>
       )}
     </div>

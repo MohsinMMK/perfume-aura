@@ -79,15 +79,41 @@ export const createVariantSchema = variantFormSchema.extend({
 
 export const archiveProductSchema = z.object({
   productId: z.string().uuid(),
+  expectedUpdatedAt: z.string().datetime(),
+});
+
+export const updateProductSchema = z.object({
+  productId: z.string().uuid(),
+  expectedUpdatedAt: z.string().datetime(),
+  name: z.string().trim().min(1, "Name is required").max(200),
+  brand: z.string().max(200).optional(),
+  category: z.string().max(100).optional(),
+  description: z.string().max(5000).optional(),
+});
+
+export const reactivateProductSchema = archiveProductSchema;
+
+export const updateVariantSchema = variantFormSchema.extend({
+  productId: z.string().uuid(),
+  variantId: z.string().uuid(),
+  expectedVersion: z.number().int().min(0),
+});
+
+export const variantLifecycleSchema = z.object({
+  productId: z.string().uuid(),
+  variantId: z.string().uuid(),
+  expectedVersion: z.number().int().min(0),
 });
 
 export const receiveStockSchema = z.object({
+  idempotencyKey: z.string().uuid(),
   variantId: z.string().uuid("Select a variant"),
   quantity: z.number().int().positive("Quantity must be a positive integer"),
   note: z.string().max(1000).optional(),
 });
 
 export const adjustStockSchema = z.object({
+  idempotencyKey: z.string().uuid(),
   variantId: z.string().uuid("Select a variant"),
   /** Signed delta: positive adds, negative removes. */
   quantityDelta: z
@@ -99,6 +125,8 @@ export const adjustStockSchema = z.object({
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type CreateVariantInput = z.infer<typeof createVariantSchema>;
+export type UpdateProductInput = z.infer<typeof updateProductSchema>;
+export type UpdateVariantInput = z.infer<typeof updateVariantSchema>;
 export type ReceiveStockInput = z.infer<typeof receiveStockSchema>;
 export type AdjustStockInput = z.infer<typeof adjustStockSchema>;
 
@@ -149,6 +177,12 @@ export const invoiceIdSchema = z.object({
   invoiceId: z.string().uuid(),
 });
 
+export const markInvoicePaidSchema = invoiceIdSchema.extend({
+  idempotencyKey: z.string().uuid(),
+  /** Stable UTC instant generated once per client request. */
+  paidAt: z.string().datetime({ offset: true }),
+});
+
 export const fulfillInvoiceSchema = z.object({
   invoiceId: z.string().uuid(),
   /** If empty, fulfill all remaining variant lines. */
@@ -172,11 +206,13 @@ export const paymentMethodSchema = z.enum([
 
 export const recordPaymentSchema = z.object({
   invoiceId: z.string().uuid(),
+  /** Stable across retries/double submissions; never generated server-side. */
+  idempotencyKey: z.string().uuid(),
   /** Major PKR (rupees) */
   amount: z.number().positive("Amount must be positive"),
   method: paymentMethodSchema.default("cash"),
-  /** ISO date or datetime string; default now server-side if omitted */
-  paidAt: z.string().optional(),
+  /** Stable ISO instant or datetime-local value, fixed for request retries. */
+  paidAt: z.string().min(1, "Payment date/time is required"),
   reference: z.string().max(120).optional(),
   note: z.string().max(1000).optional(),
 });

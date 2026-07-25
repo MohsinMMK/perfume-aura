@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { Button } from "@perfume-aura/ui/components/button";
 import {
   Card,
@@ -41,6 +41,7 @@ export function AdjustStockForm({ variants, defaultVariantId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const idempotencyKeyRef = useRef<string | null>(null);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -50,7 +51,9 @@ export function AdjustStockForm({ variants, defaultVariantId }: Props) {
     setFieldErrors({});
 
     const fd = new FormData(e.currentTarget);
+    idempotencyKeyRef.current ??= crypto.randomUUID();
     const payload = {
+      idempotencyKey: idempotencyKeyRef.current,
       variantId: String(fd.get("variantId") ?? ""),
       quantityDelta: Number(fd.get("quantityDelta")),
       note: String(fd.get("note") ?? "").trim(),
@@ -64,6 +67,7 @@ export function AdjustStockForm({ variants, defaultVariantId }: Props) {
         setPending(false);
         return;
       }
+      idempotencyKeyRef.current = null;
       setSuccess(`Adjusted. On hand now: ${result.data?.quantityAfter}`);
       (e.target as HTMLFormElement).reset();
       setPending(false);
@@ -132,6 +136,7 @@ export function AdjustStockForm({ variants, defaultVariantId }: Props) {
             <TextAreaField
               label="Note"
               name="note"
+              id="adjust-note"
               required
               placeholder="Reason for adjustment…"
               error={fe("note")}
@@ -152,7 +157,12 @@ export function AdjustStockForm({ variants, defaultVariantId }: Props) {
           </FieldGroup>
         </CardContent>
         <CardFooter className="justify-end">
-          <Button type="submit" variant="secondary" disabled={pending}>
+          <Button
+            type="submit"
+            variant="secondary"
+            disabled={pending}
+            focusableWhenDisabled={pending}
+          >
             {pending ? <Spinner data-icon="inline-start" /> : null}
             {pending ? "Saving…" : "Apply adjustment"}
           </Button>

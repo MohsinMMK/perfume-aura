@@ -2,6 +2,7 @@
 
 import {
   and,
+  count,
   customers,
   db,
   desc,
@@ -16,13 +17,20 @@ import {
   type CustomerFormInput,
 } from "@perfume-aura/validators";
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/lib/session";
+import { requireOwnerSession } from "@/lib/session";
 import {
   actionError,
   actionOk,
   type ActionResult,
   zodFieldErrors,
 } from "@/lib/action-result";
+import {
+  normalizePageSize,
+  pageOffset,
+  paginatedResult,
+  parsePage,
+  type PaginatedResult,
+} from "@/lib/pagination";
 
 export type CustomerListItem = {
   id: string;
@@ -49,11 +57,15 @@ function emptyToNull(value: string | undefined | null): string | null {
 export async function listCustomers(opts?: {
   q?: string;
   status?: "active" | "archived" | "all";
-}): Promise<CustomerListItem[]> {
-  await requireSession();
+  page?: number;
+  pageSize?: number;
+}): Promise<PaginatedResult<CustomerListItem>> {
+  await requireOwnerSession();
 
   const q = opts?.q?.trim() ?? "";
   const status = opts?.status ?? "active";
+  const page = parsePage(opts?.page);
+  const pageSize = normalizePageSize(opts?.pageSize);
   const conditions = [];
 
   if (status !== "all") {
@@ -78,27 +90,40 @@ export async function listCustomers(opts?: {
         ? conditions[0]
         : and(...conditions);
 
-  const rows = await db
-    .select({
-      id: customers.id,
-      name: customers.name,
-      email: customers.email,
-      phone: customers.phone,
-      city: customers.city,
-      status: customers.status,
-      createdAt: customers.createdAt,
-    })
-    .from(customers)
-    .where(where)
-    .orderBy(desc(customers.createdAt));
+  const [rows, totalRows] = await Promise.all([
+    db
+      .select({
+        id: customers.id,
+        name: customers.name,
+        email: customers.email,
+        phone: customers.phone,
+        city: customers.city,
+        status: customers.status,
+        createdAt: customers.createdAt,
+      })
+      .from(customers)
+      .where(where)
+      .orderBy(desc(customers.createdAt), desc(customers.id))
+      .limit(pageSize)
+      .offset(pageOffset(page, pageSize)),
+    db
+      .select({ total: count(customers.id) })
+      .from(customers)
+      .where(where),
+  ]);
 
-  return rows;
+  return paginatedResult(
+    rows,
+    Number(totalRows[0]?.total ?? 0),
+    page,
+    pageSize,
+  );
 }
 
 export async function getCustomer(
   id: string,
 ): Promise<CustomerDetail | null> {
-  await requireSession();
+  await requireOwnerSession();
   const [row] = await db
     .select()
     .from(customers)
@@ -122,7 +147,7 @@ export async function getCustomer(
 export async function listActiveCustomersForSelect(): Promise<
   { id: string; name: string }[]
 > {
-  await requireSession();
+  await requireOwnerSession();
   return db
     .select({ id: customers.id, name: customers.name })
     .from(customers)
@@ -134,7 +159,7 @@ export async function createCustomerAction(
   raw: unknown,
 ): Promise<ActionResult<{ customerId: string }>> {
   try {
-    await requireSession();
+    await requireOwnerSession();
   } catch {
     return actionError("You must be signed in");
   }
@@ -173,7 +198,7 @@ export async function updateCustomerAction(
   raw: unknown,
 ): Promise<ActionResult> {
   try {
-    await requireSession();
+    await requireOwnerSession();
   } catch {
     return actionError("You must be signed in");
   }
@@ -212,7 +237,7 @@ export async function archiveCustomerAction(
   raw: unknown,
 ): Promise<ActionResult> {
   try {
-    await requireSession();
+    await requireOwnerSession();
   } catch {
     return actionError("You must be signed in");
   }

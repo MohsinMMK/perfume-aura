@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { FormEvent, Suspense, useState } from "react";
 import { Button } from "@perfume-aura/ui/components/button";
 import {
@@ -13,15 +14,29 @@ import { Input } from "@perfume-aura/ui/components/input";
 import { Skeleton } from "@perfume-aura/ui/components/skeleton";
 import { Spinner } from "@perfume-aura/ui/components/spinner";
 import { authClient } from "@/lib/auth-client";
+import {
+  AUTH_PASSWORD_MAX_LENGTH,
+  AUTH_PASSWORD_MIN_LENGTH,
+  isOwnerRole,
+  safeReturnPath,
+} from "@/lib/auth-policy";
+import {
+  signInErrorMessage,
+  signInNetworkErrorMessage,
+} from "@/lib/auth-ui";
 
 function LoginFormInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextPath = searchParams.get("next") || "/dashboard";
+  const nextPath = safeReturnPath(searchParams.get("next"));
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    searchParams.get("error") === "access-denied"
+      ? "Owner access is required."
+      : null,
+  );
   const [pending, setPending] = useState(false);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -36,15 +51,29 @@ function LoginFormInner() {
       });
 
       if (signInError) {
-        setError(signInError.message || "Invalid email or password");
+        setError(signInErrorMessage(signInError));
         setPending(false);
         return;
       }
 
-      router.push(nextPath.startsWith("/") ? nextPath : "/dashboard");
+      const session = await authClient.getSession();
+      if (session.error) {
+        setError(signInErrorMessage(session.error));
+        setPending(false);
+        return;
+      }
+
+      if (!isOwnerRole(session.data?.user.role)) {
+        await authClient.signOut();
+        setError("Owner access is required.");
+        setPending(false);
+        return;
+      }
+
+      router.replace(nextPath);
       router.refresh();
     } catch {
-      setError("Sign-in failed. Try again.");
+      setError(signInNetworkErrorMessage());
       setPending(false);
     }
   }
@@ -75,7 +104,8 @@ function LoginFormInner() {
             type="password"
             autoComplete="current-password"
             required
-            minLength={8}
+            minLength={AUTH_PASSWORD_MIN_LENGTH}
+            maxLength={AUTH_PASSWORD_MAX_LENGTH}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
@@ -85,7 +115,21 @@ function LoginFormInner() {
 
         {error ? <FieldError>{error}</FieldError> : null}
 
-        <Button type="submit" className="w-full" disabled={pending}>
+        <div className="text-right">
+          <Link
+            href="/forgot-password"
+            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={pending}
+          focusableWhenDisabled={pending}
+        >
           {pending ? <Spinner data-icon="inline-start" /> : null}
           {pending ? "Signing in…" : "Sign in"}
         </Button>

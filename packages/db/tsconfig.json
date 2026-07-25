@@ -12,9 +12,12 @@
     "isolatedModules": true,
     "declaration": true,
     "declarationMap": true,
-    "rootDir": ".",
-    "baseUrl": "."
+    "rootDir": "."
   },
-  "include": ["src/**/*.ts", "drizzle.config.ts"],
+  "include": [
+    "src/**/*.ts",
+    "drizzle.config.ts",
+    "drizzle.phase02-test.config.ts"
+  ],
   "exclude": ["node_modules", "drizzle", "src/**/*.test.ts"]
 }

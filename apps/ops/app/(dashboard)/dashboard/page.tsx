@@ -8,17 +8,19 @@ import {
 } from "@perfume-aura/ui/components/card";
 import { Badge } from "@perfume-aura/ui/components/badge";
 import { buttonVariants } from "@perfume-aura/ui/components/button";
-import { cn } from "@perfume-aura/ui/lib/utils";
 import { getDashboardStats } from "@/lib/stock";
 import { getOpenArTotalCents } from "@/lib/invoices";
 import { getCashCollectedThisMonthCents } from "@/lib/payments";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatPkr, formatQty } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  await requireOwnerSession({ redirectToLogin: true });
+
   const [result, arResult, cashResult] = await Promise.all([
     safeDbQuery(() => getDashboardStats()),
     safeDbQuery(() => getOpenArTotalCents()),
@@ -128,36 +130,36 @@ export default async function DashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          <Link href="/products/new" className={cn(buttonVariants())}>
+          <Link href="/products/new" className={buttonVariants()}>
             New product
           </Link>
           <Link
             href="/stock"
-            className={cn(buttonVariants({ variant: "outline" }))}
+            className={buttonVariants({ variant: "outline" })}
           >
             Receive stock
           </Link>
           <Link
             href="/customers/new"
-            className={cn(buttonVariants({ variant: "outline" }))}
+            className={buttonVariants({ variant: "outline" })}
           >
             New customer
           </Link>
           <Link
             href="/invoices/new"
-            className={cn(buttonVariants({ variant: "secondary" }))}
+            className={buttonVariants({ variant: "secondary" })}
           >
             New invoice
           </Link>
           <Link
             href="/payments"
-            className={cn(buttonVariants({ variant: "outline" }))}
+            className={buttonVariants({ variant: "outline" })}
           >
             Payments
           </Link>
           <Link
             href="/stock/low"
-            className={cn(buttonVariants({ variant: "secondary" }))}
+            className={buttonVariants({ variant: "secondary" })}
           >
             Low stock
           </Link>

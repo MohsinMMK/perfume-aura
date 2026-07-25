@@ -2,25 +2,41 @@
 
 import {
   and,
+  archiveProductVariant,
+  archiveProduct,
   count,
+  createProductVariant,
+  createProductWithInitialVariant,
   db,
   desc,
+  DomainError,
   eq,
   ilike,
   or,
+  postgresSqlState,
   products,
   productVariants,
+  reactivateProduct,
+  reactivateProductVariant,
   sql,
+  updateProduct,
+  updateProductVariant,
 } from "@perfume-aura/db";
 import {
   createProductSchema,
   createVariantSchema,
   archiveProductSchema,
+  reactivateProductSchema,
+  updateProductSchema,
+  updateVariantSchema,
+  variantLifecycleSchema,
   type CreateProductInput,
   type CreateVariantInput,
+  type UpdateProductInput,
+  type UpdateVariantInput,
 } from "@perfume-aura/validators";
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/lib/session";
+import { requireOwnerSession } from "@/lib/session";
 import {
   actionError,
   actionOk,
@@ -28,6 +44,13 @@ import {
   zodFieldErrors,
 } from "@/lib/action-result";
 import { rupeesToCents } from "@/lib/money";
+import {
+  normalizePageSize,
+  pageOffset,
+  paginatedResult,
+  parsePage,
+  type PaginatedResult,
+} from "@/lib/pagination";
 import { shortId, slugify } from "@/lib/slug";
 
 export type ProductListItem = {
@@ -53,6 +76,7 @@ export type VariantRow = {
   quantityOnHand: number;
   qtyReserved: number;
   reorderLevel: number;
+  version: number;
   status: "active" | "archived";
 };
 
@@ -86,6 +110,8 @@ export type ListProductsFilter = {
   q?: string;
   /** Default: active only. Use "all" to include archived. */
   status?: "active" | "archived" | "all";
+  page?: number;
+  pageSize?: number;
 };
 
 /**
@@ -93,11 +119,13 @@ export type ListProductsFilter = {
  */
 export async function listProducts(
   filter: ListProductsFilter = {},
-): Promise<ProductListItem[]> {
-  await requireSession();
+): Promise<PaginatedResult<ProductListItem>> {
+  await requireOwnerSession();
 
   const q = filter.q?.trim() ?? "";
   const status = filter.status ?? "active";
+  const page = parsePage(filter.page);
+  const pageSize = normalizePageSize(filter.pageSize);
 
   const conditions = [];
   if (status !== "all") {
@@ -126,25 +154,33 @@ export async function listProducts(
         ? conditions[0]
         : and(...conditions);
 
-  const rows = await db
-    .select({
-      id: products.id,
-      name: products.name,
-      slug: products.slug,
-      brand: products.brand,
-      category: products.category,
-      status: products.status,
-      createdAt: products.createdAt,
-      variantCount: count(productVariants.id),
-      totalOnHand: sql<number>`coalesce(sum(${productVariants.quantityOnHand}), 0)::int`,
-    })
-    .from(products)
-    .leftJoin(productVariants, eq(productVariants.productId, products.id))
-    .where(whereClause)
-    .groupBy(products.id)
-    .orderBy(desc(products.createdAt));
+  const [rows, totalRows] = await Promise.all([
+    db
+      .select({
+        id: products.id,
+        name: products.name,
+        slug: products.slug,
+        brand: products.brand,
+        category: products.category,
+        status: products.status,
+        createdAt: products.createdAt,
+        variantCount: count(productVariants.id),
+        totalOnHand: sql<number>`coalesce(sum(${productVariants.quantityOnHand}), 0)::int`,
+      })
+      .from(products)
+      .leftJoin(productVariants, eq(productVariants.productId, products.id))
+      .where(whereClause)
+      .groupBy(products.id)
+      .orderBy(desc(products.createdAt), desc(products.id))
+      .limit(pageSize)
+      .offset(pageOffset(page, pageSize)),
+    db
+      .select({ total: count(products.id) })
+      .from(products)
+      .where(whereClause),
+  ]);
 
-  return rows.map((r) => ({
+  const items = rows.map((r) => ({
     id: r.id,
     name: r.name,
     slug: r.slug,
@@ -155,10 +191,16 @@ export async function listProducts(
     variantCount: Number(r.variantCount),
     totalOnHand: Number(r.totalOnHand),
   }));
+  return paginatedResult(
+    items,
+    Number(totalRows[0]?.total ?? 0),
+    page,
+    pageSize,
+  );
 }
 
 export async function getProduct(id: string): Promise<ProductDetail | null> {
-  await requireSession();
+  await requireOwnerSession();
 
   const [product] = await db
     .select()
@@ -180,11 +222,12 @@ export async function getProduct(id: string): Promise<ProductDetail | null> {
       quantityOnHand: productVariants.quantityOnHand,
       qtyReserved: productVariants.qtyReserved,
       reorderLevel: productVariants.reorderLevel,
+      version: productVariants.version,
       status: productVariants.status,
     })
     .from(productVariants)
     .where(eq(productVariants.productId, id))
-    .orderBy(productVariants.sizeMl);
+    .orderBy(productVariants.sizeMl, productVariants.id);
 
   return {
     id: product.id,
@@ -210,7 +253,7 @@ export async function createProductAction(
   raw: unknown,
 ): Promise<ActionResult<{ productId: string }>> {
   try {
-    await requireSession();
+    await requireOwnerSession();
   } catch {
     return actionError("You must be signed in");
   }
@@ -225,59 +268,40 @@ export async function createProductAction(
   try {
     const slug = await uniqueSlug(data.name);
 
-    const [product] = await db
-      .insert(products)
-      .values({
-        name: data.name.trim(),
-        slug,
-        brand: emptyToNull(data.brand),
-        category: emptyToNull(data.category),
-        description: emptyToNull(data.description),
-        status: "active",
-      })
-      .returning({ id: products.id });
-
-    if (!product) {
-      return actionError("Failed to create product");
-    }
-
-    if (data.withVariant !== false && data.sku) {
-      const costCents = rupeesToCents(Number(data.cost ?? 0));
-      const retailCents = rupeesToCents(Number(data.retail ?? 0));
-      const sizeMl = Number(data.sizeMl);
-      const reorderLevel = Number(data.reorderLevel ?? 0);
-
-      try {
-        await db.insert(productVariants).values({
-          productId: product.id,
-          sku: data.sku.trim(),
-          barcode: emptyToNull(data.barcode),
-          sizeMl,
-          costCents,
-          retailCents,
-          reorderLevel: Number.isFinite(reorderLevel) ? reorderLevel : 0,
-          status: "active",
-        });
-      } catch (err) {
-        // Roll back product if SKU conflict so UI can retry cleanly
-        await db.delete(products).where(eq(products.id, product.id));
-        const msg = err instanceof Error ? err.message : String(err);
-        if (msg.includes("unique") || msg.includes("duplicate")) {
-          return actionError("SKU already exists", {
-            sku: ["This SKU is already in use"],
-          });
-        }
-        throw err;
-      }
-    }
+    const created = await createProductWithInitialVariant({
+      name: data.name.trim(),
+      slug,
+      brand: emptyToNull(data.brand),
+      category: emptyToNull(data.category),
+      description: emptyToNull(data.description),
+      initialVariant:
+        data.withVariant !== false && data.sku
+          ? {
+              sku: data.sku.trim(),
+              barcode: emptyToNull(data.barcode),
+              sizeMl: Number(data.sizeMl),
+              costCents: rupeesToCents(Number(data.cost ?? 0)),
+              retailCents: rupeesToCents(Number(data.retail ?? 0)),
+              reorderLevel: Number(data.reorderLevel ?? 0),
+            }
+          : undefined,
+    });
 
     revalidatePath("/products");
     revalidatePath("/dashboard");
-    revalidatePath(`/products/${product.id}`);
+    revalidatePath(`/products/${created.productId}`);
 
-    return actionOk({ productId: product.id });
+    return actionOk({ productId: created.productId });
   } catch (err) {
     console.error("[createProductAction]", err);
+    if (err instanceof DomainError) {
+      if (err.code === "SKU_CONFLICT") {
+        return actionError(err.message, {
+          sku: ["This SKU is already in use"],
+        });
+      }
+      return actionError(err.message);
+    }
     return actionError(dbErrorMessage(err));
   }
 }
@@ -286,7 +310,7 @@ export async function createVariantAction(
   raw: unknown,
 ): Promise<ActionResult<{ variantId: string }>> {
   try {
-    await requireSession();
+    await requireOwnerSession();
   } catch {
     return actionError("You must be signed in");
   }
@@ -299,47 +323,30 @@ export async function createVariantAction(
   const data: CreateVariantInput = parsed.data;
 
   try {
-    const [product] = await db
-      .select({ id: products.id, status: products.status })
-      .from(products)
-      .where(eq(products.id, data.productId))
-      .limit(1);
-
-    if (!product) {
-      return actionError("Product not found");
-    }
-
-    const [variant] = await db
-      .insert(productVariants)
-      .values({
-        productId: data.productId,
+    const variant = await createProductVariant(data.productId, {
         sku: data.sku.trim(),
         barcode: emptyToNull(data.barcode),
         sizeMl: data.sizeMl,
         costCents: rupeesToCents(data.cost),
         retailCents: rupeesToCents(data.retail),
         reorderLevel: data.reorderLevel ?? 0,
-        status: "active",
-      })
-      .returning({ id: productVariants.id });
-
-    if (!variant) {
-      return actionError("Failed to create variant");
-    }
+      });
 
     revalidatePath("/products");
     revalidatePath(`/products/${data.productId}`);
     revalidatePath("/stock");
     revalidatePath("/dashboard");
 
-    return actionOk({ variantId: variant.id });
+    return actionOk({ variantId: variant.variantId });
   } catch (err) {
     console.error("[createVariantAction]", err);
-    const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("unique") || msg.includes("duplicate")) {
-      return actionError("SKU already exists", {
-        sku: ["This SKU is already in use"],
-      });
+    if (err instanceof DomainError) {
+      if (err.code === "SKU_CONFLICT") {
+        return actionError(err.message, {
+          sku: ["This SKU is already in use"],
+        });
+      }
+      return actionError(err.message);
     }
     return actionError(dbErrorMessage(err));
   }
@@ -349,7 +356,7 @@ export async function archiveProductAction(
   raw: unknown,
 ): Promise<ActionResult> {
   try {
-    await requireSession();
+    await requireOwnerSession();
   } catch {
     return actionError("You must be signed in");
   }
@@ -360,31 +367,172 @@ export async function archiveProductAction(
   }
 
   try {
-    const [updated] = await db
-      .update(products)
-      .set({ status: "archived", updatedAt: new Date() })
-      .where(eq(products.id, parsed.data.productId))
-      .returning({ id: products.id });
+    await archiveProduct(parsed.data.productId, {
+      expectedUpdatedAt: new Date(parsed.data.expectedUpdatedAt),
+    });
 
-    if (!updated) {
-      return actionError("Product not found");
-    }
-
-    await db
-      .update(productVariants)
-      .set({ status: "archived", updatedAt: new Date() })
-      .where(eq(productVariants.productId, parsed.data.productId));
-
-    revalidatePath("/products");
-    revalidatePath(`/products/${parsed.data.productId}`);
-    revalidatePath("/dashboard");
-    revalidatePath("/stock/low");
+    revalidateProductPaths(parsed.data.productId);
 
     return actionOk();
   } catch (err) {
     console.error("[archiveProductAction]", err);
+    if (err instanceof DomainError) return actionError(err.message);
     return actionError(dbErrorMessage(err));
   }
+}
+
+export async function updateProductAction(
+  raw: unknown,
+): Promise<ActionResult<{ updatedAt: string }>> {
+  try {
+    await requireOwnerSession();
+  } catch {
+    return actionError("You must be signed in");
+  }
+
+  const parsed = updateProductSchema.safeParse(raw);
+  if (!parsed.success) {
+    return actionError("Please fix the form errors", zodFieldErrors(parsed.error));
+  }
+  const data: UpdateProductInput = parsed.data;
+
+  try {
+    const result = await updateProduct({
+      productId: data.productId,
+      expectedUpdatedAt: new Date(data.expectedUpdatedAt),
+      name: data.name,
+      brand: emptyToNull(data.brand),
+      category: emptyToNull(data.category),
+      description: emptyToNull(data.description),
+    });
+    revalidateProductPaths(data.productId);
+    return actionOk({ updatedAt: result.updatedAt.toISOString() });
+  } catch (error) {
+    return productActionFailure(error, "Could not update product");
+  }
+}
+
+export async function reactivateProductAction(
+  raw: unknown,
+): Promise<ActionResult<{ updatedAt: string }>> {
+  try {
+    await requireOwnerSession();
+  } catch {
+    return actionError("You must be signed in");
+  }
+
+  const parsed = reactivateProductSchema.safeParse(raw);
+  if (!parsed.success) return actionError("Invalid product");
+
+  try {
+    const result = await reactivateProduct({
+      productId: parsed.data.productId,
+      expectedUpdatedAt: new Date(parsed.data.expectedUpdatedAt),
+    });
+    revalidateProductPaths(parsed.data.productId);
+    return actionOk({ updatedAt: result.updatedAt.toISOString() });
+  } catch (error) {
+    return productActionFailure(error, "Could not reactivate product");
+  }
+}
+
+export async function updateVariantAction(
+  raw: unknown,
+): Promise<ActionResult<{ version: number }>> {
+  try {
+    await requireOwnerSession();
+  } catch {
+    return actionError("You must be signed in");
+  }
+
+  const parsed = updateVariantSchema.safeParse(raw);
+  if (!parsed.success) {
+    return actionError("Please fix the form errors", zodFieldErrors(parsed.error));
+  }
+  const data: UpdateVariantInput = parsed.data;
+
+  try {
+    const result = await updateProductVariant({
+      productId: data.productId,
+      variantId: data.variantId,
+      expectedVersion: data.expectedVersion,
+      sku: data.sku.trim(),
+      barcode: emptyToNull(data.barcode),
+      sizeMl: data.sizeMl,
+      costCents: rupeesToCents(data.cost),
+      retailCents: rupeesToCents(data.retail),
+      reorderLevel: data.reorderLevel,
+    });
+    revalidateProductPaths(data.productId);
+    return actionOk({ version: result.version });
+  } catch (error) {
+    if (error instanceof DomainError && error.code === "SKU_CONFLICT") {
+      return actionError(error.message, {
+        sku: ["This SKU is already in use"],
+      });
+    }
+    return productActionFailure(error, "Could not update variant");
+  }
+}
+
+export async function archiveVariantAction(
+  raw: unknown,
+): Promise<ActionResult<{ version: number }>> {
+  return setVariantStatusAction(raw, "archived");
+}
+
+export async function reactivateVariantAction(
+  raw: unknown,
+): Promise<ActionResult<{ version: number }>> {
+  return setVariantStatusAction(raw, "active");
+}
+
+async function setVariantStatusAction(
+  raw: unknown,
+  status: "active" | "archived",
+): Promise<ActionResult<{ version: number }>> {
+  try {
+    await requireOwnerSession();
+  } catch {
+    return actionError("You must be signed in");
+  }
+
+  const parsed = variantLifecycleSchema.safeParse(raw);
+  if (!parsed.success) return actionError("Invalid variant");
+
+  try {
+    const operation =
+      status === "active" ? reactivateProductVariant : archiveProductVariant;
+    const result = await operation(parsed.data);
+    revalidateProductPaths(parsed.data.productId);
+    return actionOk({ version: result.version });
+  } catch (error) {
+    return productActionFailure(
+      error,
+      status === "active"
+        ? "Could not reactivate variant"
+        : "Could not archive variant",
+    );
+  }
+}
+
+function revalidateProductPaths(productId: string): void {
+  revalidatePath("/products");
+  revalidatePath(`/products/${productId}`);
+  revalidatePath("/stock");
+  revalidatePath("/stock/low");
+  revalidatePath("/dashboard");
+  revalidatePath("/finance");
+  revalidatePath("/invoices");
+}
+
+function productActionFailure(
+  error: unknown,
+  fallback: string,
+): ActionResult<never> {
+  if (error instanceof DomainError) return actionError(error.message);
+  console.error(`[product-action] ${fallback}`, error);
+  return actionError(dbErrorMessage(error));
 }
 
 /** Active variants for stock forms (label + id). */
@@ -398,7 +546,7 @@ export async function listActiveVariantsForSelect(): Promise<
     retailCents: number;
   }[]
 > {
-  await requireSession();
+  await requireOwnerSession();
 
   const rows = await db
     .select({
@@ -412,8 +560,13 @@ export async function listActiveVariantsForSelect(): Promise<
     })
     .from(productVariants)
     .innerJoin(products, eq(products.id, productVariants.productId))
-    .where(eq(productVariants.status, "active"))
-    .orderBy(products.name, productVariants.sizeMl);
+    .where(
+      and(
+        eq(productVariants.status, "active"),
+        eq(products.status, "active"),
+      ),
+    )
+    .orderBy(products.name, productVariants.sizeMl, productVariants.id);
 
   return rows.map((r) => ({
     id: r.id,
@@ -426,14 +579,8 @@ export async function listActiveVariantsForSelect(): Promise<
 }
 
 function dbErrorMessage(err: unknown): string {
-  const msg = err instanceof Error ? err.message : String(err);
-  if (
-    msg.includes("ECONNREFUSED") ||
-    msg.includes("DATABASE_URL") ||
-    msg.includes("connect") ||
-    msg.includes("password authentication") ||
-    msg.includes("invalid")
-  ) {
+  const sqlState = postgresSqlState(err);
+  if (sqlState?.startsWith("08") || sqlState === "28P01") {
     return "Database unavailable. Check DATABASE_URL and try again.";
   }
   return "Something went wrong. Please try again.";

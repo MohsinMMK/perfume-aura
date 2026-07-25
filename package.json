@@ -2,21 +2,28 @@
   "name": "perfume-aura",
   "private": true,
   "packageManager": "pnpm@11.1.3",
+  "engines": {
+    "node": ">=24.18.0 <25"
+  },
   "description": "Perfume Aura monorepo — marketing (static) + ops (Next.js)",
   "scripts": {
     "dev:ops": "pnpm --filter @perfume-aura/ops dev",
     "build:ops": "pnpm --filter @perfume-aura/ops build",
     "start:ops": "pnpm --filter @perfume-aura/ops start",
     "ops:pack": "bash scripts/pack-ops-standalone.sh",
-    "ops:deploy": "bash scripts/deploy-ops-hostinger.sh",
     "marketing:sync": "bash scripts/sync-marketing.sh sync",
     "marketing:check": "bash scripts/sync-marketing.sh check",
     "db:generate": "pnpm --filter @perfume-aura/db generate",
     "db:migrate": "pnpm --filter @perfume-aura/db migrate",
     "lint": "pnpm -r lint",
-    "test": "pnpm --filter @perfume-aura/db test && pnpm --filter @perfume-aura/ops test",
-    "test:unit": "pnpm --filter @perfume-aura/db test:unit && pnpm --filter @perfume-aura/ops test",
-    "test:integration": "pnpm --filter @perfume-aura/db test:integration",
-    "check": "pnpm marketing:check && pnpm test:unit"
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm test:inventory && pnpm test:unit:workspaces && pnpm test:integration:workspaces",
+    "test:inventory": "node scripts/check-test-inventory.mjs",
+    "test:unit": "pnpm test:inventory && pnpm test:unit:workspaces",
+    "test:unit:workspaces": "pnpm --filter @perfume-aura/db test:unit && pnpm --filter @perfume-aura/ops test:unit",
+    "test:integration": "pnpm test:inventory && pnpm test:integration:workspaces",
+    "test:integration:workspaces": "pnpm --filter @perfume-aura/db test:integration && pnpm --filter @perfume-aura/ops test:integration",
+    "security:audit": "pnpm audit --prod --audit-level=high && npm audit --omit=dev --audit-level=high --prefix scripts/ops-runtime-deps",
+    "check": "pnpm marketing:check && pnpm lint && pnpm typecheck && pnpm test:unit && pnpm build:ops && pnpm security:audit"
   }
 }

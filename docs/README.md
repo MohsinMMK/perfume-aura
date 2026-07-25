@@ -1,101 +1,34 @@
-# Perfume Aura — documentation index
+# Perfume Aura documentation
 
-Single entry point for product, technical, deploy, and phase docs.  
-Code lives in the monorepo; **this folder is the system of record for decisions**.
+Current documentation only. Historical plans and remediation packets were removed after their verified conclusions were merged here; Git history remains the audit source.
 
-| Field | Value |
-|-------|--------|
-| Brand | Perfume Aura |
-| Marketing | [perfumeaura.com](https://perfumeaura.com) |
-| Ops (planned) | [app.perfumeaura.com](https://app.perfumeaura.com) |
-| Repo | https://github.com/MohsinMMK/perfume-aura |
-| Stack lock | [stack-research/RECOMMENDATION.md](./stack-research/RECOMMENDATION.md) |
-| Last docs pass | 2026-07-22 |
+## Read by task
 
----
+| Need | Document |
+|---|---|
+| Product behavior, routes, workflows, terminology | [PRODUCT.md](./PRODUCT.md) |
+| Architecture, data, auth, local development, tests, CI | [ENGINEERING.md](./ENGINEERING.md) |
+| Hosting, DNS, deployment, database cutover, production recovery | [OPERATIONS.md](./OPERATIONS.md) |
+| Completed capabilities and remaining work | [ROADMAP.md](./ROADMAP.md) |
+| Locked stack and official tooling rules | [STACK.md](./STACK.md) |
+| Agent constraints | [../AGENTS.md](../AGENTS.md) |
 
-## Start here
+## Current status — verified 2026-07-25
 
-| If you need… | Read |
-|--------------|------|
-| What we are building | [PRD.md](./PRD.md) |
-| How it is built (stack + rules) | [TRD.md](./TRD.md) |
-| System shape (as-built) | [ARCHITECTURE.md](./ARCHITECTURE.md) |
-| Tables / invariants | [DATA_MODEL.md](./DATA_MODEL.md) |
-| Env vars | [ENV.md](./ENV.md) |
-| Auth / security checklist | [SECURITY.md](./SECURITY.md) |
-| Tests | [TESTING.md](./TESTING.md) |
-| Phase roadmap | [ROADMAP.md](./ROADMAP.md) |
-| Deploy marketing + ops | [DEPLOY.md](./DEPLOY.md) |
-| Ops Node go-live steps | [OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIST.md) |
-| DNS Path A / support paste | [HOSTINGER_SUPPORT_DNS.md](./HOSTINGER_SUPPORT_DNS.md) |
-| Agent rules (repo root) | [../AGENTS.md](../AGENTS.md) |
-| Dev quick start | [../README.md](../README.md) · [LOCAL_DEV.md](./LOCAL_DEV.md) |
+- Repository implements owner auth/recovery, inventory, customers, invoices, fulfillment, payments, finance, and health endpoints.
+- Local/CI/package runtime is pinned to Node `24.18.0`; Hostinger target is Node `24.x`.
+- Marketing is live: `/` returns `200`; blocked monorepo source paths return `403`.
+- Ops `/login` returns `200`, but live deployment is stale: root and auth session return `500`; repository health routes return `404` because current code is not deployed.
+- Latest listed Hostinger ops deployment is a completed archive deploy from 2026-07-23 using Node 20 and `apps/ops/server.js`.
+- Supported ops release path is manual prebuilt ZIP upload (Path Z). GitHub source build (Path G) remains blocked.
+- Production environment, staged migrations, runtime role, owner sign-in, and SMTP reset remain pending verification.
 
----
+## Documentation rules
 
-## Product & phases
-
-| Doc | Status |
-|-----|--------|
-| [PRD.md](./PRD.md) | Approved |
-| [PHASE1_STATUS.md](./PHASE1_STATUS.md) | Code + tests done; production Node pending |
-| [PHASE2_INVOICING.md](./PHASE2_INVOICING.md) | Design ready |
-| [PHASE3_PAYMENTS.md](./PHASE3_PAYMENTS.md) | Design ready |
-| [PHASE4_FINANCE.md](./PHASE4_FINANCE.md) | Design ready |
-| [ROADMAP.md](./ROADMAP.md) | Living summary |
-
----
-
-## Engineering
-
-| Doc | Contents |
-|-----|----------|
-| [TRD.md](./TRD.md) | Locked stack, app structure, security IDs, acceptance |
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | Deploy topology, request path, packages, inventory TX |
-| [DATA_MODEL.md](./DATA_MODEL.md) | Phase 1 schema + Phase 2–4 hooks |
-| [ENV.md](./ENV.md) | All environment variables |
-| [SECURITY.md](./SECURITY.md) | Owner-only auth, sessions, SEC checklist |
-| [TESTING.md](./TESTING.md) | Unit + integration commands and coverage |
-| [LOCAL_DEV.md](./LOCAL_DEV.md) | Install, seed, day-to-day commands |
-| [GLOSSARY.md](./GLOSSARY.md) | Terms (SKU, paisa, movement, …) |
-
----
-
-## Hosting & DNS
-
-| Doc | Contents |
-|-----|----------|
-| [DEPLOY.md](./DEPLOY.md) | Dual Hostinger websites, Git, SSL |
-| [OPS_DEPLOY_CHECKLIST.md](./OPS_DEPLOY_CHECKLIST.md) | `app.perfumeaura.com` Node checklist |
-| [HOSTINGER_SUPPORT_DNS.md](./HOSTINGER_SUPPORT_DNS.md) | Path A NS + support paste |
-
-**Rules (non-negotiable):**
-
-1. Domain registration stays at **GoDaddy**.  
-2. DNS zone edits only at **Hostinger** while NS are `lunar` / `solar`.  
-3. Marketing = classic Git → `public_html` (static only).  
-4. Ops = **Node.js Web App** (never classic Git for Next).  
-5. No Vercel production.  
-
----
-
-## Stack research (locked)
-
-| Doc | Role |
-|-----|------|
-| [stack-research/RECOMMENDATION.md](./stack-research/RECOMMENDATION.md) | Final decision table |
-| [stack-research/README.md](./stack-research/README.md) | Research index |
-| [stack-research/agents/](./stack-research/agents/) | Per-layer agent briefs |
-
-Do **not** re-open stack choices during Phase 1–2 without a written ADR.
-
----
-
-## Doc maintenance rules
-
-1. Update **PHASE1_STATUS** / **ROADMAP** when a phase ships.  
-2. Schema changes → **DATA_MODEL** + **TRD** §4 in the same PR.  
-3. New env vars → **ENV.md** + `apps/ops/.env.example`.  
-4. Hostinger account facts (order id, IP, CDN) → **OPS_DEPLOY_CHECKLIST** / **HOSTINGER_SUPPORT_DNS**.  
-5. Prefer linking over duplicating long checklists.  
+1. Code, migrations, tests, workflows, and dated live checks outrank prose.
+2. Update one owning document; link instead of copying long procedures.
+3. Product changes → `PRODUCT.md` and `ROADMAP.md`.
+4. Schema, env, auth, test, or CI changes → `ENGINEERING.md`.
+5. DNS, hosting, deployment, migration, or recovery changes → `OPERATIONS.md`.
+6. Stack changes require a written decision in `STACK.md` and matching `AGENTS.md` rules.
+7. Never record secrets, full connection URLs, passwords, or provider tokens.

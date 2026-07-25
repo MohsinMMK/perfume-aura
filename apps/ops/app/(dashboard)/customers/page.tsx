@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import {
   Card,
@@ -14,15 +15,22 @@ import {
   TableHeader,
   TableRow,
 } from "@perfume-aura/ui/components/table";
-import { cn } from "@perfume-aura/ui/lib/utils";
 import { listCustomers } from "@/lib/customers";
 import { safeDbQuery } from "@/lib/db-safe";
 import { ProductFilters } from "@/components/products/product-filters";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { requireOwnerSession } from "@/lib/session";
+import {
+  canonicalPage,
+  paginationHref,
+  parsePage,
+} from "@/lib/pagination";
+import { PaginationNav } from "@/components/pagination-nav";
+import { cn } from "@perfume-aura/ui/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-type SearchParams = Promise<{ q?: string; status?: string }>;
+type SearchParams = Promise<{ q?: string; status?: string; page?: string }>;
 
 function parseStatus(raw: string | undefined): "active" | "archived" | "all" {
   if (raw === "archived" || raw === "all") return raw;
@@ -34,10 +42,27 @@ export default async function CustomersPage({
 }: {
   searchParams: SearchParams;
 }) {
+  await requireOwnerSession({ redirectToLogin: true });
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const status = parseStatus(sp.status);
-  const result = await safeDbQuery(() => listCustomers({ q, status }));
+  const page = parsePage(sp.page);
+  const result = await safeDbQuery(() => listCustomers({ q, status, page }));
+  if (result.data) {
+    const canonical = canonicalPage(
+      result.data.page,
+      result.data.totalPages,
+      result.data.total,
+    );
+    if (canonical) {
+      redirect(
+        paginationHref("/customers", canonical, {
+          q: q || undefined,
+          status: status === "active" ? undefined : status,
+        }),
+      );
+    }
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -59,12 +84,17 @@ export default async function CustomersPage({
       </div>
 
       <Suspense fallback={null}>
-        <ProductFilters q={q} status={status} />
+        <ProductFilters
+          q={q}
+          status={status}
+          searchPlaceholder="Search name, email, phone, city…"
+          searchLabel="Search customers"
+        />
       </Suspense>
 
       {result.error || !result.data ? (
         <DbUnavailableState message={result.error ?? "No data"} />
-      ) : result.data.length === 0 ? (
+      ) : result.data.items.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             No customers yet.{" "}
@@ -86,7 +116,7 @@ export default async function CustomersPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {result.data.map((c) => (
+                {result.data.items.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell>
                       <Link
@@ -119,6 +149,16 @@ export default async function CustomersPage({
               </TableBody>
             </Table>
           </CardContent>
+          <PaginationNav
+            pathname="/customers"
+            page={result.data.page}
+            totalPages={result.data.totalPages}
+            total={result.data.total}
+            search={{
+              q: q || undefined,
+              status: status === "active" ? undefined : status,
+            }}
+          />
         </Card>
       )}
     </div>

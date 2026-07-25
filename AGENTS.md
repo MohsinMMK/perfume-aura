@@ -14,7 +14,7 @@ Agents and developers **must** use **official documented install/setup paths** f
 | **Drizzle** | https://orm.drizzle.team/docs | Official schema / kit / Neon or `pg` guides. |
 | **Neon** | https://neon.com/docs | Official connection strings + drivers. |
 | **Hostinger marketing** | [Classic Git docs](https://www.hostinger.com/support/1583302-how-to-deploy-a-git-repository-in-hostinger/) | Advanced → Git → GitHub OAuth → `public_html` (static only). |
-| **Hostinger ops** | [Node.js Web App docs](https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/) · [docs/OPS_DEPLOY_CHECKLIST.md](docs/OPS_DEPLOY_CHECKLIST.md) | **Node.js Web App** only (never classic Git). Official sources: **(1) GitHub** auto-build, **(2) zip upload**, **(3) Hostinger Connector**. **Current:** prebuilt zip via `pnpm ops:pack` until monorepo GitHub build works on shared Node. |
+| **Hostinger ops** | [Node.js Web App docs](https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/) · [docs/OPERATIONS.md](docs/OPERATIONS.md) | **Node.js Web App** only (never classic Git). Hostinger documents GitHub, ZIP, and Connector sources, but this repo currently supports only a prebuilt `pnpm ops:pack` ZIP manually uploaded in hPanel. |
 | **pnpm workspaces** | https://pnpm.io/workspaces | Root `pnpm-workspace.yaml` + `workspace:*` deps. |
 
 ### shadcn monorepo rules (this repo)
@@ -22,11 +22,11 @@ Agents and developers **must** use **official documented install/setup paths** f
 1. **Base UI package:** `packages/ui` (`@perfume-aura/ui`).
 2. **App config:** `apps/ops/components.json` aliases `ui` / `utils` → `@perfume-aura/ui/…`.
 3. **Package config:** `packages/ui/components.json` matches style (`base-luma`), `baseColor` (`taupe`), `iconLibrary` (`hugeicons`).
-4. **Preset (locked):** `b23PPibQOI` — luma / taupe / hugeicons / IBM Plex Sans + Raleway / radius small.  
-   Verify: `pnpm dlx shadcn@latest preset resolve -c apps/ops` must print code `b23PPibQOI` with **no fallbacks**.  
+4. **Preset (locked):** `b23PPibQOI` — luma / taupe / hugeicons / IBM Plex Sans + Raleway / radius small.
+   Verify: `pnpm dlx shadcn@latest preset resolve -c apps/ops` must print code `b23PPibQOI` with **no fallbacks**.
    Apply: `pnpm dlx shadcn@latest apply b23PPibQOI -c apps/ops -y`.
-5. **Monorepo CSS path (required for preset resolve):**  
-   `apps/ops/components.json` → `"tailwind.css": "../../packages/ui/src/globals.css"`  
+5. **Monorepo CSS path (required for preset resolve):**
+   `apps/ops/components.json` → `"tailwind.css": "../../packages/ui/src/globals.css"`
    Tokens live only in `packages/ui/src/globals.css`. Do **not** move them solely into `apps/ops/app/globals.css` or `preset resolve` will fall back to neutral/default radius.
 6. **Add components only when used (official CLI only):**
    ```bash
@@ -56,26 +56,27 @@ Installed under `.agents/skills/` via `pnpm dlx skills add …` (lockfile: `skil
 | **Neon** | `neon`, `neon-postgres`, `neon-postgres-branches` | `neondatabase/agent-skills` |
 | **Vercel (React/Next patterns only)** | `vercel-react-best-practices`, `vercel-composition-patterns` | `vercel-labs/agent-skills` |
 
-**Do not** install or follow Vercel **deploy** skills for production — hosting is Hostinger only.  
-**Neon stock path:** use `pg` Pool + Drizzle interactive transactions — not `neon-http` for ledger writes.  
+**Do not** install or follow Vercel **deploy** skills for production — hosting is Hostinger only.
+**Neon stock path:** use `pg` Pool + Drizzle interactive transactions — not `neon-http` for ledger writes.
 Restore: `pnpm dlx skills experimental_install` (from `skills-lock.json`).
 
 ### Docs pointers
 
-- Locked stack: [docs/stack-research/RECOMMENDATION.md](docs/stack-research/RECOMMENDATION.md)
-- shadcn workflow: [docs/stack-research/agents/ui-shadcn-stack.md](docs/stack-research/agents/ui-shadcn-stack.md)
+- Locked stack and shadcn workflow: [docs/STACK.md](docs/STACK.md)
+- Engineering contracts: [docs/ENGINEERING.md](docs/ENGINEERING.md)
+- Production operations: [docs/OPERATIONS.md](docs/OPERATIONS.md)
 
 ## Project identity
 
 | Field | Value |
 |-------|--------|
 | Brand / site | **Perfume Aura** |
-| Production domain | **perfumeaura.com** (marketing) · **app.perfumeaura.com** (ops, planned) |
+| Production domain | **perfumeaura.com** (marketing) · **app.perfumeaura.com** (ops) |
 | GitHub repo | https://github.com/MohsinMMK/perfume-aura |
 | Default branch | **`main`** |
-| Current phase | Monorepo: marketing coming soon + ops app scaffold (inventory next) |
-| Stack | **pnpm monorepo** · marketing static · ops **Next.js 16** on Hostinger Node |
-| Specs | [docs/README.md](docs/README.md) · [PRD](docs/PRD.md) · [TRD](docs/TRD.md) · [ARCHITECTURE](docs/ARCHITECTURE.md) · [ROADMAP](docs/ROADMAP.md) |
+| Current phase | Product inventory-to-finance implemented; production cutover pending; documentation consolidated 2026-07-25 |
+| Stack | **pnpm monorepo** · marketing static · ops **Next.js 16.2.11** + **TypeScript 7.0.2** on Hostinger Node (target **24.x**; Path Z) |
+| Docs | [index](docs/README.md) · [product](docs/PRODUCT.md) · [engineering](docs/ENGINEERING.md) · [operations](docs/OPERATIONS.md) · [roadmap](docs/ROADMAP.md) · [stack](docs/STACK.md) |
 
 ## Monorepo layout
 
@@ -84,7 +85,7 @@ apps/marketing     # brand static SOURCE OF TRUTH (edit here)
 apps/ops           # Next.js internal ops (inventory → finance)
 packages/ui|db|validators
 scripts/           # marketing sync + ops pack
-docs/              # PRD, TRD, stack-research
+docs/              # six current product/engineering/operations documents
 index.html + styles.css + .htaccess  # Path M publish surface (pnpm marketing:sync)
 ```
 
@@ -232,7 +233,7 @@ Classic Git **cannot** run Next.js. Never put ops into marketing `public_html` a
 
 ## GitHub → Hostinger (official dual flow)
 
-**Source of truth:** GitHub repo **`MohsinMMK/perfume-aura`** branch **`main`**.  
+**Source of truth:** GitHub repo **`MohsinMMK/perfume-aura`** branch **`main`**.
 Hostinger never becomes the long-term code store. Prefer GitHub-linked deploy over FTP.
 
 Official Hostinger docs:
@@ -260,7 +261,7 @@ Hostinger Node.js Web App accepts **three** official sources (in doc order):
           │                             │
           ▼                             ├── Path G: GitHub OAuth (official preferred)
   public_html static                    ├── Path Z: zip upload (current workable)
-  + root .htaccess                      └── Path C: Connector (optional IDE)
+  + root .htaccess                      └── Path C: Connector (unproven here)
 ```
 
 ### Why GitHub path (benefits agents must know)
@@ -279,7 +280,7 @@ Zip remains valid official **option #2** when remote monorepo build cannot run (
 
 ### Path M — Marketing classic Git (live / official)
 
-**Product:** Advanced → **Git** on `perfumeaura.com` only.  
+**Product:** Advanced → **Git** on `perfumeaura.com` only.
 **Not** Node.js Web App. Static HTML/CSS (and PHP-style) only.
 
 #### One-time setup (hPanel)
@@ -313,15 +314,15 @@ hPanel → perfumeaura.com → Advanced → Git → **Redeploy**
 
 #### Marketing safety (SEC-7)
 
-Classic Git currently deploys **whole monorepo** into `public_html`. Root **`.htaccess`** must deny `/apps`, `/packages`, `/docs`, lockfiles, `*.md`.  
-Verify after push: `curl -sI https://perfumeaura.com/apps/ops/package.json` → **403**.  
+Classic Git currently deploys **whole monorepo** into `public_html`. Root **`.htaccess`** must deny `/apps`, `/packages`, `/docs`, lockfiles, `*.md`.
+Verify after push: `curl -sI https://perfumeaura.com/apps/ops/package.json` → **403**.
 Long-term: artifact-only marketing (static files only).
 
 ---
 
 ### Path G — Ops Node via GitHub (goal only — **do not attempt today**)
 
-**Product:** `app.perfumeaura.com` → **Node.js Web App** → source **GitHub**.  
+**Product:** `app.perfumeaura.com` → **Node.js Web App** → source **GitHub**.
 **Not** Advanced → Git on the ops domain. Classic Git cannot start Next.
 
 Docs: https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/
@@ -346,13 +347,22 @@ Everyday then: `git push origin main`. Until green, **ignore** any Path G field 
 
 ---
 
-### Path B — CI artifact (autonomous pack / optional API deploy)
+### Path B — CI artifact (packaging only)
 
-- Workflow: `.github/workflows/ops-pack.yml` → `pnpm ops:pack` on Ubuntu → Actions artifact `ops-standalone-zip`
-- Optional: secret `HOSTINGER_API_TOKEN` → `scripts/deploy-ops-hostinger.sh` (`from-archive` + entry `apps/ops/server.js`)
-- Still **not** Path G source build on Hostinger; still Path Z runtime contract
-- Without token: download artifact or local `pnpm ops:pack` + hPanel upload
-- Zip ≤ 50MB API cap
+- Workflow: `.github/workflows/ops-pack.yml` → exact Node `24.18.0`, quality
+  and PostgreSQL 16 integration gates → `pnpm ops:pack` on Ubuntu
+- Package/native/server/static-asset smoke runs for pull requests, `main`
+  pushes, and manual runs; only a `main` push or a manual run explicitly
+  targeting `main` may upload the 14-day deploy-shaped artifact
+- Artifact: `ops-standalone-<12-character-commit>` with ZIP, SHA-256 sidecar,
+  and runtime/source manifest; 14-day retention
+- Packaging starts only after the same workflow's quality and complete
+  integration jobs pass; no test suite may skip for a missing database URL
+- The workflow has no provider credentials and no deploy job
+- Download all three files, verify checksum/manifest, retain the prior
+  production-known-good artifact, and manually upload the ZIP in hPanel using
+  the Path Z fields
+- A green artifact job is **not** a Hostinger deployment
 
 ### Path Z — Ops Node via prebuilt zip (current workable / official option #2)
 
@@ -360,10 +370,14 @@ Use while Path G monorepo build is blocked. Still a **Node.js Web App** on `app.
 
 ```bash
 pnpm ops:pack
-# → dist/perfume-aura-standalone_YYYYMMDD.zip
+# clean tree → dist/perfume-aura-standalone_<12-character-commit>.zip
+# dirty tree → unique <commit>-dirty-<UTC>-<pid> suffix
 ```
 
-Then hPanel **Settings and redeploy** (or Hostinger MCP deploy) with entry **`apps/ops/server.js`**. Full table: [Ops deploy](#ops-deploy-hostinger-node--critical-for-agents) below and [docs/OPS_DEPLOY_CHECKLIST.md](docs/OPS_DEPLOY_CHECKLIST.md).
+Then manually upload it in hPanel **Settings and redeploy** with Hostinger Node
+24.x and entry **`apps/ops/server.js`**. Full table:
+[Ops deploy](#ops-deploy-hostinger-node--critical-for-agents) below and
+[docs/OPERATIONS.md](docs/OPERATIONS.md).
 
 | When to use Path Z | When to leave Path Z |
 |--------------------|----------------------|
@@ -374,9 +388,11 @@ Then hPanel **Settings and redeploy** (or Hostinger MCP deploy) with entry **`ap
 
 ---
 
-### Path C — Hostinger Connector (optional)
+### Path C — Hostinger Connector (not supported yet)
 
-Official IDE path (Cursor / VS Code / Windsurf → Hostinger). Not required for this repo. Prefer Path G or Z so deploy stays reproducible from GitHub/`pnpm ops:pack`.
+Hostinger documents this IDE path, but it is not proven for this repository.
+Do not use it for production until it has an independent end-to-end validation
+and the runbook is updated.
 
 ---
 
@@ -387,11 +403,9 @@ Marketing change?
   → Path M: edit apps/marketing → pnpm marketing:sync → commit + git push origin main
 
 Ops change?
-  → Path G unblocked (last GitHub Node build green)?
-       yes → commit + git push origin main; watch Node deploy logs
-       no  → Path B: push ops paths → Actions ops-pack (artifact)
-             + if HOSTINGER_API_TOKEN set → auto from-archive deploy
-             else Path Z manual: download artifact / local pnpm ops:pack → hPanel
+  → Path B: push ops paths → Actions ops-pack (artifact)
+  → Path Z manual: download artifact / local pnpm ops:pack → hPanel
+  → Stop before API, MCP, Connector, or Path G deploy until separately proven
   → Always: hPanel env + Neon migrate/seed before claiming login works
 ```
 
@@ -411,7 +425,7 @@ package.json / pnpm-workspace.yaml
 apps/marketing/                ← brand coming soon
 apps/ops/                      ← Next.js ops (Hostinger Node)
 packages/ui|db|validators
-docs/   # full index: docs/README.md (PRD, TRD, ARCHITECTURE, phases, deploy, stack-research)
+docs/   # six current documents; index: docs/README.md
 index.html + styles.css + .htaccess  ← Path M publish surface (from apps/marketing)
 scripts/sync-marketing.sh            ← marketing:sync / marketing:check
 scripts/pack-ops-standalone.sh       ← ops:pack
@@ -421,7 +435,7 @@ scripts/pack-ops-standalone.sh       ← ops:pack
 
 - **Marketing (Path M):** classic GitHub → `public_html`. Edit `apps/marketing` → `pnpm marketing:sync` → commit root publish files. **`.htaccess`** denies monorepo trees (SEC-7). `pnpm marketing:check` in CI. Prefer artifact-only later.
 - **Ops preferred (Path G):** Node.js Web App **GitHub** source — auto build on push. **Blocked today** on shared Node monorepo build (esbuild **EACCES**).
-- **Ops current (Path Z):** `pnpm ops:pack` prebuilt zip → Node Web App upload/MCP. See [docs/DEPLOY.md](docs/DEPLOY.md) · [docs/OPS_DEPLOY_CHECKLIST.md](docs/OPS_DEPLOY_CHECKLIST.md).
+- **Ops current (Path Z):** `pnpm ops:pack` prebuilt ZIP → manual hPanel Node Web App upload. See [docs/OPERATIONS.md](docs/OPERATIONS.md).
 - **Never** use classic Git (Advanced → Git) as the **runtime** for Next.js ops.
 
 ## Ops deploy (Hostinger Node) — critical for agents
@@ -432,63 +446,51 @@ scripts/pack-ops-standalone.sh       ← ops:pack
 
 ```bash
 pnpm ops:pack
-# → dist/perfume-aura-standalone_YYYYMMDD.zip
+# clean tree → dist/perfume-aura-standalone_<12-character-commit>.zip
+# dirty tree → unique <commit>-dirty-<UTC>-<pid> suffix
 ```
 
 Script: [`scripts/pack-ops-standalone.sh`](scripts/pack-ops-standalone.sh)
 
 | Behavior | Detail |
 |----------|--------|
+| Build runtime | Exact Node **24.18.0**, npm **11.16.0**, pnpm **11.1.3**; the pack script fails closed on drift |
 | Layout | Monorepo standalone: entry **`apps/ops/server.js`** |
 | Modules | **Materializes** `apps/ops/node_modules` (real dirs) — **primary** Hostinger portability fix |
 | Zip | `zip -qry` secondary; do not treat `-y` alone as the fix |
-| Smoke | Stage + extract must `require('next')` + `require('sharp')` + `.next/static` or pack **fails** |
+| Smoke | Stage + extract must verify Next/Sharp/static, then the extracted server must return `200` for login/readiness/auth and one real `/_next/static/…` asset |
 | Secrets | **Never** bake `.env`/keys into zip (pack refuses) |
-| Sharp | Linux x64 glibc + sibling deps (`semver`, `detect-libc`, …) |
+| Sharp | Linux x64 glibc subtree from committed `scripts/ops-runtime-deps/package-lock.json` via official `npm ci --ignore-scripts`; lock hash is recorded and verified |
+| Publication | Candidate ZIP/sidecars live in a unique same-filesystem temporary workspace; failures clean it, existing final names are refused, and validated sidecars then ZIP are atomically renamed |
 | Server | Keep extracted `node_modules` — empty root deps mean install is no-op; clean wipe breaks boot |
 
-### hPanel / MCP deploy settings (exact)
+### hPanel manual ZIP settings (exact)
 
 | Field | Value |
 |-------|--------|
 | Domain | `app.perfumeaura.com` |
 | Source | Upload `dist/perfume-aura-standalone_*.zip` |
 | Framework | Other (or Next.js) |
-| Node | **20.x** |
+| Node | **24.x** |
 | Root directory | `./` |
 | Build command | **`echo prebuilt-standalone`** (not `pnpm run build` on Hostinger) |
 | Output directory | *(empty)* |
 | **Entry file** | **`apps/ops/server.js`** |
 
-**Forbidden artifacts:** flat zip with root `server.js` / `entry.cjs` (~9MB experiments) → `Cannot find module 'next'`. Always use current `pnpm ops:pack` output (~40MB+).
+**Forbidden artifacts:** flat zip with root `server.js` / `entry.cjs` (~9MB experiments) → `Cannot find module 'next'`. Always use the current `pnpm ops:pack` output.
 
-### Hostinger MCP / API (Docker gateway)
+### Hostinger API / MCP / Connector boundary
 
-Pi MCP server name: **`hostinger`**. Config often routes through **Docker MCP Toolkit** (`docker mcp gateway` + profile `servers` + image `hostinger-mcp-server`).
+The repository has no provider-deploy script and the packaging workflow has no
+provider credentials or deploy job. Do not infer deployment from a green
+Actions artifact.
 
-| Item | Detail |
-|------|--------|
-| Docker must be running | `docker info` OK before connect |
-| API token secret | Docker secret `docker/mcp/hostinger-mcp-server.api_token` → env **`APITOKEN`** in container |
-| If Pi `mcp({ connect: "hostinger" })` flakes | Use CLI: `docker mcp tools call --gateway-arg '--profile=servers' <tool> …` |
-| Tool names (CLI) | **Unprefixed:** `hosting_listWebsitesV1`, `hosting_deployJsApplication`, `hosting_listJsDeployments`, `hosting_showJsDeploymentLogs` |
-| Tool names (Pi list) | Often `hostinger_hosting_*` — same tools |
-| Auth failures | `Unauthenticated` → token expired/missing in Docker MCP secrets; user must refresh API token in hPanel |
-| File paths for deploy | MCP container **cannot** see arbitrary host paths; copy zip to a shared path or upload via Hostinger files API + TUS (see prior session pattern) |
-
-**Useful API paths** (Bearer token, base `https://developers.hostinger.com`):
-
-| Action | Method / path |
-|--------|----------------|
-| List sites | `GET /api/hosting/v1/websites?domain=app.perfumeaura.com` |
-| Upload creds | `POST /api/hosting/v1/files/upload-urls` body `{ username, domain }` → TUS upload |
-| Build settings | `GET …/accounts/{user}/websites/{domain}/nodejs/builds/settings/from-archive?archive_path=ops.zip` |
-| Trigger build | `POST …/accounts/{user}/websites/{domain}/nodejs/builds` |
-| List builds | `GET …/nodejs/builds` |
-| Build logs | `GET …/nodejs/builds/{uuid}/logs` |
-| **Restart Node** | `POST …/nodejs/server/restart` body `{}` → `{ "message": "Request accepted" }` |
-
-Username for this account: **`u602723373`**. Archive on server often named `ops.zip` under site files.
+- Current supported ops deployment: manually upload the `pnpm ops:pack` ZIP in
+  hPanel using the exact settings above.
+- API, MCP, Connector, and GitHub-source deployments are unsupported until each
+  is separately proven end-to-end and documented.
+- In Phase 07, the root operator may use authorized read-only provider evidence
+  to resolve live state. Normal sub-agents must not mutate the provider.
 
 Hostinger may still run `pnpm install` on deploy; pack root `package.json` has **empty deps** + `postinstall: echo skip-postinstall` so install is a no-op.
 
@@ -501,29 +503,45 @@ Hostinger may still run `pnpm install` on deploy; pack root `package.json` has *
 | Local creds | Live in **`apps/ops/.env.local`** only (gitignored). Read file if user asks — **do not guess** |
 | Local DB | `.env.local` `DATABASE_URL` is typically **localhost** — owner exists only on that DB after local seed |
 | Prod login | Needs hPanel env + owner seeded on **Neon prod**. Same email/password as local **only if** prod was seeded with them |
-| Prod auth down | `/api/auth/*` **500** if `BETTER_AUTH_SECRET` / `DATABASE_URL` missing on Hostinger → UI often shows “Invalid email or password” |
+| Prod auth down | `/api/auth/*` **500** if `BETTER_AUTH_SECRET` / `DATABASE_URL` is missing; login reports service unavailability separately from invalid credentials |
 | Login URL | https://app.perfumeaura.com/login (shell SSR + client form; wait for hydrate) |
-| Root `/` on ops | Calls `getSession()` → **500** without working DB/auth env; use `/login` |
+| Root `/` on ops | Calls `getOwnerSession()` → **500** without working DB/auth env; use `/login` |
 
 **Required hPanel env (ops Node app) — never commit:**
 
 ```text
-DATABASE_URL=<Neon pooled production>
+DATABASE_URL=<Neon pooled production runtime role>
 BETTER_AUTH_SECRET=<openssl rand -base64 32>
 BETTER_AUTH_URL=https://app.perfumeaura.com
-NEXT_PUBLIC_BETTER_AUTH_URL=https://app.perfumeaura.com
+BUSINESS_TIMEZONE=Asia/Karachi
+SMTP_HOST=smtp.hostinger.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=<Hostinger mailbox>
+SMTP_PASSWORD=<mailbox password>
+SMTP_FROM=<approved sender>
 NODE_ENV=production
 PORT=3000
 ```
 
-Then migrate + seed against prod (human provides Neon URLs):
+Then Neon + Path Z cutover in **exact** order (human provides Neon URLs):
+
+```text
+bare runtime role (SQL, not Neon role API)
+→ migrate through 0007 only
+→ apply + verify runtime grants
+→ Path Z deploy (pooled restricted DATABASE_URL)
+→ expansion smoke (/login, /api/health/*, /api/auth/get-session)
+→ reconcile zero → 0008 → re-verify grants
+→ then seed:
+```
 
 ```bash
-DATABASE_URL_DIRECT=… pnpm db:migrate
+# Follow docs/OPERATIONS.md exactly (do not seed before 0008 gate).
 DATABASE_URL=… pnpm --filter @perfume-aura/db seed
 DATABASE_URL=… BETTER_AUTH_SECRET=… BETTER_AUTH_URL=https://app.perfumeaura.com \
   OWNER_EMAIL=… OWNER_PASSWORD=… pnpm --filter @perfume-aura/ops seed:owner
-# OWNER_PASSWORD min 12 chars (matches auth)
+# OWNER_PASSWORD 12–256 chars (matches auth)
 ```
 
 ### Marketing leak (SEC-7)
@@ -534,17 +552,23 @@ Classic Git deploys **entire repo** into marketing `public_html`. Without deny r
 - Verify: `curl -sI -o /dev/null -w '%{http_code}\n' https://perfumeaura.com/apps/ops/package.json` → **403** (`.htaccess` `[F,L]`; 404 only if path absent).
 - Long-term: artifact-only marketing deploy (static files only).
 
-### Known live status (agents: re-verify, do not assume green)
+### Known live status (re-verified 2026-07-25 read-only; re-check before acting)
 
-| Check | Last known |
-|-------|------------|
+| Check | Evidence 2026-07-25 |
+|-------|---------------------|
 | `https://perfumeaura.com` | 200 coming soon |
 | Marketing monorepo HTTP | 403 via `.htaccess` |
-| `https://app.perfumeaura.com/login` | Next 200 (page exists) |
-| `https://app.perfumeaura.com/` | Often 500 until session/DB env OK |
-| `/api/auth/*` on prod | 500 until hPanel secrets + Neon |
-| Owner login on prod | Fails until prod seed + env |
+| TLS apex / www / app | valid |
+| DNS NS | `lunar` / `solar`; apex ALIAS CDN |
+| `https://app.perfumeaura.com/login` | Next shell 200 |
+| `https://app.perfumeaura.com/` | 500 |
+| `/api/auth/get-session` | 500 |
+| `/api/health/live` · `/ready` | 404 on active deploy (present in current code) |
+| Latest listed Hostinger deploy | 2026-07-23 archive, **Node 20**, entry `apps/ops/server.js` |
+| Owner login on prod | **Not verified** — needs Node 24.x Path Z redeploy + env + Neon migrate/seed |
 | Ops Path G (GitHub Node auto-build) | **Blocked** (esbuild EACCES) — use Path Z zip |
+
+Repo-ready artifact path (Node 24.18.0 Path Z) is **not** the same as the stale live deployment. Never claim production recovered from login shell 200 alone.
 
 ## Anti-patterns (do not do)
 
@@ -573,29 +597,33 @@ Classic Git deploys **entire repo** into marketing `public_html`. Without deny r
 
 ## Agent workflow preferences
 
-1. **Read** this file, `docs/DEPLOY.md`, `docs/OPS_DEPLOY_CHECKLIST.md`, `docs/HOSTINGER_SUPPORT_DNS.md`, `docs/ENV.md` before hosting/ops deploy work.
-2. **Ship via GitHub:** marketing always **Path M** (`git push origin main`). Ops: **Path G** if last Node GitHub build green; else **Path Z** (`pnpm ops:pack` + Node upload/MCP). Never classic Git for ops runtime.
-3. For DNS issues: verify WHOIS NS, public `dig`, Hostinger zone, then hPanel Live DNS Checkup — not random A-record hacks at GoDaddy.
-4. Prefer small, clear commits and keep the coming soon page **single viewport / no page scroll** until the full site replaces it.
-5. Do not claim marketing “live” until `https://perfumeaura.com` serves this project; do not claim ops “live” until `/login` works **and** auth API is not 500 **and** owner can sign in against Neon prod.
-6. **Hostinger MCP:** prefer Docker gateway tools when Pi connect flakes. Ensure Docker Desktop is running. List/deploy/restart via documented tools above. DNS writes only after zone writable; official defaults only. If API returns **Domain not found** / **Unauthenticated**, fix token or wait — do not thrash Path A NS.
-7. **Ops debug order:** public curl `/login` → `/api/auth/get-session` → latest `hosting_listJsDeployments` entry_file + logs → `nodejs/server/restart` → hPanel env present? → owner seeded on **that** `DATABASE_URL`?
-8. **Never print** full `DATABASE_URL` / API tokens in chat logs when avoidable; mask hosts. User-requested owner password from local `.env.local` is allowed when they ask for login creds explicitly.
+1. **Read** this file and `docs/OPERATIONS.md` before hosting, DNS, database cutover, or ops deploy work.
+2. **Search with Graphify first:** when answering questions about repository content, architecture, symbols, dependencies, or file relationships, query the existing graph in `graphify-out/` before broad file searches. Use `graphify query "<question>"`; use `graphify path` or `graphify explain` for focused traversal. Rebuild only when explicitly requested or when the graph is stale.
+3. **Ship via GitHub:** marketing always **Path M** (`git push origin main`). Ops currently uses **Path Z** only: build with Node 24.18.0, then manually upload the ZIP in hPanel on Node 24.x. Path G requires separate proof and a runbook update. Never use classic Git for the ops runtime.
+4. For DNS issues: verify WHOIS NS, public `dig`, Hostinger zone, then hPanel Live DNS Checkup — not random A-record hacks at GoDaddy.
+5. Prefer small, clear commits and keep the coming soon page **single viewport / no page scroll** until the full site replaces it.
+6. Do not claim marketing “live” until `https://perfumeaura.com` serves this project; do not claim ops “live” until `/login` works **and** auth API is not 500 **and** owner can sign in against Neon prod.
+7. **Provider tools:** normal sub-agents may prepare or inspect authorized read-only evidence only. Provider mutations remain root-operator Phase 07 work; repository automation must not deploy.
+8. **Ops debug order:** public curl `/login` → `/api/auth/get-session` → hPanel deployment entry + logs → hPanel restart if authorized → env present? → owner seeded on **that** `DATABASE_URL`?
+9. **Never print** full `DATABASE_URL` / API tokens in chat logs when avoidable; mask hosts. User-requested owner password from local `.env.local` is allowed when they ask for login creds explicitly.
 
 ## Success criteria
 
-- [x] `https://perfumeaura.com` serves coming soon (marketing)
-- [x] Marketing monorepo paths denied over HTTP (`.htaccess` 403) — still prefer artifact-only later
-- [x] `https://app.perfumeaura.com/login` serves Next login shell
-- [ ] Ops hPanel env (Neon `DATABASE_URL` + `BETTER_AUTH_*`) set
-- [ ] Prod migrate + MAIN seed + owner `seed:owner` against Neon
-- [ ] Owner can sign in on prod (not “invalid password” from auth 500)
+- [x] `https://perfumeaura.com` serves coming soon (marketing) — verified 2026-07-25
+- [x] Marketing monorepo paths denied over HTTP (`.htaccess` 403) — prefer artifact-only later
+- [x] `https://app.perfumeaura.com/login` serves Next login shell — verified 2026-07-25
+- [x] SSL valid on apex, `www`, and `app` — verified 2026-07-25
+- [x] DNS managed only at Hostinger (nameserver method: `lunar` / `solar`) — verified 2026-07-25
+- [x] Product phases 1–4 + hardening 00–06 implemented in repository code
+- [x] Documentation reconciled and consolidated to six current docs; reviewed 2026-07-25
+- [ ] Ops hPanel env (Neon `DATABASE_URL` + `BETTER_AUTH_*` + SMTP) set on current artifact
+- [ ] Prod staged migrate + MAIN seed + owner `seed:owner` against Neon production
+- [ ] Active Hostinger deploy on Node **24.x** with health routes present
+- [ ] Owner can sign in on prod (not auth 500)
+- [ ] `/api/auth/get-session` and `/api/health/*` non-500/ready on prod
 - [ ] `git push origin main` updates marketing Hostinger without manual upload
 - [ ] Domain still registered only at GoDaddy
-- [ ] DNS managed only at Hostinger (nameserver method: `lunar` / `solar`)
-- [ ] Apex DNS matches current Plan details / CDN (do not hardcode stale IP forever)
-- [ ] SSL valid on apex, `www`, and `app`
-- [ ] Ops Path G GitHub auto-deploy (preferred; Path Z zip is current workable)
+- [ ] Ops Path G GitHub auto-deploy (preferred long-term; Path Z zip is current supported)
 
 ## Official references
 
@@ -610,11 +638,9 @@ Classic Git deploys **entire repo** into marketing `public_html`. Without deny r
 ## Related docs in repo
 
 - [README.md](README.md) — quick start
-- [docs/README.md](docs/README.md) — **documentation index**
-- [docs/ROADMAP.md](docs/ROADMAP.md) — phases 0–4
-- [docs/PHASE1_STATUS.md](docs/PHASE1_STATUS.md) — inventory MVP status
-- [docs/OPS_DEPLOY_CHECKLIST.md](docs/OPS_DEPLOY_CHECKLIST.md) — `app.perfumeaura.com` go-live
-- [docs/DEPLOY.md](docs/DEPLOY.md) — dual Hostinger deploy
-- [docs/HOSTINGER_SUPPORT_DNS.md](docs/HOSTINGER_SUPPORT_DNS.md) — Path A DNS + support paste
-- [docs/ENV.md](docs/ENV.md) · [docs/SECURITY.md](docs/SECURITY.md) · [docs/TESTING.md](docs/TESTING.md)
-- [docs/PHASE2_INVOICING.md](docs/PHASE2_INVOICING.md) · [docs/PHASE3_PAYMENTS.md](docs/PHASE3_PAYMENTS.md) · [docs/PHASE4_FINANCE.md](docs/PHASE4_FINANCE.md)
+- [docs/README.md](docs/README.md) — documentation index
+- [docs/PRODUCT.md](docs/PRODUCT.md) — behavior and workflows
+- [docs/ENGINEERING.md](docs/ENGINEERING.md) — architecture, data, auth, development, tests
+- [docs/OPERATIONS.md](docs/OPERATIONS.md) — DNS, deploy, migration, recovery
+- [docs/ROADMAP.md](docs/ROADMAP.md) — completed and pending work
+- [docs/STACK.md](docs/STACK.md) — locked stack and tooling

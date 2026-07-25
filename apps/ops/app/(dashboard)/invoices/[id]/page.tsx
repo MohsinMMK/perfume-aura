@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -27,26 +27,34 @@ import {
 } from "@/components/invoices/invoice-actions";
 import { RecordPaymentForm } from "@/components/invoices/record-payment-form";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { formatBusinessDateTime } from "@/lib/business-date";
+import { requireOwnerSession } from "@/lib/session";
+import {
+  canonicalPage,
+  paginationHref,
+  parsePage,
+} from "@/lib/pagination";
+import { PaginationNav } from "@/components/pagination-nav";
 
 export const dynamic = "force-dynamic";
 
-function formatWhen(d: Date) {
-  return new Intl.DateTimeFormat("en-PK", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(d);
-}
-
 export default async function InvoiceDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }) {
+  await requireOwnerSession({ redirectToLogin: true });
   const { id } = await params;
+  const resolvedSearch = await searchParams;
+  const paymentsPage = parsePage(resolvedSearch.paymentsPage);
+  const preservedSearch = { ...resolvedSearch };
+  delete preservedSearch.paymentsPage;
   const [invResult, variantsResult, paymentsResult] = await Promise.all([
     safeDbQuery(() => getInvoice(id)),
     safeDbQuery(() => listActiveVariantsForSelect()),
-    safeDbQuery(() => listPayments({ invoiceId: id })),
+    safeDbQuery(() => listPayments({ invoiceId: id, page: paymentsPage })),
   ]);
 
   if (invResult.error) {
@@ -55,12 +63,29 @@ export default async function InvoiceDetailPage({
   if (!invResult.data) notFound();
 
   const inv = invResult.data;
+  if (paymentsResult.data) {
+    const canonical = canonicalPage(
+      paymentsResult.data.page,
+      paymentsResult.data.totalPages,
+      paymentsResult.data.total,
+    );
+    if (canonical) {
+      redirect(
+        paginationHref(
+          `/invoices/${id}`,
+          canonical,
+          preservedSearch,
+          "paymentsPage",
+        ),
+      );
+    }
+  }
   const variants = (variantsResult.data ?? []).map((v) => ({
     id: v.id,
     label: v.label,
     retailRupees: v.retailCents / 100,
   }));
-  const paymentRows = paymentsResult.data ?? [];
+  const paymentRows = paymentsResult.data?.items ?? [];
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -181,6 +206,7 @@ export default async function InvoiceDetailPage({
 
       {inv.status === "issued" ? (
         <RecordPaymentForm
+          key={inv.balanceCents}
           invoiceId={inv.id}
           balanceRupees={inv.balanceCents / 100}
         />
@@ -189,7 +215,9 @@ export default async function InvoiceDetailPage({
       {paymentRows.length > 0 ? (
         <Card className="overflow-hidden py-0">
           <CardHeader className="border-b px-4 py-3">
-            <CardTitle className="text-base">Payment history</CardTitle>
+            <CardTitle className="text-base">
+              Payment history · {paymentsResult.data?.total ?? paymentRows.length}
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
@@ -211,7 +239,7 @@ export default async function InvoiceDetailPage({
                       <Badge variant="secondary">{p.method}</Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {formatWhen(p.paidAt)}
+                      {formatBusinessDateTime(p.paidAt)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatPkr(p.amountCents)}
@@ -221,6 +249,16 @@ export default async function InvoiceDetailPage({
               </TableBody>
             </Table>
           </CardContent>
+          {paymentsResult.data ? (
+            <PaginationNav
+              pathname={`/invoices/${id}`}
+              page={paymentsResult.data.page}
+              totalPages={paymentsResult.data.totalPages}
+              total={paymentsResult.data.total}
+              search={preservedSearch}
+              pageParam="paymentsPage"
+            />
+          ) : null}
         </Card>
       ) : null}
 

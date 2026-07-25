@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { getInvoice } from "@/lib/invoices";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatPkr, formatQty } from "@/lib/money";
+import { formatBusinessDate } from "@/lib/business-date";
+import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +16,7 @@ export default async function InvoicePrintPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireOwnerSession({ redirectToLogin: true });
   const { id } = await params;
   const result = await safeDbQuery(() => getInvoice(id));
   if (result.error || !result.data) notFound();
@@ -38,7 +41,9 @@ export default async function InvoicePrintPage({
           </p>
           <p className="text-sm uppercase tracking-wide">{inv.status}</p>
           {inv.issueDate ? (
-            <p className="text-sm text-neutral-600">Issued {inv.issueDate}</p>
+            <p className="text-sm text-neutral-600">
+              Issued {formatBusinessDate(inv.issueDate)}
+            </p>
           ) : null}
         </div>
       </div>
@@ -81,7 +86,7 @@ export default async function InvoicePrintPage({
         </tbody>
       </table>
 
-      <div className="ml-auto w-48 space-y-1 text-sm">
+      <div className="ml-auto flex w-48 flex-col gap-1 text-sm">
         <div className="flex justify-between">
           <span>Subtotal</span>
           <span className="tabular-nums">{formatPkr(inv.subtotalCents)}</span>

@@ -190,11 +190,16 @@ export function CreateProductForm() {
             type="button"
             variant="outline"
             disabled={pending}
+            focusableWhenDisabled={pending}
             onClick={() => router.push("/products")}
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={pending}>
+          <Button
+            type="submit"
+            disabled={pending}
+            focusableWhenDisabled={pending}
+          >
             {pending ? <Spinner data-icon="inline-start" /> : null}
             {pending ? "Creating…" : "Create product"}
           </Button>

@@ -3,6 +3,7 @@
 import {
   and,
   applyMovement,
+  count,
   db,
   desc,
   eq,
@@ -20,13 +21,21 @@ import {
   type AdjustStockInput,
 } from "@perfume-aura/validators";
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/lib/session";
+import { requireOwnerSession } from "@/lib/session";
 import {
   actionError,
   actionOk,
   type ActionResult,
   zodFieldErrors,
 } from "@/lib/action-result";
+import { revalidateCommittedStockMutation } from "@/lib/stock-revalidation";
+import {
+  normalizePageSize,
+  pageOffset,
+  paginatedResult,
+  parsePage,
+  type PaginatedResult,
+} from "@/lib/pagination";
 
 export type LowStockRow = {
   variantId: string;
@@ -47,6 +56,8 @@ export type MovementRow = {
   quantityDelta: number;
   quantityAfter: number;
   note: string | null;
+  unitCostCents: number | null;
+  costBasis: "snapshot" | "legacy_current" | null;
   createdAt: Date;
   sku: string;
   productName: string;
@@ -61,7 +72,7 @@ export type DashboardStats = {
 };
 
 export async function listLowStock(): Promise<LowStockRow[]> {
-  await requireSession();
+  await requireOwnerSession();
 
   const rows = await db
     .select({
@@ -90,58 +101,54 @@ export async function listLowStock(): Promise<LowStockRow[]> {
   return rows;
 }
 
-export async function listRecentMovements(
-  limit = 50,
-): Promise<MovementRow[]> {
-  await requireSession();
+export async function listRecentMovements(opts?: {
+  page?: number;
+  pageSize?: number;
+}): Promise<PaginatedResult<MovementRow>> {
+  await requireOwnerSession();
 
-  const rows = await db
-    .select({
-      id: stockMovements.id,
-      variantId: stockMovements.variantId,
-      type: stockMovements.type,
-      quantityDelta: stockMovements.quantityDelta,
-      quantityAfter: stockMovements.quantityAfter,
-      note: stockMovements.note,
-      createdAt: stockMovements.createdAt,
-      sku: productVariants.sku,
-      productName: products.name,
-      sizeMl: productVariants.sizeMl,
-    })
-    .from(stockMovements)
-    .innerJoin(
-      productVariants,
-      eq(productVariants.id, stockMovements.variantId),
-    )
-    .innerJoin(products, eq(products.id, productVariants.productId))
-    .orderBy(desc(stockMovements.createdAt))
-    .limit(limit);
+  const page = parsePage(opts?.page);
+  const pageSize = normalizePageSize(opts?.pageSize);
+  const [rows, totalRows] = await Promise.all([
+    db
+      .select({
+        id: stockMovements.id,
+        variantId: stockMovements.variantId,
+        type: stockMovements.type,
+        quantityDelta: stockMovements.quantityDelta,
+        quantityAfter: stockMovements.quantityAfter,
+        note: stockMovements.note,
+        unitCostCents: stockMovements.unitCostCents,
+        costBasis: stockMovements.costBasis,
+        createdAt: stockMovements.createdAt,
+        sku: productVariants.sku,
+        productName: products.name,
+        sizeMl: productVariants.sizeMl,
+      })
+      .from(stockMovements)
+      .innerJoin(
+        productVariants,
+        eq(productVariants.id, stockMovements.variantId),
+      )
+      .innerJoin(products, eq(products.id, productVariants.productId))
+      .orderBy(desc(stockMovements.createdAt), desc(stockMovements.id))
+      .limit(pageSize)
+      .offset(pageOffset(page, pageSize)),
+    db.select({ total: count(stockMovements.id) }).from(stockMovements),
+  ]);
 
-  return rows;
+  return paginatedResult(
+    rows,
+    Number(totalRows[0]?.total ?? 0),
+    page,
+    pageSize,
+  );
 }
 
-export async function getDashboardStats(): Promise<DashboardStats> {
-  await requireSession();
-
-  const [productRow] = await db
-    .select({
-      productCount: sql<number>`count(*)::int`,
-    })
-    .from(products)
-    .where(eq(products.status, "active"));
-
-  const [stockRow] = await db
-    .select({
-      totalUnits: sql<number>`coalesce(sum(${productVariants.quantityOnHand}), 0)::int`,
-      inventoryCostCents: sql<number>`coalesce(sum(${productVariants.quantityOnHand} * ${productVariants.costCents}), 0)::bigint`,
-    })
-    .from(productVariants)
-    .where(eq(productVariants.status, "active"));
-
-  const [lowRow] = await db
-    .select({
-      lowStockCount: sql<number>`count(*)::int`,
-    })
+export async function getLowStockCount(): Promise<number> {
+  await requireOwnerSession();
+  const [row] = await db
+    .select({ lowStockCount: sql<number>`count(*)::int` })
     .from(productVariants)
     .innerJoin(products, eq(products.id, productVariants.productId))
     .where(
@@ -151,23 +158,45 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         lte(productVariants.quantityOnHand, productVariants.reorderLevel),
       ),
     );
+  return Number(row?.lowStockCount ?? 0);
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  await requireOwnerSession();
+
+  const [[productRow], [stockRow], lowStockCount] = await Promise.all([
+    db
+      .select({
+        productCount: sql<number>`count(*)::int`,
+      })
+      .from(products)
+      .where(eq(products.status, "active")),
+    db
+      .select({
+        totalUnits: sql<number>`coalesce(sum(${productVariants.quantityOnHand}), 0)::int`,
+        inventoryCostCents: sql<number>`coalesce(sum(${productVariants.quantityOnHand} * ${productVariants.costCents}), 0)::bigint`,
+      })
+      .from(productVariants)
+      .where(eq(productVariants.status, "active")),
+    getLowStockCount(),
+  ]);
 
   return {
     productCount: Number(productRow?.productCount ?? 0),
     totalUnits: Number(stockRow?.totalUnits ?? 0),
-    lowStockCount: Number(lowRow?.lowStockCount ?? 0),
+    lowStockCount,
     inventoryCostCents: Number(stockRow?.inventoryCostCents ?? 0),
   };
 }
 
-function revalidateStockPaths(productId?: string) {
-  revalidatePath("/stock");
-  revalidatePath("/stock/low");
-  revalidatePath("/dashboard");
-  revalidatePath("/products");
-  if (productId) {
-    revalidatePath(`/products/${productId}`);
-  }
+function revalidateStockPaths(productId: string) {
+  revalidateCommittedStockMutation(
+    productId,
+    revalidatePath,
+    (error, path) => {
+      console.error(`[stock action] revalidation failed for ${path}`, error);
+    },
+  );
 }
 
 export async function receiveStockAction(
@@ -175,7 +204,7 @@ export async function receiveStockAction(
 ): Promise<ActionResult<{ quantityAfter: number }>> {
   let session;
   try {
-    session = await requireSession();
+    session = await requireOwnerSession();
   } catch {
     return actionError("You must be signed in");
   }
@@ -185,28 +214,29 @@ export async function receiveStockAction(
     return actionError("Please fix the form errors", zodFieldErrors(parsed.error));
   }
 
-  const { variantId, quantity, note }: ReceiveStockInput = parsed.data;
+  const {
+    idempotencyKey,
+    variantId,
+    quantity,
+    note,
+  }: ReceiveStockInput = parsed.data;
 
+  let result: Awaited<ReturnType<typeof applyMovement>>;
   try {
-    const result = await applyMovement({
+    result = await applyMovement({
       variantId,
       type: "receive",
       quantity,
       note: note?.trim() || undefined,
       userId: session.user.id,
+      idempotencyKey,
     });
-
-    const [v] = await db
-      .select({ productId: productVariants.productId })
-      .from(productVariants)
-      .where(eq(productVariants.id, variantId))
-      .limit(1);
-
-    revalidateStockPaths(v?.productId);
-    return actionOk({ quantityAfter: result.quantityAfter });
   } catch (err) {
     return movementError(err);
   }
+
+  revalidateStockPaths(result.productId);
+  return actionOk({ quantityAfter: result.quantityAfter });
 }
 
 export async function adjustStockAction(
@@ -214,7 +244,7 @@ export async function adjustStockAction(
 ): Promise<ActionResult<{ quantityAfter: number }>> {
   let session;
   try {
-    session = await requireSession();
+    session = await requireOwnerSession();
   } catch {
     return actionError("You must be signed in");
   }
@@ -224,28 +254,29 @@ export async function adjustStockAction(
     return actionError("Please fix the form errors", zodFieldErrors(parsed.error));
   }
 
-  const { variantId, quantityDelta, note }: AdjustStockInput = parsed.data;
+  const {
+    idempotencyKey,
+    variantId,
+    quantityDelta,
+    note,
+  }: AdjustStockInput = parsed.data;
 
+  let result: Awaited<ReturnType<typeof applyMovement>>;
   try {
-    const result = await applyMovement({
+    result = await applyMovement({
       variantId,
       type: "adjust",
       quantityDelta,
       note: note.trim(),
       userId: session.user.id,
+      idempotencyKey,
     });
-
-    const [v] = await db
-      .select({ productId: productVariants.productId })
-      .from(productVariants)
-      .where(eq(productVariants.id, variantId))
-      .limit(1);
-
-    revalidateStockPaths(v?.productId);
-    return actionOk({ quantityAfter: result.quantityAfter });
   } catch (err) {
     return movementError(err);
   }
+
+  revalidateStockPaths(result.productId);
+  return actionOk({ quantityAfter: result.quantityAfter });
 }
 
 function movementError(err: unknown): ActionResult<never> {

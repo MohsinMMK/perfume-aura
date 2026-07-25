@@ -40,39 +40,22 @@ async function main() {
     throw new Error("OWNER_PASSWORD must be at least 12 characters");
   }
 
-  // Dynamic import after env is loaded so auth/db see DATABASE_URL
-  const { auth } = await import("../lib/auth");
+  // Dynamic import after env is loaded so the database sees DATABASE_URL.
+  const { ensureOwnerAccount } = await import(
+    "../lib/owner-maintenance"
+  );
+  const result = await ensureOwnerAccount({ email, password });
 
-  const ctx = await auth.$context;
-  const existing = await ctx.internalAdapter.findUserByEmail(email);
-
-  if (existing?.user) {
-    console.log(`Owner already exists: ${email} (id=${existing.user.id})`);
-    return;
-  }
-
-  const user = await ctx.internalAdapter.createUser({
-    email,
-    name: "Owner",
-    emailVerified: true,
-    role: "owner",
-  });
-
-  const hashed = await ctx.password.hash(password);
-
-  await ctx.internalAdapter.createAccount({
-    userId: user.id,
-    accountId: user.id,
-    providerId: "credential",
-    password: hashed,
-  });
-
-  console.log(`Created owner user: ${email} (id=${user.id})`);
+  console.log(
+    `Owner seed ${result.state}; user=${result.userId}`,
+  );
 }
 
 main()
   .then(() => process.exit(0))
-  .catch((err) => {
-    console.error(err);
+  .catch(() => {
+    console.error(
+      "Owner seed failed. Review redacted server/database diagnostics.",
+    );
     process.exit(1);
   });

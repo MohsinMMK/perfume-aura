@@ -1,0 +1,13 @@
+{
+  "name": "perfume-aura-ops-linux-runtime",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Narrow reviewed lock for Linux x64 glibc Sharp runtime files in the Hostinger standalone artifact.",
+  "engines": {
+    "node": "24.18.0",
+    "npm": "11.16.0"
+  },
+  "dependencies": {
+    "sharp": "0.35.3"
+  }
+}

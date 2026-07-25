@@ -11,6 +11,7 @@ import { cn } from "@perfume-aura/ui/lib/utils";
 type FormFieldProps = {
   label: string;
   name: string;
+  id?: string;
   type?: string;
   required?: boolean;
   placeholder?: string;
@@ -26,6 +27,7 @@ type FormFieldProps = {
 export function FormField({
   label,
   name,
+  id,
   type = "text",
   required,
   placeholder,
@@ -37,17 +39,18 @@ export function FormField({
   className,
   autoComplete,
 }: FormFieldProps) {
+  const fieldId = id ?? name;
   return (
     <Field
       data-invalid={error ? true : undefined}
       className={cn(className)}
     >
-      <FieldLabel htmlFor={name}>
+      <FieldLabel htmlFor={fieldId}>
         {label}
         {required ? <span className="text-destructive"> *</span> : null}
       </FieldLabel>
       <Input
-        id={name}
+        id={fieldId}
         name={name}
         type={type}
         required={required}
@@ -70,6 +73,7 @@ export function FormField({
 type TextAreaFieldProps = {
   label: string;
   name: string;
+  id?: string;
   required?: boolean;
   placeholder?: string;
   defaultValue?: string;
@@ -82,6 +86,7 @@ type TextAreaFieldProps = {
 export function TextAreaField({
   label,
   name,
+  id,
   required,
   placeholder,
   defaultValue,
@@ -90,17 +95,18 @@ export function TextAreaField({
   rows = 3,
   className,
 }: TextAreaFieldProps) {
+  const fieldId = id ?? name;
   return (
     <Field
       data-invalid={error ? true : undefined}
       className={cn(className)}
     >
-      <FieldLabel htmlFor={name}>
+      <FieldLabel htmlFor={fieldId}>
         {label}
         {required ? <span className="text-destructive"> *</span> : null}
       </FieldLabel>
       <Textarea
-        id={name}
+        id={fieldId}
         name={name}
         required={required}
         placeholder={placeholder}

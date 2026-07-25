@@ -1,123 +1,96 @@
 # Perfume Aura
 
-Monorepo for **perfumeaura.com** (marketing) and the internal **ops** app (inventory → invoicing → payments → finance).
+Monorepo for static marketing at **perfumeaura.com** and owner-only operations at **app.perfumeaura.com**.
 
-## Stack (locked)
+## Documentation
 
-| Piece | Choice |
-|-------|--------|
-| Marketing | Static HTML/CSS → Hostinger classic Git |
-| Ops | Next.js 16 App Router → Hostinger Node.js Web App |
-| UI | shadcn/ui **base-luma** (preset `b23PPibQOI`, Hugeicons) + Tailwind v4 → `packages/ui` |
-| Auth | Better Auth |
-| DB | Neon Postgres + Drizzle + `pg` |
-| Domain ops | `app.perfumeaura.com` (planned) |
+| Topic | Document |
+|---|---|
+| Index and current status | [docs/README.md](docs/README.md) |
+| Product behavior | [docs/PRODUCT.md](docs/PRODUCT.md) |
+| Architecture, data, auth, development, tests | [docs/ENGINEERING.md](docs/ENGINEERING.md) |
+| DNS, Hostinger, Neon, deploy/recovery | [docs/OPERATIONS.md](docs/OPERATIONS.md) |
+| Remaining work | [docs/ROADMAP.md](docs/ROADMAP.md) |
+| Locked stack/tooling | [docs/STACK.md](docs/STACK.md) |
+| Agent constraints | [AGENTS.md](AGENTS.md) |
 
-**Docs index:** [docs/README.md](docs/README.md)  
-
-Key specs: [PRD](docs/PRD.md) · [TRD](docs/TRD.md) · [Architecture](docs/ARCHITECTURE.md) · [Roadmap](docs/ROADMAP.md) · [Phase 1 status](docs/PHASE1_STATUS.md) · [Ops deploy](docs/OPS_DEPLOY_CHECKLIST.md) · [Stack lock](docs/stack-research/RECOMMENDATION.md).
-
-## Layout (monorepo ownership)
+## Layout
 
 ```text
-apps/marketing   # SOURCE OF TRUTH — brand static site (edit here)
-apps/ops         # Next.js internal admin
-packages/ui      # shadcn shared components
-packages/db      # Drizzle schema + migrations
-packages/validators
-scripts/         # marketing sync + ops pack (see scripts/README.md)
-docs/            # PRD / TRD / deploy runbooks
-
-# Path M publish surface (generated — do not hand-edit):
-index.html  styles.css  .htaccess   ← pnpm marketing:sync from apps/marketing
+apps/marketing/   static marketing source of truth
+apps/ops/         Next.js internal operations
+packages/ui/      shared shadcn components
+packages/db/      schema, migrations, workflows, tests
+packages/validators/
+scripts/          marketing sync and ops pack
+docs/             six current documents
 ```
 
-## Local development
+Root `index.html`, `styles.css`, and `.htaccess` are generated from `apps/marketing` by `pnpm marketing:sync`; do not hand-edit them.
+
+## Quick start
+
+Requires Node `24.18.0`, pnpm `11.1.3`, and PostgreSQL.
 
 ```bash
-pnpm install
-pnpm dev:ops
-# http://localhost:3000
-
-# Marketing preview
-npx serve apps/marketing
-# or open apps/marketing/index.html
-```
-
-Copy `apps/ops/.env.example` → `apps/ops/.env.local` when wiring Neon + auth.
-
-### First-time ops setup (with Neon)
-
-```bash
+nvm use
+corepack enable
+pnpm install --frozen-lockfile
 cp apps/ops/.env.example apps/ops/.env.local
-# Set DATABASE_URL, DATABASE_URL_DIRECT, BETTER_AUTH_SECRET, BETTER_AUTH_URL,
-# OWNER_EMAIL, OWNER_PASSWORD
-
-pnpm db:generate          # if migrations not yet generated
+# Fill .env.local for Next, then export command-required values explicitly.
+export DATABASE_URL='postgresql://...@127.0.0.1:5432/perfume_aura'
+export DATABASE_URL_DIRECT="$DATABASE_URL"
+export BETTER_AUTH_SECRET='local-secret-at-least-32-chars'
+export BETTER_AUTH_URL='http://localhost:3000'
+export OWNER_EMAIL='owner@example.com'
+export OWNER_PASSWORD='replace-with-12-plus-chars'
 pnpm db:migrate
 pnpm --filter @perfume-aura/db seed
 pnpm --filter @perfume-aura/ops seed:owner
 pnpm dev:ops
-# http://localhost:3000/login → dashboard → products → stock
 ```
 
-Phase 1 routes: `/login`, `/dashboard`, `/products`, `/products/new`, `/products/[id]`, `/stock`, `/stock/low`.
+Open <http://localhost:3000/login>.
 
-### Tests
-
-```bash
-pnpm test                 # unit (qty math, money) + Neon integration (if DATABASE_URL set)
-pnpm test:unit            # no DB required
-pnpm test:integration     # concurrent oversell + TX rollback (needs Neon)
-```
-
-## Production (Hostinger)
-
-| Site | Method | Domain |
-|------|--------|--------|
-| Marketing | Classic Git (**Path M**) → `public_html` + root `.htaccess` SEC-7 | perfumeaura.com |
-| Ops | **Node.js Web App** — **Path Z** prebuilt zip today (not classic Git) | app.perfumeaura.com |
-
-### Ops Path Z (current)
-
-```bash
-pnpm ops:pack
-# → dist/perfume-aura-standalone_YYYYMMDD.zip
-# hPanel Node Web App: entry apps/ops/server.js · build echo prebuilt-standalone
-# Then Neon migrate + db seed + seed:owner + hPanel env (see docs)
-```
-
-**Path B:** GitHub Actions packs the zip on push (`ops-pack.yml`); set `HOSTINGER_API_TOKEN` for auto Hostinger upload.
-
-**Path G** (GitHub source build on Node) stays blocked on shared Node (esbuild EACCES) — do not force it.
-
-Full rules: [docs/DEPLOY.md](docs/DEPLOY.md) · [docs/OPS_DEPLOY_CHECKLIST.md](docs/OPS_DEPLOY_CHECKLIST.md) · [AGENTS.md](AGENTS.md).
-
-## Scripts
+## Main commands
 
 ```bash
 pnpm dev:ops
 pnpm build:ops
-pnpm start:ops
-pnpm ops:pack          # Path Z Hostinger zip (materialize + smoke)
-pnpm db:generate
-pnpm db:migrate
-pnpm test
-
-# Marketing: edit apps/marketing/* then publish root surface for Hostinger Path M
+pnpm check
+pnpm test:unit
+pnpm test:integration   # guarded disposable loopback PostgreSQL required
 pnpm marketing:sync
-pnpm marketing:check   # also runs in GitHub Actions CI
-pnpm check             # marketing:check + unit tests
+pnpm marketing:check
+pnpm ops:pack           # Hostinger Path Z ZIP
 ```
 
-## Add a shadcn component (official only — when needed)
+Integration database:
 
 ```bash
-# Always via CLI; files land in packages/ui. Only add what you will import/use.
-pnpm dlx shadcn@latest add <component> -c apps/ops -y
-
-# Preview destination
-pnpm dlx shadcn@latest add <component> -c apps/ops --dry-run -y
+export TEST_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_local'
+export DATABASE_URL="$TEST_DATABASE_URL"
+export DATABASE_URL_DIRECT="$TEST_DATABASE_URL"
+pnpm db:migrate
+pnpm test:integration
 ```
 
-Do not keep unused registry files as inventory. See **AGENTS.md** → “official tooling only (STRICT)”.
+## Production summary
+
+| Site | Supported deployment |
+|---|---|
+| Marketing | Hostinger classic Git Path M |
+| Ops | Hostinger Node.js Web App, manual prebuilt ZIP Path Z |
+
+Path G GitHub source build remains blocked. Current live ops deployment is stale and production recovery remains pending. Follow [docs/OPERATIONS.md](docs/OPERATIONS.md); never infer production readiness from `/login` alone.
+
+## shadcn
+
+Official CLI only; components install into `packages/ui`:
+
+```bash
+pnpm dlx shadcn@latest add <component> -c apps/ops -y
+pnpm dlx shadcn@latest preset resolve -c apps/ops
+```
+
+Expected preset: `b23PPibQOI`, no fallback.

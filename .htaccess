@@ -29,12 +29,12 @@ Options -Indexes
   </FilesMatch>
 
   # Deny VCS + ignore/layout disclosure
-  <FilesMatch "^(\.gitignore|\.gitattributes|\.gitmodules|\.npmrc|\.nvmrc)$">
+  <FilesMatch "^(\.gitignore|\.gitattributes|\.gitmodules|\.npmrc|\.nvmrc|\.node-version)$">
     Require all denied
   </FilesMatch>
 
   # Deny monorepo manifests at any depth (basename)
-  <FilesMatch "^(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|skills-lock\.json)$">
+  <FilesMatch "^(package\.json|package-lock\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|skills-lock\.json)$">
     Require all denied
   </FilesMatch>
 
@@ -54,6 +54,10 @@ Options -Indexes
     Order allow,deny
     Deny from all
   </FilesMatch>
+  <FilesMatch "^(package\.json|package-lock\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|skills-lock\.json)$">
+    Order allow,deny
+    Deny from all
+  </FilesMatch>
 </IfModule>
 
 # --- Rewrite belt (path trees + deep patterns) ---
@@ -61,15 +65,15 @@ Options -Indexes
   RewriteEngine On
 
   # Block monorepo / tooling / VCS trees
-  RewriteRule ^(apps|packages|docs|scripts|taskplane-tasks|\.agents|\.pi|\.github|\.git|\.neon|\.claude)(/|$) - [F,L]
+  RewriteRule ^(apps|packages|docs|scripts|taskplane-tasks|\.agents|\.pi|\.pi-subagents|\.github|\.git|\.neon|\.claude)(/|$) - [F,L]
 
   # Block lockfiles, workspace, agent, and package manifests at web root
-  RewriteRule ^(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|skills-lock\.json)$ - [F,L]
+  RewriteRule ^(package\.json|package-lock\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|skills-lock\.json)$ - [F,L]
   RewriteRule ^(AGENTS\.md|README\.md|CLAUDE\.md|TODO\.md)$ - [F,L]
   RewriteRule ^.*\.md$ - [F,L]
 
   # Block ignore / tooling disclosure at web root
-  RewriteRule ^(\.gitignore|\.gitattributes|\.gitmodules|\.npmrc|\.nvmrc)$ - [F,L]
+  RewriteRule ^(\.gitignore|\.gitattributes|\.gitmodules|\.npmrc|\.nvmrc|\.node-version)$ - [F,L]
 
   # Block common secret / env patterns (per-dir match: NO leading slash)
   RewriteRule (^|/)\.env(\.|$) - [F,L]

@@ -2,12 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@perfume-aura/ui/components/badge";
 import { buttonVariants } from "@perfume-aura/ui/components/button";
-import { cn } from "@perfume-aura/ui/lib/utils";
 import { getCustomer } from "@/lib/customers";
 import { safeDbQuery } from "@/lib/db-safe";
 import { CustomerForm } from "@/components/customers/customer-form";
 import { ArchiveCustomerButton } from "@/components/customers/archive-customer-button";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +16,7 @@ export default async function CustomerDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireOwnerSession({ redirectToLogin: true });
   const { id } = await params;
   const result = await safeDbQuery(() => getCustomer(id));
 
@@ -48,7 +49,7 @@ export default async function CustomerDetailPage({
         <div className="flex flex-wrap gap-2">
           <Link
             href={`/invoices/new?customerId=${c.id}`}
-            className={cn(buttonVariants())}
+            className={buttonVariants()}
           >
             New invoice
           </Link>

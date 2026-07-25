@@ -142,6 +142,7 @@ export function AddVariantForm({ productId }: Props) {
             type="button"
             variant="outline"
             disabled={pending}
+            focusableWhenDisabled={pending}
             onClick={() => {
               setOpen(false);
               setError(null);
@@ -149,7 +150,11 @@ export function AddVariantForm({ productId }: Props) {
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={pending}>
+          <Button
+            type="submit"
+            disabled={pending}
+            focusableWhenDisabled={pending}
+          >
             {pending ? <Spinner data-icon="inline-start" /> : null}
             {pending ? "Saving…" : "Save variant"}
           </Button>

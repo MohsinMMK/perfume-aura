@@ -8,7 +8,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@perfume-aura/ui/components/empty";
-import { cn } from "@perfume-aura/ui/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Alert02Icon,
@@ -65,7 +64,7 @@ export function CatalogEmptyState({
         <EmptyDescription>{description}</EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Link href={actionHref} className={cn(buttonVariants())}>
+        <Link href={actionHref} className={buttonVariants()}>
           {actionLabel}
         </Link>
       </EmptyContent>
@@ -89,7 +88,7 @@ export function LowStockClearState() {
       <EmptyContent>
         <Link
           href="/stock"
-          className={cn(buttonVariants({ variant: "outline" }))}
+          className={buttonVariants({ variant: "outline" })}
         >
           Receive stock
         </Link>

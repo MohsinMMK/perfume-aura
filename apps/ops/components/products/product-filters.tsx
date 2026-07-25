@@ -13,12 +13,20 @@ type Props = {
   q: string;
   status: "active" | "archived" | "all";
   className?: string;
+  searchPlaceholder?: string;
+  searchLabel?: string;
 };
 
 /**
  * GET filters for products list (shareable URL, server-rendered results).
  */
-export function ProductFilters({ q, status, className }: Props) {
+export function ProductFilters({
+  q,
+  status,
+  className,
+  searchPlaceholder = "Search name, brand, category, SKU…",
+  searchLabel = "Search products",
+}: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -34,6 +42,7 @@ export function ProductFilters({ q, status, className }: Props) {
 
     if (nextStatus && nextStatus !== "active") params.set("status", nextStatus);
     else params.delete("status");
+    params.delete("page");
 
     const qs = params.toString();
     startTransition(() => {
@@ -60,9 +69,9 @@ export function ProductFilters({ q, status, className }: Props) {
       <Input
         name="q"
         defaultValue={q}
-        placeholder="Search name, brand, category, SKU…"
+        placeholder={searchPlaceholder}
         className="sm:max-w-xs"
-        aria-label="Search products"
+        aria-label={searchLabel}
       />
       <NativeSelect
         name="status"

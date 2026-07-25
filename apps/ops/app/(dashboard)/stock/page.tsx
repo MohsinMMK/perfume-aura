@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -24,19 +25,20 @@ import {
 import { listActiveVariantsForSelect } from "@/lib/products";
 import { listRecentMovements } from "@/lib/stock";
 import { safeDbQuery } from "@/lib/db-safe";
-import { formatQty } from "@/lib/money";
+import { formatPkr, formatQty } from "@/lib/money";
 import { ReceiveStockForm } from "@/components/stock/receive-stock-form";
 import { AdjustStockForm } from "@/components/stock/adjust-stock-form";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { formatBusinessDateTime } from "@/lib/business-date";
+import { requireOwnerSession } from "@/lib/session";
+import {
+  canonicalPage,
+  paginationHref,
+  parsePage,
+} from "@/lib/pagination";
+import { PaginationNav } from "@/components/pagination-nav";
 
 export const dynamic = "force-dynamic";
-
-function formatWhen(d: Date): string {
-  return new Intl.DateTimeFormat("en-PK", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(d);
-}
 
 function typeBadgeVariant(
   type: string,
@@ -53,16 +55,32 @@ function typeBadgeVariant(
   }
 }
 
-export default async function StockPage() {
+export default async function StockPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  await requireOwnerSession({ redirectToLogin: true });
+  const page = parsePage((await searchParams).page);
+
   // Independent loaders — parallelize (vercel-react-best-practices: async-parallel)
   const [variantsResult, movementsResult] = await Promise.all([
     safeDbQuery(() => listActiveVariantsForSelect()),
-    safeDbQuery(() => listRecentMovements(40)),
+    safeDbQuery(() => listRecentMovements({ page })),
   ]);
 
   const dbError = variantsResult.error ?? movementsResult.error;
   const variants = variantsResult.data ?? [];
-  const movements = movementsResult.data ?? [];
+  const movementPage = movementsResult.data;
+  if (movementPage) {
+    const canonical = canonicalPage(
+      movementPage.page,
+      movementPage.totalPages,
+      movementPage.total,
+    );
+    if (canonical) redirect(paginationHref("/stock", canonical));
+  }
+  const movements = movementPage?.items ?? [];
 
   const variantOptions = variants.map((v) => ({
     id: v.id,
@@ -99,7 +117,7 @@ export default async function StockPage() {
             <CardHeader className="border-b py-4">
               <CardTitle>Recent movements</CardTitle>
               <CardDescription>
-                Last {movements.length} ledger entries (all types).
+                Paged ledger entries across all movement types.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
@@ -121,6 +139,7 @@ export default async function StockPage() {
                       <TableHead>Product / SKU</TableHead>
                       <TableHead className="text-right">Delta</TableHead>
                       <TableHead className="text-right">After</TableHead>
+                      <TableHead>Cost basis</TableHead>
                       <TableHead>Note</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -128,7 +147,7 @@ export default async function StockPage() {
                     {movements.map((m) => (
                       <TableRow key={m.id}>
                         <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                          {formatWhen(m.createdAt)}
+                          {formatBusinessDateTime(m.createdAt)}
                         </TableCell>
                         <TableCell>
                           <Badge variant={typeBadgeVariant(m.type)}>
@@ -154,6 +173,21 @@ export default async function StockPage() {
                         <TableCell className="text-right tabular-nums">
                           {formatQty(m.quantityAfter)}
                         </TableCell>
+                        <TableCell className="whitespace-nowrap text-xs">
+                          {m.costBasis === "snapshot" &&
+                          m.unitCostCents !== null ? (
+                            <span>
+                              Captured · {formatPkr(m.unitCostCents)}
+                            </span>
+                          ) : m.costBasis === "legacy_current" &&
+                            m.unitCostCents !== null ? (
+                            <span className="text-muted-foreground">
+                              Legacy estimate · {formatPkr(m.unitCostCents)}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
                         <TableCell className="max-w-[12rem] truncate text-muted-foreground">
                           {m.note ?? "—"}
                         </TableCell>
@@ -163,6 +197,14 @@ export default async function StockPage() {
                 </Table>
               )}
             </CardContent>
+            {movementPage ? (
+              <PaginationNav
+                pathname="/stock"
+                page={movementPage.page}
+                totalPages={movementPage.totalPages}
+                total={movementPage.total}
+              />
+            ) : null}
           </Card>
         </>
       )}

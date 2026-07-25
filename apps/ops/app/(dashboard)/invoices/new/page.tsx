@@ -3,10 +3,18 @@ import { listActiveCustomersForSelect } from "@/lib/customers";
 import { safeDbQuery } from "@/lib/db-safe";
 import { CreateInvoiceForm } from "@/components/invoices/create-invoice-form";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { requireOwnerSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewInvoicePage() {
+export default async function NewInvoicePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ customerId?: string }>;
+}) {
+  await requireOwnerSession({ redirectToLogin: true });
+  const { customerId } = await searchParams;
+
   const result = await safeDbQuery(() => listActiveCustomersForSelect());
 
   if (result.error || !result.data) {
@@ -30,7 +38,10 @@ export default async function NewInvoicePage() {
           first.
         </p>
       ) : (
-        <CreateInvoiceForm customers={result.data} />
+        <CreateInvoiceForm
+          customers={result.data}
+          initialCustomerId={customerId}
+        />
       )}
     </div>
   );

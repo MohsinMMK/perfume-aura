@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -16,6 +17,14 @@ import { listPayments } from "@/lib/payments";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatPkr } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { formatBusinessDateTime } from "@/lib/business-date";
+import { requireOwnerSession } from "@/lib/session";
+import {
+  canonicalPage,
+  paginationHref,
+  parsePage,
+} from "@/lib/pagination";
+import { PaginationNav } from "@/components/pagination-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -32,15 +41,23 @@ function methodLabel(m: string) {
   }
 }
 
-function formatWhen(d: Date) {
-  return new Intl.DateTimeFormat("en-PK", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(d);
-}
+export default async function PaymentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  await requireOwnerSession({ redirectToLogin: true });
+  const page = parsePage((await searchParams).page);
 
-export default async function PaymentsPage() {
-  const result = await safeDbQuery(() => listPayments());
+  const result = await safeDbQuery(() => listPayments({ page }));
+  if (result.data) {
+    const canonical = canonicalPage(
+      result.data.page,
+      result.data.totalPages,
+      result.data.total,
+    );
+    if (canonical) redirect(paginationHref("/payments", canonical));
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -55,7 +72,7 @@ export default async function PaymentsPage() {
 
       {result.error || !result.data ? (
         <DbUnavailableState message={result.error ?? "No data"} />
-      ) : result.data.length === 0 ? (
+      ) : result.data.items.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             No payments yet. Record one from an issued invoice.
@@ -76,7 +93,7 @@ export default async function PaymentsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {result.data.map((p) => (
+                {result.data.items.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">
                       {p.number ?? p.id.slice(0, 8)}
@@ -96,7 +113,7 @@ export default async function PaymentsPage() {
                       <Badge variant="secondary">{methodLabel(p.method)}</Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {formatWhen(p.paidAt)}
+                      {formatBusinessDateTime(p.paidAt)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatPkr(p.amountCents)}
@@ -106,6 +123,12 @@ export default async function PaymentsPage() {
               </TableBody>
             </Table>
           </CardContent>
+          <PaginationNav
+            pathname="/payments"
+            page={result.data.page}
+            totalPages={result.data.totalPages}
+            total={result.data.total}
+          />
         </Card>
       )}
     </div>
