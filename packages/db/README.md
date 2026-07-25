@@ -120,9 +120,8 @@ explicit names such as `perfume_aura_phase03_root_admin`.
 | `reconcile:phase02` | Post-expansion cleanup/contract readiness |
 
 Operator role separation and the ordered auth-expansion/contract boundary are documented in
-[`docs/DATABASE_MIGRATION_AND_ROLE_RUNBOOK.md`](../../docs/DATABASE_MIGRATION_AND_ROLE_RUNBOOK.md)
-and
-[`docs/PHASE02_FUTURE_DATABASE_CONTRACT.md`](../../docs/PHASE02_FUTURE_DATABASE_CONTRACT.md).
+[`docs/OPERATIONS.md`](../../docs/OPERATIONS.md). Schema and migration invariants are summarized in
+[`docs/ENGINEERING.md`](../../docs/ENGINEERING.md).
 
 Phase 04 migration proof:
 

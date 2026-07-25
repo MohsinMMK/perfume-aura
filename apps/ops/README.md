@@ -2,8 +2,8 @@
 
 Internal ops app (inventory → invoicing → payments → finance).
 
-Product intent, user journeys, and design principles are defined in
-[`PRODUCT.md`](./PRODUCT.md).
+Product behavior and user journeys are defined in
+[`docs/PRODUCT.md`](../../docs/PRODUCT.md).
 
 ## Dev
 
@@ -11,7 +11,15 @@ From monorepo root:
 
 ```bash
 cp apps/ops/.env.example apps/ops/.env.local
-# configure DATABASE_URL, BETTER_AUTH_*, SMTP_*, OWNER_*
+# configure DATABASE_URL, DATABASE_URL_DIRECT, BETTER_AUTH_*, SMTP_*, OWNER_*
+# Export command-required values explicitly; do not source .env.local because
+# display-name values such as SMTP_FROM may not be shell syntax.
+export DATABASE_URL='postgresql://...@127.0.0.1:5432/perfume_aura'
+export DATABASE_URL_DIRECT="$DATABASE_URL"
+export BETTER_AUTH_SECRET='local-secret-at-least-32-chars'
+export BETTER_AUTH_URL='http://localhost:3000'
+export OWNER_EMAIL='owner@example.com'
+export OWNER_PASSWORD='replace-with-12-plus-chars'
 
 pnpm db:migrate
 pnpm --filter @perfume-aura/db seed
@@ -73,4 +81,4 @@ Components install into `packages/ui`. CSS tokens: `packages/ui/src/globals.css`
 
 ## Hostinger
 
-Deploy as **Node.js Web App** (not classic Git). See `docs/DEPLOY.md`.
+Deploy as **Node.js Web App** (not classic Git). See [`docs/OPERATIONS.md`](../../docs/OPERATIONS.md).

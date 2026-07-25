@@ -14,7 +14,7 @@ async function readRepositoryFile(path: string): Promise<string> {
 describe("Phase 02 future-contract safety design", () => {
   it("keeps payment mutation enforcement deferred until reversals exist", async () => {
     const contract = await readRepositoryFile(
-      "docs/PHASE02_FUTURE_DATABASE_CONTRACT.md",
+      "docs/ENGINEERING.md",
     );
 
     assert.match(contract, /CREATE TRIGGER "stock_movements_append_only"/);
@@ -26,7 +26,7 @@ describe("Phase 02 future-contract safety design", () => {
 
   it("requires void invoices and their authoritative payments to reconcile to zero", async () => {
     const [contract, preflight, reconciliation] = await Promise.all([
-      readRepositoryFile("docs/PHASE02_FUTURE_DATABASE_CONTRACT.md"),
+      readRepositoryFile("docs/ENGINEERING.md"),
       readRepositoryFile("packages/db/sql/phase02-preflight-0002.sql"),
       readRepositoryFile("packages/db/sql/phase02-reconciliation.sql"),
     ]);
@@ -44,7 +44,7 @@ describe("Phase 02 future-contract safety design", () => {
 
   it("keeps free-text, status, and aggregate fulfillment boundaries explicit", async () => {
     const [contract, preflight, reconciliation] = await Promise.all([
-      readRepositoryFile("docs/PHASE02_FUTURE_DATABASE_CONTRACT.md"),
+      readRepositoryFile("docs/ENGINEERING.md"),
       readRepositoryFile("packages/db/sql/phase02-preflight-0002.sql"),
       readRepositoryFile("packages/db/sql/phase02-reconciliation.sql"),
     ]);
@@ -73,7 +73,7 @@ describe("Phase 02 future-contract safety design", () => {
 
   it("documents the exact runtime table matrix without broad sequence grants", async () => {
     const runbook = await readRepositoryFile(
-      "docs/DATABASE_MIGRATION_AND_ROLE_RUNBOOK.md",
+      "docs/OPERATIONS.md",
     );
 
     assert.doesNotMatch(runbook, /ON ALL SEQUENCES/);
@@ -83,7 +83,7 @@ describe("Phase 02 future-contract safety design", () => {
     );
     assert.match(
       runbook,
-      /\('verification'\),[\s\S]*?\('rate_limit'\)[\s\S]*?mutable_with_delete/,
+      /"user", "session", "account", "verification", "rate_limit"/,
     );
     assert.match(
       runbook,
@@ -101,5 +101,8 @@ describe("Phase 02 future-contract safety design", () => {
     assert.match(runbook, /can_create_temp_objects/);
     assert.match(runbook, /has_table_privilege/);
     assert.match(runbook, /unexpected effective privilege/);
+    assert.match(runbook, /has_sequence_privilege/);
+    assert.match(runbook, /has_function_privilege/);
+    assert.match(runbook, /pg_auth_members/);
   });
 });
