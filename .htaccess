@@ -1,20 +1,18 @@
-# Perfume Aura marketing public_html — block monorepo source leak (SEC-7)
+# Perfume Aura marketing public_html — fail-closed public surface (SEC-7)
 # SOURCE OF TRUTH: apps/marketing/.htaccess
 # Publish to repo root via: pnpm marketing:sync
-# Classic Git deploys whole monorepo into public_html; deny non-marketing paths.
 #
-# Belt-and-suspenders: FilesMatch works even if mod_rewrite is off.
-# FilesMatch matches basenames only (not full paths). Tree denies need RewriteRule.
+# Classic Git deploys the whole monorepo into public_html.
+# Only the marketing static surface is intentionally public:
+#   /  /index.html  /styles.css  /assets/*
+# Everything else is denied.
 
-# Extra belt: deny directory indexes
 Options -Indexes
 
-# --- Authz belt (no rewrite required; basename matches) ---
+# --- Authz belt (basename matches; works without rewrite) ---
 <IfModule mod_authz_core.c>
-  # Default allow for marketing static (index.html, styles.css, assets)
   Require all granted
 
-  # Deny env / secret filenames if ever present
   <FilesMatch "^\.env">
     Require all denied
   </FilesMatch>
@@ -27,24 +25,17 @@ Options -Indexes
   <FilesMatch "^(id_rsa|id_ed25519)$">
     Require all denied
   </FilesMatch>
-
-  # Deny VCS + ignore/layout disclosure
-  <FilesMatch "^(\.gitignore|\.gitattributes|\.gitmodules|\.npmrc|\.nvmrc|\.node-version)$">
+  <FilesMatch "^(\.gitignore|\.gitattributes|\.gitmodules|\.npmrc|\.nvmrc|\.node-version|\.graphifyignore)$">
     Require all denied
   </FilesMatch>
-
-  # Deny monorepo manifests at any depth (basename)
   <FilesMatch "^(package\.json|package-lock\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|skills-lock\.json)$">
     Require all denied
   </FilesMatch>
-
-  # Deny markdown / agent docs
   <FilesMatch "\.(md|MD)$">
     Require all denied
   </FilesMatch>
 </IfModule>
 
-# Apache 2.2 fallback (rare on Hostinger; harmless if unused)
 <IfModule !mod_authz_core.c>
   <FilesMatch "^\.env">
     Order allow,deny
@@ -54,30 +45,22 @@ Options -Indexes
     Order allow,deny
     Deny from all
   </FilesMatch>
-  <FilesMatch "^(package\.json|package-lock\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|skills-lock\.json)$">
+  <FilesMatch "^(package\.json|package-lock\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|skills-lock\.json|\.graphifyignore)$">
     Order allow,deny
     Deny from all
   </FilesMatch>
 </IfModule>
 
-# --- Rewrite belt (path trees + deep patterns) ---
-<IfModule mod_rewrite.c>
-  RewriteEngine On
+# --- Fail-closed rewrite allowlist ---
+# mod_rewrite is required. Do not wrap this allowlist in <IfModule>: if rewrite is
+# unavailable the configuration must fail instead of exposing monorepo paths.
+RewriteEngine On
 
-  # Block monorepo / tooling / VCS trees
-  RewriteRule ^(apps|packages|docs|scripts|taskplane-tasks|\.agents|\.pi|\.pi-subagents|\.github|\.git|\.neon|\.claude)(/|$) - [F,L]
+# Explicitly allow the marketing publish surface only.
+RewriteRule ^$ - [L]
+RewriteRule ^index\.html$ - [L]
+RewriteRule ^styles\.css$ - [L]
+RewriteRule ^assets/ - [L]
 
-  # Block lockfiles, workspace, agent, and package manifests at web root
-  RewriteRule ^(package\.json|package-lock\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|skills-lock\.json)$ - [F,L]
-  RewriteRule ^(AGENTS\.md|README\.md|CLAUDE\.md|TODO\.md)$ - [F,L]
-  RewriteRule ^.*\.md$ - [F,L]
-
-  # Block ignore / tooling disclosure at web root
-  RewriteRule ^(\.gitignore|\.gitattributes|\.gitmodules|\.npmrc|\.nvmrc|\.node-version)$ - [F,L]
-
-  # Block common secret / env patterns (per-dir match: NO leading slash)
-  RewriteRule (^|/)\.env(\.|$) - [F,L]
-  RewriteRule (^|/)\.envrc$ - [F,L]
-  RewriteRule \.(pem|key)$ - [F,L]
-  RewriteRule (^|/)(id_rsa|id_ed25519)$ - [F,L]
-</IfModule>
+# Everything else (apps, packages, docs, data, graphify-out, scripts, secrets, etc.) is forbidden.
+RewriteRule ^ - [F,L]
