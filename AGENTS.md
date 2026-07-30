@@ -74,8 +74,8 @@ Restore: `pnpm dlx skills experimental_install` (from `skills-lock.json`).
 | Production domain | **perfumeaura.com** (marketing) · **app.perfumeaura.com** (ops) |
 | GitHub repo | https://github.com/MohsinMMK/perfume-aura |
 | Default branch | **`main`** |
-| Current phase | Product inventory-to-finance implemented; production cutover pending; documentation consolidated 2026-07-25 |
-| Stack | **pnpm monorepo** · marketing static · ops **Next.js 16.2.11** + **TypeScript 7.0.2** on Hostinger Node (target **24.x**; Path Z) |
+| Current phase | Product inventory-to-finance implemented; production ops cutover and owner login verified 2026-07-27; SMTP reset and trusted-proxy proof remain pending |
+| Stack | **pnpm monorepo** · marketing static · ops **Next.js 16.2.11** + **TypeScript 7.0.2** on Hostinger Node **24.x** via Path Z |
 | Docs | [index](docs/README.md) · [product](docs/PRODUCT.md) · [engineering](docs/ENGINEERING.md) · [operations](docs/OPERATIONS.md) · [roadmap](docs/ROADMAP.md) · [stack](docs/STACK.md) |
 
 ## Monorepo layout
@@ -220,7 +220,7 @@ Propagation map: https://dnschecker.org/#NS/perfumeaura.com
 | Client id | `1017729554` |
 | Hosting IPv4 (historical Check guide) | **`82.112.232.17`** — public apex may show multi-A / CDN (`hstgr`) now; re-check Plan details |
 | Ops login URL | **https://app.perfumeaura.com/login** |
-| Marketing URL | **https://perfumeaura.com** (coming soon) |
+| Marketing URL | **https://perfumeaura.com** (collection preview; no ordering) |
 
 ### Two websites (do not merge)
 
@@ -422,7 +422,7 @@ After domains resolve:
 AGENTS.md
 README.md
 package.json / pnpm-workspace.yaml
-apps/marketing/                ← brand coming soon
+apps/marketing/                ← brand collection preview
 apps/ops/                      ← Next.js ops (Hostinger Node)
 packages/ui|db|validators
 docs/   # six current documents; index: docs/README.md
@@ -500,9 +500,11 @@ Hostinger may still run `pnpm install` on deploy; pack root `package.json` has *
 |------|--------|
 | Public sign-up | **Disabled** (`disableSignUp: true`) |
 | Owner seed | `pnpm --filter @perfume-aura/ops seed:owner` with `OWNER_EMAIL` + `OWNER_PASSWORD` + `DATABASE_URL` + `BETTER_AUTH_SECRET` |
+| Owner recovery | For an existing owner, use `pnpm --filter @perfume-aura/ops recover:owner` with its explicit confirmation gate; do not seed a duplicate |
 | Local creds | Live in **`apps/ops/.env.local`** only (gitignored). Read file if user asks — **do not guess** |
 | Local DB | `.env.local` `DATABASE_URL` is typically **localhost** — owner exists only on that DB after local seed |
-| Prod login | Needs hPanel env + owner seeded on **Neon prod**. Same email/password as local **only if** prod was seeded with them |
+| Production creds | Owner email/password live in **`apps/ops/.env.owner-production`** (gitignored, mode `0600`). Read it only when the user explicitly requests production login credentials; never copy the password into `AGENTS.md`, commits, logs, or deploy ZIPs |
+| Prod login | **Verified 2026-07-27** against Neon production at https://app.perfumeaura.com/login; owner sign-in reached `/dashboard` and the core product pages |
 | Prod auth down | `/api/auth/*` **500** if `BETTER_AUTH_SECRET` / `DATABASE_URL` is missing; login reports service unavailability separately from invalid credentials |
 | Login URL | https://app.perfumeaura.com/login (shell SSR + client form; wait for hydrate) |
 | Root `/` on ops | Calls `getOwnerSession()` → **500** without working DB/auth env; use `/login` |
@@ -524,7 +526,8 @@ NODE_ENV=production
 PORT=3000
 ```
 
-Then Neon + Path Z cutover in **exact** order (human provides Neon URLs):
+For a new environment or production recovery, follow the Neon + Path Z cutover
+in this **exact** order (human provides Neon URLs):
 
 ```text
 bare runtime role (SQL, not Neon role API)
@@ -548,27 +551,35 @@ DATABASE_URL=… BETTER_AUTH_SECRET=… BETTER_AUTH_URL=https://app.perfumeaura.
 
 Classic Git deploys **entire repo** into marketing `public_html`. Without deny rules, `https://perfumeaura.com/apps/ops/package.json` was **200**.
 
-- Mitigate: root **`.htaccess`** → **403** on `/apps`, `/packages`, `/docs`, lockfiles, `*.md`, `.git`, `.env`, `.gitignore` (rewrite + FilesMatch).
+- Mitigate: root **`.htaccess`** fail-closed allowlist serves only `/`, `/index.html`, `/styles.css`, and `/assets/*`; FilesMatch remains a secret-filename belt.
 - Verify: `curl -sI -o /dev/null -w '%{http_code}\n' https://perfumeaura.com/apps/ops/package.json` → **403** (`.htaccess` `[F,L]`; 404 only if path absent).
 - Long-term: artifact-only marketing deploy (static files only).
 
-### Known live status (re-verified 2026-07-25 read-only; re-check before acting)
+### Known live status (public probes re-verified 2026-07-30; re-check before acting)
 
-| Check | Evidence 2026-07-25 |
-|-------|---------------------|
-| `https://perfumeaura.com` | 200 coming soon |
-| Marketing monorepo HTTP | 403 via `.htaccess` |
+This snapshot supersedes only the stale 2026-07-25 live-evidence table in
+`docs/OPERATIONS.md`; its safety gates and recovery sequence remain
+authoritative. Provider/database evidence otherwise retains the 2026-07-27 baseline.
+
+| Check | Evidence |
+|-------|----------|
+| `https://perfumeaura.com` | 200 collection preview; auto-deploy from `main` verified 2026-07-30 |
+| Marketing public allowlist | `/assets/favicon.svg` 200; repo source/data/Graphify/design paths 403 |
 | TLS apex / www / app | valid |
 | DNS NS | `lunar` / `solar`; apex ALIAS CDN |
-| `https://app.perfumeaura.com/login` | Next shell 200 |
-| `https://app.perfumeaura.com/` | 500 |
-| `/api/auth/get-session` | 500 |
-| `/api/health/live` · `/ready` | 404 on active deploy (present in current code) |
-| Latest listed Hostinger deploy | 2026-07-23 archive, **Node 20**, entry `apps/ops/server.js` |
-| Owner login on prod | **Not verified** — needs Node 24.x Path Z redeploy + env + Neon migrate/seed |
+| `https://app.perfumeaura.com/login` | 200 |
+| `/api/auth/get-session` | 200 |
+| `/api/health/live` · `/ready` | 200 / 200 |
+| Active Hostinger deploy | **Node 24.x** Path Z, entry `apps/ops/server.js`; corrected package includes materialized `.next/node_modules` external aliases |
+| Neon production | Main branch migrated through `0008`; nine-row journal/hash, restricted runtime role, grants, constraints, trigger, and zero reconciliation drift verified |
+| Owner login on prod | **Verified** in the production browser; `/dashboard`, `/products`, `/customers`, `/invoices`, `/stock`, and `/finance` rendered |
+| Password reset email | **Not verified** — SMTP hPanel variables/mailbox remain pending |
+| Client-IP rate limiting | Shared-bucket fallback remains active until Hostinger trusted-proxy evidence is established |
 | Ops Path G (GitHub Node auto-build) | **Blocked** (esbuild EACCES) — use Path Z zip |
 
-Repo-ready artifact path (Node 24.18.0 Path Z) is **not** the same as the stale live deployment. Never claim production recovered from login shell 200 alone.
+Never infer continued production readiness from `/login` alone. Re-check
+readiness, auth session, a real static asset, and an authenticated owner page
+after every deploy or provider configuration change.
 
 ## Anti-patterns (do not do)
 
@@ -585,7 +596,7 @@ Repo-ready artifact path (Node 24.18.0 Path Z) is **not** the same as the stale 
 | `zip` without materializing / symlink-safe pack | Orphan `next` → missing `@swc/helpers` / `react` |
 | Hostinger source `pnpm build` for monorepo ops (Path G today) | esbuild **EACCES** on shared Node |
 | Baking `.env` into deploy zip | Secret leak; pack must refuse |
-| Guessing `OWNER_EMAIL` / `OWNER_PASSWORD` | Read `apps/ops/.env.local` only if user needs them; never invent |
+| Guessing `OWNER_EMAIL` / `OWNER_PASSWORD` | Read `apps/ops/.env.local` for local or `apps/ops/.env.owner-production` for production only when the user explicitly requests credentials; never invent or document the password here |
 | Claiming prod login works without Neon + hPanel env + seed | Localhost DB ≠ prod |
 | Whole monorepo in marketing `public_html` without `.htaccess` | SEC-7 source leak |
 | Website Builder / Horizons for this repo | No official Git integration |
@@ -601,11 +612,11 @@ Repo-ready artifact path (Node 24.18.0 Path Z) is **not** the same as the stale 
 2. **Search with Graphify first:** when answering questions about repository content, architecture, symbols, dependencies, or file relationships, query the existing graph in `graphify-out/` before broad file searches. Use `graphify query "<question>"`; use `graphify path` or `graphify explain` for focused traversal. Rebuild only when explicitly requested or when the graph is stale.
 3. **Ship via GitHub:** marketing always **Path M** (`git push origin main`). Ops currently uses **Path Z** only: build with Node 24.18.0, then manually upload the ZIP in hPanel on Node 24.x. Path G requires separate proof and a runbook update. Never use classic Git for the ops runtime.
 4. For DNS issues: verify WHOIS NS, public `dig`, Hostinger zone, then hPanel Live DNS Checkup — not random A-record hacks at GoDaddy.
-5. Prefer small, clear commits and keep the coming soon page **single viewport / no page scroll** until the full site replaces it.
+5. Prefer small, clear commits. Keep the collection preview honest and fail-closed: no ordering, pricing, delivery, payment, or final public product-name claims before commerce gates pass.
 6. Do not claim marketing “live” until `https://perfumeaura.com` serves this project; do not claim ops “live” until `/login` works **and** auth API is not 500 **and** owner can sign in against Neon prod.
 7. **Provider tools:** normal sub-agents may prepare or inspect authorized read-only evidence only. Provider mutations remain root-operator Phase 07 work; repository automation must not deploy.
 8. **Ops debug order:** public curl `/login` → `/api/auth/get-session` → hPanel deployment entry + logs → hPanel restart if authorized → env present? → owner seeded on **that** `DATABASE_URL`?
-9. **Never print** full `DATABASE_URL` / API tokens in chat logs when avoidable; mask hosts. User-requested owner password from local `.env.local` is allowed when they ask for login creds explicitly.
+9. **Never print** full `DATABASE_URL`, API tokens, or owner passwords in routine logs or documentation. When the user explicitly requests credentials, read the correct gitignored file (`.env.local` for local, `.env.owner-production` for production) instead of guessing.
 
 ## Commerce catalog status (2026-07-30)
 
@@ -638,19 +649,20 @@ Repo-ready artifact path (Node 24.18.0 Path Z) is **not** the same as the stale 
 
 ## Success criteria
 
-- [x] `https://perfumeaura.com` serves coming soon (marketing) — verified 2026-07-25
-- [x] Marketing monorepo paths denied over HTTP (`.htaccess` 403) — prefer artifact-only later
-- [x] `https://app.perfumeaura.com/login` serves Next login shell — verified 2026-07-25
-- [x] SSL valid on apex, `www`, and `app` — verified 2026-07-25
-- [x] DNS managed only at Hostinger (nameserver method: `lunar` / `solar`) — verified 2026-07-25
+- [x] `https://perfumeaura.com` serves collection preview (marketing) — verified 2026-07-30
+- [x] Marketing fail-closed public allowlist serves assets and denies repo/source paths over HTTP — verified 2026-07-30
+- [x] `https://app.perfumeaura.com/login` serves Next login — verified 2026-07-27
+- [x] SSL valid on apex, `www`, and `app` — verified 2026-07-27
+- [x] DNS managed only at Hostinger (nameserver method: `lunar` / `solar`) — verified 2026-07-27
 - [x] Product phases 1–4 + hardening 00–06 implemented in repository code
-- [x] Documentation reconciled and consolidated to six current docs; reviewed 2026-07-25
-- [ ] Ops hPanel env (Neon `DATABASE_URL` + `BETTER_AUTH_*` + SMTP) set on current artifact
-- [ ] Prod staged migrate + MAIN seed + owner `seed:owner` against Neon production
-- [ ] Active Hostinger deploy on Node **24.x** with health routes present
-- [ ] Owner can sign in on prod (not auth 500)
-- [ ] `/api/auth/get-session` and `/api/health/*` non-500/ready on prod
-- [ ] `git push origin main` updates marketing Hostinger without manual upload
+- [x] Core ops hPanel env (`DATABASE_URL`, `BETTER_AUTH_*`, timezone, `NODE_ENV`, `PORT`) set on current artifact
+- [x] Prod staged migrate through `0008`, runtime grant proof, MAIN seed, and owner credential recovery completed
+- [x] Active Hostinger deploy on Node **24.x** with health routes present
+- [x] Owner can sign in on prod and reach authenticated core pages
+- [x] `/api/auth/get-session` and `/api/health/*` return 200 on prod
+- [ ] SMTP mailbox/env and password-reset email smoke
+- [ ] Trusted-proxy evidence and per-client IP rate-limit/restart proof
+- [x] `git push origin main` updates marketing Hostinger without manual upload — verified 2026-07-30
 - [ ] Domain still registered only at GoDaddy
 - [ ] Ops Path G GitHub auto-deploy (preferred long-term; Path Z zip is current supported)
 
