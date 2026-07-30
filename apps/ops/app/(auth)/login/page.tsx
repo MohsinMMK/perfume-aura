@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LoginForm } from "./login-form";
 
 export const metadata = {
@@ -20,6 +21,14 @@ export default function LoginPage() {
       <div className="mt-8">
         <LoginForm />
       </div>
+      <p className="mt-8 text-center">
+        <Link
+          href="https://perfumeaura.com"
+          className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+        >
+          Back to perfumeaura.com
+        </Link>
+      </p>
     </main>
   );
 }

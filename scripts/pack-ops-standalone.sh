@@ -19,6 +19,307 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+path_realpath() {
+  python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$1"
+}
+
+path_is_within_root() {
+  local candidate root candidate_r root_r
+  candidate="$1"
+  root="$2"
+  candidate_r="$(path_realpath "$candidate")"
+  root_r="$(path_realpath "$root")"
+  if [[ "$candidate_r" == "$root_r" || "$candidate_r" == "$root_r"/* ]]; then
+    return 0
+  fi
+  return 1
+}
+
+assert_path_under_roots() {
+  local candidate label root
+  candidate="$1"
+  label="$2"
+  shift 2
+  if [[ ! -e "$candidate" && ! -L "$candidate" ]]; then
+    echo "ERROR: ${label}: path does not exist: $candidate" >&2
+    return 1
+  fi
+  for root in "$@"; do
+    if path_is_within_root "$candidate" "$root"; then
+      return 0
+    fi
+  done
+  echo "ERROR: ${label}: path escapes approved roots: $candidate -> $(path_realpath "$candidate")" >&2
+  return 1
+}
+
+# Ensure a symlink chain and final target remain under approved roots.
+assert_symlink_chain_under_roots() {
+  local start label current parent target max_hops hops
+  start="$1"
+  label="$2"
+  shift 2
+  current="$start"
+  max_hops=40
+  hops=0
+  while [[ -L "$current" ]]; do
+    hops=$((hops + 1))
+    if [[ "$hops" -gt "$max_hops" ]]; then
+      echo "ERROR: ${label}: symlink hop limit exceeded at $current" >&2
+      return 1
+    fi
+    assert_path_under_roots "$current" "$label" "$@" || return 1
+    parent="$(dirname "$current")"
+    target="$(readlink "$current")"
+    if [[ "$target" != /* ]]; then
+      target="$parent/$target"
+    fi
+    current="$target"
+  done
+  assert_path_under_roots "$current" "$label" "$@" || return 1
+}
+
+# Every symlink under a package tree must resolve inside approved roots.
+assert_tree_symlinks_under_roots() {
+  local tree label
+  tree="$1"
+  label="$2"
+  shift 2
+  if [[ ! -d "$tree" ]]; then
+    echo "ERROR: ${label}: expected directory tree: $tree" >&2
+    return 1
+  fi
+  while IFS= read -r -d '' link; do
+    assert_symlink_chain_under_roots "$link" "$label" "$@" || return 1
+  done < <(find "$tree" -type l -print0 2>/dev/null)
+}
+
+# Enumerate Next external alias package leaves:
+#   .next/node_modules/pkg-hash
+#   .next/node_modules/@scope/pkg-hash
+enumerate_next_external_alias_leaves() {
+  local aliases_dir entry base leaf
+  aliases_dir="$1"
+  shopt -s nullglob
+  for entry in "$aliases_dir"/*; do
+    base="$(basename "$entry")"
+    if [[ "$base" == @* ]]; then
+      if [[ -d "$entry" || -L "$entry" ]]; then
+        for leaf in "$entry"/*; do
+          if [[ -e "$leaf" || -L "$leaf" ]]; then
+            printf '%s\0' "$leaf"
+          fi
+        done
+      fi
+    else
+      printf '%s\0' "$entry"
+    fi
+  done
+  shopt -u nullglob
+}
+
+next_external_alias_specifier() {
+  local aliases_dir leaf rel
+  aliases_dir="$1"
+  leaf="$2"
+  rel="${leaf#"$aliases_dir"/}"
+  if [[ "$rel" == "$leaf" || -z "$rel" ]]; then
+    echo "ERROR: cannot derive alias specifier for $leaf under $aliases_dir" >&2
+    return 1
+  fi
+  printf '%s\n' "$rel"
+}
+
+# Materialize generated Turbopack external aliases as real, symlink-free package trees.
+materialize_next_external_aliases() {
+  local stage_root aliases_dir leaf src dest_parent tmp specifier
+  stage_root="$1"
+  aliases_dir="$stage_root/apps/ops/.next/node_modules"
+
+  if [[ ! -d "$aliases_dir" ]]; then
+    mkdir -p "$aliases_dir"
+    echo "materialize: no Next external aliases; created empty manifest directory"
+    return 0
+  fi
+
+  while IFS= read -r -d '' leaf; do
+    specifier="$(next_external_alias_specifier "$aliases_dir" "$leaf")"
+    src=""
+    if [[ -L "$leaf" ]]; then
+      assert_symlink_chain_under_roots "$leaf" "external-alias:${specifier}" "$stage_root" || return 1
+      src="$(path_realpath "$leaf")"
+      assert_path_under_roots "$src" "external-alias-target:${specifier}" "$stage_root" || return 1
+      if [[ ! -d "$src" ]]; then
+        echo "ERROR: external alias target is not a directory: ${specifier} -> $src" >&2
+        return 1
+      fi
+      assert_tree_symlinks_under_roots "$src" "external-alias-tree:${specifier}" "$stage_root" || return 1
+    elif [[ -d "$leaf" ]]; then
+      assert_path_under_roots "$leaf" "external-alias-dir:${specifier}" "$stage_root" || return 1
+      assert_tree_symlinks_under_roots "$leaf" "external-alias-dir-tree:${specifier}" "$stage_root" || return 1
+      src="$leaf"
+    else
+      echo "ERROR: unsupported Next external alias entry: $leaf" >&2
+      return 1
+    fi
+
+    tmp="${leaf}.materializing.$$"
+    dest_parent="$(dirname "$leaf")"
+    rm -rf "$tmp"
+    mkdir -p "$dest_parent" "$tmp"
+    # -L follows nested symlinks so the destination is a real package tree.
+    cp -RL "$src"/. "$tmp"/
+    if [[ ! -f "$tmp/package.json" ]]; then
+      echo "ERROR: materialized alias missing package.json: ${specifier}" >&2
+      rm -rf "$tmp"
+      return 1
+    fi
+    if find "$tmp" -type l | grep -q .; then
+      echo "ERROR: materialized alias still contains symlinks: ${specifier}" >&2
+      rm -rf "$tmp"
+      return 1
+    fi
+    rm -rf "$leaf"
+    mv "$tmp" "$leaf"
+  done < <(enumerate_next_external_alias_leaves "$aliases_dir")
+}
+
+smoke_next_external_aliases() {
+  local app_root="$1" label="$2"
+  local aliases_dir="$app_root/.next/node_modules"
+  local chunks_dir="$app_root/.next/server/chunks"
+  local leaf specifier count=0
+
+  if [[ ! -d "$aliases_dir" ]]; then
+    echo "${label}: no Next external aliases directory (ok)"
+    return 0
+  fi
+  if [[ ! -d "$chunks_dir" ]]; then
+    echo "ERROR: ${label}: missing .next/server/chunks" >&2
+    return 1
+  fi
+
+  while IFS= read -r -d '' leaf; do
+    count=$((count + 1))
+    specifier="$(next_external_alias_specifier "$aliases_dir" "$leaf")"
+    if [[ -L "$leaf" ]]; then
+      echo "ERROR: ${label}: external alias is still a symlink: ${specifier}" >&2
+      return 1
+    fi
+    if [[ ! -d "$leaf" || ! -f "$leaf/package.json" ]]; then
+      echo "ERROR: ${label}: external alias is not a materialized package: ${specifier}" >&2
+      return 1
+    fi
+    if find "$leaf" -type l | grep -q .; then
+      echo "ERROR: ${label}: external alias still contains symlinks: ${specifier}" >&2
+      return 1
+    fi
+    (
+      cd "$chunks_dir"
+      node --input-type=module -e 'await import(process.argv[1]);' "$specifier"
+    )
+    echo "${label}: external alias import ok (${specifier})"
+  done < <(enumerate_next_external_alias_leaves "$aliases_dir")
+
+  if [[ "$count" -eq 0 ]]; then
+    echo "${label}: no Next external aliases (ok)"
+  fi
+}
+
+run_packer_alias_self_tests() {
+  local fixture stage outside status
+  fixture="$(mktemp -d "${TMPDIR:-/tmp}/perfume-aura-packer-alias.XXXXXX")"
+  trap 'rm -rf -- "$fixture"' RETURN
+
+  stage="$fixture/stage"
+  outside="$fixture/outside"
+  mkdir -p "$outside/evil-pkg" "$stage/apps/ops/.next/server/chunks"
+  printf '%s\n' '{"name":"evil-pkg","version":"0.0.0","type":"module"}' >"$outside/evil-pkg/package.json"
+  printf '%s\n' 'export const marker = "outside";' >"$outside/evil-pkg/index.js"
+  printf '%s\n' 'export const ok = true;' >"$stage/apps/ops/.next/server/chunks/keep.js"
+
+  # 1) outside-stage alias rejection
+  mkdir -p "$stage/apps/ops/.next/node_modules"
+  ln -s "$outside/evil-pkg" "$stage/apps/ops/.next/node_modules/evil-hash"
+  status=0
+  materialize_next_external_aliases "$stage" || status=$?
+  if [[ "$status" -eq 0 ]]; then
+    echo "ERROR: self-test expected outside-stage alias rejection" >&2
+    return 1
+  fi
+  rm -rf "$stage/apps/ops/.next/node_modules"
+
+  # 2) nested symlink escape rejection
+  mkdir -p "$stage/apps/ops/.next/node_modules" "$stage/apps/ops/node_modules/safe-pkg"
+  printf '%s\n' '{"name":"safe-pkg","version":"0.0.0","type":"module"}' >"$stage/apps/ops/node_modules/safe-pkg/package.json"
+  ln -s "$outside/evil-pkg/index.js" "$stage/apps/ops/node_modules/safe-pkg/escape.js"
+  ln -s "$stage/apps/ops/node_modules/safe-pkg" "$stage/apps/ops/.next/node_modules/nested-escape-hash"
+  status=0
+  materialize_next_external_aliases "$stage" || status=$?
+  if [[ "$status" -eq 0 ]]; then
+    echo "ERROR: self-test expected nested symlink escape rejection" >&2
+    return 1
+  fi
+  rm -rf "$stage/apps/ops/.next/node_modules" "$stage/apps/ops/node_modules"
+
+  # 3) top-level alias success + import
+  mkdir -p "$stage/apps/ops/node_modules/top-pkg" "$stage/apps/ops/.next/node_modules" "$stage/apps/ops/.next/server/chunks"
+  printf '%s\n' '{"name":"top-pkg","version":"1.0.0","type":"module","exports":"./index.js"}' >"$stage/apps/ops/node_modules/top-pkg/package.json"
+  printf '%s\n' 'export const top = true;' >"$stage/apps/ops/node_modules/top-pkg/index.js"
+  ln -s "$stage/apps/ops/node_modules/top-pkg" "$stage/apps/ops/.next/node_modules/top-pkg-hash"
+  materialize_next_external_aliases "$stage"
+  smoke_next_external_aliases "$stage/apps/ops" "self-test-top"
+  if [[ -L "$stage/apps/ops/.next/node_modules/top-pkg-hash" ]]; then
+    echo "ERROR: self-test top-level alias remained a symlink" >&2
+    return 1
+  fi
+  rm -rf "$stage/apps/ops/.next/node_modules" "$stage/apps/ops/node_modules"
+
+  # 4) scoped alias success + import
+  mkdir -p "$stage/apps/ops/node_modules/@scope/pkg" "$stage/apps/ops/.next/node_modules/@scope" "$stage/apps/ops/.next/server/chunks"
+  printf '%s\n' '{"name":"@scope/pkg","version":"1.0.0","type":"module","exports":"./index.js"}' >"$stage/apps/ops/node_modules/@scope/pkg/package.json"
+  printf '%s\n' 'export const scoped = true;' >"$stage/apps/ops/node_modules/@scope/pkg/index.js"
+  ln -s "$stage/apps/ops/node_modules/@scope/pkg" "$stage/apps/ops/.next/node_modules/@scope/pkg-hash"
+  materialize_next_external_aliases "$stage"
+  smoke_next_external_aliases "$stage/apps/ops" "self-test-scoped"
+  if [[ -L "$stage/apps/ops/.next/node_modules/@scope/pkg-hash" || ! -f "$stage/apps/ops/.next/node_modules/@scope/pkg-hash/package.json" ]]; then
+    echo "ERROR: self-test scoped alias was not materialized" >&2
+    return 1
+  fi
+  rm -rf "$stage/apps/ops/.next/node_modules" "$stage/apps/ops/node_modules"
+
+  # 5) real-dir nested symlink materialization
+  mkdir -p "$stage/apps/ops/node_modules/dep-pkg" "$stage/apps/ops/.next/node_modules/real-alias-hash" "$stage/apps/ops/.next/server/chunks"
+  printf '%s\n' '{"name":"dep-pkg","version":"1.0.0","type":"module","exports":"./index.js"}' >"$stage/apps/ops/node_modules/dep-pkg/package.json"
+  printf '%s\n' 'export const dep = true;' >"$stage/apps/ops/node_modules/dep-pkg/index.js"
+  printf '%s\n' '{"name":"real-alias","version":"1.0.0","type":"module","exports":"./index.js"}' >"$stage/apps/ops/.next/node_modules/real-alias-hash/package.json"
+  ln -s "$stage/apps/ops/node_modules/dep-pkg/index.js" "$stage/apps/ops/.next/node_modules/real-alias-hash/index.js"
+  materialize_next_external_aliases "$stage"
+  smoke_next_external_aliases "$stage/apps/ops" "self-test-realdir"
+  if find "$stage/apps/ops/.next/node_modules/real-alias-hash" -type l | grep -q .; then
+    echo "ERROR: self-test real-dir alias retained nested symlinks" >&2
+    return 1
+  fi
+  rm -rf "$stage/apps/ops/.next/node_modules" "$stage/apps/ops/node_modules"
+
+  # 6) zero-alias success
+  mkdir -p "$stage/apps/ops/.next/server/chunks"
+  rm -rf "$stage/apps/ops/.next/node_modules"
+  materialize_next_external_aliases "$stage"
+  [[ -d "$stage/apps/ops/.next/node_modules" ]] || {
+    echo "ERROR: zero-alias materialization must create manifest directory" >&2
+    return 1
+  }
+  smoke_next_external_aliases "$stage/apps/ops" "self-test-zero"
+
+  echo "packer-alias-self-test ok"
+}
+
+if [[ "${1:-}" == "self-test" ]]; then
+  run_packer_alias_self_tests
+  exit 0
+fi
+
 EXPECTED_NODE_VERSION="24.18.0"
 EXPECTED_NPM_VERSION="11.16.0"
 EXPECTED_PNPM_VERSION="11.1.3"
@@ -279,6 +580,12 @@ if [[ -d "$STAGE/node_modules/.pnpm/node_modules" ]]; then
     fi
   done
 fi
+
+# Turbopack can emit hashed ESM external aliases under .next/node_modules
+# (for example, pg-<hash> or @scope/pkg-<hash>). Hostinger's extractor does
+# not preserve these symlinks reliably, so materialize every generated alias
+# leaf as a real, symlink-free package tree beside the server chunks.
+materialize_next_external_aliases "$STAGE"
 
 # @swc/helpers must expose package exports (not a dangling symlink)
 if [[ ! -f "$STAGE/apps/ops/node_modules/@swc/helpers/package.json" ]]; then
@@ -629,6 +936,7 @@ const manifest = {
     "runtime-package-lock.json",
     "apps/ops/server.js",
     "apps/ops/.next/static",
+    "apps/ops/.next/node_modules",
     "apps/ops/node_modules/next/package.json",
     "apps/ops/node_modules/sharp/package.json",
     "apps/ops/node_modules/@img/sharp-linux-x64",
@@ -799,6 +1107,7 @@ echo "==> Stage smoke (next + sharp + static from apps/ops)…"
 )
 smoke_package_versions "$STAGE/apps/ops" "stage-smoke"
 smoke_sharp_tree "$STAGE/apps/ops" "stage-smoke"
+smoke_next_external_aliases "$STAGE/apps/ops" "stage-smoke"
 
 echo "==> Pruning stage bloat for portable manual upload…"
 # Safe deletes only — do not strip runtime .js/.node
@@ -854,6 +1163,7 @@ fi
 )
 smoke_package_versions "$VERIFY/apps/ops" "zip-smoke"
 smoke_sharp_tree "$VERIFY/apps/ops" "zip-smoke"
+smoke_next_external_aliases "$VERIFY/apps/ops" "zip-smoke"
 
 BYTES="$(wc -c < "$CANDIDATE_ZIP_PATH" | tr -d ' ')"
 if [[ "$BYTES" -gt "$MAX_ARCHIVE_BYTES" ]]; then

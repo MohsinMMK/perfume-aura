@@ -456,9 +456,9 @@ Script: [`scripts/pack-ops-standalone.sh`](scripts/pack-ops-standalone.sh)
 |----------|--------|
 | Build runtime | Exact Node **24.18.0**, npm **11.16.0**, pnpm **11.1.3**; the pack script fails closed on drift |
 | Layout | Monorepo standalone: entry **`apps/ops/server.js`** |
-| Modules | **Materializes** `apps/ops/node_modules` (real dirs) — **primary** Hostinger portability fix |
+| Modules | **Materializes** `apps/ops/node_modules` and hashed `apps/ops/.next/node_modules/*` external aliases as real directories; Hostinger extraction does not reliably preserve their pnpm symlinks |
 | Zip | `zip -qry` secondary; do not treat `-y` alone as the fix |
-| Smoke | Stage + extract must verify Next/Sharp/static, then the extracted server must return `200` for login/readiness/auth and one real `/_next/static/…` asset |
+| Smoke | Stage + extract must verify Next/Sharp/static and dynamically import every generated Next external alias; the extracted server smoke must return `200` for login/readiness/auth and one real `/_next/static/…` asset when a disposable test DB is supplied |
 | Secrets | **Never** bake `.env`/keys into zip (pack refuses) |
 | Sharp | Linux x64 glibc subtree from committed `scripts/ops-runtime-deps/package-lock.json` via official `npm ci --ignore-scripts`; lock hash is recorded and verified |
 | Publication | Candidate ZIP/sidecars live in a unique same-filesystem temporary workspace; failures clean it, existing final names are refused, and validated sidecars then ZIP are atomically renamed |

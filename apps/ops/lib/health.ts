@@ -23,6 +23,8 @@ export async function readinessResponse(
       headers: HEALTH_HEADERS,
     });
   } catch {
+    // Never inspect or log error fields/causes: values may contain secrets.
+    console.error("[health/ready] database probe failed");
     return new Response(JSON.stringify({ status: "unavailable" }), {
       status: 503,
       headers: HEALTH_HEADERS,
