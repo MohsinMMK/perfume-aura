@@ -1,0 +1,2 @@
+# Disposable marketing publish temp dirs. Never index in Graphify corpus.
+.marketing-sync.*

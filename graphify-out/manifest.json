@@ -515,9 +515,9 @@
     "semantic_hash": "14a6fa3ac79766968aff0c215b1ffefc"
   },
   "package.json": {
-    "mtime": 1784927895.9741704,
-    "ast_hash": "152b3b0b56fafbf3444361b5e2e67cfe",
-    "semantic_hash": "152b3b0b56fafbf3444361b5e2e67cfe"
+    "mtime": 1785430969.982555,
+    "ast_hash": "61ce66a87dc8660b67152e628ebbac42",
+    "semantic_hash": "61ce66a87dc8660b67152e628ebbac42"
   },
   "packages/db/drizzle.config.ts": {
     "mtime": 1784627149.496587,
@@ -1635,9 +1635,9 @@
     "semantic_hash": "b0eb0a668ba8f0d1b4eeb347bbb60aeb"
   },
   "docs/README.md": {
-    "mtime": 1784976308.6629758,
-    "ast_hash": "572c37ebcb32ffd5dc4c0da18ec155e6",
-    "semantic_hash": "572c37ebcb32ffd5dc4c0da18ec155e6"
+    "mtime": 1785430969.9818292,
+    "ast_hash": "26fb0c76388ebe80679bd79b42f14093",
+    "semantic_hash": ""
   },
   "docs/ROADMAP.md": {
     "mtime": 1784976457.0948932,
@@ -1678,5 +1678,50 @@
     "mtime": 1784655765.3733184,
     "ast_hash": "cb56bf002d36bb860c3d320a23bd871a",
     "semantic_hash": "cb56bf002d36bb860c3d320a23bd871a"
+  },
+  "scripts/verify-commerce-foundation.mjs": {
+    "mtime": 1785431501.8623052,
+    "ast_hash": "fa707e35bd1ebcbc298aeb0add279568",
+    "semantic_hash": ""
+  },
+  "docs/commerce/ARCHITECTURE.md": {
+    "mtime": 1785430969.9819534,
+    "ast_hash": "3292e667a616d1e3700e094add2e6587",
+    "semantic_hash": "3292e667a616d1e3700e094add2e6587"
+  },
+  "docs/commerce/DECISIONS.md": {
+    "mtime": 1785430969.9820518,
+    "ast_hash": "f0e9663c092dc0993af29a17498ada9b",
+    "semantic_hash": ""
+  },
+  "docs/commerce/README.md": {
+    "mtime": 1785431280.6560163,
+    "ast_hash": "726ec677a70a9d1912c4eaa1e51ed9ca",
+    "semantic_hash": ""
+  },
+  "docs/commerce/RELEASE-CHECKLIST.md": {
+    "mtime": 1785430969.9822736,
+    "ast_hash": "eb5af1f24c5206c8d7407c78ef138c47",
+    "semantic_hash": ""
+  },
+  "docs/commerce/REQUIREMENTS.md": {
+    "mtime": 1785430969.98235,
+    "ast_hash": "b0a5c71c0fbd605436e4ef5642f2abbc",
+    "semantic_hash": ""
+  },
+  "docs/commerce/RESEARCH.md": {
+    "mtime": 1785430969.9824195,
+    "ast_hash": "f0e01aaa9b42f285490c83bd4df11a97",
+    "semantic_hash": ""
+  },
+  "docs/commerce/VERIFICATION.md": {
+    "mtime": 1785431516.7146173,
+    "ast_hash": "6373a2c36f0ff6413db28c15f38ab8a8",
+    "semantic_hash": ""
+  },
+  "docs/commerce/REFERENCE-MAPPINGS.md": {
+    "mtime": 1785430969.9821982,
+    "ast_hash": "00c0324c6fb7020cb13ce8831850a4c7",
+    "semantic_hash": ""
   }
 }

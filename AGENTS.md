@@ -607,6 +607,35 @@ Repo-ready artifact path (Node 24.18.0 Path Z) is **not** the same as the stale 
 8. **Ops debug order:** public curl `/login` → `/api/auth/get-session` → hPanel deployment entry + logs → hPanel restart if authorized → env present? → owner seeded on **that** `DATABASE_URL`?
 9. **Never print** full `DATABASE_URL` / API tokens in chat logs when avoidable; mask hosts. User-requested owner password from local `.env.local` is allowed when they ask for login creds explicitly.
 
+## Commerce catalog status (2026-07-30)
+
+**Catalog foundation is complete; commerce launch is not complete.** Source records, mapping decisions, and verification live under [`data/catalog/`](data/catalog/) and [`docs/commerce/`](docs/commerce/). Run `pnpm commerce:verify` after every catalog or commerce-document change.
+
+### Completed
+
+- [x] Preserved 103 reviewed source products and generated 412 fail-closed launch variants.
+- [x] Confirmed all 21 Signature Series names as exact in-house backend/frontend identities; external reference mapping is not applicable.
+- [x] Confirmed every 10 ml variant is a tester; 30/50/100 ml variants are bottles.
+- [x] Approved 48 inspired title references with evidence metadata and recorded future title policy: `Inspired by <owner-confirmed reference>`.
+- [x] Added the 82-row evidence register at `docs/commerce/REFERENCE-MAPPINGS.md`, decision trail through COM-ADR-022, verifier gates, and scoped Graphify evidence.
+- [x] Kept every public inspired title/slug blank and all 103 products plus 412 variants non-publishable.
+- [x] Recorded fail-closed bottle-label/packaging policy: designer and inspired-reference names stay disabled until separate owner and India-counsel surface approval (COM-ADR-022). Product policy only; not legal clearance.
+
+### Remaining before commerce publication
+
+- [ ] Resolve 4 family-level mappings to exact product/flanker/concentration: `Cycus Flora`, `YSL-Y`, `CH 212 Men`, and `Baccarat`.
+- [ ] Resolve 4 unsupported source names without guessing: `Green Creed`, `F Fabulous`, `Gucci Guilty EX`, and `Pawake`.
+- [ ] Obtain owner/supplier confirmation for 26 additional inspired mappings.
+- [ ] Replace or strengthen weak/blocked/gap evidence where durable official pages exist; `main_list:22` currently has an explicit evidence gap and `main_list:20` is strongest-available retailer evidence only.
+- [ ] Complete India trademark/counsel review for inspired-reference display, Signature-name collision clearance, disclaimer wording/placement, and any future bottle/packaging surface change. Competitor behavior and a disclaimer are **not** legal clearance.
+- [ ] Approve final public inspired titles/slugs only after exact mapping and legal gates pass.
+- [ ] Supply sale facts: SKUs, prices, costs, opening stock, reorder levels, descriptions, images, and other product content.
+- [ ] Define customer-facing policies and operational decisions: delivery/shipping, returns/refunds, taxes, payment methods, order handling, and support surfaces.
+- [ ] Design and implement storefront, catalog browsing/search, product pages, cart, checkout, payments, customer/order flows, and commerce deployment.
+- [ ] Run final catalog, legal, accessibility, security, payment, fulfillment, and production smoke reviews before publication.
+
+**Publication gate:** do not infer readiness from mapping approval. No product becomes publishable until product data, legal, content, price/stock, policy, application, payment, and production-review gates all pass.
+
 ## Success criteria
 
 - [x] `https://perfumeaura.com` serves coming soon (marketing) — verified 2026-07-25

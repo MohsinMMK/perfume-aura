@@ -11,6 +11,7 @@ Current documentation only. Historical plans and remediation packets were remove
 | Hosting, DNS, deployment, database cutover, production recovery | [OPERATIONS.md](./OPERATIONS.md) |
 | Completed capabilities and remaining work | [ROADMAP.md](./ROADMAP.md) |
 | Locked stack and official tooling rules | [STACK.md](./STACK.md) |
+| Commerce research, requirements, architecture, catalog, and verification | [commerce/README.md](./commerce/README.md) |
 | Agent constraints | [../AGENTS.md](../AGENTS.md) |
 
 ## Current status — verified 2026-07-25
@@ -31,4 +32,5 @@ Current documentation only. Historical plans and remediation packets were remove
 4. Schema, env, auth, test, or CI changes → `ENGINEERING.md`.
 5. DNS, hosting, deployment, migration, or recovery changes → `OPERATIONS.md`.
 6. Stack changes require a written decision in `STACK.md` and matching `AGENTS.md` rules.
-7. Never record secrets, full connection URLs, passwords, or provider tokens.
+7. Commerce planning and verification → `commerce/`; accepted product capability changes still update the owning current documents above.
+8. Never record secrets, full connection URLs, passwords, or provider tokens.

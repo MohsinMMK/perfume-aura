@@ -31,3 +31,6 @@ yarn-error.log*
 .pi-subagents/
 perfume-aura-standalone_*.zip
 *.standalone.zip
+
+# disposable marketing sync temp snapshots (never corpus/graph inputs)
+.marketing-sync.*

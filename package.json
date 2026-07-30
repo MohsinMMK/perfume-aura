@@ -13,6 +13,7 @@
     "ops:pack": "bash scripts/pack-ops-standalone.sh",
     "marketing:sync": "bash scripts/sync-marketing.sh sync",
     "marketing:check": "bash scripts/sync-marketing.sh check",
+    "commerce:verify": "node scripts/verify-commerce-foundation.mjs",
     "db:generate": "pnpm --filter @perfume-aura/db generate",
     "db:migrate": "pnpm --filter @perfume-aura/db migrate",
     "lint": "pnpm -r lint",
@@ -24,6 +25,6 @@
     "test:integration": "pnpm test:inventory && pnpm test:integration:workspaces",
     "test:integration:workspaces": "pnpm --filter @perfume-aura/db test:integration && pnpm --filter @perfume-aura/ops test:integration",
     "security:audit": "pnpm audit --prod --audit-level=high && npm audit --omit=dev --audit-level=high --prefix scripts/ops-runtime-deps",
-    "check": "pnpm marketing:check && pnpm lint && pnpm typecheck && pnpm test:unit && pnpm build:ops && pnpm security:audit"
+    "check": "pnpm marketing:check && pnpm commerce:verify && pnpm lint && pnpm typecheck && pnpm test:unit && pnpm build:ops && pnpm security:audit"
   }
 }
