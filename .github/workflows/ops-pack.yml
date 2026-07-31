@@ -1,6 +1,7 @@
-# Release gate and Path B artifact builder.
-# This workflow has no provider credentials and never deploys. The ZIP remains
-# an input to the official manual Hostinger Path Z hPanel workflow.
+# CI gate, verified standalone pack, and automated Hostinger ops branch publish.
+# Pure Hostinger monorepo source build (Path G) remains blocked by esbuild EACCES.
+# Routine ops target: publish exact prebuilt tree to branch hostinger-ops-production.
+# Live Path Z remains current production until Hostinger Git webhook is proven twice.
 name: ci-and-ops-artifact
 
 on:
@@ -10,9 +11,13 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Main releases serialize and never cancel mid-run: a started commit finishes
+# even if newer main commits arrive; queued/latest push deploys afterward.
+# GitHub may replace older pending runs in the concurrency group — acceptable
+# because the newest remaining run still deploys. PRs may cancel superseded runs.
 concurrency:
   group: ci-and-ops-artifact-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -21,6 +26,7 @@ env:
   EXACT_NODE_VERSION: 24.18.0
   EXACT_NPM_VERSION: 11.16.0
   EXACT_PNPM_VERSION: 11.1.3
+  HOSTINGER_OPS_BRANCH: hostinger-ops-production
 
 jobs:
   quality:
@@ -57,6 +63,16 @@ jobs:
       - name: Marketing publish surface
         run: pnpm marketing:check
 
+      - name: Deploy automation self-tests
+        run: |
+          set -euo pipefail
+          node scripts/verify-hostinger-ops-deploy-tree.mjs self-test
+          node scripts/verify-production-deploy.mjs self-test
+          bash -n scripts/publish-hostinger-ops-branch.sh
+          bash scripts/publish-hostinger-ops-branch.sh self-test
+          bash -n scripts/pack-ops-standalone.sh
+          bash scripts/pack-ops-standalone.sh self-test
+
       - name: Lint
         run: pnpm lint
 
@@ -72,6 +88,7 @@ jobs:
       - name: Ops production build
         env:
           BETTER_AUTH_URL: https://app.perfumeaura.com
+          STANDALONE_SOURCE_COMMIT: ${{ github.sha }}
         run: pnpm build:ops
 
   integration:
@@ -244,6 +261,7 @@ jobs:
           echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
           echo "checksum=$CHECKSUM" >> "$GITHUB_OUTPUT"
           echo "manifest=$MANIFEST" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=ops-standalone-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Upload inspected artifact
         if: >-
@@ -259,3 +277,106 @@ jobs:
           if-no-files-found: error
           compression-level: 0
           retention-days: 14
+
+  publish-hostinger-ops:
+    name: publish-hostinger-ops-branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs:
+      - package
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Serialize deploy-branch updates. Started publish finishes; ancestry guard
+    # prevents deploying an older source over a newer already-published source.
+    concurrency:
+      group: publish-hostinger-ops-production
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout scripts only
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: true
+
+      - name: Setup exact Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Resolve artifact name
+        id: meta
+        run: |
+          set -euo pipefail
+          echo "short_sha=${GITHUB_SHA:0:12}" >> "$GITHUB_OUTPUT"
+
+      - name: Download exact package artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: ops-standalone-${{ steps.meta.outputs.short_sha }}
+          path: dist-publish
+
+      - name: Re-verify artifact and publish generated branch
+        env:
+          GIT_TERMINAL_PROMPT: "0"
+        run: |
+          set -euo pipefail
+          SHORT_SHA="${GITHUB_SHA:0:12}"
+          ZIP="dist-publish/perfume-aura-standalone_${SHORT_SHA}.zip"
+          CHECKSUM="${ZIP}.sha256"
+          MANIFEST="dist-publish/perfume-aura-standalone_${SHORT_SHA}.manifest.json"
+          test -f "$ZIP"
+          test -f "$CHECKSUM"
+          test -f "$MANIFEST"
+          (
+            cd dist-publish
+            sha256sum --check "$(basename "$CHECKSUM")"
+          )
+          node - "$MANIFEST" "$GITHUB_SHA" <<'NODE'
+          const assert = require("node:assert/strict");
+          const fs = require("node:fs");
+          const [manifestPath, sourceCommit] = process.argv.slice(2);
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+          assert.equal(manifest.source.commit, sourceCommit);
+          assert.equal(manifest.source.dirty, false);
+          assert.equal(manifest.entry, "apps/ops/server.js");
+          assert.ok(manifest.archive && manifest.archive.sha256);
+          NODE
+
+          TREE="$(mktemp -d "${RUNNER_TEMP}/hostinger-ops-tree.XXXXXX")"
+          cleanup() {
+            rm -rf -- "$TREE"
+          }
+          trap cleanup EXIT
+
+          # Fail-closed ZIP preflight + extract (allows safe relative pnpm symlinks).
+          python3 scripts/extract-hostinger-ops-zip.py "$ZIP" "$TREE"
+          node scripts/verify-hostinger-ops-deploy-tree.mjs "$TREE" "$GITHUB_SHA"
+          bash scripts/publish-hostinger-ops-branch.sh \
+            --tree "$TREE" \
+            --commit "$GITHUB_SHA" \
+            --branch "$HOSTINGER_OPS_BRANCH" \
+            --remote origin
+
+  verify-hostinger-ops:
+    name: verify-hostinger-ops-live
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      vars.HOSTINGER_OPS_AUTO_DEPLOY_ENABLED == 'true'
+    needs:
+      - publish-hostinger-ops
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup exact Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Poll live version and smoke surfaces
+        run: |
+          set -euo pipefail
+          node scripts/verify-production-deploy.mjs "$GITHUB_SHA" --timeout-ms 1200000

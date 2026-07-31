@@ -1,4 +1,5 @@
 import { db, sql } from "@perfume-aura/db";
+import { getEmbeddedBuildSourceCommit } from "./build-version";
 
 const HEALTH_HEADERS = {
   "cache-control": "no-store",
@@ -10,6 +11,25 @@ export function livenessResponse(): Response {
     status: 200,
     headers: HEALTH_HEADERS,
   });
+}
+
+export function versionResponse(
+  readCommit: () => string = getEmbeddedBuildSourceCommit,
+): Response {
+  try {
+    const commit = readCommit();
+    return new Response(JSON.stringify({ status: "ok", commit }), {
+      status: 200,
+      headers: HEALTH_HEADERS,
+    });
+  } catch {
+    // Never log env values or malformed metadata contents.
+    console.error("[health/version] build identity unavailable");
+    return new Response(JSON.stringify({ status: "unavailable" }), {
+      status: 503,
+      headers: HEALTH_HEADERS,
+    });
+  }
 }
 
 export async function readinessResponse(

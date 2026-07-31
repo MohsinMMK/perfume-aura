@@ -135,6 +135,9 @@ pnpm check
 pnpm marketing:sync
 pnpm marketing:check
 pnpm ops:pack
+pnpm ops:verify-deploy-tree self-test
+pnpm ops:publish-branch self-test
+pnpm ops:verify-production-deploy self-test
 ```
 
 `pnpm check` runs marketing drift, lint, typechecks, unit tests, optimized build, and production audit. It does not run integration tests.
@@ -153,17 +156,24 @@ pnpm test:integration
 
 Coverage includes inventory concurrency/idempotency, invoice/payment/finance workflows, migration boundaries, constraints, owner auth/recovery, health, security headers, and lifecycle races.
 
-## CI and release artifact
+## CI and release automation
 
 `.github/workflows/ops-pack.yml` uses exact Node `24.18.0`, npm `11.16.0`, pnpm `11.1.3`, PostgreSQL 16, SHA-pinned actions, and least permissions.
 
-- `quality`: repository checks and audits.
+- `quality`: repository checks, audits, and deploy-script self-tests.
 - `integration`: disposable PostgreSQL tests; missing URL cannot skip.
 - `dependency-review`: PR-only; currently blocked if GitHub Dependency Graph is disabled.
 - `package`: depends on quality + integration, runs deploy-shaped ZIP smoke.
 - Artifact upload: only `main` push or manual `main` run; 14-day retention.
+- Workflow concurrency on `main` is non-cancelling: a started release completes; later pushes queue/follow. GitHub may replace older pending runs; newest remaining run still deploys.
+- `publish-hostinger-ops`: `main` push only; job-scoped `contents: write`; downloads the exact artifact; re-verifies checksum/manifest; fail-closed ZIP preflight/extract (safe relative pnpm symlinks allowed; absolute/escape/prefix-write rejected); verifies deploy tree (critical paths materialized); publishes orphan branch `hostinger-ops-production` with force-with-lease. Does not CAS against current `main` tip. Rejects deploy-source regression when previous branch `artifact-manifest.json` `source.commit` is not an ancestor of the candidate source commit.
+- `verify-hostinger-ops`: runs only when repository variable `HOSTINGER_OPS_AUTO_DEPLOY_ENABLED=true`; polls `/api/health/version` for the exact SHA, then smokes ops/marketing surfaces.
 
-Green artifact job is not production deployment.
+Build identity: Next embeds validated full source SHA as `PERFUME_AURA_BUILD_COMMIT` for `GET /api/health/version` (`{ status, commit }` only).
+
+Production database migrations are **not** applied by this workflow. Schema-changing push-only release remains blocked until separate production migration automation is implemented and proven.
+
+Green package/publish jobs are not proof that live Hostinger production already points at the generated branch. Current production may still be Path Z until webhook cutover is proven twice.
 
 ## Auth and security
 

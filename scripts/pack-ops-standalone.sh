@@ -479,6 +479,8 @@ BUILD_ONLY_AUTH_SECRET="$(
 )"
 BETTER_AUTH_URL="https://app.perfumeaura.com" \
 BETTER_AUTH_SECRET="$BUILD_ONLY_AUTH_SECRET" \
+STANDALONE_SOURCE_COMMIT="$SOURCE_COMMIT" \
+PERFUME_AURA_BUILD_COMMIT="$SOURCE_COMMIT" \
   pnpm --filter @perfume-aura/ops build
 
 STANDALONE="$ROOT/apps/ops/.next/standalone"
@@ -1312,6 +1314,9 @@ if [[ -n "${TEST_DATABASE_URL:-}" ]]; then
   )"
   (
     cd "$VERIFY"
+    # Prove build identity is embedded: never pass PERFUME_AURA_BUILD_COMMIT
+    # (or pack-time commit aliases) into the extracted server process.
+    unset PERFUME_AURA_BUILD_COMMIT STANDALONE_SOURCE_COMMIT GITHUB_SHA
     DATABASE_URL="$TEST_DATABASE_URL" \
     BETTER_AUTH_SECRET="$SMOKE_AUTH_SECRET" \
     BETTER_AUTH_URL="https://app.perfumeaura.com" \
@@ -1358,6 +1363,32 @@ if [[ -n "${TEST_DATABASE_URL:-}" ]]; then
     fi
     echo "server-smoke: ${path} -> ${STATUS}"
   done
+
+  # Build identity must be embedded at build time. Do not supply
+  # PERFUME_AURA_BUILD_COMMIT (or related vars) in the smoke runtime env.
+  VERSION_BODY_FILE="$WORK_DIR/version-body.json"
+  if ! STATUS="$(
+    curl -sS --connect-timeout 2 --max-time 5 -o "$VERSION_BODY_FILE" \
+      -w '%{http_code}' "http://127.0.0.1:${SMOKE_PORT}/api/health/version"
+  )"; then
+    echo "ERROR: standalone server smoke /api/health/version request failed" >&2
+    sed -n '1,120p' "$SMOKE_LOG" >&2
+    exit 1
+  fi
+  if [[ "$STATUS" != "200" ]]; then
+    echo "ERROR: standalone server smoke /api/health/version returned ${STATUS}, expected 200" >&2
+    sed -n '1,120p' "$SMOKE_LOG" >&2
+    exit 1
+  fi
+  node - "$VERSION_BODY_FILE" "$SOURCE_COMMIT" <<'NODE'
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const [bodyPath, expectedCommit] = process.argv.slice(2);
+const body = JSON.parse(fs.readFileSync(bodyPath, "utf8"));
+assert.equal(body.status, "ok");
+assert.equal(body.commit, expectedCommit);
+NODE
+  echo "server-smoke: /api/health/version -> ${STATUS} commit=${SOURCE_COMMIT}"
 
   STATIC_ASSET_RELATIVE="$(
     cd "$VERIFY/apps/ops/.next/static"

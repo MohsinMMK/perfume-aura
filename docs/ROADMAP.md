@@ -13,23 +13,26 @@
 | Draft/issue/fulfill/void/print invoices | Complete |
 | Payments, numbering, idempotency, AR | Complete |
 | Finance snapshot, inventory value, cash/accrual metrics | Complete |
-| Migrations `0000–0008`, staged cutover tooling, restricted role design | Complete locally; production pending |
+| Migrations `0000–0008`, staged cutover tooling, restricted role design | Complete; production migrated through `0008` and grants verified 2026-07-27 |
 | Node 24 quality/integration/package workflow | Complete; GitHub Dependency Review setting pending |
-| Manual standalone Path Z packaging | Complete and locally verified |
+| Manual standalone Path Z packaging | Complete; current live production fallback |
+| Owner login on production ops | Verified 2026-07-27 against Neon production |
+| CI publish of prebuilt `hostinger-ops-production` branch (Option 1-B) | Implemented in repository; Hostinger webhook cutover pending |
 | Documentation consolidation | Complete |
 
-## Production recovery — next
+## Production automation — next
 
 1. Enable GitHub Dependency Graph/Dependency Review and rerun PR gates.
-2. Retain verified `main` ZIP/checksum/manifest plus previous known-good artifact.
-3. Execute [OPERATIONS.md](./OPERATIONS.md) write-freeze cutover exactly:
-   bare SQL role → `0007` → grants → Path Z smoke → reconcile → `0008` → grant reproof → seed.
-4. Verify owner login, auth session, live/readiness, core workflows, and reset email.
-5. Record dated production evidence without secrets.
+2. Prove Option 1-B twice on staging/non-prod Hostinger app: push `main` → branch publish → Node Git auto-start → `/api/health/version` matches SHA.
+3. One-time connect `app.perfumeaura.com` Node Web App to branch `hostinger-ops-production` with prebuilt settings (Package manager `pnpm`, build `echo prebuilt-standalone`, entry `apps/ops/server.js`); set `HOSTINGER_OPS_AUTO_DEPLOY_ENABLED=true` only after first green live poll.
+4. Keep Path Z ZIP as rollback/fallback until two consecutive production push proofs pass.
+5. Implement/prove production migration automation before claiming schema-changing push-only releases.
+6. Complete SMTP mailbox/env and password-reset email smoke; prove trusted-proxy / per-client IP rate limiting.
+7. Record dated production evidence without secrets after webhook cutover.
 
 ## Later
 
-- Prove Hostinger GitHub source build (Path G) end-to-end before enabling it.
+- Do not enable pure Hostinger monorepo source build (Path G) while esbuild EACCES remains.
 - Move marketing from whole-repo classic Git to artifact-only static deployment; expected protected paths then become absent (`404`) instead of denied (`403`).
 - Design linked returns, payment reversal/credit notes, and authoritative net-sum semantics.
 - Add purchase orders/suppliers only after product requirements.

@@ -62,7 +62,10 @@ pnpm test:unit
 pnpm test:integration   # guarded disposable loopback PostgreSQL required
 pnpm marketing:sync
 pnpm marketing:check
-pnpm ops:pack           # Hostinger Path Z ZIP
+pnpm ops:pack           # verified standalone ZIP / deploy tree source
+pnpm ops:verify-deploy-tree self-test
+pnpm ops:publish-branch self-test
+pnpm ops:verify-production-deploy self-test
 ```
 
 Integration database:
@@ -79,10 +82,11 @@ pnpm test:integration
 
 | Site | Supported deployment |
 |---|---|
-| Marketing | Hostinger classic Git Path M |
-| Ops | Hostinger Node.js Web App, manual prebuilt ZIP Path Z |
+| Marketing | Hostinger classic Git Path M (`main`) |
+| Ops target | GitHub Actions prebuilt tree → branch `hostinger-ops-production` → Hostinger Node GitHub App |
+| Ops fallback | Manual prebuilt ZIP Path Z until branch webhook proven twice |
 
-Path G GitHub source build remains blocked. Current live ops deployment is stale and production recovery remains pending. Follow [docs/OPERATIONS.md](docs/OPERATIONS.md); never infer production readiness from `/login` alone.
+Pure Hostinger monorepo source build remains blocked (esbuild EACCES). Production DB migrations are not auto-applied by CI. No public ecommerce storefront yet. Follow [docs/OPERATIONS.md](docs/OPERATIONS.md); never infer production readiness from `/login` alone.
 
 ## shadcn
 

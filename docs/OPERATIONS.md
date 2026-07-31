@@ -55,41 +55,97 @@ git push origin main
 
 Current classic Git deploy exposes whole repository filesystem, so root `.htaccess` must deny `/apps`, `/packages`, `/docs`, lockfiles, Markdown, `.git`, and env files. Verify protected source returns `403`.
 
-### Ops — Path Z (supported now)
+### Ops — automated prebuilt Git branch (Option 1-B / target routine)
 
-Build exact standalone ZIP:
+Routine developer action:
+
+```bash
+git push origin main
+```
+
+GitHub Actions then:
+
+1. runs quality + PostgreSQL 16 integration gates;
+2. builds and smoke-tests the exact standalone runtime (`pnpm ops:pack`);
+3. publishes that verified tree to generated branch `hostinger-ops-production`
+   as a single orphan commit (force-with-lease only);
+4. optionally polls live `/api/health/version` when repository variable
+   `HOSTINGER_OPS_AUTO_DEPLOY_ENABLED=true`.
+
+Release ordering:
+
+- Main workflow concurrency is non-cancelling for `main` pushes. A release that
+  already started finishes even if a newer `main` commit arrives while it runs.
+- The latest queued/remaining push deploys afterward (eventual sequential
+  release). GitHub may drop older still-pending runs in the concurrency group;
+  that is acceptable because the newest remaining run still deploys.
+- Publisher does **not** require the candidate SHA to equal the live `main` tip.
+- Monotonic guard: if `hostinger-ops-production` already exists, its
+  `artifact-manifest.json` `source.commit` must be a Git ancestor of the
+  candidate source commit. Older/non-descendant sources are rejected so a slow
+  older run cannot overwrite a newer already-published deploy source.
+- Deploy-branch tip updates stay atomic via `force-with-lease`.
+- `git revert` on `main` remains a descendant publish and is allowed.
+
+This is still Hostinger Node.js Web App + GitHub App auto-deploy. CI builds the
+runtime; Hostinger only pulls the prebuilt branch and starts
+`apps/ops/server.js`. No recurring archive upload.
+
+One-time Hostinger ops fields after staging proof:
+
+| Field | Value |
+|---|---|
+| Domain | `app.perfumeaura.com` |
+| Source | GitHub App → same repo |
+| Branch | `hostinger-ops-production` |
+| Framework | Other |
+| Node | `24.x` |
+| Package manager | `pnpm` |
+| Root | `./` |
+| Build | `echo prebuilt-standalone` |
+| Output | empty |
+| Entry | `apps/ops/server.js` |
+| Env | existing hPanel runtime set only |
+
+Keep extracted `node_modules`. Never bake secrets into the branch.
+
+### Ops — Path Z (current live fallback until branch webhook proven twice)
+
+Manual ZIP upload remains the current production fallback while the generated
+branch webhook is unproven:
 
 ```bash
 nvm use
 pnpm ops:pack
 ```
 
-Pack requires Node `24.18.0`, npm `11.16.0`, pnpm `11.1.3`; rejects secrets; materializes runtime modules; installs Linux x64 glibc Sharp subtree from committed lock; verifies extracted server, auth/readiness routes, and static assets; publishes ZIP/checksum/manifest atomically.
+Same runtime contract and entry `apps/ops/server.js`. Use only for emergency
+or first cutover if Git branch source is not yet connected.
 
-Hostinger settings:
+### Path G — pure monorepo source build blocked
 
-| Field | Value |
-|---|---|
-| Domain | `app.perfumeaura.com` |
-| Source | Upload `dist/perfume-aura-standalone_*.zip` |
-| Framework | Other or Next.js |
-| Node | `24.x` |
-| Root | `./` |
-| Build | `echo prebuilt-standalone` |
-| Output | empty |
-| Entry | `apps/ops/server.js` |
+Hostinger shared-host monorepo `pnpm install` + `next build` remains blocked by
+esbuild `EACCES` / pnpm PATH behavior. Do not connect `main` source build for
+ops. Option 1-B prebuilt branch is the supported GitHub automation path.
 
-Never upload flat `entry.cjs`/root `server.js`, source monorepo build, or ZIP containing env files. Keep extracted `node_modules`.
+Provider API archive upload, MCP deploy, and Connector remain unsupported for
+routine release. Read-only provider inspection is allowed; mutations stay with
+authorized root operator.
 
-### Path G — blocked
+### Production migrations are not auto-run by this deploy path
 
-Hostinger GitHub source build remains blocked by shared-hosting esbuild `EACCES`/pnpm PATH behavior. Do not connect or retry it until a push alone builds, starts, and passes auth/readiness. Path G requires separate proof and runbook update.
+Push-only schema changes are **not** complete yet. CI does not apply production
+Neon migrations. Schema-changing releases still require the reviewed direct-URL
+migration procedure in this document before or with a coordinated deploy.
+Until dedicated production migration automation exists and is proven, treat
+migration-bearing pushes as blocked for fully hands-off release.
 
-Provider API, MCP deploy, Connector, and custom deploy scripts are unsupported. Read-only provider inspection is allowed; mutations stay with authorized root operator.
+## Historical live evidence — 2026-07-25 (superseded)
 
-## Current live evidence — 2026-07-25
+The following table is **historical only**. It records the pre-cutover stale
+Hostinger artifact state and must not be used as current production truth.
 
-| Check | Result |
+| Check | Result 2026-07-25 |
 |---|---|
 | Marketing `/` | `200` |
 | Marketing source path | `403` |
@@ -100,7 +156,31 @@ Provider API, MCP deploy, Connector, and custom deploy scripts are unsupported. 
 | `/api/health/live`, `/ready` | `404` |
 | Latest listed ops deploy | completed 2026-07-23 archive, Node 20, `apps/ops/server.js` |
 
-Conclusion: live ops is stale and not production-ready. Do not claim current code, Node 24, environment, migrations, owner login, or SMTP reset is live.
+## Current live evidence — public probes re-verified 2026-07-30
+
+Provider/database baseline retains the 2026-07-27 cutover proof. Re-check before
+acting. Generated-branch webhook cutover remains pending.
+
+| Check | Evidence |
+|---|---|
+| `https://perfumeaura.com` | 200 collection preview; auto-deploy from `main` verified 2026-07-30 |
+| Marketing public allowlist | `/assets/favicon.svg` 200; repo source/data/Graphify/design paths 403 |
+| TLS apex / www / app | valid |
+| DNS NS | `lunar` / `solar`; apex ALIAS CDN |
+| `https://app.perfumeaura.com/login` | 200 |
+| `/api/auth/get-session` | 200 |
+| `/api/health/live` · `/ready` | 200 / 200 |
+| Active Hostinger deploy | **Node 24.x** Path Z, entry `apps/ops/server.js`; critical runtime/alias trees materialized; safe internal pnpm links may remain in pack |
+| Neon production | Main branch migrated through `0008`; restricted runtime role, grants, constraints, trigger, zero reconciliation drift verified |
+| Owner login on prod | **Verified** in production browser; core authenticated pages rendered |
+| Password reset email | **Not verified** — SMTP hPanel variables/mailbox remain pending |
+| Client-IP rate limiting | Shared-bucket fallback until Hostinger trusted-proxy evidence is established |
+| Ops Option 1-B generated branch publish | Implemented in CI; Hostinger webhook cutover pending |
+| Ops Path G monorepo source build | **Blocked** (esbuild EACCES) |
+
+Never infer continued production readiness from `/login` alone. Re-check
+readiness, auth session, a real static asset, and an authenticated owner page
+after every deploy or provider configuration change.
 
 ## Required production environment
 

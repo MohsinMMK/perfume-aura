@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { livenessResponse, readinessResponse } from "./health";
+import { livenessResponse, readinessResponse, versionResponse } from "./health";
 
 async function withCapturedConsoleError<T>(
   run: () => Promise<T>,
@@ -28,6 +28,28 @@ describe("health responses", () => {
     assert.equal(response.status, 200);
     assert.equal(response.headers.get("cache-control"), "no-store");
     assert.deepEqual(await response.json(), { status: "ok" });
+  });
+
+  it("reports only status and full lowercase source commit", async () => {
+    const commit = "a".repeat(40);
+    const response = versionResponse(() => commit);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("cache-control"), "no-store");
+    assert.deepEqual(await response.json(), { status: "ok", commit });
+  });
+
+  it("returns generic unavailable when build identity is missing", async () => {
+    const { result: unavailable, errors } = await withCapturedConsoleError(async () =>
+      versionResponse(() => {
+        throw new Error("invalid source commit");
+      }),
+    );
+    assert.equal(unavailable.status, 503);
+    assert.equal(unavailable.headers.get("cache-control"), "no-store");
+    const body = JSON.stringify(await unavailable.json());
+    assert.equal(body, JSON.stringify({ status: "unavailable" }));
+    assert.doesNotMatch(body, /commit|secret|env|password/i);
+    assert.deepEqual(errors, [["[health/version] build identity unavailable"]]);
   });
 
   it("reports database readiness with generic success and failure bodies", async () => {

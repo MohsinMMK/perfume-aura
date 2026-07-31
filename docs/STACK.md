@@ -16,6 +16,8 @@ Change stack only through an explicit reviewed decision. Production hosting rema
 | Validation | Zod |
 | Marketing | Static HTML/CSS |
 | Production | Hostinger Business hosting |
+| Ops deploy automation | GitHub Actions prebuilt standalone → generated branch `hostinger-ops-production` → Hostinger Node GitHub App start (`apps/ops/server.js`) |
+| Ops source build on Hostinger | Blocked (esbuild EACCES); not used |
 | Registrar | GoDaddy; registration/renewal only |
 
 ## Official tooling only
