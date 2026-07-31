@@ -83,8 +83,8 @@ pnpm test:integration
 | Site | Supported deployment |
 |---|---|
 | Marketing | Hostinger classic Git Path M (`main`) |
-| Ops target | GitHub Actions prebuilt tree → branch `hostinger-ops-production` → Hostinger Node GitHub App |
-| Ops fallback | Manual prebuilt ZIP Path Z until branch webhook proven twice |
+| Ops routine | GitHub Actions prebuilt tree → branch `hostinger-ops-production` → Hostinger Node GitHub App; production webhook proven twice 2026-07-31 |
+| Ops emergency fallback | Manual prebuilt ZIP Path Z |
 
 Pure Hostinger monorepo source build remains blocked (esbuild EACCES). Production DB migrations are not auto-applied by CI. No public ecommerce storefront yet. Follow [docs/OPERATIONS.md](docs/OPERATIONS.md); never infer production readiness from `/login` alone.
 

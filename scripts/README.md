@@ -5,7 +5,7 @@ Automation entrypoints for the monorepo. Prefer `pnpm <script>` from repo root.
 | Script | pnpm | Purpose |
 |--------|------|---------|
 | `sync-marketing.sh` | `marketing:sync` / `marketing:check` | Publish `apps/marketing` → repo root for Hostinger Path M |
-| `pack-ops-standalone.sh` | `ops:pack` | Build Path Z zip for Hostinger Node Web App |
+| `pack-ops-standalone.sh` | `ops:pack` | Build verified standalone runtime for generated Path B branch and emergency Path Z ZIP |
 
 ## Conventions
 
@@ -34,11 +34,14 @@ pnpm ops:pack   (exact Node 24.18.0 + npm 11.16.0 + pnpm 11.1.3)
             ├── .zip.sha256
             └── .manifest.json
         │
-        └── one 14-day artifact on Actions
+        ├── one 14-day Actions artifact (also emergency Path Z source)
+        └── re-verify + safe extract
                     │
-                    ▼  manual hPanel Node Web App ZIP upload
+                    ▼  orphan branch hostinger-ops-production
+                    │
+                    ▼  Hostinger Node GitHub App
                     Node 24.x · entry apps/ops/server.js
-                    build echo prebuilt-standalone
+                    build pnpm run build → echo prebuilt-standalone
 ```
 
 Workflow: `.github/workflows/ops-pack.yml`
@@ -58,7 +61,9 @@ refused, and validated sidecars then the ZIP are atomically renamed only after
 all gates pass. A clean tree defaults to the short commit stamp; dirty local
 packs receive a unique timestamp/PID suffix.
 
-The workflow uploads an Actions artifact only. It has `contents: read`, no
-provider credentials, and cannot report a Hostinger deployment. API, Connector,
-or GitHub-source deployment must be separately proven before this repo supports
-it.
+The workflow keeps default `contents: read`; only the publication job receives
+`contents: write` to update `hostinger-ops-production` with force-with-lease.
+It stores no Hostinger credentials. Hostinger watches that generated branch,
+and the optional live job polls `/api/health/version` for the exact source SHA.
+Production branch auto-deployment was proven twice 2026-07-31; API, MCP, and
+Connector deployment remain unsupported.

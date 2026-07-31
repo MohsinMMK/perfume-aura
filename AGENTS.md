@@ -14,7 +14,7 @@ Agents and developers **must** use **official documented install/setup paths** f
 | **Drizzle** | https://orm.drizzle.team/docs | Official schema / kit / Neon or `pg` guides. |
 | **Neon** | https://neon.com/docs | Official connection strings + drivers. |
 | **Hostinger marketing** | [Classic Git docs](https://www.hostinger.com/support/1583302-how-to-deploy-a-git-repository-in-hostinger/) | Advanced → Git → GitHub OAuth → `public_html` (static only). |
-| **Hostinger ops** | [Node.js Web App docs](https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/) · [docs/OPERATIONS.md](docs/OPERATIONS.md) | **Node.js Web App** only (never classic Git). Automation target: CI prebuilt branch `hostinger-ops-production`. Live fallback: Path Z ZIP until webhook proven twice. Pure monorepo source build blocked. |
+| **Hostinger ops** | [Node.js Web App docs](https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/) · [docs/OPERATIONS.md](docs/OPERATIONS.md) | **Node.js Web App** only (never classic Git). Production routine: CI prebuilt branch `hostinger-ops-production`, proven twice 2026-07-31. Path Z ZIP is emergency fallback only. Pure monorepo source build blocked. |
 | **pnpm workspaces** | https://pnpm.io/workspaces | Root `pnpm-workspace.yaml` + `workspace:*` deps. |
 
 ### shadcn monorepo rules (this repo)
@@ -74,8 +74,8 @@ Restore: `pnpm dlx skills experimental_install` (from `skills-lock.json`).
 | Production domain | **perfumeaura.com** (marketing) · **app.perfumeaura.com** (ops) |
 | GitHub repo | https://github.com/MohsinMMK/perfume-aura |
 | Default branch | **`main`** |
-| Current phase | Product inventory-to-finance implemented; production ops cutover and owner login verified 2026-07-27; SMTP reset and trusted-proxy proof remain pending |
-| Stack | **pnpm monorepo** · marketing static · ops **Next.js 16.2.11** + **TypeScript 7.0.2** on Hostinger Node **24.x** (Option 1-B target / Path Z fallback) |
+| Current phase | Product inventory-to-finance implemented; generated-branch production cutover, secret rotation, and owner login re-verified 2026-07-31; migration automation, SMTP reset, and trusted-proxy proof remain pending |
+| Stack | **pnpm monorepo** · marketing static · ops **Next.js 16.2.11** + **TypeScript 7.0.2** on Hostinger Node **24.x** (Option 1-B production / Path Z emergency fallback) |
 | Docs | [index](docs/README.md) · [product](docs/PRODUCT.md) · [engineering](docs/ENGINEERING.md) · [operations](docs/OPERATIONS.md) · [roadmap](docs/ROADMAP.md) · [stack](docs/STACK.md) |
 
 ## Monorepo layout
@@ -129,7 +129,7 @@ GoDaddy (owns perfumeaura.com — renewal only)
                        └── app  → Node Web App target
                               └── Hostinger hosting
                                        public_html (marketing Path M)
-                                       app Node runtime (ops Path Z/G)
+                                       app Node runtime (ops Path B/Z)
                                             ▲
                                        GitHub main (source of truth)
 ```
@@ -259,8 +259,8 @@ Hostinger Node.js Web App accepts **three** official sources (in doc order):
   Advanced → Git                 Deploy Web App / Node.js
   (classic Git product)          (NOT Advanced → Git)
           │                             │
-          ▼                             ├── Path G: GitHub OAuth (official preferred)
-  public_html static                    ├── Path Z: zip upload (current workable)
+          ▼                             ├── Path B: generated Git branch (production)
+  public_html static                    ├── Path Z: zip upload (emergency fallback)
   + root .htaccess                      └── Path C: Connector (unproven here)
 ```
 
@@ -324,7 +324,7 @@ Long-term: artifact-only marketing (static files only).
 
 Hostinger shared Node monorepo **source build** (`pnpm install` + `next build` on `main`) hits esbuild **EACCES** / broken `pnpm` PATH. Do **not** connect ops to build monorepo source on Hostinger.
 
-### Path B → generated Git branch (Option 1-B — **routine automation target**)
+### Path B → generated Git branch (Option 1-B — **production routine**)
 
 Workflow: `.github/workflows/ops-pack.yml`
 
@@ -341,9 +341,9 @@ git push origin main
 
 Production migrations are **not** auto-applied by this workflow.
 
-### Path Z — manual prebuilt ZIP (**current live fallback**)
+### Path Z — manual prebuilt ZIP (**emergency rollback/fallback**)
 
-Use until Option 1-B Hostinger webhook is proven twice on production.
+Option 1-B is production routine. Retain Path Z only for emergency rollback/fallback.
 
 ```bash
 pnpm ops:pack
@@ -373,8 +373,8 @@ Marketing change?
 
 Ops change?
   → push main → Actions quality/integration/pack → publish hostinger-ops-production
-  → Hostinger Node GitHub App (once connected) auto-starts prebuilt tree
-  → Path Z manual ZIP only as fallback until webhook proven twice
+  → Hostinger Node GitHub App auto-starts the prebuilt tree
+  → exact-SHA live poll verifies the release; Path Z remains emergency-only
   → Do not use pure monorepo Path G source build
   → Production DB migrations remain manual/reviewed until automation exists
   → Always: hPanel env present before claiming login works
@@ -405,17 +405,17 @@ scripts/pack-ops-standalone.sh       ← ops:pack
 ### Deploy notes
 
 - **Marketing (Path M):** classic GitHub → `public_html` from `main`. Edit `apps/marketing` → `pnpm marketing:sync` → commit root publish files. Fail-closed `.htaccess` allowlist. Prefer artifact-only later.
-- **Ops automation target (Option 1-B):** CI publishes prebuilt branch `hostinger-ops-production`; Hostinger Node GitHub App starts `apps/ops/server.js` with no-op build.
+- **Ops production routine (Option 1-B):** CI publishes prebuilt branch `hostinger-ops-production`; Hostinger Node GitHub App starts `apps/ops/server.js` with no-op build. Two consecutive production webhook deployments passed 2026-07-31.
 - **Ops pure source build (Path G):** blocked (esbuild EACCES). Do not enable.
-- **Ops live fallback (Path Z):** manual ZIP upload until branch webhook proven twice.
+- **Ops emergency fallback (Path Z):** retain a checksum-verified manual ZIP; do not use for routine releases.
 - **Never** use classic Git (Advanced → Git) as the **runtime** for Next.js ops.
 - **No public ecommerce storefront** implemented yet.
 
 ## Ops deploy (Hostinger Node) — critical for agents
 
-**Automation target = Option 1-B generated branch.** **Live fallback = Path Z ZIP** until webhook proven twice. Same Node Web App + hPanel env. Details: [docs/OPERATIONS.md](docs/OPERATIONS.md).
+**Production routine = Option 1-B generated branch.** **Emergency fallback = Path Z ZIP.** Same Node Web App + hPanel env. Details: [docs/OPERATIONS.md](docs/OPERATIONS.md).
 
-### One-time Hostinger Git settings (after staging proof)
+### Current Hostinger Git settings
 
 | Field | Value |
 |-------|--------|
@@ -426,7 +426,7 @@ scripts/pack-ops-standalone.sh       ← ops:pack
 | Node | **24.x** |
 | Package manager | **pnpm** |
 | Root directory | `./` |
-| Build command | **`echo prebuilt-standalone`** |
+| Build command | **`pnpm run build`** (generated root script echoes `prebuilt-standalone`) |
 | Output directory | *(empty)* |
 | **Entry file** | **`apps/ops/server.js`** |
 
@@ -462,7 +462,7 @@ Script: [`scripts/pack-ops-standalone.sh`](scripts/pack-ops-standalone.sh)
 | Node | **24.x** |
 | Package manager | **pnpm** |
 | Root directory | `./` |
-| Build command | **`echo prebuilt-standalone`** (not `pnpm run build` on Hostinger) |
+| Build command | **`echo prebuilt-standalone`** (manual ZIP flow; generated Git branch uses `pnpm run build`) |
 | Output directory | *(empty)* |
 | **Entry file** | **`apps/ops/server.js`** |
 
@@ -474,8 +474,8 @@ The repository has no Hostinger provider credentials. CI publishes a generated
 prebuilt Git branch only; it does not call Hostinger APIs. Do not infer live
 production cutover from a green publish job alone.
 
-- Automation target: Hostinger Node GitHub App watches `hostinger-ops-production`.
-- Live fallback until webhook proven twice: manual Path Z ZIP upload.
+- Production routine: Hostinger Node GitHub App watches `hostinger-ops-production`; two consecutive production deployments passed 2026-07-31.
+- Emergency fallback: manual Path Z ZIP upload only.
 - Pure monorepo GitHub source build remains blocked (esbuild EACCES).
 - API, MCP, and Connector deploys remain unsupported for routine release.
 - In Phase 07, the root operator may use authorized read-only provider evidence
@@ -544,7 +544,7 @@ Classic Git deploys **entire repo** into marketing `public_html`. Without deny r
 - Verify: `curl -sI -o /dev/null -w '%{http_code}\n' https://perfumeaura.com/apps/ops/package.json` → **403** (`.htaccess` `[F,L]`; 404 only if path absent).
 - Long-term: artifact-only marketing deploy (static files only).
 
-### Known live status (public probes re-verified 2026-07-30; re-check before acting)
+### Known live status (production cutover re-verified 2026-07-31; re-check before acting)
 
 This snapshot supersedes only the stale 2026-07-25 live-evidence table in
 `docs/OPERATIONS.md`; its safety gates and recovery sequence remain
@@ -559,12 +559,12 @@ authoritative. Provider/database evidence otherwise retains the 2026-07-27 basel
 | `https://app.perfumeaura.com/login` | 200 |
 | `/api/auth/get-session` | 200 |
 | `/api/health/live` · `/ready` | 200 / 200 |
-| Active Hostinger deploy | **Node 24.x** Path Z, entry `apps/ops/server.js`; corrected package includes materialized `.next/node_modules` external aliases |
-| Neon production | Main branch migrated through `0008`; nine-row journal/hash, restricted runtime role, grants, constraints, trigger, and zero reconciliation drift verified |
-| Owner login on prod | **Verified** in the production browser; `/dashboard`, `/products`, `/customers`, `/invoices`, `/stock`, and `/finance` rendered |
+| Active Hostinger deploy | **Node 24.x** generated branch `hostinger-ops-production`, build `pnpm run build`, entry `apps/ops/server.js`; `/api/health/version` must match each released source SHA |
+| Neon production | Main branch migrated through `0008`; nine-row journal/hash, restricted runtime role, grants, constraints, trigger, and zero reconciliation drift verified; runtime password rotated 2026-07-31 |
+| Owner login on prod | **Re-verified 2026-07-31 after Better Auth secret rotation**; `/dashboard`, `/products`, `/customers`, `/invoices`, `/stock`, and `/finance` rendered |
 | Password reset email | **Not verified** — SMTP hPanel variables/mailbox remain pending |
 | Client-IP rate limiting | Shared-bucket fallback remains active until Hostinger trusted-proxy evidence is established |
-| Ops Option 1-B generated branch publish | Implemented in CI; Hostinger webhook cutover pending |
+| Ops Option 1-B generated branch publish | Production connected; hPanel deployment evidence plus manual exact-SHA probes proved initial and follow-up releases, then live-poll variable was enabled 2026-07-31 |
 | Ops Path G monorepo source build | **Blocked** (esbuild EACCES) |
 
 Never infer continued production readiness from `/login` alone. Re-check
@@ -580,8 +580,8 @@ after every deploy or provider configuration change.
 | Invent DNS before Hostinger validates the zone | Zone empty / “not pointing” until activation |
 | Long-term FTP instead of **Path M** GitHub for marketing | Breaks official classic Git workflow |
 | Classic Git (Advanced → Git) as ops **runtime** | Wrong product; Next needs Node.js Web App |
-| Treating Path Z zip as “unofficial” | Zip is Hostinger official source #2; Path G is preferred when build works |
-| Forcing Path G while monorepo build EACCES | Wastes deploys; use Path Z until unblocked |
+| Treating Path Z ZIP as routine or unofficial | ZIP is Hostinger official source #2 for emergency fallback; proven Option 1-B is routine while Path G stays blocked |
+| Forcing Path G while monorepo build EACCES | Wastes deploys; use proven Option 1-B generated branch |
 | Flat ops zip (`entry.cjs` / root `server.js` only) | Breaks `require('next')`; use `pnpm ops:pack` monorepo layout |
 | `zip` without materializing / symlink-safe pack | Orphan `next` → missing `@swc/helpers` / `react` |
 | Hostinger source `pnpm build` for monorepo ops (Path G today) | esbuild **EACCES** on shared Node |
@@ -600,7 +600,7 @@ after every deploy or provider configuration change.
 
 1. **Read** this file and `docs/OPERATIONS.md` before hosting, DNS, database cutover, or ops deploy work.
 2. **Search with Graphify first:** when answering questions about repository content, architecture, symbols, dependencies, or file relationships, query the existing graph in `graphify-out/` before broad file searches. Use `graphify query "<question>"`; use `graphify path` or `graphify explain` for focused traversal. Rebuild only when explicitly requested or when the graph is stale.
-3. **Ship via GitHub:** marketing always **Path M** (`git push origin main`). Ops automation target is Option 1-B generated branch after CI pack; Path Z ZIP remains live fallback until webhook proven twice. Never use classic Git for the ops runtime. Never enable pure monorepo Path G source build while EACCES remains.
+3. **Ship via GitHub:** marketing always **Path M** (`git push origin main`). Ops production routine is Option 1-B generated branch after CI pack; Path Z ZIP is emergency fallback only. Never use classic Git for the ops runtime. Never enable pure monorepo Path G source build while EACCES remains.
 4. For DNS issues: verify WHOIS NS, public `dig`, Hostinger zone, then hPanel Live DNS Checkup — not random A-record hacks at GoDaddy.
 5. Prefer small, clear commits. Keep the collection preview honest and fail-closed: no ordering, pricing, delivery, payment, or final public product-name claims before commerce gates pass.
 6. Do not claim marketing “live” until `https://perfumeaura.com` serves this project; do not claim ops “live” until `/login` works **and** auth API is not 500 **and** owner can sign in against Neon prod.
@@ -654,7 +654,7 @@ after every deploy or provider configuration change.
 - [ ] Trusted-proxy evidence and per-client IP rate-limit/restart proof
 - [x] `git push origin main` updates marketing Hostinger without manual upload — verified 2026-07-30
 - [ ] Domain still registered only at GoDaddy
-- [ ] Ops Option 1-B generated-branch auto-deploy proven twice on production Hostinger
+- [x] Ops Option 1-B generated-branch auto-deploy proven twice on production Hostinger — verified 2026-07-31
 - [ ] Production migration automation before schema-changing push-only releases
 - [ ] Pure monorepo Path G source build remains disabled while esbuild EACCES remains
 

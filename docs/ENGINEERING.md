@@ -173,7 +173,7 @@ Build identity: Next embeds validated full source SHA as `PERFUME_AURA_BUILD_COM
 
 Production database migrations are **not** applied by this workflow. Schema-changing push-only release remains blocked until separate production migration automation is implemented and proven.
 
-Green package/publish jobs are not proof that live Hostinger production already points at the generated branch. Current production may still be Path Z until webhook cutover is proven twice.
+Production Hostinger now watches `hostinger-ops-production`; two consecutive generated-branch deployments were verified 2026-07-31. Green package/publish jobs alone still do not prove a specific release is live: require the enabled `verify-hostinger-ops` exact-SHA poll or an equivalent `/api/health/version` check. Path Z remains emergency rollback/fallback only.
 
 ## Auth and security
 

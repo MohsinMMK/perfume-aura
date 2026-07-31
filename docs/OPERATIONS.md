@@ -55,7 +55,7 @@ git push origin main
 
 Current classic Git deploy exposes whole repository filesystem, so root `.htaccess` must deny `/apps`, `/packages`, `/docs`, lockfiles, Markdown, `.git`, and env files. Verify protected source returns `403`.
 
-### Ops — automated prebuilt Git branch (Option 1-B / target routine)
+### Ops — automated prebuilt Git branch (Option 1-B / production routine)
 
 Routine developer action:
 
@@ -91,7 +91,7 @@ This is still Hostinger Node.js Web App + GitHub App auto-deploy. CI builds the
 runtime; Hostinger only pulls the prebuilt branch and starts
 `apps/ops/server.js`. No recurring archive upload.
 
-One-time Hostinger ops fields after staging proof:
+Current Hostinger ops fields:
 
 | Field | Value |
 |---|---|
@@ -102,25 +102,25 @@ One-time Hostinger ops fields after staging proof:
 | Node | `24.x` |
 | Package manager | `pnpm` |
 | Root | `./` |
-| Build | `echo prebuilt-standalone` |
+| Build | `pnpm run build` (generated branch root script runs `echo prebuilt-standalone`) |
 | Output | empty |
 | Entry | `apps/ops/server.js` |
 | Env | existing hPanel runtime set only |
 
 Keep extracted `node_modules`. Never bake secrets into the branch.
 
-### Ops — Path Z (current live fallback until branch webhook proven twice)
+### Ops — Path Z (emergency rollback/fallback)
 
-Manual ZIP upload remains the current production fallback while the generated
-branch webhook is unproven:
+Generated-branch auto-deployment is the production routine. Retain a current,
+checksum-verified ZIP only for emergency rollback/fallback:
 
 ```bash
 nvm use
 pnpm ops:pack
 ```
 
-Same runtime contract and entry `apps/ops/server.js`. Use only for emergency
-or first cutover if Git branch source is not yet connected.
+Same runtime contract and entry `apps/ops/server.js`. Do not return to recurring
+manual uploads while the generated branch remains healthy.
 
 ### Path G — pure monorepo source build blocked
 
@@ -156,10 +156,10 @@ Hostinger artifact state and must not be used as current production truth.
 | `/api/health/live`, `/ready` | `404` |
 | Latest listed ops deploy | completed 2026-07-23 archive, Node 20, `apps/ops/server.js` |
 
-## Current live evidence — public probes re-verified 2026-07-30
+## Current live evidence — re-verified 2026-07-31
 
-Provider/database baseline retains the 2026-07-27 cutover proof. Re-check before
-acting. Generated-branch webhook cutover remains pending.
+Provider/database schema baseline retains the 2026-07-27 cutover proof. Re-check
+before acting; dated evidence never replaces a fresh release smoke.
 
 | Check | Evidence |
 |---|---|
@@ -168,15 +168,24 @@ acting. Generated-branch webhook cutover remains pending.
 | TLS apex / www / app | valid |
 | DNS NS | `lunar` / `solar`; apex ALIAS CDN |
 | `https://app.perfumeaura.com/login` | 200 |
-| `/api/auth/get-session` | 200 |
-| `/api/health/live` · `/ready` | 200 / 200 |
-| Active Hostinger deploy | **Node 24.x** Path Z, entry `apps/ops/server.js`; critical runtime/alias trees materialized; safe internal pnpm links may remain in pack |
-| Neon production | Main branch migrated through `0008`; restricted runtime role, grants, constraints, trigger, zero reconciliation drift verified |
-| Owner login on prod | **Verified** in production browser; core authenticated pages rendered |
+| `/api/auth/get-session` | 200 JSON `null` anonymously; authenticated browser returned session + user objects |
+| `/api/health/live` · `/ready` | 200 / 200 after credential rotation and redeploy |
+| `/api/health/version` | 200 and matched the exact released source SHA on each proof |
+| Static runtime asset | Real `/_next/static/…` asset returned 200 with non-empty body |
+| Active Hostinger deploy | **Node 24.x** generated branch `hostinger-ops-production`, build `pnpm run build`, entry `apps/ops/server.js` |
+| Push deployment proof | GitHub runs `30615774862` and `30623386605` published sources `43edda3e7b05…` and `3e7fa94c1a18…`; hPanel listed corresponding completed deploy commits `db10bb11b724…` and `cd7f2d818d66…`, and immediate root-operator probes returned each exact source from `/api/health/version` |
+| Credential rotation | Restricted Neon runtime-role password and Better Auth secret rotated; hPanel values applied and current process re-smoked without recording values |
+| Neon production | Main branch migrated through `0008`; restricted runtime role, grants, constraints, trigger, and zero reconciliation drift verified |
+| Owner login on prod | **Re-verified 2026-07-31** after rotation; `/dashboard`, `/products`, `/customers`, `/invoices`, `/stock`, and `/finance` returned 200 with expected headings |
 | Password reset email | **Not verified** — SMTP hPanel variables/mailbox remain pending |
 | Client-IP rate limiting | Shared-bucket fallback until Hostinger trusted-proxy evidence is established |
-| Ops Option 1-B generated branch publish | Implemented in CI; Hostinger webhook cutover pending |
 | Ops Path G monorepo source build | **Blocked** (esbuild EACCES) |
+
+The first two proof runs predated the repository-variable switch, so their
+`verify-hostinger-ops-live` jobs were skipped and the provider completion rows
+plus immediate manual version probes are the attestation. The root operator then
+set `HOSTINGER_OPS_AUTO_DEPLOY_ENABLED=true`; subsequent `main` releases must
+also pass the workflow's automated exact-SHA live poll.
 
 Never infer continued production readiness from `/login` alone. Re-check
 readiness, auth session, a real static asset, and an authenticated owner page
@@ -474,7 +483,7 @@ Do not enable trusted proxy/IP extraction until Hostinger header behavior is pro
 ## Production completion checklist
 
 - [ ] GitHub Dependency Review gate resolved and main artifact retained.
-- [ ] Current checksum-verified Path Z ZIP uploaded with Node 24.x settings.
+- [x] Generated branch connected with Node 24.x settings and exact-SHA production smoke; retain checksum-verified Path Z ZIP for emergency rollback only — verified 2026-07-31.
 - [ ] hPanel env and SMTP keys present.
 - [ ] Bare role, `0007`, grant proof, expansion smoke, reconciliation, `0008`, grant reproof complete.
 - [ ] MAIN and owner seeded on production.

@@ -1,7 +1,7 @@
 # CI gate, verified standalone pack, and automated Hostinger ops branch publish.
 # Pure Hostinger monorepo source build (Path G) remains blocked by esbuild EACCES.
 # Routine ops target: publish exact prebuilt tree to branch hostinger-ops-production.
-# Live Path Z remains current production until Hostinger Git webhook is proven twice.
+# Production Hostinger watches the generated branch; Path Z is emergency fallback only.
 name: ci-and-ops-artifact
 
 on:

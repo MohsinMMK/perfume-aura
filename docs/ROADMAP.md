@@ -15,20 +15,25 @@
 | Finance snapshot, inventory value, cash/accrual metrics | Complete |
 | Migrations `0000–0008`, staged cutover tooling, restricted role design | Complete; production migrated through `0008` and grants verified 2026-07-27 |
 | Node 24 quality/integration/package workflow | Complete; GitHub Dependency Review setting pending |
-| Manual standalone Path Z packaging | Complete; current live production fallback |
-| Owner login on production ops | Verified 2026-07-27 against Neon production |
-| CI publish of prebuilt `hostinger-ops-production` branch (Option 1-B) | Implemented in repository; Hostinger webhook cutover pending |
+| Manual standalone Path Z packaging | Complete; emergency rollback/fallback only |
+| Owner login on production ops | Re-verified 2026-07-31 after generated-branch cutover and secret rotation |
+| CI publish of prebuilt `hostinger-ops-production` branch (Option 1-B) | Production connected; two consecutive webhook deployments and exact-SHA health proofs passed 2026-07-31 |
 | Documentation consolidation | Complete |
 
-## Production automation — next
+## Production automation — completed 2026-07-31
+
+1. Connected `app.perfumeaura.com` Hostinger Node Web App to generated branch `hostinger-ops-production`.
+2. GitHub runs `30615774862` and `30623386605` published sources `43edda3e7b05…` and `3e7fa94c1a18…`; hPanel showed completed deploy commits `db10bb11b724…` and `cd7f2d818d66…`, followed immediately by matching manual `/api/health/version` probes.
+3. Enabled repository variable `HOSTINGER_OPS_AUTO_DEPLOY_ENABLED=true` after those proofs so subsequent releases require the workflow's automated exact-SHA live poll.
+4. Rotated the restricted Neon runtime-role password and Better Auth secret, applied the hPanel environment, redeployed, and re-verified readiness, auth, static assets, owner session, dashboard, and core pages.
+
+## Production automation — remaining
 
 1. Enable GitHub Dependency Graph/Dependency Review and rerun PR gates.
-2. Prove Option 1-B twice on staging/non-prod Hostinger app: push `main` → branch publish → Node Git auto-start → `/api/health/version` matches SHA.
-3. One-time connect `app.perfumeaura.com` Node Web App to branch `hostinger-ops-production` with prebuilt settings (Package manager `pnpm`, build `echo prebuilt-standalone`, entry `apps/ops/server.js`); set `HOSTINGER_OPS_AUTO_DEPLOY_ENABLED=true` only after first green live poll.
-4. Keep Path Z ZIP as rollback/fallback until two consecutive production push proofs pass.
-5. Implement/prove production migration automation before claiming schema-changing push-only releases.
-6. Complete SMTP mailbox/env and password-reset email smoke; prove trusted-proxy / per-client IP rate limiting.
-7. Record dated production evidence without secrets after webhook cutover.
+2. Implement/prove production migration automation before claiming schema-changing push-only releases.
+3. Complete SMTP mailbox/env and password-reset email smoke.
+4. Prove trusted-proxy / per-client IP rate limiting and restart persistence.
+5. Retain a checksum-verified Path Z ZIP as emergency rollback material, not routine deployment.
 
 ## Later
 
