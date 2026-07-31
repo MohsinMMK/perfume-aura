@@ -144,18 +144,40 @@ export async function verifyProductionDeploy(options) {
   ).replace(/\/$/, "");
   const timeoutMs = options.timeoutMs ?? 15 * 60_000;
   const pollIntervalMs = options.pollIntervalMs ?? 10_000;
+  if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1) {
+    throw new Error("invalid deploy verification timeout");
+  }
+  if (!Number.isSafeInteger(pollIntervalMs) || pollIntervalMs < 1) {
+    throw new Error("invalid deploy verification poll interval");
+  }
   const fetchImpl = options.fetchImpl;
   const now = options.now ?? Date.now;
   const sleepImpl = options.sleepImpl ?? sleep;
   const started = now();
+  const maxAttempts = Math.ceil(timeoutMs / pollIntervalMs) + 1;
+  if (!Number.isSafeInteger(maxAttempts)) {
+    throw new Error("invalid deploy verification polling bounds");
+  }
 
   let versionMatched = false;
-  while (now() - started <= timeoutMs) {
-    const version = await fetchStatus(`${opsBase}/api/health/version`, {
-      fetchImpl,
-      timeoutMs: 15_000,
-    });
-    if (version.status === 200) {
+  let attempts = 0;
+  while (attempts < maxAttempts) {
+    const elapsedMs = now() - started;
+    if (elapsedMs >= timeoutMs) {
+      break;
+    }
+    attempts += 1;
+    let version = null;
+    try {
+      version = await fetchStatus(`${opsBase}/api/health/version`, {
+        fetchImpl,
+        timeoutMs: Math.max(1, Math.min(15_000, timeoutMs - elapsedMs)),
+      });
+    } catch {
+      // DNS, TLS, connection, and request-timeout failures can be transient while
+      // Hostinger rolls the branch. Keep polling without exposing provider details.
+    }
+    if (version?.status === 200) {
       let body;
       try {
         body = JSON.parse(version.text);
@@ -365,6 +387,28 @@ async function selfTest() {
     /user field has invalid type/,
   );
 
+  await assert.rejects(
+    () => verifyProductionDeploy({ expectedCommit: commit, timeoutMs: 0 }),
+    /invalid deploy verification timeout/,
+  );
+  await assert.rejects(
+    () =>
+      verifyProductionDeploy({
+        expectedCommit: commit,
+        pollIntervalMs: 0,
+      }),
+    /invalid deploy verification poll interval/,
+  );
+  await assert.rejects(
+    () =>
+      verifyProductionDeploy({
+        expectedCommit: commit,
+        timeoutMs: Number.MAX_SAFE_INTEGER,
+        pollIntervalMs: 1,
+      }),
+    /invalid deploy verification polling bounds/,
+  );
+
   const success = await createFixtureServer(successRoutes(commit, staticPath));
   try {
     const result = await verifyProductionDeploy({
@@ -401,6 +445,84 @@ async function selfTest() {
   } finally {
     stale.server.close();
   }
+
+  const transient = await createFixtureServer(
+    successRoutes(commit, staticPath),
+  );
+  try {
+    let versionAttempts = 0;
+    const transientFetch = async (url, init) => {
+      if (String(url).endsWith("/api/health/version")) {
+        versionAttempts += 1;
+        if (versionAttempts === 1) {
+          throw new TypeError("temporary provider fetch failure");
+        }
+      }
+      return globalThis.fetch(url, init);
+    };
+    const result = await verifyProductionDeploy({
+      expectedCommit: commit,
+      opsBaseUrl: transient.baseUrl,
+      marketingBaseUrl: transient.baseUrl,
+      timeoutMs: 1_000,
+      pollIntervalMs: 10,
+      fetchImpl: transientFetch,
+    });
+    assert.equal(result.commit, commit);
+    assert.equal(versionAttempts, 2);
+  } finally {
+    transient.server.close();
+  }
+
+  let persistentAttempts = 0;
+  let fakeNow = 0;
+  await assert.rejects(
+    () =>
+      verifyProductionDeploy({
+        expectedCommit: commit,
+        opsBaseUrl: "https://ops.invalid.example",
+        marketingBaseUrl: "https://marketing.invalid.example",
+        timeoutMs: 50,
+        pollIntervalMs: 10,
+        fetchImpl: async () => {
+          persistentAttempts += 1;
+          throw new TypeError("sensitive provider failure detail");
+        },
+        now: () => fakeNow,
+        sleepImpl: async (ms) => {
+          fakeNow += ms;
+        },
+      }),
+    (error) => {
+      assert.match(
+        error.message,
+        /deploy version did not match expected commit before timeout/,
+      );
+      assert.doesNotMatch(error.message, /sensitive provider failure detail/);
+      return true;
+    },
+  );
+  assert.equal(persistentAttempts, 5);
+
+  let frozenClockAttempts = 0;
+  await assert.rejects(
+    () =>
+      verifyProductionDeploy({
+        expectedCommit: commit,
+        opsBaseUrl: "https://ops.invalid.example",
+        marketingBaseUrl: "https://marketing.invalid.example",
+        timeoutMs: 30,
+        pollIntervalMs: 10,
+        fetchImpl: async () => {
+          frozenClockAttempts += 1;
+          throw new TypeError("transient");
+        },
+        now: () => 0,
+        sleepImpl: async () => {},
+      }),
+    /deploy version did not match expected commit before timeout/,
+  );
+  assert.equal(frozenClockAttempts, 4);
 
   const badStatus = await createFixtureServer({
     "/api/health/version": {
