@@ -6,6 +6,7 @@ Monorepo for static marketing at **perfumeaura.com** and owner-only operations a
 
 | Topic | Document |
 |---|---|
+| Mandatory current-state handoff | [docs/CURRENT_STATE.md](docs/CURRENT_STATE.md) |
 | Index and current status | [docs/README.md](docs/README.md) |
 | Product behavior | [docs/PRODUCT.md](docs/PRODUCT.md) |
 | Architecture, data, auth, development, tests | [docs/ENGINEERING.md](docs/ENGINEERING.md) |
@@ -23,7 +24,7 @@ packages/ui/      shared shadcn components
 packages/db/      schema, migrations, workflows, tests
 packages/validators/
 scripts/          marketing sync and ops pack
-docs/             six current documents
+docs/             current state and detailed project/runbook documents
 ```
 
 Root `index.html`, `styles.css`, and `.htaccess` are generated from `apps/marketing` by `pnpm marketing:sync`; do not hand-edit them.
@@ -83,7 +84,7 @@ pnpm test:integration
 | Site | Supported deployment |
 |---|---|
 | Marketing | Hostinger classic Git Path M (`main`) |
-| Ops routine | GitHub Actions prebuilt tree → branch `hostinger-ops-production` → Hostinger Node GitHub App; production webhook proven twice 2026-07-31 |
+| Ops routine | GitHub Actions prebuilt tree → branch `hostinger-ops-production` → Hostinger Node GitHub App; recovered from plan-wide NPROC exhaustion and exact-SHA verified 2026-08-01 |
 | Ops emergency fallback | Manual prebuilt ZIP Path Z |
 
 Pure Hostinger monorepo source build remains blocked (esbuild EACCES). Production DB migrations are not auto-applied by CI. No public ecommerce storefront yet. Follow [docs/OPERATIONS.md](docs/OPERATIONS.md); never infer production readiness from `/login` alone.

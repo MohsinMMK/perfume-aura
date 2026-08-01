@@ -2,6 +2,18 @@
 
 Instructions for AI agents and developers working on this repository.
 
+## Mandatory session bootstrap
+
+Every agent must read [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) before
+acting. It is the concise live handoff for repository SHAs, production state,
+the active Hostinger incident/risk, verified evidence, and the next safe action.
+
+Then open the task-specific owning document linked from that file. Fresh live
+evidence outranks dated snapshots, but it never overrides the non-negotiable
+safety/tooling rules in this file. If a task changes production state, the
+deployment route/settings, active blockers, or next action, update
+`docs/CURRENT_STATE.md` in the same change. Never put secrets in it.
+
 ## Non-negotiable: official tooling only (STRICT)
 
 Agents and developers **must** use **official documented install/setup paths** for every stack piece. Do **not** hand-roll alternatives “to save time.”
@@ -62,6 +74,7 @@ Restore: `pnpm dlx skills experimental_install` (from `skills-lock.json`).
 
 ### Docs pointers
 
+- Mandatory current-state handoff: [docs/CURRENT_STATE.md](docs/CURRENT_STATE.md)
 - Locked stack and shadcn workflow: [docs/STACK.md](docs/STACK.md)
 - Engineering contracts: [docs/ENGINEERING.md](docs/ENGINEERING.md)
 - Production operations: [docs/OPERATIONS.md](docs/OPERATIONS.md)
@@ -74,7 +87,7 @@ Restore: `pnpm dlx skills experimental_install` (from `skills-lock.json`).
 | Production domain | **perfumeaura.com** (marketing) · **app.perfumeaura.com** (ops) |
 | GitHub repo | https://github.com/MohsinMMK/perfume-aura |
 | Default branch | **`main`** |
-| Current phase | Product inventory-to-finance implemented; generated-branch production cutover, secret rotation, and owner login re-verified 2026-07-31; migration automation, SMTP reset, and trusted-proxy proof remain pending |
+| Current phase | Product inventory-to-finance implemented; production recovered from a plan-wide NPROC exhaustion on 2026-08-01 and exact-SHA CI/live verification passed; durable process attribution, migration automation, SMTP reset, and trusted-proxy proof remain pending |
 | Stack | **pnpm monorepo** · marketing static · ops **Next.js 16.2.11** + **TypeScript 7.0.2** on Hostinger Node **24.x** (Option 1-B production / Path Z emergency fallback) |
 | Docs | [index](docs/README.md) · [product](docs/PRODUCT.md) · [engineering](docs/ENGINEERING.md) · [operations](docs/OPERATIONS.md) · [roadmap](docs/ROADMAP.md) · [stack](docs/STACK.md) |
 
@@ -85,7 +98,7 @@ apps/marketing     # brand static SOURCE OF TRUTH (edit here)
 apps/ops           # Next.js internal ops (inventory → finance)
 packages/ui|db|validators
 scripts/           # marketing sync + ops pack
-docs/              # six current product/engineering/operations documents
+docs/              # current state plus product/engineering/operations documents
 index.html + styles.css + .htaccess  # Path M publish surface (pnpm marketing:sync)
 ```
 
@@ -426,7 +439,7 @@ scripts/pack-ops-standalone.sh       ← ops:pack
 | Node | **24.x** |
 | Package manager | **pnpm** |
 | Root directory | `./` |
-| Build command | **`pnpm run build`** (generated root script echoes `prebuilt-standalone`) |
+| Build command | **None** (generated branch is already prebuilt) |
 | Output directory | *(empty)* |
 | **Entry file** | **`apps/ops/server.js`** |
 
@@ -462,7 +475,7 @@ Script: [`scripts/pack-ops-standalone.sh`](scripts/pack-ops-standalone.sh)
 | Node | **24.x** |
 | Package manager | **pnpm** |
 | Root directory | `./` |
-| Build command | **`echo prebuilt-standalone`** (manual ZIP flow; generated Git branch uses `pnpm run build`) |
+| Build command | **`echo prebuilt-standalone`** (manual ZIP flow; generated Git branch uses no build command) |
 | Output directory | *(empty)* |
 | **Entry file** | **`apps/ops/server.js`** |
 
@@ -512,8 +525,11 @@ SMTP_USER=<Hostinger mailbox>
 SMTP_PASSWORD=<mailbox password>
 SMTP_FROM=<approved sender>
 NODE_ENV=production
-PORT=3000
 ```
+
+Do **not** set a fixed `PORT` in hPanel. Hostinger supplies `process.env.PORT`;
+the standalone server uses `3000` only as a fallback when the platform does not
+provide one.
 
 For a new environment or production recovery, follow the Neon + Path Z cutover
 in this **exact** order (human provides Neon URLs):
@@ -544,7 +560,7 @@ Classic Git deploys **entire repo** into marketing `public_html`. Without deny r
 - Verify: `curl -sI -o /dev/null -w '%{http_code}\n' https://perfumeaura.com/apps/ops/package.json` → **403** (`.htaccess` `[F,L]`; 404 only if path absent).
 - Long-term: artifact-only marketing deploy (static files only).
 
-### Known live status (production cutover re-verified 2026-07-31; re-check before acting)
+### Known live status (recovered and re-verified 2026-08-01; re-check before acting)
 
 This snapshot supersedes only the stale 2026-07-25 live-evidence table in
 `docs/OPERATIONS.md`; its safety gates and recovery sequence remain
@@ -559,13 +575,14 @@ authoritative. Provider/database evidence otherwise retains the 2026-07-27 basel
 | `https://app.perfumeaura.com/login` | 200 |
 | `/api/auth/get-session` | 200 |
 | `/api/health/live` · `/ready` | 200 / 200 |
-| Active Hostinger deploy | **Node 24.x** generated branch `hostinger-ops-production`, build `pnpm run build`, entry `apps/ops/server.js`; `/api/health/version` must match each released source SHA |
+| Active Hostinger deploy | **Node 24.x** generated branch `hostinger-ops-production`, no build command, entry `apps/ops/server.js`; `/api/health/version` must match each released source SHA |
 | Neon production | Main branch migrated through `0008`; nine-row journal/hash, restricted runtime role, grants, constraints, trigger, and zero reconciliation drift verified; runtime password rotated 2026-07-31 |
 | Owner login on prod | **Re-verified 2026-07-31 after Better Auth secret rotation**; `/dashboard`, `/products`, `/customers`, `/invoices`, `/stock`, and `/finance` rendered |
 | Password reset email | **Not verified** — SMTP hPanel variables/mailbox remain pending |
 | Client-IP rate limiting | Shared-bucket fallback remains active until Hostinger trusted-proxy evidence is established |
 | Ops Option 1-B generated branch publish | Production connected; hPanel deployment evidence plus manual exact-SHA probes proved initial and follow-up releases, then live-poll variable was enabled 2026-07-31 |
 | Ops Path G monorepo source build | **Blocked** (esbuild EACCES) |
+| 2026-08-01 outage recovery | Hostinger support found the plan at its 120 NPROC limit and stopped plan-wide running processes; service recovered, exact source `6d79a495…` passed the full verifier, and GitHub run `30690719178` rerun succeeded. Live Max Processes fell to about 10/120. Durable process/site attribution remains unknown; see `docs/CURRENT_STATE.md`. |
 
 Never infer continued production readiness from `/login` alone. Re-check
 readiness, auth session, a real static asset, and an authenticated owner page

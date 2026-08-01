@@ -6,6 +6,7 @@ Current documentation only. Historical plans and remediation packets were remove
 
 | Need | Document |
 |---|---|
+| Mandatory current repository/production handoff | [CURRENT_STATE.md](./CURRENT_STATE.md) |
 | Product behavior, routes, workflows, terminology | [PRODUCT.md](./PRODUCT.md) |
 | Architecture, data, auth, local development, tests, CI | [ENGINEERING.md](./ENGINEERING.md) |
 | Hosting, DNS, deployment, database cutover, production recovery | [OPERATIONS.md](./OPERATIONS.md) |
@@ -16,10 +17,12 @@ Current documentation only. Historical plans and remediation packets were remove
 
 ## Current status
 
+- Every agent starts with `AGENTS.md` and `CURRENT_STATE.md`; the latter owns
+  the latest SHAs, live evidence, active incident/risk, and next safe action.
 - Repository implements owner auth/recovery, inventory, customers, invoices, fulfillment, payments, finance, and health endpoints.
 - Local/CI/package runtime is pinned to Node `24.18.0`; Hostinger target is Node `24.x`.
 - Marketing collection preview is live via classic Git Path M (`main`); public allowlist serves assets and denies repo source paths.
-- Ops production routine is Option 1-B: `main` push → verified pack → generated branch `hostinger-ops-production` → Hostinger Node GitHub App start. Two consecutive production webhook deployments passed 2026-07-31; Path Z remains emergency fallback only. Pure monorepo source build (Path G) remains blocked by esbuild EACCES.
+- Ops production routine is Option 1-B: `main` push → verified pack → generated branch `hostinger-ops-production` → Hostinger Node GitHub App start. Production was recovered from plan-wide NPROC exhaustion and exact-SHA verification passed 2026-08-01; Path Z remains emergency fallback only. Pure monorepo source build (Path G) remains blocked by esbuild EACCES.
 - Repository variable `HOSTINGER_OPS_AUTO_DEPLOY_ENABLED=true` enables exact-SHA live polling after branch publication.
 - Production migration automation is not part of the deploy workflow yet; schema-changing push-only release remains incomplete.
 - SMTP reset and trusted-proxy proof remain pending.
