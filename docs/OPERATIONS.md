@@ -10,7 +10,7 @@ Safety-critical source for DNS, Hostinger deployment, Neon cutover, and producti
 | Authoritative DNS | Hostinger |
 | Marketing hosting | Hostinger classic Git |
 | Ops hosting | Hostinger Node.js Web App |
-| Storefront hosting | Separate Hostinger Node.js Web App at `shop.perfumeaura.com` (planned, not configured) |
+| Storefront hosting | Separate Hostinger Node.js Web App at `shop.perfumeaura.com` (deployed; public proxy provisioning pending) |
 | Database | Neon PostgreSQL |
 | Source | GitHub `MohsinMMK/perfume-aura`, branch `main` |
 
@@ -133,7 +133,7 @@ Provider API archive upload, MCP deploy, and Connector remain unsupported for
 routine release. Read-only provider inspection is allowed; mutations stay with
 authorized root operator.
 
-### Storefront — staged prebuilt ZIP (not deployed)
+### Storefront — deployed prebuilt ZIP
 
 The storefront must remain separate from marketing and owner ops. Build and
 verify its Hostinger-compatible archive locally:
@@ -149,9 +149,10 @@ paths, extracts the candidate, starts it, and smokes `/` plus a real Next static
 asset. It writes a ZIP, checksum, and manifest under `dist/`; entry is
 `apps/storefront/server.js`.
 
-Do not create the Hostinger app, add `shop` DNS, upload the ZIP, set provider
-credentials, or enable release flags without explicit release authorization.
-When authorized, use Hostinger Node.js Web App (not classic Git and not Path G):
+The user explicitly authorized release on 2026-08-02. The verified ZIP was
+uploaded to a separate Hostinger Node.js Web App and `shop.perfumeaura.com` was
+attached through Hostinger. Continue to use the Node.js Web App (not classic Git
+and not Path G):
 
 | Field | Value |
 |---|---|
@@ -160,9 +161,26 @@ When authorized, use Hostinger Node.js Web App (not classic Git and not Path G):
 | Framework | Other |
 | Node | `24.x` |
 | Root | `./` |
-| Build | `echo prebuilt-standalone` |
+| Build | `pnpm run build` (the artifact root script is a prebuilt no-op) |
 | Output | empty |
 | Entry | `apps/storefront/server.js` |
+
+Deployed artifact:
+
+```text
+perfume-aura-storefront_2a8864c251f5.zip
+SHA-256 08e24c8766a5c4d46d1ca3555b4a86c7e6dab1ec78143e1fe22a72654c19bc82
+```
+
+Hostinger reports the Web App Running and its latest deployment Completed. The
+custom domain, authoritative DNS, SSL, and CDN are active, but the public edge
+currently serves Hostinger LiteSpeed `403` for `/` and `404` for Next routes.
+Redeploy and restart did not regenerate the public proxy; the managed
+`public_html`/`.htaccess` is not accessible in File Manager. Hostinger documents
+that a newly connected custom domain may take up to 24 hours. After that window,
+if the edge is unchanged, ask support to regenerate the managed Node proxy and
+`.htaccess` mapping for `shop.perfumeaura.com` without stopping plan-wide
+processes or changing another site.
 
 Migration `0009` was applied to production on 2026-08-02 after the read-only
 audit proved every legacy monetary category was zero. For a new environment,
