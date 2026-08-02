@@ -12,7 +12,7 @@ import { getDashboardStats } from "@/lib/stock";
 import { getOpenArTotalCents } from "@/lib/invoices";
 import { getCashCollectedThisMonthCents } from "@/lib/payments";
 import { safeDbQuery } from "@/lib/db-safe";
-import { formatPkr, formatQty } from "@/lib/money";
+import { formatInr, formatQty } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { requireOwnerSession } from "@/lib/session";
 
@@ -64,15 +64,15 @@ export default async function DashboardPage() {
     },
     {
       label: "Inventory cost",
-      value: stats ? formatPkr(stats.inventoryCostCents) : "—",
-      hint: "Sum of qty × cost (PKR)",
+      value: stats ? formatInr(stats.inventoryCostCents) : "—",
+      hint: "Sum of qty × cost (INR)",
       href: "/products",
       badge: error ? "Offline" : "Live",
       warn: false,
     },
     {
       label: "Open AR",
-      value: formatPkr(openAr),
+      value: formatInr(openAr),
       hint: "Issued unpaid invoices",
       href: "/invoices/ar",
       badge: openAr > 0 ? "AR" : error ? "Offline" : "Clear",
@@ -80,7 +80,7 @@ export default async function DashboardPage() {
     },
     {
       label: "Cash MTD",
-      value: formatPkr(cashMtd),
+      value: formatInr(cashMtd),
       hint: "Payments received this month",
       href: "/payments",
       badge: error ? "Offline" : "Live",

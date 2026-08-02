@@ -211,7 +211,7 @@ async function recordPaymentAgainstLockedInvoice(
   if (effectiveAmount > remainingCents) {
     throw new DomainError(
       "OVERPAYMENT",
-      `Payment exceeds balance. Remaining: ${(remainingCents / 100).toFixed(2)} PKR`,
+      `Payment exceeds balance. Remaining: INR ${(remainingCents / 100).toFixed(2)}`,
     );
   }
 

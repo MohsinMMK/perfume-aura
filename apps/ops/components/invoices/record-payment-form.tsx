@@ -99,7 +99,7 @@ export function RecordPaymentForm({
         <CardDescription>
           Manual cash / bank / card. Does not change stock. Balance:{" "}
           <span className="font-medium text-foreground">
-            Rs {balanceRupees.toFixed(2)}
+            ₹{balanceRupees.toFixed(2)}
           </span>
         </CardDescription>
       </CardHeader>
@@ -108,7 +108,7 @@ export function RecordPaymentForm({
           <FieldGroup className="gap-3">
           <FieldGroup className="grid gap-3 sm:grid-cols-2">
             <FormField
-              label="Amount (Rs)"
+              label="Amount (INR)"
               name="amount"
               type="number"
               step="0.01"

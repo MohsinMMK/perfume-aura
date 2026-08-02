@@ -17,7 +17,7 @@ import {
 import { recordPaymentSchema } from "@perfume-aura/validators";
 import { revalidatePath } from "next/cache";
 import { requireOwnerSession } from "@/lib/session";
-import { rupeesToCents } from "@/lib/money";
+import { rupeesToPaise } from "@/lib/money";
 import {
   actionError,
   actionOk,
@@ -147,7 +147,7 @@ export async function recordPaymentAction(
     const result = await recordPayment({
       invoiceId: parsed.data.invoiceId,
       idempotencyKey: parsed.data.idempotencyKey,
-      amountCents: rupeesToCents(parsed.data.amount),
+      amountCents: rupeesToPaise(parsed.data.amount),
       method: parsed.data.method,
       paidAt: parseBusinessDateTime(parsed.data.paidAt),
       reference: parsed.data.reference?.trim() || null,

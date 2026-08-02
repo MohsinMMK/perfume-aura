@@ -26,7 +26,7 @@ It does not yet support a public catalog contract, cart, checkout, order, shippi
 
 ```text
 apps/marketing       retained until storefront cutover
-apps/storefront      proposed public Next.js commerce application
+apps/storefront      accepted public Next.js commerce application
 apps/ops             private owner catalog, inventory, order, invoice, and finance operations
 packages/db          shared data model and migrations
 packages/validators  shared server/client input contracts
@@ -122,11 +122,11 @@ Customer order and financial invoice are related but distinct:
 
 ## Payment boundary
 
-No provider is selected.
+Cashfree is the selected prepaid provider and COD is the selected offline method. Merchant/KYC approval and live credentials remain release gates.
 
 Any future integration must include:
 
-- PKR and supported-method confirmation
+- INR and supported-method confirmation
 - Server-created payment attempt
 - Signed callback/webhook verification
 - Provider-event idempotency and replay handling

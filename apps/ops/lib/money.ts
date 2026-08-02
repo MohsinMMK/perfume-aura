@@ -1,26 +1,27 @@
 /**
- * PKR money helpers. Storage is integer cents (paisa); UI uses major units (rupees).
+ * INR money helpers. Legacy `*Cents` columns store integer paise; UI uses rupees.
  */
 
-/** Convert major PKR (rupees, may be fractional) to integer cents. */
-export function rupeesToCents(rupees: number): number {
+/** Convert major INR rupees to integer paise. */
+export function rupeesToPaise(rupees: number): number {
   if (!Number.isFinite(rupees)) {
     throw new Error("Invalid money amount");
   }
   return Math.round(rupees * 100);
 }
 
-/** Format cents as "Rs 1,234.56" (or whole rupees when exact). */
-export function formatPkr(cents: number): string {
-  const rupees = cents / 100;
-  const formatted = new Intl.NumberFormat("en-PK", {
+/** Format integer paise with the unambiguous INR currency symbol. */
+export function formatInr(paise: number): string {
+  const rupees = paise / 100;
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
     minimumFractionDigits: Number.isInteger(rupees) ? 0 : 2,
     maximumFractionDigits: 2,
   }).format(rupees);
-  return `Rs ${formatted}`;
 }
 
 /** Compact integer formatting for unit counts. */
 export function formatQty(n: number): string {
-  return new Intl.NumberFormat("en-PK").format(n);
+  return new Intl.NumberFormat("en-IN").format(n);
 }

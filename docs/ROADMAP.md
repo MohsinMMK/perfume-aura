@@ -19,6 +19,10 @@
 | Owner login on production ops | Re-verified 2026-07-31 after generated-branch cutover and secret rotation |
 | CI publish of prebuilt `hostinger-ops-production` branch (Option 1-B) | Production connected; two consecutive webhook deployments and exact-SHA health proofs passed 2026-07-31 |
 | Documentation consolidation | Complete |
+| Storefront routes, editorial UI, cart, gated checkout, customer auth, Cashfree/COD contracts, owner commerce console | Complete locally; production release gated |
+| Storefront migration `0009`, public catalog projection, reservation/order/payment/shipment/review/return schema | Generated and repository-verified; not applied |
+| INR read-only audit and fail-closed migration preflight | Complete in code; owner treatment decision pending |
+| Hostinger storefront prebuilt ZIP (`apps/storefront/server.js`) | Extracted-artifact smoke passed locally; Hostinger app/DNS not created |
 
 ## Production automation — completed 2026-07-31
 
@@ -35,6 +39,23 @@
 4. Prove trusted-proxy / per-client IP rate limiting and restart persistence.
 5. Retain a checksum-verified Path Z ZIP as emergency rollback material, not routine deployment.
 
+## Storefront release gates
+
+1. Complete browser/design/accessibility QA and the full serial repository suite.
+2. Run the read-only currency audit; record the owner's treatment decision for
+   every non-zero legacy monetary record. Never perform automatic FX conversion.
+3. Approve every product's legal identity, copy, media, SKU, stock, cost, and
+   price. Supply exact Signature prices.
+4. Approve delivery fee/threshold, shipping/returns/cancellation text, tax
+   treatment, and support channel in ops.
+5. Complete Cashfree KYC/sandbox proof, isolated customer-auth secret, SMTP,
+   Google and Apple credentials/callback domains, and India-counsel review.
+6. Create a separate Hostinger Node Web App and DNS record for
+   `shop.perfumeaura.com`, upload the verified prebuilt artifact, and run the
+   explicitly authorized prepaid + COD lifecycle acceptance tests.
+7. Cut the apex only after explicit release approval and preserve current Path
+   M marketing files/settings as rollback.
+
 ## Later
 
 - Do not enable pure Hostinger monorepo source build (Path G) while esbuild EACCES remains.
@@ -42,11 +63,10 @@
 - Design linked returns, payment reversal/credit notes, and authoritative net-sum semantics.
 - Add purchase orders/suppliers only after product requirements.
 - Add multi-role access only after explicit authorization model.
-- Add payment gateway only with webhook idempotency and accounting design; never couple stock mutation to payment webhook.
+- Enable Cashfree production payments only after merchant approval, signed-webhook idempotency, refund/reconciliation proof, and Hostinger staging evidence; never couple stock mutation directly to a browser callback.
 
 ## Not planned now
 
 - Vercel production hosting.
-- Public e-commerce storefront.
 - Unproven provider API/MCP/Connector deployment.
 - Destructive migration shortcuts or broad runtime database privileges.

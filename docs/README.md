@@ -26,7 +26,11 @@ Current documentation only. Historical plans and remediation packets were remove
 - Repository variable `HOSTINGER_OPS_AUTO_DEPLOY_ENABLED=true` enables exact-SHA live polling after branch publication.
 - Production migration automation is not part of the deploy workflow yet; schema-changing push-only release remains incomplete.
 - SMTP reset and trusted-proxy proof remain pending.
-- No public ecommerce storefront is implemented yet.
+- The release-gated ecommerce storefront, commerce schema, owner controls,
+  Cashfree/COD contracts, customer-auth boundary, INR audit, and verified
+  Hostinger artifact path are implemented locally. Nothing is deployed and
+  migration `0009` is not applied; see `CURRENT_STATE.md` for the explicit
+  currency/catalog/legal/provider/policy release blockers.
 
 ## Documentation rules
 

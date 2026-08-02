@@ -16,7 +16,7 @@ import {
 } from "@perfume-aura/ui/components/table";
 import { listLowStock } from "@/lib/stock";
 import { safeDbQuery } from "@/lib/db-safe";
-import { formatPkr, formatQty } from "@/lib/money";
+import { formatInr, formatQty } from "@/lib/money";
 import {
   DbUnavailableState,
   LowStockClearState,
@@ -107,7 +107,7 @@ export default async function LowStockPage() {
                       {formatQty(row.reorderLevel)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatPkr(row.costCents)}
+                      {formatInr(row.costCents)}
                     </TableCell>
                   </TableRow>
                 ))}

@@ -115,7 +115,7 @@ export function AddVariantForm({ productId }: Props) {
               error={fe("reorderLevel")}
             />
             <FormField
-              label="Cost (Rs)"
+              label="Cost (INR)"
               name="cost"
               type="number"
               required
@@ -124,7 +124,7 @@ export function AddVariantForm({ productId }: Props) {
               error={fe("cost")}
             />
             <FormField
-              label="Retail (Rs)"
+              label="Retail (INR)"
               name="retail"
               type="number"
               required

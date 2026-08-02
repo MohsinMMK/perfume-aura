@@ -112,6 +112,29 @@ export {
   MAIN_LOCATION_NAME,
 } from "./seed";
 
+export {
+  normalizeReservationItems,
+  reserveCheckoutStock,
+  releaseCheckoutReservations,
+  consumeCheckoutReservations,
+  expireAbandonedCheckouts,
+  type ReservationItemInput,
+  type ReservationResult,
+} from "./commerce-reservations";
+
+export {
+  commerceInvoiceTransitions,
+  linkCommerceOrderInvoice,
+  type CommerceInvoiceTransition,
+  type LinkCommerceOrderInvoiceInput,
+} from "./commerce-invoice-link";
+
+export {
+  evaluateCurrencyMigration,
+  type CurrencyAuditSnapshot,
+  type CurrencyMigrationAuditReport,
+} from "./currency-migration-audit";
+
 /**
  * Official monorepo pattern: apps import operators only from `@perfume-aura/db`
  * (this package’s drizzle-orm instance). Never `import { eq } from "drizzle-orm"`

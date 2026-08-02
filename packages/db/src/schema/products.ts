@@ -48,7 +48,8 @@ export const products = pgTable(
 );
 
 /**
- * Sellable SKU = product × size. Money fields are integer PKR cents (paisa).
+ * Sellable SKU = product × size. Money fields use integer INR minor units (paise)
+ * only after the audited currency migration gate passes.
  * quantity_on_hand is the v1 balance cache; ledger is stock_movements.
  */
 export const productVariants = pgTable(
@@ -61,9 +62,9 @@ export const productVariants = pgTable(
     sku: text("sku").notNull().unique(),
     barcode: text("barcode"),
     sizeMl: integer("size_ml").notNull(),
-    /** Cost in PKR integer cents (paisa). */
+    /** Cost in INR integer paise after the currency gate. */
     costCents: integer("cost_cents").notNull().default(0),
-    /** Retail in PKR integer cents (paisa). */
+    /** Retail in INR integer paise after the currency gate. */
     retailCents: integer("retail_cents").notNull().default(0),
     quantityOnHand: integer("quantity_on_hand").notNull().default(0),
     qtyReserved: integer("qty_reserved").notNull().default(0),

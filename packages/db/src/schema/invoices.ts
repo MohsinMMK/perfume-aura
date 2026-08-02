@@ -37,7 +37,7 @@ export const invoices = pgTable(
     status: invoiceStatusEnum("status").notNull().default("draft"),
     issueDate: date("issue_date"),
     dueDate: date("due_date"),
-    currency: text("currency").notNull().default("PKR"),
+    currency: text("currency").notNull().default("INR"),
     subtotalCents: integer("subtotal_cents").notNull().default(0),
     taxCents: integer("tax_cents").notNull().default(0),
     totalCents: integer("total_cents").notNull().default(0),
@@ -68,7 +68,8 @@ export const invoices = pgTable(
     index("invoices_created_at_idx").on(table.createdAt),
     check(
       "invoices_money_check",
-      sql`${table.subtotalCents} >= 0
+      sql`${table.currency} = 'INR'
+        AND ${table.subtotalCents} >= 0
         AND ${table.taxCents} >= 0
         AND ${table.totalCents} >= 0
         AND ${table.amountPaidCents} >= 0

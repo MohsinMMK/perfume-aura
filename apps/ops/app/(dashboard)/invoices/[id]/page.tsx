@@ -19,7 +19,7 @@ import { getInvoice } from "@/lib/invoices";
 import { listActiveVariantsForSelect } from "@/lib/products";
 import { listPayments } from "@/lib/payments";
 import { safeDbQuery } from "@/lib/db-safe";
-import { formatPkr, formatQty } from "@/lib/money";
+import { formatInr, formatQty } from "@/lib/money";
 import { AddInvoiceLineForm } from "@/components/invoices/add-line-form";
 import {
   InvoiceStatusActions,
@@ -119,7 +119,7 @@ export default async function InvoiceDetailPage({
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xl tabular-nums">
-            {formatPkr(inv.subtotalCents)}
+            {formatInr(inv.subtotalCents)}
           </CardContent>
         </Card>
         <Card>
@@ -129,7 +129,7 @@ export default async function InvoiceDetailPage({
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xl tabular-nums">
-            {formatPkr(inv.totalCents)}
+            {formatInr(inv.totalCents)}
           </CardContent>
         </Card>
         <Card>
@@ -139,7 +139,7 @@ export default async function InvoiceDetailPage({
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xl tabular-nums">
-            {formatPkr(inv.balanceCents)}
+            {formatInr(inv.balanceCents)}
           </CardContent>
         </Card>
       </div>
@@ -175,10 +175,10 @@ export default async function InvoiceDetailPage({
                       {formatQty(line.quantity)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatPkr(line.unitPriceCents)}
+                      {formatInr(line.unitPriceCents)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatPkr(line.lineTotalCents)}
+                      {formatInr(line.lineTotalCents)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatQty(line.quantityFulfilled)}
@@ -242,7 +242,7 @@ export default async function InvoiceDetailPage({
                       {formatBusinessDateTime(p.paidAt)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatPkr(p.amountCents)}
+                      {formatInr(p.amountCents)}
                     </TableCell>
                   </TableRow>
                 ))}

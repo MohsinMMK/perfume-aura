@@ -23,6 +23,12 @@ const ignoredDirectories = new Set([
 
 const suites = [
   {
+    packageRoot: "apps/storefront",
+    unitGlob: "lib/**/!(*.integration).test.ts",
+    integrationGlob: "lib/**/*.integration.test.ts",
+    integrationCommand: 'tsx --test "lib/**/*.integration.test.ts"',
+  },
+  {
     packageRoot: "apps/ops",
     unitGlob: "lib/**/!(*.integration).test.ts",
     integrationGlob: "lib/**/*.integration.test.ts",

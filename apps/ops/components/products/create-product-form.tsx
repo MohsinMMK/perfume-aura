@@ -80,7 +80,7 @@ export function CreateProductForm() {
           <CardTitle>New product</CardTitle>
           <CardDescription>
             Create a catalog product and its first sellable size/SKU. Prices in
-            rupees (stored as cents).
+            INR rupees (stored as integer paise in legacy `*Cents` columns).
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
@@ -157,7 +157,7 @@ export function CreateProductForm() {
                 error={fe("reorderLevel")}
               />
               <FormField
-                label="Cost (Rs)"
+                label="Cost (INR)"
                 name="cost"
                 type="number"
                 required
@@ -167,7 +167,7 @@ export function CreateProductForm() {
                 error={fe("cost")}
               />
               <FormField
-                label="Retail (Rs)"
+                label="Retail (INR)"
                 name="retail"
                 type="number"
                 required

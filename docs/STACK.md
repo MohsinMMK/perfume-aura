@@ -8,16 +8,18 @@ Change stack only through an explicit reviewed decision. Production hosting rema
 |---|---|
 | Workspace | pnpm `11.1.3` monorepo |
 | Runtime | Node `24.18.0` local/CI/package; Hostinger Node `24.x` target |
-| Ops | Next.js `16.2.11`, App Router, React 19, TypeScript `7.0.2` native CLI |
+| Ops + storefront | Next.js `16.2.11`, App Router, React 19, TypeScript `7.0.2` native CLI |
 | TypeScript compatibility | `@typescript/native` aliases TypeScript `7.0.2`; `typescript` aliases `@typescript/typescript6` for Next.js and ESLint compiler-API consumers |
 | UI | shadcn/ui, Base UI, Tailwind CSS 4, Hugeicons |
-| Auth | Better Auth email/password + Drizzle adapter |
+| Auth | Two isolated Better Auth boundaries: owner ops and storefront customer, each with separate tables, secrets, cookies, origins, and Drizzle adapter |
 | Database | Neon PostgreSQL + Drizzle ORM/Kit + `pg` Pool |
 | Validation | Zod |
 | Marketing | Static HTML/CSS |
 | Production | Hostinger Business hosting |
 | Ops deploy automation | GitHub Actions prebuilt standalone → generated branch `hostinger-ops-production` → Hostinger Node GitHub App start (`apps/ops/server.js`) |
 | Ops source build on Hostinger | Blocked (esbuild EACCES); not used |
+| Storefront deploy target | Separate Hostinger Node.js Web App at `shop.perfumeaura.com`; checksum-verified prebuilt ZIP, entry `apps/storefront/server.js`; not deployed yet |
+| Payments | Cashfree Payment Gateway (server-created INR orders, signed raw-body webhooks, server status verification, refunds) plus separately reconciled COD |
 | Registrar | GoDaddy; registration/renewal only |
 
 ## Official tooling only
@@ -42,7 +44,8 @@ No hand-rolled substitutes for official install/setup paths. No Vercel productio
 ## shadcn monorepo contract
 
 - Base UI package: `packages/ui` (`@perfume-aura/ui`).
-- App composition: `apps/ops/components/` imports `@perfume-aura/ui/components/*`.
+- App composition: `apps/ops/components/` and `apps/storefront/components/`
+  import `@perfume-aura/ui/components/*`.
 - Preset: `b23PPibQOI` — luma, taupe, Hugeicons, IBM Plex Sans + Raleway, small radius.
 - Tokens: `packages/ui/src/globals.css` only.
 - `apps/ops/components.json` must point `tailwind.css` to `../../packages/ui/src/globals.css`.
@@ -52,6 +55,7 @@ No hand-rolled substitutes for official install/setup paths. No Vercel productio
 pnpm dlx shadcn@latest preset resolve -c apps/ops
 pnpm dlx shadcn@latest add button -c apps/ops -y
 pnpm dlx shadcn@latest add button -c apps/ops --dry-run
+pnpm dlx shadcn@latest preset resolve -c apps/storefront
 ```
 
 Preset resolve must return `b23PPibQOI` without fallback. Never copy registry components manually as primary install path or place base UI under `apps/ops/components/ui`.
@@ -66,7 +70,9 @@ Preset resolve must return `b23PPibQOI` without fallback. Never copy registry co
 
 ## Auth contract
 
-- Public sign-up disabled.
+- Owner public sign-up disabled. Customer sign-up is a distinct verified-email
+  flow and defaults off until `STOREFRONT_CUSTOMER_AUTH_ENABLED=true` plus all
+  secret, SMTP, and callback-domain gates are proven.
 - Owner seeded explicitly.
 - Password length: 12–256 characters.
 - Generic reset responses prevent account enumeration.

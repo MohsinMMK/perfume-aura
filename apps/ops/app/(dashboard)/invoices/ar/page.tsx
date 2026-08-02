@@ -17,7 +17,7 @@ import {
 } from "@perfume-aura/ui/components/table";
 import { listInvoices, getOpenArTotalCents } from "@/lib/invoices";
 import { safeDbQuery } from "@/lib/db-safe";
-import { formatPkr } from "@/lib/money";
+import { formatInr } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { formatBusinessDate } from "@/lib/business-date";
 import { requireOwnerSession } from "@/lib/session";
@@ -79,7 +79,7 @@ export default async function ArPage({
         <CardHeader>
           <CardDescription>Open AR</CardDescription>
           <CardTitle className="text-2xl tabular-nums">
-            {formatPkr(openAr)}
+            {formatInr(openAr)}
           </CardTitle>
         </CardHeader>
       </Card>
@@ -121,10 +121,10 @@ export default async function ArPage({
                         : "—"}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatPkr(inv.totalCents)}
+                      {formatInr(inv.totalCents)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums font-medium">
-                      {formatPkr(inv.balanceCents)}
+                      {formatInr(inv.balanceCents)}
                     </TableCell>
                   </TableRow>
                 ))}

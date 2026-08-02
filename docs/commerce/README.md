@@ -46,10 +46,10 @@ Graphify is a derived relationship map. Never edit `graphify-out/` as source mat
 - Existing public marketing remains a cinematic, honest pre-launch experience.
 - Existing ops supports owner-managed products, size variants, inventory, customers, invoices, fulfillment, payments, and finance.
 - Owner confirmed India, INR, India-wide intended delivery, and that the first 82 entries represent inspired fragrances.
-- All 103 source entries are selected for intended launch with purchasable 10/30/50/100 ml variants. Samples/discovery sets, bundles, customer accounts, and verified reviews are also selected for launch scope.
+- All 103 source entries remain selected for intended launch. Standard fragrances use 30/50/100 ml variants at approved fixed retail prices; Signature fragrances use 50/105 ml variants with per-product price approval still pending. 10 ml is not sold and discovery sets remain blocked until a different sample format is approved. Bundles, customer accounts, and verified reviews remain selected launch capabilities.
 - Selection is not publication approval. All 21 Signature names are owner-approved in-house identities. Inspired products use the planned `Inspired by <owner-confirmed reference>` policy: 48 title references are owner-approved, 4 family mappings need exact detail, 4 mappings are explicitly unresolved, and 26 still need owner input. Public titles/slugs and legal review remain pending. Designer and inspired-reference names stay disabled on bottle labels/packaging under COM-ADR-022 until separate owner and India-counsel surface approval. Evidence metadata records official/retailer/gap provenance; `main_list:22` is an explicit evidence gap and `main_list:20` is strongest-available retailer evidence only.
-- Prices, costs, SKUs, numeric stock, reorder levels, product content, images, shipping, returns, tax, support, and payment-provider approval remain unresolved. `launch-products.csv` and `launch-variants.csv` stay non-publishable/non-importable.
-- Proposed public storefront architecture is not approved for implementation until pending business decisions are resolved.
+- Standard retail prices are approved. Signature prices, costs, SKUs, numeric stock, reorder levels, product content, images, shipping values, returns, tax, support, Cashfree merchant approval, SMTP, and Google/Apple credentials remain unresolved. `launch-products.csv` and `launch-variants.csv` stay non-publishable/non-importable.
+- The separate `apps/storefront` architecture is approved for implementation. Public checkout and production cutover remain fail-closed until the catalog, policy, provider, legal, and operational gates are complete.
 
 ## Change protocol
 

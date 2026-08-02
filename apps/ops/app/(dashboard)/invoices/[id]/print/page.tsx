@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getInvoice } from "@/lib/invoices";
 import { safeDbQuery } from "@/lib/db-safe";
-import { formatPkr, formatQty } from "@/lib/money";
+import { formatInr, formatQty } from "@/lib/money";
 import { formatBusinessDate } from "@/lib/business-date";
 import { requireOwnerSession } from "@/lib/session";
 
@@ -76,10 +76,10 @@ export default async function InvoicePrintPage({
                 {formatQty(line.quantity)}
               </td>
               <td className="py-2 pr-2 text-right tabular-nums">
-                {formatPkr(line.unitPriceCents)}
+                {formatInr(line.unitPriceCents)}
               </td>
               <td className="py-2 text-right tabular-nums">
-                {formatPkr(line.lineTotalCents)}
+                {formatInr(line.lineTotalCents)}
               </td>
             </tr>
           ))}
@@ -89,19 +89,19 @@ export default async function InvoicePrintPage({
       <div className="ml-auto flex w-48 flex-col gap-1 text-sm">
         <div className="flex justify-between">
           <span>Subtotal</span>
-          <span className="tabular-nums">{formatPkr(inv.subtotalCents)}</span>
+          <span className="tabular-nums">{formatInr(inv.subtotalCents)}</span>
         </div>
         <div className="flex justify-between font-semibold">
-          <span>Total (PKR)</span>
-          <span className="tabular-nums">{formatPkr(inv.totalCents)}</span>
+          <span>Total (INR)</span>
+          <span className="tabular-nums">{formatInr(inv.totalCents)}</span>
         </div>
         <div className="flex justify-between">
           <span>Paid</span>
-          <span className="tabular-nums">{formatPkr(inv.amountPaidCents)}</span>
+          <span className="tabular-nums">{formatInr(inv.amountPaidCents)}</span>
         </div>
         <div className="flex justify-between border-t border-neutral-300 pt-1 font-semibold">
           <span>Balance</span>
-          <span className="tabular-nums">{formatPkr(inv.balanceCents)}</span>
+          <span className="tabular-nums">{formatInr(inv.balanceCents)}</span>
         </div>
       </div>
 

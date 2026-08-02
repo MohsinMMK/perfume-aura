@@ -200,7 +200,7 @@ export function VariantActions({
                 error={fieldError("reorderLevel")}
               />
               <FormField
-                label="Cost (Rs)"
+                label="Cost (INR)"
                 name="cost"
                 type="number"
                 min={0}
@@ -210,7 +210,7 @@ export function VariantActions({
                 error={fieldError("cost")}
               />
               <FormField
-                label="Retail (Rs)"
+                label="Retail (INR)"
                 name="retail"
                 type="number"
                 min={0}

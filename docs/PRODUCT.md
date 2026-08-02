@@ -1,13 +1,17 @@
 # Product
 
-Perfume Aura is an owner-operated perfume inventory, invoicing, payment, and finance system for Pakistan. Currency is PKR; persisted money uses integer paisa.
+Perfume Aura is an owner-operated perfume inventory, commerce, invoicing, payment, and finance system for India. Currency is INR; persisted money uses integer paise. The source migration from PKR-labelled records must pass the audited currency gate before production application.
 
 ## Users and scope
 
 - One seeded owner account; public sign-up disabled.
 - Internal ops app at `app.perfumeaura.com`.
 - Marketing site at `perfumeaura.com`.
-- No public storefront, multi-tenant roles, purchase orders, returns, tax engine, or payment gateway yet.
+- A public storefront is implemented locally for staged release at
+  `shop.perfumeaura.com`; it is not deployed. Multi-tenant staff roles, purchase
+  orders, and a general tax engine remain outside scope. Every public product,
+  account, checkout, payment, policy, and indexing capability defaults closed
+  until its release gate passes.
 
 ## Routes
 
@@ -22,6 +26,10 @@ Perfume Aura is an owner-operated perfume inventory, invoicing, payment, and fin
 | Payments | `/payments` and invoice detail payment actions |
 | Finance | `/finance` |
 | Health/API | `/api/health/live`, `/api/health/ready`, `/api/auth/[...all]` |
+| Owner commerce | `/commerce`, `/commerce/catalog`, `/commerce/orders`, `/commerce/promotions`, `/commerce/reviews`, `/commerce/support`, `/commerce/settings` |
+| Storefront | `/`, `/shop`, `/collections/[slug]`, `/products/[slug]`, `/search`, `/find-your-scent`, `/cart`, `/checkout`, `/order/[token]` |
+| Customer account | `/account/*`, `/api/customer-auth/[...all]` |
+| Store content | `/about`, `/faq`, `/contact`, `/wholesale`, `/shipping`, `/returns`, `/privacy`, `/terms` |
 
 ## Product lifecycle
 
@@ -97,6 +105,17 @@ Inventory valuation includes all variants with on-hand balances, including archi
 - Counters: atomic by document kind and business year.
 - Owner-only access: every protected action checks server session/role.
 - Mutations: database transaction + deterministic lock order + cache revalidation after commit.
+- Store money: `{ currency: "INR", amountMinor: number }`; the browser never
+  authorizes totals.
+- Store variants: standard 30/50/100 ml at ₹600/₹800/₹1,400; Signature 50/105
+  ml with exact owner-approved price required. No public 10 ml.
+- Public catalog: active + published + legal/content/media approved + approved
+  INR price + approved media; costs, internal notes, and raw stock never project.
+- Stock: cart mutations revalidate price/publication/availability; checkout
+  reservations lock deterministically and release/consume exactly once.
+- Payments: a browser callback never marks paid. Cashfree success requires raw
+  signature verification plus server-fetched PAID/exact-amount state. COD is
+  settled only after owner-recorded collection and reconciliation.
 
 ## Terms
 
@@ -104,7 +123,7 @@ Inventory valuation includes all variants with on-hand balances, including archi
 |---|---|
 | SKU | Unique stock-keeping unit for one variant |
 | Variant | Product size/configuration carrying stock and prices |
-| Paisa | 1/100 PKR; storage unit for money |
+| Paise | 1/100 INR; storage unit for money |
 | Movement | Append-only stock ledger event |
 | Fulfillment | Issued invoice quantity converted into sale movements |
 | AR | Accounts receivable: issued invoice value not yet paid |

@@ -10,6 +10,7 @@ Safety-critical source for DNS, Hostinger deployment, Neon cutover, and producti
 | Authoritative DNS | Hostinger |
 | Marketing hosting | Hostinger classic Git |
 | Ops hosting | Hostinger Node.js Web App |
+| Storefront hosting | Separate Hostinger Node.js Web App at `shop.perfumeaura.com` (planned, not configured) |
 | Database | Neon PostgreSQL |
 | Source | GitHub `MohsinMMK/perfume-aura`, branch `main` |
 
@@ -131,6 +132,45 @@ ops. Option 1-B prebuilt branch is the supported GitHub automation path.
 Provider API archive upload, MCP deploy, and Connector remain unsupported for
 routine release. Read-only provider inspection is allowed; mutations stay with
 authorized root operator.
+
+### Storefront — staged prebuilt ZIP (not deployed)
+
+The storefront must remain separate from marketing and owner ops. Build and
+verify its Hostinger-compatible archive locally:
+
+```bash
+nvm use
+pnpm storefront:pack
+```
+
+The pack builds `apps/storefront`, materializes the standalone runtime, installs
+the locked Linux x64/glibc Sharp tree, refuses secrets/symlinks/unsafe ZIP
+paths, extracts the candidate, starts it, and smokes `/` plus a real Next static
+asset. It writes a ZIP, checksum, and manifest under `dist/`; entry is
+`apps/storefront/server.js`.
+
+Do not create the Hostinger app, add `shop` DNS, upload the ZIP, set provider
+credentials, or enable release flags without explicit release authorization.
+When authorized, use Hostinger Node.js Web App (not classic Git and not Path G):
+
+| Field | Value |
+|---|---|
+| Domain | `shop.perfumeaura.com` |
+| Source | Verified `perfume-aura-storefront_*.zip` |
+| Framework | Other |
+| Node | `24.x` |
+| Root | `./` |
+| Build | `echo prebuilt-standalone` |
+| Output | empty |
+| Entry | `apps/storefront/server.js` |
+
+Apply migration `0009` only after `pnpm currency:audit` and an explicit owner
+decision permit the INR semantic cutover. Configure secrets from
+`apps/storefront/.env.example` only in hPanel. `STOREFRONT_PUBLIC_RELEASE`,
+`STOREFRONT_CUSTOMER_AUTH_ENABLED`, and
+`STOREFRONT_CHECKOUT_RELEASE_APPROVED` remain false until their separate gates
+pass. Always re-smoke `app.perfumeaura.com` owner pages after a storefront
+deployment because both sites share the Hostinger plan/process ceiling.
 
 ### Production migrations are not auto-run by this deploy path
 

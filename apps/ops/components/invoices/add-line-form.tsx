@@ -116,7 +116,7 @@ export function AddInvoiceLineForm({
               error={fieldErrors.quantity?.[0]}
             />
             <FormField
-              label="Unit price (Rs)"
+              label="Unit price (INR)"
               name="unitPrice"
               type="number"
               step="0.01"

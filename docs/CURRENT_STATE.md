@@ -34,12 +34,12 @@ document. Do not select whichever statement is more convenient.
 
 ## Snapshot
 
-Last refreshed: **2026-08-01 22:42 IST**.
+Last refreshed: **2026-08-02 13:44 IST**.
 
 | Item | Current evidence |
 |---|---|
 | Repository | `MohsinMMK/perfume-aura` |
-| Working branch | `codex/current-state-handoff` |
+| Working branch | `codex/current-state-handoff`; resolve the current published candidate with `git rev-parse HEAD` rather than relying on a copied SHA |
 | `main` / `origin/main` | `6d79a49593895b2e656e22df0b6d33141b5c89dc` |
 | Generated ops branch | `hostinger-ops-production` |
 | Generated branch commit | `a11d4fbdfb76b6a8fac042dc49e5e6f644fcad61` |
@@ -48,8 +48,65 @@ Last refreshed: **2026-08-01 22:42 IST**.
 | Ops | `https://app.perfumeaura.com` — owner-only internal operations |
 | Latest CI proof | GitHub Actions run `30690719178` rerun succeeded on 2026-08-01; quality, PostgreSQL 16 integration, verified ZIP, generated-branch publication, and exact-SHA live verification passed; Dependency Review remained skipped |
 
-The working tree was clean when this snapshot was gathered. Re-check with
-`git status --short --branch`; do not assume it stays clean.
+This handoff branch contains the reviewed storefront/INR implementation. No
+production deployment, DNS mutation, provider mutation, or production database
+migration was performed. Re-check the branch, SHA, and worktree with
+`git status --short --branch` before continuing.
+
+## Storefront implementation state
+
+`apps/storefront` now contains the release-gated Next.js storefront for
+`shop.perfumeaura.com`: the requested routes, responsive Bucks-inspired
+editorial structure, real Perfume Aura media derivatives, secure cookie cart,
+controlled public catalog projection, gated checkout, Cashfree server/webhook/
+refund contracts, COD settlement, separate customer Better Auth boundary,
+guest-order claiming, and non-enumerable order status.
+
+The local storefront now includes a fresh page-by-page Bucks Sauce fidelity
+pass: exact measured `#100b06` / `#f5e4c7` source colors, an open-source
+condensed display face, fixed-to-compact navigation, floating cream cart,
+oversized filled/outlined editorial typography, long horizontal storytelling,
+stacked proof panels, conversion splits, dense footer, and matched Shop, PDP,
+About, FAQ, Contact, and Wholesale rhythms. GSAP drives hero choreography,
+active bottle transitions, scroll reveals, parallax, floating media, progress,
+the pinned horizontal story sequence, editorial marquee, and keyboard/
+coarse-pointer-safe product-card interactions. Featured cards retain the
+controlled flat-color bottle media by default and reveal the existing cloth,
+water, and petal campaign compositions plus price, Buy now, and Add to cart on
+hover/focus. Manrope and Playfair Display remain self-hosted; Bebas Neue is
+self-hosted through the locked Fontsource package. No source font or media was
+copied or hotlinked.
+
+The same change adds:
+
+- migration `0009_storefront-commerce.sql`, including separate customer-auth,
+  merchandising, cart, reservation, order, payment, shipment, promotion,
+  review, return, and inquiry records;
+- deterministic stock reservation/release/consume workflows;
+- owner commerce surfaces under `/commerce/*`;
+- a read-only `pnpm currency:audit` gate and fail-closed legacy PKR check;
+- a verified `pnpm storefront:pack` Hostinger ZIP path with entry
+  `apps/storefront/server.js`.
+
+Repository proof on 2026-08-02: commerce foundation (103 products / 288
+variants), production-only unused-file/dependency analysis, repository lint and
+typecheck, 117 unit tests, 51 guarded PostgreSQL integration tests, both
+production builds, production dependency audit, diff hygiene, and both
+extracted-artifact smoke paths passed after the fidelity implementation. Fresh
+live-reference and local captures at 1280 x 720
+cover homepage, Shop, PDP, header, menu, cart, About, FAQ, Contact, and
+Wholesale; the populated INR cart journey and opening purchase controls also
+pass. See `design-qa.md` for the paired comparison and current P3 mobile-capture
+limitation. The latest verified extracted artifact is
+`perfume-aura-storefront_66d37a950b51-dirty-20260802T081328Z-27240.zip`
+(SHA-256 `9f0d6d74f2307af9c3dde01115c112fcad293287d8034a8c11295c94e5c814de`).
+
+Migration `0009` is **generated but not applied anywhere**. Its first block
+refuses INR relabelling while any non-zero PKR-semantic product, invoice header,
+invoice line, payment, stock-cost, or finance value exists. The read-only local
+audit reports an all-zero local database and no blockers; this is not production
+evidence. Run the report against production read-only and get an explicit owner
+treatment decision before any migration attempt.
 
 ## Current Hostinger ops deployment
 
@@ -174,8 +231,23 @@ If the `503` returns:
 - SMTP mailbox/password-reset delivery remains unverified.
 - Trusted-proxy/client-IP rate limiting remains unproven.
 - GitHub Dependency Review remains skipped until Dependency Graph is enabled.
-- The public commerce storefront remains intentionally unimplemented.
+- Storefront code exists locally but is not deployed; `shop.perfumeaura.com`
+  and its Hostinger Node app/DNS are not configured by this change.
+- Migration `0009` and the INR semantic cutover are blocked on the read-only
+  production audit plus explicit owner treatment of every non-zero legacy
+  monetary record. No automatic exchange-rate conversion is allowed.
+- Signature prices, shipping/free-shipping amounts, policies, tax treatment,
+  support channel, Cashfree approval/credentials, Google/Apple credentials,
+  customer SMTP, catalog approvals, and India-counsel clearance remain release
+  gates. Checkout/auth/public indexing default off.
 - Catalog publication remains fail-closed.
+
+Next safe storefront action: collect the owner/provider/legal inputs listed
+above, run `pnpm currency:audit` read-only against production, and review every
+non-zero legacy amount with the owner. Only after those gates should a separate
+`shop.perfumeaura.com` Hostinger Node staging app be configured from the verified
+standalone artifact. Do not apply `0009`, create Hostinger/DNS state, or enable a
+release flag without the corresponding explicit approval.
 
 ## Safe verification commands
 

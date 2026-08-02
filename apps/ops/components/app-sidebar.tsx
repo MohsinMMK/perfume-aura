@@ -16,6 +16,12 @@ import {
   WarehouseIcon,
   Invoice01Icon,
   LockPasswordIcon,
+  ShoppingBag02Icon,
+  Settings02Icon,
+  StarIcon,
+  DeliveryTruck01Icon,
+  Tag01Icon,
+  CustomerSupportIcon,
 } from "@hugeicons/core-free-icons";
 import {
   Sidebar,
@@ -47,6 +53,16 @@ const salesNav = [
   { href: "/invoices", label: "Invoices", icon: File01Icon },
   { href: "/invoices/ar", label: "AR", icon: Invoice01Icon },
   { href: "/payments", label: "Payments", icon: MoneyBag01Icon },
+] as const;
+
+const commerceNav = [
+  { href: "/commerce", label: "Commerce", icon: ShoppingBag02Icon },
+  { href: "/commerce/catalog", label: "Store catalog", icon: Package01Icon },
+  { href: "/commerce/orders", label: "Orders & delivery", icon: DeliveryTruck01Icon },
+  { href: "/commerce/promotions", label: "Promotions", icon: Tag01Icon },
+  { href: "/commerce/reviews", label: "Reviews", icon: StarIcon },
+  { href: "/commerce/support", label: "Support", icon: CustomerSupportIcon },
+  { href: "/commerce/settings", label: "Checkout gates", icon: Settings02Icon },
 ] as const;
 
 function isActive(pathname: string, href: string) {
@@ -151,6 +167,30 @@ export function AppSidebar({
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Storefront</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {commerceNav.map(({ href, label, icon }) => (
+                <SidebarMenuItem key={href}>
+                  <SidebarMenuButton
+                    isActive={
+                      href === "/commerce"
+                        ? pathname === href
+                        : isActive(pathname, href)
+                    }
+                    tooltip={label}
+                    render={<Link href={href} />}
+                  >
+                    <HugeiconsIcon icon={icon} strokeWidth={2} />
+                    <span>{label}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarSeparator />
@@ -175,7 +215,7 @@ export function AppSidebar({
           </SidebarMenuItem>
         </SidebarMenu>
         <p className="px-2 pb-1 text-[10px] text-muted-foreground group-data-[collapsible=icon]:hidden">
-          Phase 3 · Inventory + sales + payments
+          Inventory + finance + commerce
         </p>
       </SidebarFooter>
 

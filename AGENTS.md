@@ -87,8 +87,8 @@ Restore: `pnpm dlx skills experimental_install` (from `skills-lock.json`).
 | Production domain | **perfumeaura.com** (marketing) · **app.perfumeaura.com** (ops) |
 | GitHub repo | https://github.com/MohsinMMK/perfume-aura |
 | Default branch | **`main`** |
-| Current phase | Product inventory-to-finance implemented; production recovered from a plan-wide NPROC exhaustion on 2026-08-01 and exact-SHA CI/live verification passed; durable process attribution, migration automation, SMTP reset, and trusted-proxy proof remain pending |
-| Stack | **pnpm monorepo** · marketing static · ops **Next.js 16.2.11** + **TypeScript 7.0.2** on Hostinger Node **24.x** (Option 1-B production / Path Z emergency fallback) |
+| Current phase | Inventory-to-finance and a release-gated ecommerce storefront are implemented; storefront migration `0009` is not applied and no storefront is deployed. Ops production recovered from plan-wide NPROC exhaustion on 2026-08-01; storefront currency/catalog/legal/provider/policy gates plus durable process attribution, migration automation, SMTP reset, and trusted-proxy proof remain pending |
+| Stack | **pnpm monorepo** · marketing static · ops + storefront **Next.js 16.2.11** + **TypeScript 7.0.2** · Hostinger Node **24.x** (ops Option 1-B production / Path Z fallback; storefront separate verified prebuilt ZIP target) |
 | Docs | [index](docs/README.md) · [product](docs/PRODUCT.md) · [engineering](docs/ENGINEERING.md) · [operations](docs/OPERATIONS.md) · [roadmap](docs/ROADMAP.md) · [stack](docs/STACK.md) |
 
 ## Monorepo layout
@@ -422,7 +422,10 @@ scripts/pack-ops-standalone.sh       ← ops:pack
 - **Ops pure source build (Path G):** blocked (esbuild EACCES). Do not enable.
 - **Ops emergency fallback (Path Z):** retain a checksum-verified manual ZIP; do not use for routine releases.
 - **Never** use classic Git (Advanced → Git) as the **runtime** for Next.js ops.
-- **No public ecommerce storefront** implemented yet.
+- `apps/storefront` is implemented locally for a future separate Hostinger Node
+  Web App at `shop.perfumeaura.com`; it is not deployed and defaults fail-closed.
+  Migration `0009`, INR cutover, product publication, customer auth, checkout,
+  payments, and public indexing require the gates in `docs/CURRENT_STATE.md`.
 
 ## Ops deploy (Hostinger Node) — critical for agents
 
@@ -625,19 +628,23 @@ after every deploy or provider configuration change.
 8. **Ops debug order:** public curl `/login` → `/api/auth/get-session` → hPanel deployment entry + logs → hPanel restart if authorized → env present? → owner seeded on **that** `DATABASE_URL`?
 9. **Never print** full `DATABASE_URL`, API tokens, or owner passwords in routine logs or documentation. When the user explicitly requests credentials, read the correct gitignored file (`.env.local` for local, `.env.owner-production` for production) instead of guessing.
 
-## Commerce catalog status (2026-07-30)
+## Commerce catalog status (2026-08-02)
 
 **Catalog foundation is complete; commerce launch is not complete.** Source records, mapping decisions, and verification live under [`data/catalog/`](data/catalog/) and [`docs/commerce/`](docs/commerce/). Run `pnpm commerce:verify` after every catalog or commerce-document change.
 
 ### Completed
 
-- [x] Preserved 103 reviewed source products and generated 412 fail-closed launch variants.
+- [x] Preserved 103 reviewed source products and generated 288 fail-closed launch variants.
+- [x] Removed 10 ml from public commerce; standard scents use 30/50/100 ml and Signature scents use 50/105 ml only.
+- [x] Recorded approved standard INR/paise prices and left every Signature price blank behind the owner gate.
 - [x] Confirmed all 21 Signature Series names as exact in-house backend/frontend identities; external reference mapping is not applicable.
 - [x] Confirmed every 10 ml variant is a tester; 30/50/100 ml variants are bottles.
 - [x] Approved 48 inspired title references with evidence metadata and recorded future title policy: `Inspired by <owner-confirmed reference>`.
-- [x] Added the 82-row evidence register at `docs/commerce/REFERENCE-MAPPINGS.md`, decision trail through COM-ADR-022, verifier gates, and scoped Graphify evidence.
-- [x] Kept every public inspired title/slug blank and all 103 products plus 412 variants non-publishable.
+- [x] Added the 82-row evidence register at `docs/commerce/REFERENCE-MAPPINGS.md`, decision trail through COM-ADR-026, verifier gates, and scoped Graphify evidence.
+- [x] Kept every public inspired title/slug blank and all 103 products plus 288 variants non-publishable.
 - [x] Recorded fail-closed bottle-label/packaging policy: designer and inspired-reference names stay disabled until separate owner and India-counsel surface approval (COM-ADR-022). Product policy only; not legal clearance.
+- [x] Implemented the release-gated storefront, controlled public projection, cart/checkout/reservation/order/payment/customer-auth records, owner commerce surfaces, and verified Hostinger standalone artifact path locally.
+- [x] Completed matching desktop/mobile browser design QA and the local serial verification suite; see `design-qa.md` and `docs/CURRENT_STATE.md`.
 
 ### Remaining before commerce publication
 
@@ -649,7 +656,7 @@ after every deploy or provider configuration change.
 - [ ] Approve final public inspired titles/slugs only after exact mapping and legal gates pass.
 - [ ] Supply sale facts: SKUs, prices, costs, opening stock, reorder levels, descriptions, images, and other product content.
 - [ ] Define customer-facing policies and operational decisions: delivery/shipping, returns/refunds, taxes, payment methods, order handling, and support surfaces.
-- [ ] Design and implement storefront, catalog browsing/search, product pages, cart, checkout, payments, customer/order flows, and commerce deployment.
+- [ ] Deploy a separate authorized `shop.perfumeaura.com` Hostinger Node staging app from the verified prebuilt artifact, apply the reviewed production migration, and complete the provider-backed release gates.
 - [ ] Run final catalog, legal, accessibility, security, payment, fulfillment, and production smoke reviews before publication.
 
 **Publication gate:** do not infer readiness from mapping approval. No product becomes publishable until product data, legal, content, price/stock, policy, application, payment, and production-review gates all pass.
