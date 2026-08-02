@@ -98,9 +98,11 @@ live-reference and local captures at 1280 x 720
 cover homepage, Shop, PDP, header, menu, cart, About, FAQ, Contact, and
 Wholesale; the populated INR cart journey and opening purchase controls also
 pass. See `design-qa.md` for the paired comparison and current P3 mobile-capture
-limitation. The exact artifact deployed to Hostinger is
-`perfume-aura-storefront_2a8864c251f5.zip`
-(SHA-256 `08e24c8766a5c4d46d1ca3555b4a86c7e6dab1ec78143e1fe22a72654c19bc82`).
+limitation. The recovery artifact currently deployed at the storefront is
+`perfume-aura-storefront_8d3e9cdc0509-dirty-20260802T122848Z-39627.zip`
+(SHA-256 `1c30501db9ced0eca26e56d11230dc4338fd5a079b6d38cc8fdaefadec252d93`).
+Its manifest is explicitly dirty-worktree provenance, not a clean commit
+artifact; the apex cutover must use a newly packed clean artifact from `main`.
 
 Migration `0009` was applied to the Neon production `main` branch on
 **2026-08-02** only after the read-only repeatable-read audit proved zero

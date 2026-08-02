@@ -172,6 +172,11 @@ perfume-aura-storefront_8d3e9cdc0509-dirty-20260802T122848Z-39627.zip
 SHA-256 1c30501db9ced0eca26e56d11230dc4338fd5a079b6d38cc8fdaefadec252d93
 ```
 
+This recovery artifact is explicitly marked as a dirty-worktree build by its
+filename and manifest. It is verified as an archive, but it is not clean-SHA
+release provenance and must be superseded by a clean artifact from `main` for
+the apex cutover.
+
 The Web App is live. During the first cutover the public edge served Hostinger
 LiteSpeed `403` for `/` and `404` for Next routes because the managed redeploy
 form's **Entry file** was blank. After the shared process pool was reset with
@@ -271,7 +276,7 @@ before acting; dated evidence never replaces a fresh release smoke.
 | Active Hostinger deploy | **Node 24.x** generated branch `hostinger-ops-production`, source `b4410852…`, deploy commit `cfd2efca…`; exact-SHA live verification passed |
 | Push deployment proof | GitHub runs `30615774862` and `30623386605` published sources `43edda3e7b05…` and `3e7fa94c1a18…`; hPanel listed corresponding completed deploy commits `db10bb11b724…` and `cd7f2d818d66…`, and immediate root-operator probes returned each exact source from `/api/health/version` |
 | Credential rotation | Restricted Neon runtime-role password, ops Better Auth secret, storefront customer-auth secret, and storefront maintenance secret rotated; hPanel values applied and current processes re-smoked without recording values |
-| Neon production | Main branch migrated through `0008`; restricted runtime role, grants, constraints, trigger, and zero reconciliation drift verified |
+| Neon production | Main branch migrated through `0009`; restricted runtime role, grants, constraints, trigger, and zero reconciliation drift verified |
 | Owner login on prod | **Re-verified 2026-07-31** after rotation; `/dashboard`, `/products`, `/customers`, `/invoices`, `/stock`, and `/finance` returned 200 with expected headings |
 | Password reset email | **Not verified** — SMTP hPanel variables/mailbox remain pending |
 | Client-IP rate limiting | Shared-bucket fallback until Hostinger trusted-proxy evidence is established |

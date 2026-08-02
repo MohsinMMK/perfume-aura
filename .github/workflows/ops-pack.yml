@@ -379,4 +379,7 @@ jobs:
       - name: Poll live version and smoke surfaces
         run: |
           set -euo pipefail
-          node scripts/verify-production-deploy.mjs "$GITHUB_SHA" --timeout-ms 1200000
+          node scripts/verify-production-deploy.mjs "$GITHUB_SHA" \
+            --public-surface marketing \
+            --public-base https://perfumeaura.com \
+            --timeout-ms 1200000
