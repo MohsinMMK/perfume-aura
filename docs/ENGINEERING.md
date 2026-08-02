@@ -18,7 +18,9 @@ No static marketing application or generated root publish surface remains.
 - Storefront uses a controlled public catalog projection and a secure HttpOnly
   cart token. It never returns costs, raw stock, internal notes, or archived
   records.
-- Ops uses independent Better Auth owner sessions and private server actions.
+- Ops uses independent Better Auth owner/staff sessions and private,
+  capability-authorized server actions. Roles are exact `owner`, `staff`, or
+  `user`; missing, unknown, and comma-separated values fail closed.
 - Storefront customer auth has separate tables, secrets, cookies, and trusted
   origins. It is disabled and must not import auth/database code on disabled
   routes.
@@ -34,6 +36,9 @@ No static marketing application or generated root publish surface remains.
 - Money persists as integer INR paise; no browser float is authoritative.
 - Inventory, invoice/payment, and commerce reservation/order lifecycles are
   transactionally locked and idempotent where a client or provider may retry.
+- The Admin/2FA schema uses immutable invitation/audit tables and a database
+  owner invariant: a blank database may have zero owners until seeded, then it
+  permits one owner only and prevents removal/demotion of the final owner.
 
 ### Retained financial and inventory contracts
 

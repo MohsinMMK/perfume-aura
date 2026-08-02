@@ -30,9 +30,6 @@ Git history and that backup are the only static rollback path.
 - `node scripts/verify-production-deploy.mjs
   89b79d8575687978f3c0b5eee09ea43bb9d1268a --public-surface storefront
   --public-base https://perfumeaura.com --timeout-ms 180000` passed.
-- Ops `/login`, live, ready, auth-session, a real static asset, and
-  `/api/health/version` pass. The version endpoint reports source
-  `89b79d8575687978f3c0b5eee09ea43bb9d1268a`.
 - Read-only Neon reconciliation found zero storefront users, sessions, cart
   items, checkouts, orders, payment records, inquiries, published products,
   published collections, invoices, payments, stock movements, inventory,
@@ -57,10 +54,23 @@ disallows indexing. Do not open a lock merely because runtime health is green.
   every deployment, and never use the plan-wide process-stop control without
   explicit authorization and confirmed scope.
 
+## Active ops incident
+
+As rechecked on **2026-08-02 IST**, `https://perfumeaura.com/` remains `200`,
+but `app.perfumeaura.com` is intermittent: `/login` may return `200` while
+`/api/health/live`, `/ready`, `/version`, and `/api/auth/get-session` return
+Hostinger HCDN `503` “server temporarily busy.” hPanel previously showed the
+Node app running with no runtime errors; this is not sufficient readiness
+evidence. Do not deploy the staff release or run a plan-wide process stop.
+Capture fresh hPanel resource evidence and obtain a scoped Hostinger repair,
+then re-smoke ops live/ready/version/auth/static/authenticated owner page and
+the healthy apex before any deployment.
+
 ## Current repository work
 
-`main` is at `89b79d8575687978f3c0b5eee09ea43bb9d1268a`. The active cleanup
-work removes the obsolete static marketing deployment surface and changes CI,
-docs, and verification to apex-storefront checks. The next product phase is the
-separate Better Auth Admin/2FA staff-operations migration; keep both flags off
-until SMTP and owner TOTP recovery are proven.
+`main` is at `cc38326dcf46651e10cb618727e4c03ef1fdc948`. The apex cleanup is
+merged. The active `codex/staff-operations` branch implements the separate
+Better Auth Admin/2FA migration, strict owner/staff capability matrix,
+append-only invitation/audit records, and owner break-glass recovery. It is
+not deployed and both security flags stay false until the isolated-Neon,
+production-grant, SMTP, owner-TOTP, recovery-code, and staff-denial gates pass.

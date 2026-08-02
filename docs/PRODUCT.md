@@ -58,9 +58,16 @@ commerce is fail-closed:
 - 10 ml and discovery sets are excluded from public commerce until a separate
   sample format is approved.
 
-## Staff phase
+## Staff operations release gate
 
-The next release adds Better Auth Admin and 2FA plugins, typed owner/staff
-capabilities, mandatory TOTP, audited staff invitations, staff deactivation,
-and owner-only financial and publication controls. Feature flags remain off
-until SMTP delivery and owner TOTP recovery are demonstrated.
+Ops implements Better Auth Admin and 2FA plugins, strict `owner`/`staff`/`user`
+roles, server-side capabilities, immutable staff invitation/audit records,
+TOTP, recovery codes, trusted private devices, staff deactivation, and
+owner-only financial/publication/payment controls. Staff can update shipment
+state but cannot settle COD; that owner-only reconciliation is a separate
+server action.
+
+`OPS_TWO_FACTOR_REQUIRED` and `OPS_STAFF_INVITES_ENABLED` remain false until
+the migration and restricted grants are applied, SMTP delivery is proven, the
+owner completes TOTP and recovery-code proof, and an authorized staff journey
+proves direct action denials.

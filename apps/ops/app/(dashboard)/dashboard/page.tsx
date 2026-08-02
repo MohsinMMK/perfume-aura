@@ -14,17 +14,40 @@ import { getCashCollectedThisMonthCents } from "@/lib/payments";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatInr, formatQty } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
-import { requireOwnerSession } from "@/lib/session";
+import { hasOpsCapability } from "@/lib/ops-access";
+import { requireCapability } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  await requireOwnerSession({ redirectToLogin: true });
+  const session = await requireCapability("dashboard.view", {
+    redirectToLogin: true,
+  });
+  const canViewCost = hasOpsCapability(session.user.role, "stock.view-cost");
+  const canViewFinance = hasOpsCapability(session.user.role, "finance.view");
+  const canRecordPayments = hasOpsCapability(
+    session.user.role,
+    "payments.record",
+  );
+  const canManageCommercialCatalog = hasOpsCapability(
+    session.user.role,
+    "catalog.manage-commercials",
+  );
+  const canCreateCustomers = hasOpsCapability(
+    session.user.role,
+    "customers.create",
+  );
+  const canDraftInvoices = hasOpsCapability(session.user.role, "invoices.draft");
+  const canReceiveStock = hasOpsCapability(session.user.role, "stock.receive");
 
   const [result, arResult, cashResult] = await Promise.all([
     safeDbQuery(() => getDashboardStats()),
-    safeDbQuery(() => getOpenArTotalCents()),
-    safeDbQuery(() => getCashCollectedThisMonthCents()),
+    canViewFinance
+      ? safeDbQuery(() => getOpenArTotalCents())
+      : Promise.resolve({ data: null, error: null }),
+    canRecordPayments
+      ? safeDbQuery(() => getCashCollectedThisMonthCents())
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
   const stats = result.data;
@@ -62,30 +85,45 @@ export default async function DashboardPage() {
             : "OK",
       warn: Boolean(stats && stats.lowStockCount > 0),
     },
-    {
-      label: "Inventory cost",
-      value: stats ? formatInr(stats.inventoryCostCents) : "—",
-      hint: "Sum of qty × cost (INR)",
-      href: "/products",
-      badge: error ? "Offline" : "Live",
-      warn: false,
-    },
-    {
-      label: "Open AR",
-      value: formatInr(openAr),
-      hint: "Issued unpaid invoices",
-      href: "/invoices/ar",
-      badge: openAr > 0 ? "AR" : error ? "Offline" : "Clear",
-      warn: openAr > 0,
-    },
-    {
-      label: "Cash MTD",
-      value: formatInr(cashMtd),
-      hint: "Payments received this month",
-      href: "/payments",
-      badge: error ? "Offline" : "Live",
-      warn: false,
-    },
+    ...(canViewCost
+      ? [
+          {
+            label: "Inventory cost",
+            value:
+              stats?.inventoryCostCents === null
+                ? "—"
+                : formatInr(stats?.inventoryCostCents ?? 0),
+            hint: "Sum of qty × cost (INR)",
+            href: "/products",
+            badge: error ? "Offline" : "Live",
+            warn: false,
+          },
+        ]
+      : []),
+    ...(canViewFinance
+      ? [
+          {
+            label: "Open AR",
+            value: formatInr(openAr),
+            hint: "Issued unpaid invoices",
+            href: "/invoices/ar",
+            badge: openAr > 0 ? "AR" : error ? "Offline" : "Clear",
+            warn: openAr > 0,
+          },
+        ]
+      : []),
+    ...(canRecordPayments
+      ? [
+          {
+            label: "Cash MTD",
+            value: formatInr(cashMtd),
+            hint: "Payments received this month",
+            href: "/payments",
+            badge: error ? "Offline" : "Live",
+            warn: false,
+          },
+        ]
+      : []),
   ] as const;
 
   return (
@@ -130,33 +168,43 @@ export default async function DashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          <Link href="/products/new" className={buttonVariants()}>
-            New product
-          </Link>
-          <Link
-            href="/stock"
-            className={buttonVariants({ variant: "outline" })}
-          >
-            Receive stock
-          </Link>
-          <Link
-            href="/customers/new"
-            className={buttonVariants({ variant: "outline" })}
-          >
-            New customer
-          </Link>
-          <Link
-            href="/invoices/new"
-            className={buttonVariants({ variant: "secondary" })}
-          >
-            New invoice
-          </Link>
-          <Link
-            href="/payments"
-            className={buttonVariants({ variant: "outline" })}
-          >
-            Payments
-          </Link>
+          {canManageCommercialCatalog ? (
+            <Link href="/products/new" className={buttonVariants()}>
+              New product
+            </Link>
+          ) : null}
+          {canReceiveStock ? (
+            <Link
+              href="/stock"
+              className={buttonVariants({ variant: "outline" })}
+            >
+              Receive stock
+            </Link>
+          ) : null}
+          {canCreateCustomers ? (
+            <Link
+              href="/customers/new"
+              className={buttonVariants({ variant: "outline" })}
+            >
+              New customer
+            </Link>
+          ) : null}
+          {canDraftInvoices ? (
+            <Link
+              href="/invoices/new"
+              className={buttonVariants({ variant: "secondary" })}
+            >
+              New invoice
+            </Link>
+          ) : null}
+          {canRecordPayments ? (
+            <Link
+              href="/payments"
+              className={buttonVariants({ variant: "outline" })}
+            >
+              Payments
+            </Link>
+          ) : null}
           <Link
             href="/stock/low"
             className={buttonVariants({ variant: "secondary" })}

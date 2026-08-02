@@ -18,7 +18,7 @@ import { safeDbQuery } from "@/lib/db-safe";
 import { formatInr } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { formatBusinessDateTime } from "@/lib/business-date";
-import { requireOwnerSession } from "@/lib/session";
+import { requireCapability } from "@/lib/session";
 import {
   canonicalPage,
   paginationHref,
@@ -46,7 +46,7 @@ export default async function PaymentsPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
-  await requireOwnerSession({ redirectToLogin: true });
+  await requireCapability("payments.record", { redirectToLogin: true });
   const page = parsePage((await searchParams).page);
 
   const result = await safeDbQuery(() => listPayments({ page }));

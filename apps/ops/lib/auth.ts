@@ -1,11 +1,14 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { admin, twoFactor } from "better-auth/plugins";
+import { adminAc, userAc } from "better-auth/plugins/admin/access";
 import {
   account,
   db,
   rateLimit,
   session,
+  twoFactor as twoFactorTable,
   user,
   verification,
 } from "@perfume-aura/db";
@@ -13,12 +16,16 @@ import {
   AUTH_PASSWORD_MAX_LENGTH,
   AUTH_PASSWORD_MIN_LENGTH,
   DEFAULT_USER_ROLE,
+  OWNER_ROLE,
+  STAFF_ROLE,
   RESET_PASSWORD_TOKEN_EXPIRES_IN_SECONDS,
   resolveAuthBaseUrl,
   resolveAuthTrustedOrigins,
 } from "./auth-policy";
 import { resolveAuthSecret } from "./auth-secret";
 import { sendPasswordResetEmail } from "./mail";
+import { isOpsTwoFactorRequired } from "./ops-security-policy";
+import { markStaffInvitationAccepted } from "./staff-invitation-events";
 
 const baseURL = resolveAuthBaseUrl();
 const trustedOrigins = resolveAuthTrustedOrigins();
@@ -48,6 +55,7 @@ export function createAuth(
         account,
         verification,
         rateLimit,
+        twoFactor: twoFactorTable,
       },
     }),
     emailAndPassword: {
@@ -64,15 +72,8 @@ export function createAuth(
           resetUrl: url,
         });
       },
-    },
-    user: {
-      additionalFields: {
-        role: {
-          type: "string",
-          required: false,
-          defaultValue: DEFAULT_USER_ROLE,
-          input: false,
-        },
+      onPasswordReset: async ({ user: resetUser }) => {
+        await markStaffInvitationAccepted(resetUser.id);
       },
     },
     secret: resolveAuthSecret(),
@@ -96,6 +97,23 @@ export function createAuth(
       expiresIn: 60 * 60 * 24 * 7,
       updateAge: 60 * 60 * 24,
     },
+    /**
+     * Operations never exposes Better Auth's broad admin mutations directly.
+     * Server-side invite/deactivation workflows use auth.api and append their
+     * own immutable audit events. Enforced 2FA also removes the public disable
+     * endpoint, so a protected user cannot bypass it with a raw request.
+     */
+    disabledPaths: [
+      "/admin/ban-user",
+      "/admin/create-user",
+      "/admin/impersonate-user",
+      "/admin/remove-user",
+      "/admin/revoke-user-sessions",
+      "/admin/set-role",
+      "/admin/stop-impersonating",
+      "/admin/unban-user",
+      ...(isOpsTwoFactorRequired() ? ["/two-factor/disable"] : []),
+    ],
     advanced: {
       useSecureCookies: process.env.NODE_ENV === "production",
       disableCSRFCheck: false,
@@ -115,7 +133,22 @@ export function createAuth(
         },
       },
     },
-    plugins: [nextCookies()],
+    plugins: [
+      admin({
+        adminRoles: [OWNER_ROLE],
+        defaultRole: DEFAULT_USER_ROLE,
+        roles: {
+          [OWNER_ROLE]: adminAc,
+          [STAFF_ROLE]: userAc,
+          [DEFAULT_USER_ROLE]: userAc,
+        },
+      }),
+      twoFactor({
+        issuer: "Perfume Aura Ops",
+        trustDeviceMaxAge: 60 * 60 * 24 * 30,
+      }),
+      nextCookies(),
+    ],
   });
 }
 

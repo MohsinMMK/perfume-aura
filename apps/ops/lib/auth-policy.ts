@@ -1,4 +1,5 @@
 export const OWNER_ROLE = "owner";
+export const STAFF_ROLE = "staff";
 export const DEFAULT_USER_ROLE = "user";
 
 export const AUTH_PASSWORD_MIN_LENGTH = 12;
@@ -24,6 +25,7 @@ const ALLOWED_RETURN_PATH_PREFIXES = [
   "/invoices",
   "/payments",
   "/finance",
+  "/commerce",
   "/settings/security",
 ] as const;
 

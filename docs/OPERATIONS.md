@@ -96,6 +96,44 @@ build command, empty output directory, and entry `apps/ops/server.js`.
 Ops production migrations are manual, reviewed operations using the direct Neon
 owner connection. Reapply restricted runtime grants after schema changes.
 
+## Staff and mandatory-2FA release
+
+The `0010_curved_puma` migration is a separate release from the apex cutover.
+It adds Better Auth's official Admin and 2FA tables, strict single-value ops
+roles, immutable staff invitation/audit records, and the database owner
+invariants. Keep both flags below set to `false` until every gate completes:
+
+```text
+OPS_TWO_FACTOR_REQUIRED=false
+OPS_STAFF_INVITES_ENABLED=false
+```
+
+1. Create an isolated Neon branch and apply `0010_curved_puma`; run the
+   migration and authenticated integration suites there.
+2. Review the result, then apply the same migration through the production
+   direct owner connection. Never use the pooled runtime connection for DDL.
+3. Reapply the additive runtime grants with the reviewed runtime role name:
+
+   ```bash
+   psql "$DATABASE_URL_DIRECT" \
+     -v runtime_role='<reviewed-runtime-role>' \
+     -f packages/db/sql/ops-runtime-grants.sql
+   ```
+
+4. Deploy while both flags are still `false`; prove the existing owner login
+   and all health endpoints.
+5. Prove Hostinger SMTP delivery, enroll the owner in TOTP, and consume one
+   recovery code in the authorized test journey.
+6. Enable `OPS_TWO_FACTOR_REQUIRED=true`, prove raw 2FA-disable requests are
+   rejected, then enable invitations and complete one authorized staff setup.
+7. Prove server-action denials for staff price/cost, finance, payment, COD,
+   promotion, release-gate, and staff-management attempts. Verify separately
+   that a staff shipment update cannot settle COD.
+
+The owner-only break-glass TOTP command requires the exact explicit
+confirmation in `apps/ops/.env.example`; it revokes every owner session. Do
+not use it for ordinary recovery.
+
 ### Restricted runtime-role proof
 
 The verified operations grant matrix is explicit and never grants all tables or
@@ -105,6 +143,13 @@ checks effective privileges before releasing a runtime credential:
 ```sql
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
   "user", "session", "account", "verification", "rate_limit"
+TO :"runtime_role";
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "two_factor"
+TO :"runtime_role";
+
+GRANT SELECT, INSERT ON TABLE
+  "staff_invitation_events", "ops_audit_events"
 TO :"runtime_role";
 
 GRANT SELECT, INSERT, UPDATE ON TABLE

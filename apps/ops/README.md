@@ -43,6 +43,33 @@ CONFIRM_OWNER_RECOVERY=REVOKE_ALL_OWNER_SESSIONS \
 This replaces the owner password and revokes every owner session in one
 transaction. Never print or commit the supplied password.
 
+## Staff operations and mandatory 2FA
+
+The Admin and 2FA plugins are installed through Better Auth's official
+Drizzle schema path. Ops accepts only one exact role: `owner`, `staff`, or
+`user`; unknown and comma-separated roles are denied. Only the owner can
+manage commercial catalog fields, financial actions, COD reconciliation,
+release gates, staff, or audit history. Staff may fulfill shipments but cannot
+settle COD.
+
+Both security flags remain `false` by default. Do not enable either until the
+reviewed `0010_curved_puma` migration and `packages/db/sql/ops-runtime-grants.sql`
+are applied through the direct owner connection, Hostinger SMTP delivery is
+proven, and the owner has enrolled TOTP and verified one recovery code.
+
+```bash
+# Separate break-glass path for a lost owner authenticator. It removes the
+# TOTP/recovery-code record and revokes all owner sessions.
+CONFIRM_OWNER_TWO_FACTOR_RESET=RESET_OWNER_TWO_FACTOR_AND_REVOKE_SESSIONS \
+  pnpm --filter @perfume-aura/ops reset:owner-two-factor
+```
+
+Public sign-up remains disabled. Owner-only invitations create a pending staff
+identity with a random undisclosed bootstrap credential, deliver Better Auth's
+password-setup link, and append immutable invitation/audit events. Never put
+setup links, credentials, TOTP secrets, recovery codes, or raw request bodies
+in logs or audit metadata.
+
 Health endpoints:
 
 - `/api/health/live` — process only

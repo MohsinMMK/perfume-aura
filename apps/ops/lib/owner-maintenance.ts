@@ -6,8 +6,10 @@ import {
   and,
   db,
   eq,
+  opsAuditEvents,
   session,
   sql,
+  twoFactor,
   user,
 } from "@perfume-aura/db";
 import {
@@ -36,6 +38,11 @@ type OwnerRecoveryResult = {
   revokedSessionCount: number;
 };
 
+type OwnerTwoFactorResetResult = {
+  revokedSessionCount: number;
+  userId: string;
+};
+
 function normalizedOwnerInput(input: OwnerInput): OwnerInput {
   const parsed = ownerInputSchema.parse(input);
   return {
@@ -48,14 +55,13 @@ async function lockOwnerIdentity(
   transaction: Parameters<
     Parameters<typeof db.transaction>[0]
   >[0],
-  normalizedEmail: string,
 ) {
   await transaction.execute(
-    sql`select pg_advisory_xact_lock(hashtextextended(${normalizedEmail}, 0))`,
+    sql`select pg_advisory_xact_lock(hashtextextended(${"perfume-aura:owner"}, 0))`,
   );
 }
 
-async function findOwnerUserForUpdate(
+async function findUserByEmailForUpdate(
   transaction: Parameters<
     Parameters<typeof db.transaction>[0]
   >[0],
@@ -74,6 +80,25 @@ async function findOwnerUserForUpdate(
   }
 
   return rows[0] ?? null;
+}
+
+async function findExistingOwnerForUpdate(
+  transaction: Parameters<
+    Parameters<typeof db.transaction>[0]
+  >[0],
+) {
+  const owners = await transaction
+    .select()
+    .from(user)
+    .where(eq(user.role, OWNER_ROLE))
+    .for("update")
+    .limit(2);
+
+  if (owners.length > 1) {
+    throw new Error("Owner maintenance found multiple owner identities");
+  }
+
+  return owners[0] ?? null;
 }
 
 async function findCredentialAccountsForUpdate(
@@ -113,12 +138,20 @@ export async function ensureOwnerAccount(
   const hashedPassword = await hashPassword(normalized.password);
 
   return db.transaction(async (transaction) => {
-    await lockOwnerIdentity(transaction, normalized.email);
+    await lockOwnerIdentity(transaction);
 
-    let owner = await findOwnerUserForUpdate(
+    let owner = await findUserByEmailForUpdate(
       transaction,
       normalized.email,
     );
+    const existingOwner = await findExistingOwnerForUpdate(transaction);
+
+    if (existingOwner && (!owner || existingOwner.id !== owner.id)) {
+      throw new Error(
+        "Owner maintenance refused to create or promote a second owner identity",
+      );
+    }
+
     let state: OwnerSeedResult["state"] = "unchanged";
 
     if (!owner) {
@@ -209,9 +242,9 @@ export async function recoverOwnerCredential(
   const hashedPassword = await hashPassword(normalized.password);
 
   return db.transaction(async (transaction) => {
-    await lockOwnerIdentity(transaction, normalized.email);
+    await lockOwnerIdentity(transaction);
 
-    const owner = await findOwnerUserForUpdate(
+    const owner = await findUserByEmailForUpdate(
       transaction,
       normalized.email,
     );
@@ -246,6 +279,48 @@ export async function recoverOwnerCredential(
       .delete(session)
       .where(eq(session.userId, owner.id))
       .returning({ id: session.id });
+
+    return {
+      userId: owner.id,
+      revokedSessionCount: revokedSessions.length,
+    };
+  });
+}
+
+/**
+ * Separate, explicitly confirmed break-glass recovery for a lost owner TOTP
+ * device. It never weakens an active session: every session is revoked and the
+ * owner must sign in again to enroll a fresh authenticator.
+ */
+export async function resetOwnerTwoFactorBreakGlass(input: {
+  email: string;
+}): Promise<OwnerTwoFactorResetResult> {
+  const email = z.string().trim().email().max(320).parse(input.email).toLowerCase();
+
+  return db.transaction(async (transaction) => {
+    await lockOwnerIdentity(transaction);
+    const owner = await findUserByEmailForUpdate(transaction, email);
+    if (!owner || owner.role !== OWNER_ROLE) {
+      throw new Error("Owner two-factor recovery target was not found");
+    }
+
+    await transaction.delete(twoFactor).where(eq(twoFactor.userId, owner.id));
+    await transaction
+      .update(user)
+      .set({ twoFactorEnabled: false, updatedAt: new Date() })
+      .where(eq(user.id, owner.id));
+    const revokedSessions = await transaction
+      .delete(session)
+      .where(eq(session.userId, owner.id))
+      .returning({ id: session.id });
+    await transaction.insert(opsAuditEvents).values({
+      id: randomUUID(),
+      actorUserId: owner.id,
+      action: "owner.two_factor.break_glass_reset",
+      targetType: "user",
+      targetId: owner.id,
+      metadata: { sessions_revoked: revokedSessions.length },
+    });
 
     return {
       userId: owner.id,

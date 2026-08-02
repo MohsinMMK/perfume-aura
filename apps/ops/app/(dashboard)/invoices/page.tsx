@@ -18,7 +18,8 @@ import { listInvoices } from "@/lib/invoices";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatInr } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
-import { requireOwnerSession } from "@/lib/session";
+import { hasOpsCapability } from "@/lib/ops-access";
+import { requireCapability } from "@/lib/session";
 import {
   canonicalPage,
   paginationHref,
@@ -65,7 +66,11 @@ export default async function InvoicesPage({
 }: {
   searchParams: SearchParams;
 }) {
-  await requireOwnerSession({ redirectToLogin: true });
+  const session = await requireCapability("invoices.view", {
+    redirectToLogin: true,
+  });
+  const canDraft = hasOpsCapability(session.user.role, "invoices.draft");
+  const canViewFinance = hasOpsCapability(session.user.role, "finance.view");
   const sp = await searchParams;
   const status = parseStatus(sp.status);
   const page = parsePage(sp.page);
@@ -104,12 +109,14 @@ export default async function InvoicesPage({
             Draft → issue → paid/void. Stock moves only on fulfill.
           </p>
         </div>
-        <Link
-          href="/invoices/new"
-          className={cn(buttonVariants(), "w-full sm:w-auto")}
-        >
-          New invoice
-        </Link>
+        {canDraft ? (
+          <Link
+            href="/invoices/new"
+            className={cn(buttonVariants(), "w-full sm:w-auto")}
+          >
+            New invoice
+          </Link>
+        ) : null}
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -127,12 +134,14 @@ export default async function InvoicesPage({
             {f.label}
           </Link>
         ))}
-        <Link
-          href="/invoices/ar"
-          className={buttonVariants({ variant: "secondary", size: "sm" })}
-        >
-          AR list
-        </Link>
+        {canViewFinance ? (
+          <Link
+            href="/invoices/ar"
+            className={buttonVariants({ variant: "secondary", size: "sm" })}
+          >
+            AR list
+          </Link>
+        ) : null}
       </div>
 
       {result.error || !result.data ? (
@@ -141,9 +150,11 @@ export default async function InvoicesPage({
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             No invoices.{" "}
-            <Link href="/invoices/new" className="underline-offset-4 hover:underline">
-              Create a draft
-            </Link>
+            {canDraft ? (
+              <Link href="/invoices/new" className="underline-offset-4 hover:underline">
+                Create a draft
+              </Link>
+            ) : null}
           </CardContent>
         </Card>
       ) : (

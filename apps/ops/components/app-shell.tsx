@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AppSidebar } from "@/components/app-sidebar";
+import type { OpsRole } from "@/lib/ops-access";
 import {
   SidebarInset,
   SidebarProvider,
@@ -16,14 +17,16 @@ import { Separator } from "@perfume-aura/ui/components/separator";
 export function AppShell({
   children,
   lowStockCount = 0,
+  role,
 }: {
   children: React.ReactNode;
   /** Active low-stock SKU count for nav badge (FR-INV-7 day-to-day alert). */
   lowStockCount?: number;
+  role: OpsRole;
 }) {
   return (
     <SidebarProvider>
-      <AppSidebar lowStockCount={lowStockCount} />
+      <AppSidebar lowStockCount={lowStockCount} role={role} />
       <SidebarInset>
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3 md:px-4">
           <SidebarTrigger className="-ml-1" />

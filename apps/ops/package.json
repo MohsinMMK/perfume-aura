@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "seed:owner": "tsx scripts/seed-owner.ts",
     "recover:owner": "tsx scripts/recover-owner.ts",
+    "reset:owner-two-factor": "tsx scripts/reset-owner-two-factor.ts",
     "test": "pnpm test:unit && pnpm test:integration",
     "test:unit": "tsx --test \"lib/**/!(*.integration).test.ts\"",
     "test:integration": "tsx --test \"lib/**/*.integration.test.ts\""

@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/app-shell";
-import { requireOwnerSession } from "@/lib/session";
+import { hasOpsCapability, parseOpsRole } from "@/lib/ops-access";
+import { requireOpsSession } from "@/lib/session";
 import { getLowStockCount } from "@/lib/stock";
 import { safeDbQuery } from "@/lib/db-safe";
 
@@ -8,10 +9,20 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await requireOwnerSession({ redirectToLogin: true });
+  const session = await requireOpsSession({ redirectToLogin: true });
+  const role = parseOpsRole(session.user.role);
+  if (!role) {
+    throw new Error("Operations session unexpectedly has no valid role");
+  }
 
-  const lowStock = await safeDbQuery(() => getLowStockCount());
+  const lowStock = hasOpsCapability(role, "stock.view")
+    ? await safeDbQuery(() => getLowStockCount())
+    : { data: 0 };
   const lowStockCount = lowStock.data ?? 0;
 
-  return <AppShell lowStockCount={lowStockCount}>{children}</AppShell>;
+  return (
+    <AppShell lowStockCount={lowStockCount} role={role}>
+      {children}
+    </AppShell>
+  );
 }

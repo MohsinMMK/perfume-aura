@@ -10,6 +10,7 @@
 | INR contract and legacy PKR audit gate | Implemented; no automatic FX conversion |
 | Apex cutover | `perfumeaura.com` is the deployed storefront; `www` redirects; `shop` is deleted |
 | Hostinger packages | Ops generated branch and apex storefront verified ZIP paths pass extracted smoke |
+| Staff operations foundation | Implemented locally: official Better Auth Admin/2FA plugins, strict roles/capabilities, invitation/audit records, owner break-glass recovery, and migration/integration coverage |
 
 ## Release gates still closed
 
@@ -23,17 +24,18 @@
 5. Complete an authorized prepaid and COD lifecycle acceptance test before
    checkout release.
 
-## Next release: owner and staff operations
+## Pending staff-operations release gate
 
-1. Add the official Better Auth Admin and 2FA plugins and generate their schema.
-2. Test the reviewed migration on an isolated Neon branch, then apply it to
-   production and reapply restricted runtime grants.
-3. Add typed `owner`, `staff`, and fail-closed `user` roles with server-side
-   capabilities and an exactly-one-owner database invariant.
-4. Add audited staff invitations, mandatory TOTP, recovery codes, trusted
-   devices, session revocation, bans, and break-glass owner recovery.
-5. Keep `OPS_TWO_FACTOR_REQUIRED` and `OPS_STAFF_INVITES_ENABLED` false until
-   SMTP delivery, owner enrollment, and recovery-code use are proven.
+1. Test `0010_curved_puma` on an isolated Neon branch, then apply it to
+   production and reapply the reviewed runtime grant matrix.
+2. Deploy with `OPS_TWO_FACTOR_REQUIRED=false` and
+   `OPS_STAFF_INVITES_ENABLED=false`; prove current owner login and ops health.
+3. Prove Hostinger SMTP delivery, owner TOTP enrollment, and one recovery-code
+   use before enabling mandatory 2FA.
+4. Enable invitations only after mandatory 2FA is proven; complete one
+   authorized staff setup and direct server-action authorization denial tests.
+5. Resolve the active Hostinger ops HCDN 503 incident before deploying this
+   release.
 
 ## Operational follow-up
 

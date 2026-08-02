@@ -3,7 +3,7 @@ import { getInvoice } from "@/lib/invoices";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatInr, formatQty } from "@/lib/money";
 import { formatBusinessDate } from "@/lib/business-date";
-import { requireOwnerSession } from "@/lib/session";
+import { requireCapability } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,7 @@ export default async function InvoicePrintPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireOwnerSession({ redirectToLogin: true });
+  await requireCapability("invoices.print", { redirectToLogin: true });
   const { id } = await params;
   const result = await safeDbQuery(() => getInvoice(id));
   if (result.error || !result.data) notFound();
