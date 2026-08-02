@@ -59,14 +59,14 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
         "@context": "https://schema.org",
         "@type": "Product",
         name: product.name,
-        image: [new URL(product.image, process.env.STOREFRONT_URL ?? "https://shop.perfumeaura.com").toString()],
+        image: [new URL(product.image, process.env.STOREFRONT_URL ?? "https://perfumeaura.com").toString()],
         description: product.summary,
         offers: product.variants.flatMap((variant) => variant.price ? [{
           "@type": "Offer",
           priceCurrency: "INR",
           price: (variant.price.amountMinor / 100).toFixed(2),
           availability: variant.purchasable ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-          url: new URL(`/products/${product.slug}`, process.env.STOREFRONT_URL ?? "https://shop.perfumeaura.com").toString(),
+          url: new URL(`/products/${product.slug}`, process.env.STOREFRONT_URL ?? "https://perfumeaura.com").toString(),
         }] : []),
       }
     : null;

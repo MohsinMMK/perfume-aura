@@ -20,7 +20,7 @@ const playfairDisplay = localFont({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.STOREFRONT_URL ?? "https://shop.perfumeaura.com",
+    process.env.STOREFRONT_URL ?? "https://perfumeaura.com",
   ),
   title: {
     default: "Perfume Aura",

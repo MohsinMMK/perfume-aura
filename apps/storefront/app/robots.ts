@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
     rules: publicRelease
       ? { userAgent: "*", allow: "/", disallow: ["/account/", "/checkout", "/cart", "/order/"] }
       : { userAgent: "*", disallow: "/" },
-    sitemap: `${process.env.STOREFRONT_URL ?? "https://shop.perfumeaura.com"}/sitemap.xml`,
+    sitemap: `${process.env.STOREFRONT_URL ?? "https://perfumeaura.com"}/sitemap.xml`,
   };
 }

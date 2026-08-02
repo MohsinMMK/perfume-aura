@@ -281,7 +281,7 @@ export async function placeCheckoutOrder(
   if (!attempt) throw new Error("Payment attempt could not be created");
 
   try {
-    const storefrontUrl = new URL(process.env.STOREFRONT_URL ?? "https://shop.perfumeaura.com");
+    const storefrontUrl = new URL(process.env.STOREFRONT_URL ?? "https://perfumeaura.com");
     const cashfreeOrder = await createCashfreeOrder({
       orderId: createdOrderNumber,
       amountMinor: totalAmountMinor,

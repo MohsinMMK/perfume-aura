@@ -1,9 +1,5 @@
 import type { Money } from "./money";
-import {
-  loadPublishedCollection,
-  loadPublishedCollectionSlugs,
-  loadPublishedProducts,
-} from "./public-catalog";
+import { isPublicCatalogEnabled } from "./catalog-policy";
 
 export type StorefrontVariant = Readonly<{
   id: string;
@@ -172,7 +168,10 @@ export function isPreviewCatalogEnabled(): boolean {
 }
 
 export async function getStorefrontProducts(): Promise<readonly StorefrontProduct[]> {
-  return isPreviewCatalogEnabled() ? previewProducts : loadPublishedProducts();
+  if (isPreviewCatalogEnabled()) return previewProducts;
+  if (!isPublicCatalogEnabled()) return [];
+  const { loadPublishedProducts } = await import("./public-catalog");
+  return loadPublishedProducts();
 }
 
 export async function getFeaturedProducts(): Promise<readonly StorefrontProduct[]> {
@@ -228,6 +227,8 @@ export async function getStorefrontCollection(slug: string): Promise<Readonly<{
       ? { ...collection, products: products.filter((product) => product.collectionSlug === slug) }
       : null;
   }
+  if (!isPublicCatalogEnabled()) return null;
+  const { loadPublishedCollection } = await import("./public-catalog");
   const collection = await loadPublishedCollection(slug);
   if (!collection) return null;
   const productIds = new Set(collection.productIds);
@@ -235,7 +236,8 @@ export async function getStorefrontCollection(slug: string): Promise<Readonly<{
 }
 
 export async function getStorefrontCollectionSlugs(): Promise<readonly string[]> {
-  return isPreviewCatalogEnabled()
-    ? ["signature", "standard-preview"]
-    : loadPublishedCollectionSlugs();
+  if (isPreviewCatalogEnabled()) return ["signature", "standard-preview"];
+  if (!isPublicCatalogEnabled()) return [];
+  const { loadPublishedCollectionSlugs } = await import("./public-catalog");
+  return loadPublishedCollectionSlugs();
 }

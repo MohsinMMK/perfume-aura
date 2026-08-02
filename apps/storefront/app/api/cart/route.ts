@@ -1,9 +1,17 @@
 import { randomBytes } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { findStorefrontVariant, isPreviewCatalogEnabled } from "@/lib/catalog";
-import { readPreviewCart, setPreviewCartLine } from "@/lib/cart-store";
-import { readDurableCart, setDurableCartLine } from "@/lib/durable-cart";
+import {
+  findStorefrontVariant,
+  isPreviewCatalogEnabled,
+} from "@/lib/catalog";
+import { isPublicCatalogEnabled } from "@/lib/catalog-policy";
+import {
+  readPreviewCart,
+  readReleaseLockedCart,
+  setPreviewCartLine,
+} from "@/lib/cart-store";
+import type { CartSnapshot } from "@/lib/cart-store";
 
 const cartCookieName = "pa_storefront_cart";
 
@@ -45,9 +53,16 @@ function withCartCookie(
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { token, created } = resolveToken(request);
   try {
-    const cart = isPreviewCatalogEnabled()
-      ? readPreviewCart(token)
-      : await readDurableCart(token);
+    const previewCatalog = isPreviewCatalogEnabled();
+    let cart: CartSnapshot;
+    if (previewCatalog) {
+      cart = readPreviewCart(token);
+    } else if (isPublicCatalogEnabled()) {
+      const { readDurableCart } = await import("@/lib/durable-cart");
+      cart = await readDurableCart(token);
+    } else {
+      cart = readReleaseLockedCart();
+    }
     return withCartCookie(NextResponse.json(cart), token, created);
   } catch (error) {
     console.error("[storefront cart] failed to read cart", error);
@@ -66,7 +81,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const { token, created } = resolveToken(request);
   try {
-    if (!isPreviewCatalogEnabled()) {
+    const previewCatalog = isPreviewCatalogEnabled();
+    if (!previewCatalog && !isPublicCatalogEnabled()) {
+      return NextResponse.json(
+        { error: "The public catalog is not released yet." },
+        { status: 409 },
+      );
+    }
+
+    if (!previewCatalog) {
+      const { setDurableCartLine } = await import("@/lib/durable-cart");
       const cart = await setDurableCartLine(
         token,
         parsedBody.data.variantId,
