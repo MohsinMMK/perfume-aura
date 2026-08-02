@@ -1,0 +1,77 @@
+{
+  "node": {
+    "00819dac7cc9c0d585500bf64747c7741e7b422f0a": {
+      "workers": {
+        "app/(dashboard)/stock/low/page": {
+          "moduleId": 4679,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "getDashboardStats",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "0096c7abad9484fcaaa83e432d0b608ac2329018ad": {
+      "workers": {
+        "app/(dashboard)/stock/low/page": {
+          "moduleId": 4679,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "listLowStock",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "00f54090ffc8f7ecf952758ce0d5d5403d92083f50": {
+      "workers": {
+        "app/(dashboard)/stock/low/page": {
+          "moduleId": 4679,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "getLowStockCount",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40b6aca9a73cd0db71965a5edb41fe2d1f3d28023a": {
+      "workers": {
+        "app/(dashboard)/stock/low/page": {
+          "moduleId": 4679,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "listRecentMovements",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40f22bcacaccad8e737c33444e26e15efa0ff6113a": {
+      "workers": {
+        "app/(dashboard)/stock/low/page": {
+          "moduleId": 4679,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "adjustStockAction",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40fa1cb3c70f4e1b7504e7b8e2ec8249d68db3e3fa": {
+      "workers": {
+        "app/(dashboard)/stock/low/page": {
+          "moduleId": 4679,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "receiveStockAction",
+      "filename": "apps/ops/lib/stock.ts"
+    }
+  },
+  "edge": {}
+}

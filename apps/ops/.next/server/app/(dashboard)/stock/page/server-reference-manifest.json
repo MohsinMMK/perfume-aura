@@ -1,0 +1,209 @@
+{
+  "node": {
+    "00819dac7cc9c0d585500bf64747c7741e7b422f0a": {
+      "workers": {
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "getDashboardStats",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "0096c7abad9484fcaaa83e432d0b608ac2329018ad": {
+      "workers": {
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "listLowStock",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "00f54090ffc8f7ecf952758ce0d5d5403d92083f50": {
+      "workers": {
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "getLowStockCount",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40b6aca9a73cd0db71965a5edb41fe2d1f3d28023a": {
+      "workers": {
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "listRecentMovements",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40f22bcacaccad8e737c33444e26e15efa0ff6113a": {
+      "workers": {
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "adjustStockAction",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40fa1cb3c70f4e1b7504e7b8e2ec8249d68db3e3fa": {
+      "workers": {
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "receiveStockAction",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "002bed9e18006d3adb309c2df94f009b6f2ca1b99e": {
+      "workers": {
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "listActiveVariantsForSelect",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "listActiveVariantsForSelect",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "400aaa292c8e250e8108fd4b7a93d0d93f77b36340": {
+      "workers": {
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "createProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "createProductAction",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "4010a3e4f348e950bec2cb93f3485f78cf96bc1a64": {
+      "workers": {
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "updateProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "updateProductAction",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "4039e02a87429f5594559f52f0e50dc153ddec2c66": {
+      "workers": {
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "archiveProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "archiveProductAction",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "403efb03cf162cd5f5d7af5969c23dcd497a08ada5": {
+      "workers": {
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "getProduct",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "getProduct",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "405a16038b7d90887f046af90dbe9e907e4322dfa9": {
+      "workers": {
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "createVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "createVariantAction",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "4071ca2bbc036fae43bbe4fd36b0533ad6443812dc": {
+      "workers": {
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "updateVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "updateVariantAction",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "409a793591a3cfc2a83327608a671a172fccdf4684": {
+      "workers": {
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "archiveVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "archiveVariantAction",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "40b9cbc46154ada59cb1da2c6f97260cdc736946ae": {
+      "workers": {
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "reactivateVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "reactivateVariantAction",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "40ca47e9df1f463140ea56fe7d43e7fd9fac594655": {
+      "workers": {
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "reactivateProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "reactivateProductAction",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "40fe75d3d4cd5c9c9e3ab56998b5e419b5383b833e": {
+      "workers": {
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "listProducts",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "listProducts",
+      "filename": "apps/ops/lib/products.ts"
+    }
+  },
+  "edge": {}
+}

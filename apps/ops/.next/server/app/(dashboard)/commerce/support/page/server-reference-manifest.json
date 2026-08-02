@@ -1,0 +1,185 @@
+{
+  "node": {
+    "00819dac7cc9c0d585500bf64747c7741e7b422f0a": {
+      "workers": {
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "getDashboardStats",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "0096c7abad9484fcaaa83e432d0b608ac2329018ad": {
+      "workers": {
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "listLowStock",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "00f54090ffc8f7ecf952758ce0d5d5403d92083f50": {
+      "workers": {
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "getLowStockCount",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40b6aca9a73cd0db71965a5edb41fe2d1f3d28023a": {
+      "workers": {
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "listRecentMovements",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40f22bcacaccad8e737c33444e26e15efa0ff6113a": {
+      "workers": {
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "adjustStockAction",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40fa1cb3c70f4e1b7504e7b8e2ec8249d68db3e3fa": {
+      "workers": {
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "receiveStockAction",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "002876512be93a4f8703872a6ae6c8472c52d69dba": {
+      "workers": {
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "listCommerceSupport",
+          "filename": "apps/ops/lib/commerce.ts"
+        }
+      },
+      "exportedName": "listCommerceSupport",
+      "filename": "apps/ops/lib/commerce.ts"
+    },
+    "0041b1a8541316ee1fbb63d21bae080b5504cd8905": {
+      "workers": {
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "listCommerceOrders",
+          "filename": "apps/ops/lib/commerce.ts"
+        }
+      },
+      "exportedName": "listCommerceOrders",
+      "filename": "apps/ops/lib/commerce.ts"
+    },
+    "0048dd79e4dab00aba80fb70a3d6d2d6299215d4b5": {
+      "workers": {
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "getCommerceOverview",
+          "filename": "apps/ops/lib/commerce.ts"
+        }
+      },
+      "exportedName": "getCommerceOverview",
+      "filename": "apps/ops/lib/commerce.ts"
+    },
+    "00559ce8dbea9f17d6901af1479b132f0174ca05e2": {
+      "workers": {
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "listCommerceCatalog",
+          "filename": "apps/ops/lib/commerce.ts"
+        }
+      },
+      "exportedName": "listCommerceCatalog",
+      "filename": "apps/ops/lib/commerce.ts"
+    },
+    "005f702a799086a96b851c066f8be548f371e7e456": {
+      "workers": {
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "listCommercePromotions",
+          "filename": "apps/ops/lib/commerce.ts"
+        }
+      },
+      "exportedName": "listCommercePromotions",
+      "filename": "apps/ops/lib/commerce.ts"
+    },
+    "0094b5b771f02981c14d1833627c8d4d4eecca8f38": {
+      "workers": {
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "getCommerceSettings",
+          "filename": "apps/ops/lib/commerce.ts"
+        }
+      },
+      "exportedName": "getCommerceSettings",
+      "filename": "apps/ops/lib/commerce.ts"
+    },
+    "00a71c132ab9c66d4d0d94b31d0a61439ac7aa38c0": {
+      "workers": {
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "listCommerceReviews",
+          "filename": "apps/ops/lib/commerce.ts"
+        }
+      },
+      "exportedName": "listCommerceReviews",
+      "filename": "apps/ops/lib/commerce.ts"
+    },
+    "4019d8ef87ab7353c8e0897c0f1a74dcf8b5ee7add": {
+      "workers": {
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "updateCommerceSettingsAction",
+          "filename": "apps/ops/lib/commerce.ts"
+        }
+      },
+      "exportedName": "updateCommerceSettingsAction",
+      "filename": "apps/ops/lib/commerce.ts"
+    },
+    "40d59e246c57e47ef443ae7ff3f0f6486e25e116e7": {
+      "workers": {
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "updateShipmentAction",
+          "filename": "apps/ops/lib/commerce.ts"
+        }
+      },
+      "exportedName": "updateShipmentAction",
+      "filename": "apps/ops/lib/commerce.ts"
+    }
+  },
+  "edge": {}
+}

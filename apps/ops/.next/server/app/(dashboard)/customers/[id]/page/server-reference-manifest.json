@@ -1,0 +1,149 @@
+{
+  "node": {
+    "00819dac7cc9c0d585500bf64747c7741e7b422f0a": {
+      "workers": {
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "getDashboardStats",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "0096c7abad9484fcaaa83e432d0b608ac2329018ad": {
+      "workers": {
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "listLowStock",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "00f54090ffc8f7ecf952758ce0d5d5403d92083f50": {
+      "workers": {
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "getLowStockCount",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40b6aca9a73cd0db71965a5edb41fe2d1f3d28023a": {
+      "workers": {
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "listRecentMovements",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40f22bcacaccad8e737c33444e26e15efa0ff6113a": {
+      "workers": {
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "adjustStockAction",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40fa1cb3c70f4e1b7504e7b8e2ec8249d68db3e3fa": {
+      "workers": {
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "receiveStockAction",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "006c871bcf06b182dc842353075f967da90ecd491a": {
+      "workers": {
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "listActiveCustomersForSelect",
+          "filename": "apps/ops/lib/customers.ts"
+        }
+      },
+      "exportedName": "listActiveCustomersForSelect",
+      "filename": "apps/ops/lib/customers.ts"
+    },
+    "405b7f33b718b316b7279db55053872835ea4ef1e0": {
+      "workers": {
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "getCustomer",
+          "filename": "apps/ops/lib/customers.ts"
+        }
+      },
+      "exportedName": "getCustomer",
+      "filename": "apps/ops/lib/customers.ts"
+    },
+    "407f4b65efee4f4af0b066e8317a28f198fff0eac0": {
+      "workers": {
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "listCustomers",
+          "filename": "apps/ops/lib/customers.ts"
+        }
+      },
+      "exportedName": "listCustomers",
+      "filename": "apps/ops/lib/customers.ts"
+    },
+    "40987faebc6fdd7935ad90bd1295b7018084e4ce9f": {
+      "workers": {
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "createCustomerAction",
+          "filename": "apps/ops/lib/customers.ts"
+        }
+      },
+      "exportedName": "createCustomerAction",
+      "filename": "apps/ops/lib/customers.ts"
+    },
+    "40c2ceed7ad3d3523a8ae51b34f5186e1ada7cb766": {
+      "workers": {
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "updateCustomerAction",
+          "filename": "apps/ops/lib/customers.ts"
+        }
+      },
+      "exportedName": "updateCustomerAction",
+      "filename": "apps/ops/lib/customers.ts"
+    },
+    "40efdba1189a46460a7e62b51a5876f2c71e65b49d": {
+      "workers": {
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "archiveCustomerAction",
+          "filename": "apps/ops/lib/customers.ts"
+        }
+      },
+      "exportedName": "archiveCustomerAction",
+      "filename": "apps/ops/lib/customers.ts"
+    }
+  },
+  "edge": {}
+}

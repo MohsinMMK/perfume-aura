@@ -1,0 +1,2304 @@
+{
+  "node": {
+    "00819dac7cc9c0d585500bf64747c7741e7b422f0a": {
+      "workers": {
+        "app/(dashboard)/commerce/catalog/page": {
+          "moduleId": 88931,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/orders/page": {
+          "moduleId": 50560,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/page": {
+          "moduleId": 38185,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/promotions/page": {
+          "moduleId": 81632,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/reviews/page": {
+          "moduleId": 7090,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/settings/page": {
+          "moduleId": 10547,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/customers/new/page": {
+          "moduleId": 84967,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/customers/page": {
+          "moduleId": 44435,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/finance/page": {
+          "moduleId": 66152,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/[id]/print/page": {
+          "moduleId": 11416,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/ar/page": {
+          "moduleId": 94106,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/new/page": {
+          "moduleId": 31759,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/payments/page": {
+          "moduleId": 3541,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 15965,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/products/new/page": {
+          "moduleId": 39863,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/products/page": {
+          "moduleId": 70565,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/settings/security/page": {
+          "moduleId": 44924,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/stock/low/page": {
+          "moduleId": 4679,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "filename": "apps/ops/lib/stock.ts",
+      "exportedName": "getDashboardStats"
+    },
+    "0096c7abad9484fcaaa83e432d0b608ac2329018ad": {
+      "workers": {
+        "app/(dashboard)/commerce/catalog/page": {
+          "moduleId": 88931,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/orders/page": {
+          "moduleId": 50560,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/page": {
+          "moduleId": 38185,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/promotions/page": {
+          "moduleId": 81632,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/reviews/page": {
+          "moduleId": 7090,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/settings/page": {
+          "moduleId": 10547,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/customers/new/page": {
+          "moduleId": 84967,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/customers/page": {
+          "moduleId": 44435,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/finance/page": {
+          "moduleId": 66152,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/[id]/print/page": {
+          "moduleId": 11416,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/ar/page": {
+          "moduleId": 94106,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/new/page": {
+          "moduleId": 31759,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/payments/page": {
+          "moduleId": 3541,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 15965,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/products/new/page": {
+          "moduleId": 39863,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/products/page": {
+          "moduleId": 70565,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/settings/security/page": {
+          "moduleId": 44924,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/stock/low/page": {
+          "moduleId": 4679,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "filename": "apps/ops/lib/stock.ts",
+      "exportedName": "listLowStock"
+    },
+    "00f54090ffc8f7ecf952758ce0d5d5403d92083f50": {
+      "workers": {
+        "app/(dashboard)/commerce/catalog/page": {
+          "moduleId": 88931,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/orders/page": {
+          "moduleId": 50560,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/page": {
+          "moduleId": 38185,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/promotions/page": {
+          "moduleId": 81632,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/reviews/page": {
+          "moduleId": 7090,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/settings/page": {
+          "moduleId": 10547,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/customers/new/page": {
+          "moduleId": 84967,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/customers/page": {
+          "moduleId": 44435,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/finance/page": {
+          "moduleId": 66152,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/[id]/print/page": {
+          "moduleId": 11416,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/ar/page": {
+          "moduleId": 94106,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/new/page": {
+          "moduleId": 31759,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/payments/page": {
+          "moduleId": 3541,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 15965,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/products/new/page": {
+          "moduleId": 39863,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/products/page": {
+          "moduleId": 70565,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/settings/security/page": {
+          "moduleId": 44924,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/stock/low/page": {
+          "moduleId": 4679,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "filename": "apps/ops/lib/stock.ts",
+      "exportedName": "getLowStockCount"
+    },
+    "40b6aca9a73cd0db71965a5edb41fe2d1f3d28023a": {
+      "workers": {
+        "app/(dashboard)/commerce/catalog/page": {
+          "moduleId": 88931,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/orders/page": {
+          "moduleId": 50560,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/page": {
+          "moduleId": 38185,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/promotions/page": {
+          "moduleId": 81632,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/reviews/page": {
+          "moduleId": 7090,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/settings/page": {
+          "moduleId": 10547,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/customers/new/page": {
+          "moduleId": 84967,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/customers/page": {
+          "moduleId": 44435,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/finance/page": {
+          "moduleId": 66152,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/[id]/print/page": {
+          "moduleId": 11416,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/ar/page": {
+          "moduleId": 94106,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/new/page": {
+          "moduleId": 31759,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/payments/page": {
+          "moduleId": 3541,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 15965,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/products/new/page": {
+          "moduleId": 39863,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/products/page": {
+          "moduleId": 70565,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/settings/security/page": {
+          "moduleId": 44924,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/stock/low/page": {
+          "moduleId": 4679,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "filename": "apps/ops/lib/stock.ts",
+      "exportedName": "listRecentMovements"
+    },
+    "40f22bcacaccad8e737c33444e26e15efa0ff6113a": {
+      "workers": {
+        "app/(dashboard)/commerce/catalog/page": {
+          "moduleId": 88931,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/orders/page": {
+          "moduleId": 50560,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/page": {
+          "moduleId": 38185,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/promotions/page": {
+          "moduleId": 81632,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/reviews/page": {
+          "moduleId": 7090,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/settings/page": {
+          "moduleId": 10547,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/customers/new/page": {
+          "moduleId": 84967,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/customers/page": {
+          "moduleId": 44435,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/finance/page": {
+          "moduleId": 66152,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/[id]/print/page": {
+          "moduleId": 11416,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/ar/page": {
+          "moduleId": 94106,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/new/page": {
+          "moduleId": 31759,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/payments/page": {
+          "moduleId": 3541,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 15965,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/products/new/page": {
+          "moduleId": 39863,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/products/page": {
+          "moduleId": 70565,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/settings/security/page": {
+          "moduleId": 44924,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/stock/low/page": {
+          "moduleId": 4679,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "filename": "apps/ops/lib/stock.ts",
+      "exportedName": "adjustStockAction"
+    },
+    "40fa1cb3c70f4e1b7504e7b8e2ec8249d68db3e3fa": {
+      "workers": {
+        "app/(dashboard)/commerce/catalog/page": {
+          "moduleId": 88931,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/orders/page": {
+          "moduleId": 50560,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/page": {
+          "moduleId": 38185,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/promotions/page": {
+          "moduleId": 81632,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/reviews/page": {
+          "moduleId": 7090,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/settings/page": {
+          "moduleId": 10547,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/customers/new/page": {
+          "moduleId": 84967,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/customers/page": {
+          "moduleId": 44435,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/finance/page": {
+          "moduleId": 66152,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/[id]/print/page": {
+          "moduleId": 11416,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/ar/page": {
+          "moduleId": 94106,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/new/page": {
+          "moduleId": 31759,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/payments/page": {
+          "moduleId": 3541,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 15965,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/products/new/page": {
+          "moduleId": 39863,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/products/page": {
+          "moduleId": 70565,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/settings/security/page": {
+          "moduleId": 44924,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/stock/low/page": {
+          "moduleId": 4679,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        },
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "filename": "apps/ops/lib/stock.ts",
+      "exportedName": "receiveStockAction"
+    },
+    "002876512be93a4f8703872a6ae6c8472c52d69dba": {
+      "workers": {
+        "app/(dashboard)/commerce/catalog/page": {
+          "moduleId": 88931,
+          "async": true,
+          "exportedName": "listCommerceSupport",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/orders/page": {
+          "moduleId": 50560,
+          "async": true,
+          "exportedName": "listCommerceSupport",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/page": {
+          "moduleId": 38185,
+          "async": true,
+          "exportedName": "listCommerceSupport",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/promotions/page": {
+          "moduleId": 81632,
+          "async": true,
+          "exportedName": "listCommerceSupport",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/reviews/page": {
+          "moduleId": 7090,
+          "async": true,
+          "exportedName": "listCommerceSupport",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/settings/page": {
+          "moduleId": 10547,
+          "async": true,
+          "exportedName": "listCommerceSupport",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "listCommerceSupport",
+          "filename": "apps/ops/lib/commerce.ts"
+        }
+      },
+      "filename": "apps/ops/lib/commerce.ts",
+      "exportedName": "listCommerceSupport"
+    },
+    "0041b1a8541316ee1fbb63d21bae080b5504cd8905": {
+      "workers": {
+        "app/(dashboard)/commerce/catalog/page": {
+          "moduleId": 88931,
+          "async": true,
+          "exportedName": "listCommerceOrders",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/orders/page": {
+          "moduleId": 50560,
+          "async": true,
+          "exportedName": "listCommerceOrders",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/page": {
+          "moduleId": 38185,
+          "async": true,
+          "exportedName": "listCommerceOrders",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/promotions/page": {
+          "moduleId": 81632,
+          "async": true,
+          "exportedName": "listCommerceOrders",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/reviews/page": {
+          "moduleId": 7090,
+          "async": true,
+          "exportedName": "listCommerceOrders",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/settings/page": {
+          "moduleId": 10547,
+          "async": true,
+          "exportedName": "listCommerceOrders",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "listCommerceOrders",
+          "filename": "apps/ops/lib/commerce.ts"
+        }
+      },
+      "filename": "apps/ops/lib/commerce.ts",
+      "exportedName": "listCommerceOrders"
+    },
+    "0048dd79e4dab00aba80fb70a3d6d2d6299215d4b5": {
+      "workers": {
+        "app/(dashboard)/commerce/catalog/page": {
+          "moduleId": 88931,
+          "async": true,
+          "exportedName": "getCommerceOverview",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/orders/page": {
+          "moduleId": 50560,
+          "async": true,
+          "exportedName": "getCommerceOverview",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/page": {
+          "moduleId": 38185,
+          "async": true,
+          "exportedName": "getCommerceOverview",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/promotions/page": {
+          "moduleId": 81632,
+          "async": true,
+          "exportedName": "getCommerceOverview",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/reviews/page": {
+          "moduleId": 7090,
+          "async": true,
+          "exportedName": "getCommerceOverview",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/settings/page": {
+          "moduleId": 10547,
+          "async": true,
+          "exportedName": "getCommerceOverview",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "getCommerceOverview",
+          "filename": "apps/ops/lib/commerce.ts"
+        }
+      },
+      "filename": "apps/ops/lib/commerce.ts",
+      "exportedName": "getCommerceOverview"
+    },
+    "00559ce8dbea9f17d6901af1479b132f0174ca05e2": {
+      "workers": {
+        "app/(dashboard)/commerce/catalog/page": {
+          "moduleId": 88931,
+          "async": true,
+          "exportedName": "listCommerceCatalog",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/orders/page": {
+          "moduleId": 50560,
+          "async": true,
+          "exportedName": "listCommerceCatalog",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/page": {
+          "moduleId": 38185,
+          "async": true,
+          "exportedName": "listCommerceCatalog",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/promotions/page": {
+          "moduleId": 81632,
+          "async": true,
+          "exportedName": "listCommerceCatalog",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/reviews/page": {
+          "moduleId": 7090,
+          "async": true,
+          "exportedName": "listCommerceCatalog",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/settings/page": {
+          "moduleId": 10547,
+          "async": true,
+          "exportedName": "listCommerceCatalog",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "listCommerceCatalog",
+          "filename": "apps/ops/lib/commerce.ts"
+        }
+      },
+      "filename": "apps/ops/lib/commerce.ts",
+      "exportedName": "listCommerceCatalog"
+    },
+    "005f702a799086a96b851c066f8be548f371e7e456": {
+      "workers": {
+        "app/(dashboard)/commerce/catalog/page": {
+          "moduleId": 88931,
+          "async": true,
+          "exportedName": "listCommercePromotions",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/orders/page": {
+          "moduleId": 50560,
+          "async": true,
+          "exportedName": "listCommercePromotions",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/page": {
+          "moduleId": 38185,
+          "async": true,
+          "exportedName": "listCommercePromotions",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/promotions/page": {
+          "moduleId": 81632,
+          "async": true,
+          "exportedName": "listCommercePromotions",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/reviews/page": {
+          "moduleId": 7090,
+          "async": true,
+          "exportedName": "listCommercePromotions",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/settings/page": {
+          "moduleId": 10547,
+          "async": true,
+          "exportedName": "listCommercePromotions",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "listCommercePromotions",
+          "filename": "apps/ops/lib/commerce.ts"
+        }
+      },
+      "filename": "apps/ops/lib/commerce.ts",
+      "exportedName": "listCommercePromotions"
+    },
+    "0094b5b771f02981c14d1833627c8d4d4eecca8f38": {
+      "workers": {
+        "app/(dashboard)/commerce/catalog/page": {
+          "moduleId": 88931,
+          "async": true,
+          "exportedName": "getCommerceSettings",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/orders/page": {
+          "moduleId": 50560,
+          "async": true,
+          "exportedName": "getCommerceSettings",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/page": {
+          "moduleId": 38185,
+          "async": true,
+          "exportedName": "getCommerceSettings",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/promotions/page": {
+          "moduleId": 81632,
+          "async": true,
+          "exportedName": "getCommerceSettings",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/reviews/page": {
+          "moduleId": 7090,
+          "async": true,
+          "exportedName": "getCommerceSettings",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/settings/page": {
+          "moduleId": 10547,
+          "async": true,
+          "exportedName": "getCommerceSettings",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "getCommerceSettings",
+          "filename": "apps/ops/lib/commerce.ts"
+        }
+      },
+      "filename": "apps/ops/lib/commerce.ts",
+      "exportedName": "getCommerceSettings"
+    },
+    "00a71c132ab9c66d4d0d94b31d0a61439ac7aa38c0": {
+      "workers": {
+        "app/(dashboard)/commerce/catalog/page": {
+          "moduleId": 88931,
+          "async": true,
+          "exportedName": "listCommerceReviews",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/orders/page": {
+          "moduleId": 50560,
+          "async": true,
+          "exportedName": "listCommerceReviews",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/page": {
+          "moduleId": 38185,
+          "async": true,
+          "exportedName": "listCommerceReviews",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/promotions/page": {
+          "moduleId": 81632,
+          "async": true,
+          "exportedName": "listCommerceReviews",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/reviews/page": {
+          "moduleId": 7090,
+          "async": true,
+          "exportedName": "listCommerceReviews",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/settings/page": {
+          "moduleId": 10547,
+          "async": true,
+          "exportedName": "listCommerceReviews",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "listCommerceReviews",
+          "filename": "apps/ops/lib/commerce.ts"
+        }
+      },
+      "filename": "apps/ops/lib/commerce.ts",
+      "exportedName": "listCommerceReviews"
+    },
+    "4019d8ef87ab7353c8e0897c0f1a74dcf8b5ee7add": {
+      "workers": {
+        "app/(dashboard)/commerce/catalog/page": {
+          "moduleId": 88931,
+          "async": true,
+          "exportedName": "updateCommerceSettingsAction",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/orders/page": {
+          "moduleId": 50560,
+          "async": true,
+          "exportedName": "updateCommerceSettingsAction",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/page": {
+          "moduleId": 38185,
+          "async": true,
+          "exportedName": "updateCommerceSettingsAction",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/promotions/page": {
+          "moduleId": 81632,
+          "async": true,
+          "exportedName": "updateCommerceSettingsAction",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/reviews/page": {
+          "moduleId": 7090,
+          "async": true,
+          "exportedName": "updateCommerceSettingsAction",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/settings/page": {
+          "moduleId": 10547,
+          "async": true,
+          "exportedName": "updateCommerceSettingsAction",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "updateCommerceSettingsAction",
+          "filename": "apps/ops/lib/commerce.ts"
+        }
+      },
+      "filename": "apps/ops/lib/commerce.ts",
+      "exportedName": "updateCommerceSettingsAction"
+    },
+    "40d59e246c57e47ef443ae7ff3f0f6486e25e116e7": {
+      "workers": {
+        "app/(dashboard)/commerce/catalog/page": {
+          "moduleId": 88931,
+          "async": true,
+          "exportedName": "updateShipmentAction",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/orders/page": {
+          "moduleId": 50560,
+          "async": true,
+          "exportedName": "updateShipmentAction",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/page": {
+          "moduleId": 38185,
+          "async": true,
+          "exportedName": "updateShipmentAction",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/promotions/page": {
+          "moduleId": 81632,
+          "async": true,
+          "exportedName": "updateShipmentAction",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/reviews/page": {
+          "moduleId": 7090,
+          "async": true,
+          "exportedName": "updateShipmentAction",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/settings/page": {
+          "moduleId": 10547,
+          "async": true,
+          "exportedName": "updateShipmentAction",
+          "filename": "apps/ops/lib/commerce.ts"
+        },
+        "app/(dashboard)/commerce/support/page": {
+          "moduleId": 19081,
+          "async": true,
+          "exportedName": "updateShipmentAction",
+          "filename": "apps/ops/lib/commerce.ts"
+        }
+      },
+      "filename": "apps/ops/lib/commerce.ts",
+      "exportedName": "updateShipmentAction"
+    },
+    "006c871bcf06b182dc842353075f967da90ecd491a": {
+      "workers": {
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "listActiveCustomersForSelect",
+          "filename": "apps/ops/lib/customers.ts"
+        },
+        "app/(dashboard)/customers/page": {
+          "moduleId": 44435,
+          "async": true,
+          "exportedName": "listActiveCustomersForSelect",
+          "filename": "apps/ops/lib/customers.ts"
+        },
+        "app/(dashboard)/invoices/new/page": {
+          "moduleId": 31759,
+          "async": true,
+          "exportedName": "listActiveCustomersForSelect",
+          "filename": "apps/ops/lib/customers.ts"
+        }
+      },
+      "filename": "apps/ops/lib/customers.ts",
+      "exportedName": "listActiveCustomersForSelect"
+    },
+    "405b7f33b718b316b7279db55053872835ea4ef1e0": {
+      "workers": {
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "getCustomer",
+          "filename": "apps/ops/lib/customers.ts"
+        },
+        "app/(dashboard)/customers/page": {
+          "moduleId": 44435,
+          "async": true,
+          "exportedName": "getCustomer",
+          "filename": "apps/ops/lib/customers.ts"
+        },
+        "app/(dashboard)/invoices/new/page": {
+          "moduleId": 31759,
+          "async": true,
+          "exportedName": "getCustomer",
+          "filename": "apps/ops/lib/customers.ts"
+        }
+      },
+      "filename": "apps/ops/lib/customers.ts",
+      "exportedName": "getCustomer"
+    },
+    "407f4b65efee4f4af0b066e8317a28f198fff0eac0": {
+      "workers": {
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "listCustomers",
+          "filename": "apps/ops/lib/customers.ts"
+        },
+        "app/(dashboard)/customers/page": {
+          "moduleId": 44435,
+          "async": true,
+          "exportedName": "listCustomers",
+          "filename": "apps/ops/lib/customers.ts"
+        },
+        "app/(dashboard)/invoices/new/page": {
+          "moduleId": 31759,
+          "async": true,
+          "exportedName": "listCustomers",
+          "filename": "apps/ops/lib/customers.ts"
+        }
+      },
+      "filename": "apps/ops/lib/customers.ts",
+      "exportedName": "listCustomers"
+    },
+    "40987faebc6fdd7935ad90bd1295b7018084e4ce9f": {
+      "workers": {
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "createCustomerAction",
+          "filename": "apps/ops/lib/customers.ts"
+        },
+        "app/(dashboard)/customers/new/page": {
+          "moduleId": 84967,
+          "async": true,
+          "exportedName": "createCustomerAction",
+          "filename": "apps/ops/lib/customers.ts"
+        },
+        "app/(dashboard)/customers/page": {
+          "moduleId": 44435,
+          "async": true,
+          "exportedName": "createCustomerAction",
+          "filename": "apps/ops/lib/customers.ts"
+        },
+        "app/(dashboard)/invoices/new/page": {
+          "moduleId": 31759,
+          "async": true,
+          "exportedName": "createCustomerAction",
+          "filename": "apps/ops/lib/customers.ts"
+        }
+      },
+      "filename": "apps/ops/lib/customers.ts",
+      "exportedName": "createCustomerAction"
+    },
+    "40c2ceed7ad3d3523a8ae51b34f5186e1ada7cb766": {
+      "workers": {
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "updateCustomerAction",
+          "filename": "apps/ops/lib/customers.ts"
+        },
+        "app/(dashboard)/customers/new/page": {
+          "moduleId": 84967,
+          "async": true,
+          "exportedName": "updateCustomerAction",
+          "filename": "apps/ops/lib/customers.ts"
+        },
+        "app/(dashboard)/customers/page": {
+          "moduleId": 44435,
+          "async": true,
+          "exportedName": "updateCustomerAction",
+          "filename": "apps/ops/lib/customers.ts"
+        },
+        "app/(dashboard)/invoices/new/page": {
+          "moduleId": 31759,
+          "async": true,
+          "exportedName": "updateCustomerAction",
+          "filename": "apps/ops/lib/customers.ts"
+        }
+      },
+      "filename": "apps/ops/lib/customers.ts",
+      "exportedName": "updateCustomerAction"
+    },
+    "40efdba1189a46460a7e62b51a5876f2c71e65b49d": {
+      "workers": {
+        "app/(dashboard)/customers/[id]/page": {
+          "moduleId": 66897,
+          "async": true,
+          "exportedName": "archiveCustomerAction",
+          "filename": "apps/ops/lib/customers.ts"
+        },
+        "app/(dashboard)/customers/page": {
+          "moduleId": 44435,
+          "async": true,
+          "exportedName": "archiveCustomerAction",
+          "filename": "apps/ops/lib/customers.ts"
+        },
+        "app/(dashboard)/invoices/new/page": {
+          "moduleId": 31759,
+          "async": true,
+          "exportedName": "archiveCustomerAction",
+          "filename": "apps/ops/lib/customers.ts"
+        }
+      },
+      "filename": "apps/ops/lib/customers.ts",
+      "exportedName": "archiveCustomerAction"
+    },
+    "005bba377f00d896cf3d78fb388096700144aab60e": {
+      "workers": {
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "getOpenArTotalCents",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "getOpenArTotalCents",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/print/page": {
+          "moduleId": 11416,
+          "async": true,
+          "exportedName": "getOpenArTotalCents",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/ar/page": {
+          "moduleId": 94106,
+          "async": true,
+          "exportedName": "getOpenArTotalCents",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "getOpenArTotalCents",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "filename": "apps/ops/lib/invoices.ts",
+      "exportedName": "getOpenArTotalCents"
+    },
+    "4004fd4347936090b19ed83f57922cf52498aba9ac": {
+      "workers": {
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "fulfillInvoiceAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "fulfillInvoiceAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/print/page": {
+          "moduleId": 11416,
+          "async": true,
+          "exportedName": "fulfillInvoiceAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/ar/page": {
+          "moduleId": 94106,
+          "async": true,
+          "exportedName": "fulfillInvoiceAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "fulfillInvoiceAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "filename": "apps/ops/lib/invoices.ts",
+      "exportedName": "fulfillInvoiceAction"
+    },
+    "402006102701350ea47499e1ef41b51611e5d10d8e": {
+      "workers": {
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "createInvoiceDraftAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "createInvoiceDraftAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/print/page": {
+          "moduleId": 11416,
+          "async": true,
+          "exportedName": "createInvoiceDraftAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/ar/page": {
+          "moduleId": 94106,
+          "async": true,
+          "exportedName": "createInvoiceDraftAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/new/page": {
+          "moduleId": 31759,
+          "async": true,
+          "exportedName": "createInvoiceDraftAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "createInvoiceDraftAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "filename": "apps/ops/lib/invoices.ts",
+      "exportedName": "createInvoiceDraftAction"
+    },
+    "403d32829df95d50643fd79cbe915171dda99e4431": {
+      "workers": {
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "addInvoiceLineAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "addInvoiceLineAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/print/page": {
+          "moduleId": 11416,
+          "async": true,
+          "exportedName": "addInvoiceLineAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/ar/page": {
+          "moduleId": 94106,
+          "async": true,
+          "exportedName": "addInvoiceLineAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "addInvoiceLineAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "filename": "apps/ops/lib/invoices.ts",
+      "exportedName": "addInvoiceLineAction"
+    },
+    "404f57d01e69e3f3f1429813a31b9408fa5f3cdf4f": {
+      "workers": {
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "issueInvoiceAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "issueInvoiceAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/print/page": {
+          "moduleId": 11416,
+          "async": true,
+          "exportedName": "issueInvoiceAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/ar/page": {
+          "moduleId": 94106,
+          "async": true,
+          "exportedName": "issueInvoiceAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "issueInvoiceAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "filename": "apps/ops/lib/invoices.ts",
+      "exportedName": "issueInvoiceAction"
+    },
+    "409b39b12771450dbcd79f496564a55fe5f9c4f7cc": {
+      "workers": {
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "markInvoicePaidAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "markInvoicePaidAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/print/page": {
+          "moduleId": 11416,
+          "async": true,
+          "exportedName": "markInvoicePaidAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/ar/page": {
+          "moduleId": 94106,
+          "async": true,
+          "exportedName": "markInvoicePaidAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "markInvoicePaidAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "filename": "apps/ops/lib/invoices.ts",
+      "exportedName": "markInvoicePaidAction"
+    },
+    "40a2533df1eff18465a231f080cdbc8e6b8f8c42a8": {
+      "workers": {
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "voidInvoiceAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "voidInvoiceAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/print/page": {
+          "moduleId": 11416,
+          "async": true,
+          "exportedName": "voidInvoiceAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/ar/page": {
+          "moduleId": 94106,
+          "async": true,
+          "exportedName": "voidInvoiceAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "voidInvoiceAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "filename": "apps/ops/lib/invoices.ts",
+      "exportedName": "voidInvoiceAction"
+    },
+    "40aa6d73571d190599de56b1fb9c6323d0a98b02f6": {
+      "workers": {
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "getInvoice",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "getInvoice",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/print/page": {
+          "moduleId": 11416,
+          "async": true,
+          "exportedName": "getInvoice",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/ar/page": {
+          "moduleId": 94106,
+          "async": true,
+          "exportedName": "getInvoice",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "getInvoice",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "filename": "apps/ops/lib/invoices.ts",
+      "exportedName": "getInvoice"
+    },
+    "40bea67ecd22805d735afa2262b83b1ff9781ba47f": {
+      "workers": {
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "removeInvoiceLineAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "removeInvoiceLineAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/print/page": {
+          "moduleId": 11416,
+          "async": true,
+          "exportedName": "removeInvoiceLineAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/ar/page": {
+          "moduleId": 94106,
+          "async": true,
+          "exportedName": "removeInvoiceLineAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "removeInvoiceLineAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "filename": "apps/ops/lib/invoices.ts",
+      "exportedName": "removeInvoiceLineAction"
+    },
+    "40edfd170db38550ba6a0a33a89a4c06586756974b": {
+      "workers": {
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "listInvoices",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "listInvoices",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/[id]/print/page": {
+          "moduleId": 11416,
+          "async": true,
+          "exportedName": "listInvoices",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/ar/page": {
+          "moduleId": 94106,
+          "async": true,
+          "exportedName": "listInvoices",
+          "filename": "apps/ops/lib/invoices.ts"
+        },
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "listInvoices",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "filename": "apps/ops/lib/invoices.ts",
+      "exportedName": "listInvoices"
+    },
+    "00bf6985cf8ee012fad51befbf7393d826073c497f": {
+      "workers": {
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "getCashCollectedThisMonthCents",
+          "filename": "apps/ops/lib/payments.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "getCashCollectedThisMonthCents",
+          "filename": "apps/ops/lib/payments.ts"
+        },
+        "app/(dashboard)/payments/page": {
+          "moduleId": 3541,
+          "async": true,
+          "exportedName": "getCashCollectedThisMonthCents",
+          "filename": "apps/ops/lib/payments.ts"
+        }
+      },
+      "filename": "apps/ops/lib/payments.ts",
+      "exportedName": "getCashCollectedThisMonthCents"
+    },
+    "403a5e39cbec986a46a585bd956b4b66811375d111": {
+      "workers": {
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "listPayments",
+          "filename": "apps/ops/lib/payments.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "listPayments",
+          "filename": "apps/ops/lib/payments.ts"
+        },
+        "app/(dashboard)/payments/page": {
+          "moduleId": 3541,
+          "async": true,
+          "exportedName": "listPayments",
+          "filename": "apps/ops/lib/payments.ts"
+        }
+      },
+      "filename": "apps/ops/lib/payments.ts",
+      "exportedName": "listPayments"
+    },
+    "40b05ad6899bcee5a054f20ca6d32976e0cd81b4c0": {
+      "workers": {
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "recordPaymentAction",
+          "filename": "apps/ops/lib/payments.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "recordPaymentAction",
+          "filename": "apps/ops/lib/payments.ts"
+        },
+        "app/(dashboard)/payments/page": {
+          "moduleId": 3541,
+          "async": true,
+          "exportedName": "recordPaymentAction",
+          "filename": "apps/ops/lib/payments.ts"
+        }
+      },
+      "filename": "apps/ops/lib/payments.ts",
+      "exportedName": "recordPaymentAction"
+    },
+    "60059e9d2f8f02be889053f301852c281cf83c7a9f": {
+      "workers": {
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 48378,
+          "async": true,
+          "exportedName": "getCashCollectedCents",
+          "filename": "apps/ops/lib/payments.ts"
+        },
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "getCashCollectedCents",
+          "filename": "apps/ops/lib/payments.ts"
+        },
+        "app/(dashboard)/payments/page": {
+          "moduleId": 3541,
+          "async": true,
+          "exportedName": "getCashCollectedCents",
+          "filename": "apps/ops/lib/payments.ts"
+        }
+      },
+      "filename": "apps/ops/lib/payments.ts",
+      "exportedName": "getCashCollectedCents"
+    },
+    "40928198179b06352994d2a7121b14586466bc2f8f": {
+      "workers": {
+        "app/(dashboard)/finance/page": {
+          "moduleId": 66152,
+          "async": true,
+          "exportedName": "getFinanceSummary",
+          "filename": "apps/ops/lib/finance.ts"
+        }
+      },
+      "filename": "apps/ops/lib/finance.ts",
+      "exportedName": "getFinanceSummary"
+    },
+    "002bed9e18006d3adb309c2df94f009b6f2ca1b99e": {
+      "workers": {
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "listActiveVariantsForSelect",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 15965,
+          "async": true,
+          "exportedName": "listActiveVariantsForSelect",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/page": {
+          "moduleId": 70565,
+          "async": true,
+          "exportedName": "listActiveVariantsForSelect",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "listActiveVariantsForSelect",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "filename": "apps/ops/lib/products.ts",
+      "exportedName": "listActiveVariantsForSelect"
+    },
+    "400aaa292c8e250e8108fd4b7a93d0d93f77b36340": {
+      "workers": {
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "createProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 15965,
+          "async": true,
+          "exportedName": "createProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/new/page": {
+          "moduleId": 39863,
+          "async": true,
+          "exportedName": "createProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/page": {
+          "moduleId": 70565,
+          "async": true,
+          "exportedName": "createProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "createProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "filename": "apps/ops/lib/products.ts",
+      "exportedName": "createProductAction"
+    },
+    "4010a3e4f348e950bec2cb93f3485f78cf96bc1a64": {
+      "workers": {
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "updateProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 15965,
+          "async": true,
+          "exportedName": "updateProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/page": {
+          "moduleId": 70565,
+          "async": true,
+          "exportedName": "updateProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "updateProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "filename": "apps/ops/lib/products.ts",
+      "exportedName": "updateProductAction"
+    },
+    "4039e02a87429f5594559f52f0e50dc153ddec2c66": {
+      "workers": {
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "archiveProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 15965,
+          "async": true,
+          "exportedName": "archiveProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/page": {
+          "moduleId": 70565,
+          "async": true,
+          "exportedName": "archiveProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "archiveProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "filename": "apps/ops/lib/products.ts",
+      "exportedName": "archiveProductAction"
+    },
+    "403efb03cf162cd5f5d7af5969c23dcd497a08ada5": {
+      "workers": {
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "getProduct",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 15965,
+          "async": true,
+          "exportedName": "getProduct",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/page": {
+          "moduleId": 70565,
+          "async": true,
+          "exportedName": "getProduct",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "getProduct",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "filename": "apps/ops/lib/products.ts",
+      "exportedName": "getProduct"
+    },
+    "405a16038b7d90887f046af90dbe9e907e4322dfa9": {
+      "workers": {
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "createVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 15965,
+          "async": true,
+          "exportedName": "createVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/page": {
+          "moduleId": 70565,
+          "async": true,
+          "exportedName": "createVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "createVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "filename": "apps/ops/lib/products.ts",
+      "exportedName": "createVariantAction"
+    },
+    "4071ca2bbc036fae43bbe4fd36b0533ad6443812dc": {
+      "workers": {
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "updateVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 15965,
+          "async": true,
+          "exportedName": "updateVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/page": {
+          "moduleId": 70565,
+          "async": true,
+          "exportedName": "updateVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "updateVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "filename": "apps/ops/lib/products.ts",
+      "exportedName": "updateVariantAction"
+    },
+    "409a793591a3cfc2a83327608a671a172fccdf4684": {
+      "workers": {
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "archiveVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 15965,
+          "async": true,
+          "exportedName": "archiveVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/page": {
+          "moduleId": 70565,
+          "async": true,
+          "exportedName": "archiveVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "archiveVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "filename": "apps/ops/lib/products.ts",
+      "exportedName": "archiveVariantAction"
+    },
+    "40b9cbc46154ada59cb1da2c6f97260cdc736946ae": {
+      "workers": {
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "reactivateVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 15965,
+          "async": true,
+          "exportedName": "reactivateVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/page": {
+          "moduleId": 70565,
+          "async": true,
+          "exportedName": "reactivateVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "reactivateVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "filename": "apps/ops/lib/products.ts",
+      "exportedName": "reactivateVariantAction"
+    },
+    "40ca47e9df1f463140ea56fe7d43e7fd9fac594655": {
+      "workers": {
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "reactivateProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 15965,
+          "async": true,
+          "exportedName": "reactivateProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/page": {
+          "moduleId": 70565,
+          "async": true,
+          "exportedName": "reactivateProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "reactivateProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "filename": "apps/ops/lib/products.ts",
+      "exportedName": "reactivateProductAction"
+    },
+    "40fe75d3d4cd5c9c9e3ab56998b5e419b5383b833e": {
+      "workers": {
+        "app/(dashboard)/invoices/[id]/page": {
+          "moduleId": 2263,
+          "async": true,
+          "exportedName": "listProducts",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 15965,
+          "async": true,
+          "exportedName": "listProducts",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/products/page": {
+          "moduleId": 70565,
+          "async": true,
+          "exportedName": "listProducts",
+          "filename": "apps/ops/lib/products.ts"
+        },
+        "app/(dashboard)/stock/page": {
+          "moduleId": 78841,
+          "async": true,
+          "exportedName": "listProducts",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "filename": "apps/ops/lib/products.ts",
+      "exportedName": "listProducts"
+    }
+  },
+  "edge": {},
+  "encryptionKey": "FjmI8I38xPHZkTcWhdU/iGIpXa4aqCXfp+CqXN50Lu4="
+}

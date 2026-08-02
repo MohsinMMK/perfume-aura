@@ -1,0 +1,3 @@
+module.exports=[44346,a=>a.a(async(b,c)=>{try{var d=a.i(97109),e=b([d]);[d]=e.then?(await e)():e,a.s([]),c()}catch(a){c(a)}},!1),4679,a=>a.a(async(b,c)=>{try{var d=a.i(44346),e=a.i(97109),f=b([d,e]);[d,e]=f.then?(await f)():f,a.s(["00819dac7cc9c0d585500bf64747c7741e7b422f0a",()=>e.getDashboardStats,"0096c7abad9484fcaaa83e432d0b608ac2329018ad",()=>e.listLowStock,"00f54090ffc8f7ecf952758ce0d5d5403d92083f50",()=>e.getLowStockCount,"40b6aca9a73cd0db71965a5edb41fe2d1f3d28023a",()=>e.listRecentMovements,"40f22bcacaccad8e737c33444e26e15efa0ff6113a",()=>e.adjustStockAction,"40fa1cb3c70f4e1b7504e7b8e2ec8249d68db3e3fa",()=>e.receiveStockAction]),c()}catch(a){c(a)}},!1)];
+
+//# sourceMappingURL=apps_ops__next-internal_server_app_%28dashboard%29_stock_low_page_actions_1zcuswr.js.map

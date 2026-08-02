@@ -1,0 +1,197 @@
+{
+  "node": {
+    "00819dac7cc9c0d585500bf64747c7741e7b422f0a": {
+      "workers": {
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "getDashboardStats",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "0096c7abad9484fcaaa83e432d0b608ac2329018ad": {
+      "workers": {
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "listLowStock",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "00f54090ffc8f7ecf952758ce0d5d5403d92083f50": {
+      "workers": {
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "getLowStockCount",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40b6aca9a73cd0db71965a5edb41fe2d1f3d28023a": {
+      "workers": {
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "listRecentMovements",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40f22bcacaccad8e737c33444e26e15efa0ff6113a": {
+      "workers": {
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "adjustStockAction",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40fa1cb3c70f4e1b7504e7b8e2ec8249d68db3e3fa": {
+      "workers": {
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "receiveStockAction",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "005bba377f00d896cf3d78fb388096700144aab60e": {
+      "workers": {
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "getOpenArTotalCents",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "exportedName": "getOpenArTotalCents",
+      "filename": "apps/ops/lib/invoices.ts"
+    },
+    "4004fd4347936090b19ed83f57922cf52498aba9ac": {
+      "workers": {
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "fulfillInvoiceAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "exportedName": "fulfillInvoiceAction",
+      "filename": "apps/ops/lib/invoices.ts"
+    },
+    "402006102701350ea47499e1ef41b51611e5d10d8e": {
+      "workers": {
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "createInvoiceDraftAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "exportedName": "createInvoiceDraftAction",
+      "filename": "apps/ops/lib/invoices.ts"
+    },
+    "403d32829df95d50643fd79cbe915171dda99e4431": {
+      "workers": {
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "addInvoiceLineAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "exportedName": "addInvoiceLineAction",
+      "filename": "apps/ops/lib/invoices.ts"
+    },
+    "404f57d01e69e3f3f1429813a31b9408fa5f3cdf4f": {
+      "workers": {
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "issueInvoiceAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "exportedName": "issueInvoiceAction",
+      "filename": "apps/ops/lib/invoices.ts"
+    },
+    "409b39b12771450dbcd79f496564a55fe5f9c4f7cc": {
+      "workers": {
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "markInvoicePaidAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "exportedName": "markInvoicePaidAction",
+      "filename": "apps/ops/lib/invoices.ts"
+    },
+    "40a2533df1eff18465a231f080cdbc8e6b8f8c42a8": {
+      "workers": {
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "voidInvoiceAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "exportedName": "voidInvoiceAction",
+      "filename": "apps/ops/lib/invoices.ts"
+    },
+    "40aa6d73571d190599de56b1fb9c6323d0a98b02f6": {
+      "workers": {
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "getInvoice",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "exportedName": "getInvoice",
+      "filename": "apps/ops/lib/invoices.ts"
+    },
+    "40bea67ecd22805d735afa2262b83b1ff9781ba47f": {
+      "workers": {
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "removeInvoiceLineAction",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "exportedName": "removeInvoiceLineAction",
+      "filename": "apps/ops/lib/invoices.ts"
+    },
+    "40edfd170db38550ba6a0a33a89a4c06586756974b": {
+      "workers": {
+        "app/(dashboard)/invoices/page": {
+          "moduleId": 20198,
+          "async": true,
+          "exportedName": "listInvoices",
+          "filename": "apps/ops/lib/invoices.ts"
+        }
+      },
+      "exportedName": "listInvoices",
+      "filename": "apps/ops/lib/invoices.ts"
+    }
+  },
+  "edge": {}
+}
