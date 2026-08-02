@@ -34,7 +34,7 @@ document. Do not select whichever statement is more convenient.
 
 ## Snapshot
 
-Last refreshed: **2026-08-02 13:44 IST**.
+Last refreshed: **2026-08-02 14:10 IST**.
 
 | Item | Current evidence |
 |---|---|
@@ -46,7 +46,7 @@ Last refreshed: **2026-08-02 13:44 IST**.
 | Embedded production source | `6d79a49593895b2e656e22df0b6d33141b5c89dc` |
 | Marketing | `https://perfumeaura.com` — static collection preview |
 | Ops | `https://app.perfumeaura.com` — owner-only internal operations |
-| Latest CI proof | GitHub Actions run `30690719178` rerun succeeded on 2026-08-01; quality, PostgreSQL 16 integration, verified ZIP, generated-branch publication, and exact-SHA live verification passed; Dependency Review remained skipped |
+| Latest candidate CI proof | GitHub Actions run `30739452307` succeeded for `eca32943b04c0ab38147e1dd319b799445abd376`; quality, PostgreSQL 16 integration, Dependency Review, and verified Hostinger ZIP passed; publication/live jobs correctly skipped on the pull request |
 
 This handoff branch contains the reviewed storefront/INR implementation. No
 production deployment, DNS mutation, provider mutation, or production database
@@ -101,12 +101,19 @@ limitation. The latest verified extracted artifact is
 `perfume-aura-storefront_66d37a950b51-dirty-20260802T081328Z-27240.zip`
 (SHA-256 `9f0d6d74f2307af9c3dde01115c112fcad293287d8034a8c11295c94e5c814de`).
 
-Migration `0009` is **generated but not applied anywhere**. Its first block
-refuses INR relabelling while any non-zero PKR-semantic product, invoice header,
-invoice line, payment, stock-cost, or finance value exists. The read-only local
-audit reports an all-zero local database and no blockers; this is not production
-evidence. Run the report against production read-only and get an explicit owner
-treatment decision before any migration attempt.
+Migration `0009` was applied to the Neon production `main` branch on
+**2026-08-02** only after the read-only repeatable-read audit proved zero
+products, invoices, invoice lines, payments, stock cost, receivables, and
+finance values. No exchange-rate conversion or non-zero monetary relabelling
+occurred. Production now has 10 Drizzle journal rows ending at timestamp
+`1785618937648` with migration hash
+`025e2ed6c654733329f41e2995accc7ecb90daf00dad08469c0134e62c59ac15`.
+
+The existing `perfume_aura_runtime` role received the explicit 31-table
+storefront matrix in `packages/db/sql/storefront-runtime-grants.sql`.
+Post-apply proof found zero matrix mismatches and zero sequence privileges;
+the role remains `NOINHERIT`, non-superuser, and unable to create database,
+schema, or temporary objects.
 
 ## Current Hostinger ops deployment
 
@@ -231,23 +238,23 @@ If the `503` returns:
 - SMTP mailbox/password-reset delivery remains unverified.
 - Trusted-proxy/client-IP rate limiting remains unproven.
 - GitHub Dependency Review remains skipped until Dependency Graph is enabled.
-- Storefront code exists locally but is not deployed; `shop.perfumeaura.com`
-  and its Hostinger Node app/DNS are not configured by this change.
-- Migration `0009` and the INR semantic cutover are blocked on the read-only
-  production audit plus explicit owner treatment of every non-zero legacy
-  monetary record. No automatic exchange-rate conversion is allowed.
+- Storefront code is not deployed yet; `shop.perfumeaura.com` and its
+  Hostinger Node app/DNS remain the active release task.
+- Migration `0009`, the zero-value INR semantic cutover, and the explicit
+  storefront runtime grant matrix are complete in production. No automatic
+  exchange-rate conversion occurred.
 - Signature prices, shipping/free-shipping amounts, policies, tax treatment,
   support channel, Cashfree approval/credentials, Google/Apple credentials,
   customer SMTP, catalog approvals, and India-counsel clearance remain release
   gates. Checkout/auth/public indexing default off.
 - Catalog publication remains fail-closed.
 
-Next safe storefront action: collect the owner/provider/legal inputs listed
-above, run `pnpm currency:audit` read-only against production, and review every
-non-zero legacy amount with the owner. Only after those gates should a separate
-`shop.perfumeaura.com` Hostinger Node staging app be configured from the verified
-standalone artifact. Do not apply `0009`, create Hostinger/DNS state, or enable a
-release flag without the corresponding explicit approval.
+Next safe storefront action: deploy the verified standalone artifact to the
+existing unused temporary Hostinger Web App, connect `shop.perfumeaura.com`,
+and keep catalog publication, checkout, customer auth, indexing, inquiries,
+and provider integrations disabled until their remaining owner/provider/legal
+inputs are supplied. Re-smoke owner ops after the storefront deployment because
+both apps share the plan process ceiling.
 
 ## Safe verification commands
 

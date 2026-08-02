@@ -164,8 +164,19 @@ When authorized, use Hostinger Node.js Web App (not classic Git and not Path G):
 | Output | empty |
 | Entry | `apps/storefront/server.js` |
 
-Apply migration `0009` only after `pnpm currency:audit` and an explicit owner
-decision permit the INR semantic cutover. Configure secrets from
+Migration `0009` was applied to production on 2026-08-02 after the read-only
+audit proved every legacy monetary category was zero. For a new environment,
+run the same audit first, apply the migration with the reviewed direct owner
+URL, then apply and verify the explicit runtime matrix:
+
+```bash
+psql "$DATABASE_URL_DIRECT" -v ON_ERROR_STOP=1 \
+  -v runtime_role='REDACTED_REVIEWED_RUNTIME_ROLE' \
+  -f packages/db/sql/storefront-runtime-grants.sql
+```
+
+The two verification queries at the end must both return zero rows. Configure
+secrets from
 `apps/storefront/.env.example` only in hPanel. `STOREFRONT_PUBLIC_RELEASE`,
 `STOREFRONT_CUSTOMER_AUTH_ENABLED`, and
 `STOREFRONT_CHECKOUT_RELEASE_APPROVED` remain false until their separate gates
