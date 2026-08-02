@@ -168,29 +168,45 @@ and not Path G):
 Deployed artifact:
 
 ```text
-perfume-aura-storefront_2a8864c251f5.zip
-SHA-256 08e24c8766a5c4d46d1ca3555b4a86c7e6dab1ec78143e1fe22a72654c19bc82
+perfume-aura-storefront_8d3e9cdc0509-dirty-20260802T122848Z-39627.zip
+SHA-256 1c30501db9ced0eca26e56d11230dc4338fd5a079b6d38cc8fdaefadec252d93
 ```
 
-Hostinger reports the Web App Running and its latest deployment Completed. The
-custom domain, authoritative DNS, SSL, and CDN are active, but the public edge
-currently serves Hostinger LiteSpeed `403` for `/` and `404` for Next routes.
-Redeploy and restart did not regenerate the public proxy; the managed
-`public_html`/`.htaccess` is not accessible in File Manager. Hostinger documents
-that a newly connected custom domain may take up to 24 hours. After that window,
-if the edge is unchanged, ask support to regenerate the managed Node proxy and
-`.htaccess` mapping for `shop.perfumeaura.com` without stopping plan-wide
-processes or changing another site.
+The Web App is live. During the first cutover the public edge served Hostinger
+LiteSpeed `403` for `/` and `404` for Next routes because the managed redeploy
+form's **Entry file** was blank. After the shared process pool was reset with
+explicit approval, set the entry to `apps/storefront/server.js` and redeploy the
+saved verified ZIP. Deployment `2026-08-02 17:16:12` IST completed and became
+Current; `/`, `/shop`, `/robots.txt`, real Next static media, and controlled
+product imagery returned `200`. Do not manually edit the generated
+`public_html/.htaccess` and do not leave the Entry file blank on a future
+redeploy.
+
+Credential rotation then exposed a release-boundary defect: search, product,
+collection, and cart reads still reached Neon while public commerce was off.
+The release-locked runtime now loads neither the public catalog nor durable cart
+until `STOREFRONT_PUBLIC_RELEASE=true`; locked catalog routes return empty/404
+and `GET /api/cart` returns an empty disabled INR cart. Deployment
+`2026-08-02 18:02:20` IST was Current, but the public server still reported the
+prior Next build after redeploy, app Restart, and CDN cache clear. With that
+fresh stuck-process evidence and the owner's standing authorization, the
+plan-wide recovery was confirmed once more. The live build switched to
+`mIFtH1Pi0De0_ulWeiVcr`; the storefront route/cart smoke and ops exact-SHA
+verifier both passed.
 
 During the same 2026-08-02 cutover, the subsequent ops deployment completed and
 reported Running with zero runtime-log errors, but hCDN served `503` for all
 dynamic health/auth routes. An app-scoped Restart did not recover it. Live Max
-Processes increased from 88 to 92/120 while the six-hour average was 36/120;
-workflow `30743458937` consequently timed out its exact-SHA live verification.
-Do not use **Stop running processes** without explicit approval because it is
-plan-wide across five websites. Escalate the completed deployment IDs, hCDN
-responses, and process evidence to Hostinger for per-site attribution and Node
-proxy recovery.
+Processes reached 106/120 against a 24-hour average of 23/120. Hostinger
+specialist Petra confirmed the process ceiling was refusing new connections
+and that **Stop running processes** affects all five websites. After explicit
+approval and evidence capture, one plan-wide reset restored ops. Source
+`b4410852f71351b92cfd7f9ad351de3affed436a` passed the serial production
+verifier and rerun workflow `30743458937` passed its exact-SHA live job.
+Post-recovery usage returned to 97/120 even though six-hour analytics showed
+only 223 ops and 271 storefront requests, so the durable process source remains
+unattributed. Do not repeat the reset without fresh evidence and explicit
+scope.
 
 Migration `0009` was applied to production on 2026-08-02 after the read-only
 audit proved every legacy monetary category was zero. For a new environment,
@@ -247,20 +263,21 @@ before acting; dated evidence never replaces a fresh release smoke.
 | TLS apex / www / app | valid |
 | DNS NS | `lunar` / `solar`; apex ALIAS CDN |
 | `https://app.perfumeaura.com/login` | Cached shell 200; insufficient as health proof |
-| `/api/auth/get-session` | 503 after generated deployment `cfd2efca…` |
-| `/api/health/live` · `/ready` | 503 / 503 after generated deployment `cfd2efca…` and an app-scoped Restart |
-| `/api/health/version` | 503; workflow run `30743458937` exhausted its 20-minute exact-SHA poll |
+| `https://shop.perfumeaura.com` | 200; storefront UI, `/shop`, `/robots.txt`, real Next static media, and controlled product imagery verified |
+| `/api/auth/get-session` | 200 after the authorized 2026-08-02 process reset |
+| `/api/health/live` · `/ready` | 200 / 200 after the authorized process reset |
+| `/api/health/version` | 200; exact source `b4410852f71351b92cfd7f9ad351de3affed436a` |
 | Static runtime asset | Real `/_next/static/…` asset returned 200 with non-empty body |
-| Active Hostinger deploy | **Node 24.x** generated branch `hostinger-ops-production`, source `b4410852…`, deploy commit `cfd2efca…`; hPanel says Completed/Running but dynamic edge is unavailable |
+| Active Hostinger deploy | **Node 24.x** generated branch `hostinger-ops-production`, source `b4410852…`, deploy commit `cfd2efca…`; exact-SHA live verification passed |
 | Push deployment proof | GitHub runs `30615774862` and `30623386605` published sources `43edda3e7b05…` and `3e7fa94c1a18…`; hPanel listed corresponding completed deploy commits `db10bb11b724…` and `cd7f2d818d66…`, and immediate root-operator probes returned each exact source from `/api/health/version` |
-| Credential rotation | Restricted Neon runtime-role password and Better Auth secret rotated; hPanel values applied and current process re-smoked without recording values |
+| Credential rotation | Restricted Neon runtime-role password, ops Better Auth secret, storefront customer-auth secret, and storefront maintenance secret rotated; hPanel values applied and current processes re-smoked without recording values |
 | Neon production | Main branch migrated through `0008`; restricted runtime role, grants, constraints, trigger, and zero reconciliation drift verified |
 | Owner login on prod | **Re-verified 2026-07-31** after rotation; `/dashboard`, `/products`, `/customers`, `/invoices`, `/stock`, and `/finance` returned 200 with expected headings |
 | Password reset email | **Not verified** — SMTP hPanel variables/mailbox remain pending |
 | Client-IP rate limiting | Shared-bucket fallback until Hostinger trusted-proxy evidence is established |
 | Ops Path G monorepo source build | **Blocked** (esbuild EACCES) |
 | 2026-08-01 recovery | Hostinger support found the Business Web Hosting order at its hard 120 NPROC limit and stopped plan-wide running processes. Exact source `6d79a495…` then passed the complete production verifier; GitHub run `30690719178` rerun succeeded and live Max Processes fell to about 10/120. A later plan-level LVE snapshot was described as `lsphp`/`index.php` activity, which does not match the Node ops runtime; domain/document-root attribution remains unresolved. See `CURRENT_STATE.md`. |
-| 2026-08-02 recurrence | Storefront Web App and DNS/TLS/CDN were provisioned, but its edge stayed `403`/`404`. Ops then returned hCDN `503` despite Completed/Running and zero runtime-log errors. Live Max Processes rose 88→92/120 versus a six-hour average of 36; no plan-wide stop was authorized. |
+| 2026-08-02 recurrence | Hostinger confirmed 106/120 processes caused ops hCDN `503`. An explicitly authorized plan-wide reset restored ops; correcting the storefront's blank Entry file to `apps/storefront/server.js` restored shop routing. A later verified storefront artifact remained behind a stuck old process after redeploy/Restart/cache clear, so the authorized recovery was confirmed again; live build, storefront route/cart smoke, and ops exact-SHA proof then passed. Process attribution remains open. |
 
 The first two proof runs predated the repository-variable switch, so their
 `verify-hostinger-ops-live` jobs were skipped and the provider completion rows

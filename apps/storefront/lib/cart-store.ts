@@ -18,6 +18,9 @@ export type CartSnapshot = Readonly<{
   checkoutBlockReason: string;
 }>;
 
+const checkoutReleaseBlockReason =
+  "Checkout is locked until shipping, policy, tax, Cashfree, and production catalog approvals are complete.";
+
 type MutableCart = {
   lines: Map<string, CartLine>;
 };
@@ -55,8 +58,17 @@ export function readPreviewCart(token: string): CartSnapshot {
     },
     quantity: lines.reduce((total, line) => total + line.quantity, 0),
     checkoutEnabled: false,
-    checkoutBlockReason:
-      "Checkout is locked until shipping, policy, tax, Cashfree, and production catalog approvals are complete.",
+    checkoutBlockReason: checkoutReleaseBlockReason,
+  };
+}
+
+export function readReleaseLockedCart(): CartSnapshot {
+  return {
+    lines: [],
+    subtotal: { currency: "INR", amountMinor: 0 },
+    quantity: 0,
+    checkoutEnabled: false,
+    checkoutBlockReason: checkoutReleaseBlockReason,
   };
 }
 

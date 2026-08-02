@@ -34,7 +34,7 @@ document. Do not select whichever statement is more convenient.
 
 ## Snapshot
 
-Last refreshed: **2026-08-02 16:12 IST**.
+Last refreshed: **2026-08-02 18:13 IST**.
 
 | Item | Current evidence |
 |---|---|
@@ -46,7 +46,7 @@ Last refreshed: **2026-08-02 16:12 IST**.
 | Embedded production source | `b4410852f71351b92cfd7f9ad351de3affed436a` |
 | Marketing | `https://perfumeaura.com` — static collection preview |
 | Ops | `https://app.perfumeaura.com` — owner-only internal operations |
-| Latest release CI proof | GitHub Actions run `30743458937` passed quality, PostgreSQL 16 integration, verified Hostinger ZIP, and generated-branch publication for `b4410852f71351b92cfd7f9ad351de3affed436a`; its bounded 20-minute live verification failed because Hostinger served `503` throughout |
+| Latest release CI proof | GitHub Actions run `30743458937` passed quality, PostgreSQL 16 integration, verified Hostinger ZIP, generated-branch publication, and its rerun exact-SHA live verification for `b4410852f71351b92cfd7f9ad351de3affed436a` |
 
 Pull request #4 was merged and the reviewed storefront/INR implementation is on
 `main`. Migration, runtime grants, the storefront artifact deployment, the
@@ -132,7 +132,7 @@ schema, or temporary objects.
 | Output directory | empty |
 | Entry | `apps/ops/server.js` |
 | Auto-deployment | enabled |
-| Provider state | deployment `cfd2efca…` completed and app reports Running, but dynamic public routes return hCDN `503` |
+| Provider state | deployment `cfd2efca…` completed, app reports Running, and exact-SHA dynamic/live verification passes |
 
 Do **not** configure a fixed `PORT` in hPanel. The standalone server binds to
 `process.env.PORT` supplied by Hostinger and falls back to `3000` only when the
@@ -177,13 +177,42 @@ hCDN `503`; only the cached `/login` shell returned `200`. An app-scoped Restart
 completed without recovery. Workflow `30743458937` therefore failed only its
 bounded live exact-SHA job after 20 minutes.
 
-The plan resource snapshot showed live Max Processes rising from 88 to 92 of
-120 while the six-hour average was 36. This does not prove the exact process or
-site responsible, but it is consistent with a release-time process spike and
-requires provider attribution. Do not use the plan-wide **Stop running
-processes** control without explicit approval: it interrupts all five hosted
-websites. The public storefront simultaneously remains on Hostinger's default
-`403`/`404` edge instead of the deployed Node runtime.
+The plan resource snapshot then reached 106 of 120 processes while the 24-hour
+average was 23. Hostinger specialist Petra confirmed that this process pressure
+was the reason hCDN refused new ops connections and confirmed the hPanel
+**Stop running processes** control is plan-wide. After explicit owner
+authorization and capture of the live evidence, the control was used once.
+Ops immediately recovered: live, readiness, version, auth-session, login, and a
+real static asset returned `200`, the version endpoint matched source
+`b4410852f71351b92cfd7f9ad351de3affed436a`, the serial production verifier
+passed, and rerun workflow `30743458937` passed its exact-SHA live job.
+
+The storefront's separate `403`/`404` was then traced to a blank **Entry file**
+in Hostinger's managed redeploy form. The saved verified ZIP was redeployed with
+entry `apps/storefront/server.js`; deployment `2026-08-02 17:16:12` IST
+completed and became Current. `/`, `/shop`, `/robots.txt`, the main content
+routes, a real Next static asset, and the controlled bottle image all returned
+`200`. Hostinger DNS, TLS, CDN, and the generated Node proxy are now live.
+
+After production credentials were rotated, the release-locked search, product,
+collection, and cart paths exposed an unnecessary database dependency. The
+storefront now avoids loading the public catalog and durable cart while
+`STOREFRONT_PUBLIC_RELEASE` is false. Verified artifact deployment
+`2026-08-02 18:02:20` became Current, but Hostinger continued serving prior
+build `CJ3rUMbFMzqq7GXhZPGNo` after redeploy, app Restart, and CDN cache clear.
+That was fresh evidence of a stuck runtime, so the explicitly authorized
+plan-wide recovery was confirmed a second time. The live storefront then moved
+to build `mIFtH1Pi0De0_ulWeiVcr`; `/search` and `/api/cart` returned `200`,
+unpublished product/collection routes returned `404`, and the complete public
+smoke passed. Ops exact-SHA verification passed again after the interruption.
+
+The restricted Neon runtime credential, ops Better Auth secret, storefront
+customer-auth secret, and storefront maintenance secret were rotated during
+the recovery; values remain only in provider configuration. The storefront
+remains intentionally fail-closed: no product is public until
+its catalog gates pass, robots disallows crawling, and public release,
+checkout, customer auth, and inquiries remain disabled. Do not enable those
+flags merely because the runtime is healthy.
 
 ## Active risk: process-limit recurrence
 
@@ -191,11 +220,12 @@ The outage symptom was Hostinger/hCDN `503 Service Unavailable` on all dynamic
 ops routes while hPanel reported Deployment Completed, Application Running,
 and Next.js Ready on `0.0.0.0:3000`. A cached `/login` could still return `200`.
 
-Hostinger support identified the plan-wide 120-process limit and restored
-service by stopping running processes. That action is temporary and affected a
-Business Web Hosting order containing five websites. Hostinger has not yet
-provided process commands, PIDs, timestamps, peak history, or site attribution,
-so the durable root cause is **not established**.
+Hostinger support identified the plan-wide process limit and twice restored
+service by stopping running processes, most recently with explicit approval on
+2026-08-02. The action is temporary and affects a Business Web Hosting order
+containing five websites. Hostinger has not yet provided process commands,
+PIDs, timestamps, peak history, or site attribution, so the durable root cause
+is **not established**.
 
 Support later generated a plan-level `.logs/LVE_snapshot` and described the
 visible workload as `lsphp` running `index.php`. That is material evidence of
@@ -257,13 +287,10 @@ If the `503` returns:
 - SMTP mailbox/password-reset delivery remains unverified.
 - Trusted-proxy/client-IP rate limiting remains unproven.
 - GitHub Dependency Review remains skipped until Dependency Graph is enabled.
-- The exact storefront ZIP is deployed and Hostinger reports the separate Node
-  Web App as Running. `shop.perfumeaura.com` is attached with authoritative
-  Hostinger DNS, TLS, and CDN active. The public edge still returns Hostinger's
-  LiteSpeed `403` for `/` and `404` for Next routes instead of proxying to the
-  running Node runtime. Redeploy and restart did not change it; the provider's
-  managed `public_html`/`.htaccess` is inaccessible. Treat this as a Hostinger
-  domain-to-Node routing/provisioning blocker, not a completed public launch.
+- The exact storefront ZIP is deployed and the separate Hostinger Node Web App
+  is live at `shop.perfumeaura.com`. The required Hostinger entry is
+  `apps/storefront/server.js`; keep it explicit on every redeploy. The visual
+  storefront runtime is public, but catalog and commerce release remain gated.
 - Migration `0009`, the zero-value INR semantic cutover, and the explicit
   storefront runtime grant matrix are complete in production. No automatic
   exchange-rate conversion occurred.
@@ -273,13 +300,15 @@ If the `503` returns:
   gates. Checkout/auth/public indexing default off.
 - Catalog publication remains fail-closed.
 
-Next safe storefront action: ask Hostinger to investigate the live process spike
-and restore the managed Node proxy for both `app.perfumeaura.com` and
-`shop.perfumeaura.com`, using the exact completed deployment/process evidence
-above. Do not stop plan-wide processes, delete the storefront Web App, boost the
-plan, or change another website without explicit approval. Keep catalog
-publication, checkout, customer auth, indexing, inquiries, and provider
-integrations disabled until their remaining owner/provider/legal gates pass.
+Next safe storefront action: approve and publish catalog records product by
+product only after the remaining owner/provider/legal gates pass. Keep
+checkout, customer auth, indexing, inquiries, and provider integrations
+disabled until their separate gates pass. In parallel, continue the Hostinger
+case for exact process/domain attribution: fresh post-recovery usage had already
+returned to 97/120 despite only 223 ops and 271 storefront requests over six
+hours, so ordinary public traffic does not explain the process count. Do not
+repeat the plan-wide process reset, delete a Web App, boost the plan, or change
+another website without new evidence and explicit scope.
 
 ## Safe verification commands
 
