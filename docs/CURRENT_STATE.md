@@ -34,19 +34,19 @@ document. Do not select whichever statement is more convenient.
 
 ## Snapshot
 
-Last refreshed: **2026-08-02 15:45 IST**.
+Last refreshed: **2026-08-02 16:12 IST**.
 
 | Item | Current evidence |
 |---|---|
 | Repository | `MohsinMMK/perfume-aura` |
-| Working branch | `main` |
-| `main` / `origin/main` | `e0597b7ca563231d2fda130edb2890e42c96113a` |
+| Working branch | `codex/storefront-hostinger-blocker` |
+| `main` / `origin/main` | `b4410852f71351b92cfd7f9ad351de3affed436a` |
 | Generated ops branch | `hostinger-ops-production` |
-| Generated branch commit | `230b8ceebdf17226678877b09569e436aa2e1aa5` |
-| Embedded production source | `e0597b7ca563231d2fda130edb2890e42c96113a` |
+| Generated branch commit | `cfd2efca5d0c9d59ef8bd8f4bb9550bb93511d09` |
+| Embedded production source | `b4410852f71351b92cfd7f9ad351de3affed436a` |
 | Marketing | `https://perfumeaura.com` — static collection preview |
 | Ops | `https://app.perfumeaura.com` — owner-only internal operations |
-| Latest release CI proof | GitHub Actions run `30740484665` succeeded for `e0597b7ca563231d2fda130edb2890e42c96113a`; quality, PostgreSQL 16 integration, verified Hostinger ZIP, generated-branch publication, and exact-SHA live verification passed |
+| Latest release CI proof | GitHub Actions run `30743458937` passed quality, PostgreSQL 16 integration, verified Hostinger ZIP, and generated-branch publication for `b4410852f71351b92cfd7f9ad351de3affed436a`; its bounded 20-minute live verification failed because Hostinger served `503` throughout |
 
 Pull request #4 was merged and the reviewed storefront/INR implementation is on
 `main`. Migration, runtime grants, the storefront artifact deployment, the
@@ -132,7 +132,7 @@ schema, or temporary objects.
 | Output directory | empty |
 | Entry | `apps/ops/server.js` |
 | Auto-deployment | enabled |
-| Provider state | completed for the latest sealed environment deployment |
+| Provider state | deployment `cfd2efca…` completed and app reports Running, but dynamic public routes return hCDN `503` |
 
 Do **not** configure a fixed `PORT` in hPanel. The standalone server binds to
 `process.env.PORT` supplied by Hostinger and falls back to `3000` only when the
@@ -166,6 +166,24 @@ Authenticated owner smoke passed on **2026-08-02** after the sealed database and
 Better Auth credential rotation: `/dashboard`, `/commerce`, and `/products`
 rendered for the owner. Public health, readiness, auth session, and a real static
 asset also passed.
+
+### 2026-08-02 recurrence during storefront cutover
+
+After `main` source `b4410852…` published generated ops commit `cfd2efca…`,
+Hostinger completed the deployment at 15:52 IST and continued to show the app
+as Running. Runtime logs showed zero issues and zero errors, but `/api/health/live`,
+`/api/health/ready`, `/api/health/version`, and `/api/auth/get-session` returned
+hCDN `503`; only the cached `/login` shell returned `200`. An app-scoped Restart
+completed without recovery. Workflow `30743458937` therefore failed only its
+bounded live exact-SHA job after 20 minutes.
+
+The plan resource snapshot showed live Max Processes rising from 88 to 92 of
+120 while the six-hour average was 36. This does not prove the exact process or
+site responsible, but it is consistent with a release-time process spike and
+requires provider attribution. Do not use the plan-wide **Stop running
+processes** control without explicit approval: it interrupts all five hosted
+websites. The public storefront simultaneously remains on Hostinger's default
+`403`/`404` edge instead of the deployed Node runtime.
 
 ## Active risk: process-limit recurrence
 
@@ -255,14 +273,13 @@ If the `503` returns:
   gates. Checkout/auth/public indexing default off.
 - Catalog publication remains fail-closed.
 
-Next safe storefront action: allow the newly attached Hostinger custom-domain
-mapping its documented propagation window (up to 24 hours from 2026-08-02),
-then recheck `/`, `/shop`, `/robots.txt`, and one real static asset. If the edge
-still serves LiteSpeed `403`/`404`, escalate to Hostinger to regenerate the
-managed Node proxy/`.htaccess` mapping for `shop.perfumeaura.com` without
-changing any other website or plan process. Keep catalog publication, checkout,
-customer auth, indexing, inquiries, and provider integrations disabled until
-their remaining owner/provider/legal gates pass.
+Next safe storefront action: ask Hostinger to investigate the live process spike
+and restore the managed Node proxy for both `app.perfumeaura.com` and
+`shop.perfumeaura.com`, using the exact completed deployment/process evidence
+above. Do not stop plan-wide processes, delete the storefront Web App, boost the
+plan, or change another website without explicit approval. Keep catalog
+publication, checkout, customer auth, indexing, inquiries, and provider
+integrations disabled until their remaining owner/provider/legal gates pass.
 
 ## Safe verification commands
 
@@ -272,10 +289,10 @@ git rev-parse HEAD
 git ls-remote origin refs/heads/main refs/heads/hostinger-ops-production
 
 node scripts/verify-production-deploy.mjs \
-  e0597b7ca563231d2fda130edb2890e42c96113a \
+  b4410852f71351b92cfd7f9ad351de3affed436a \
   --timeout-ms 1200000
 
-gh run view 30740484665 \
+gh run view 30743458937 \
   --json status,conclusion,headSha,jobs,url
 ```
 
