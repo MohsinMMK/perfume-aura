@@ -27,7 +27,7 @@ business tool whose design disappears behind the task.
 
 ## Anti-references
 
-- A public ecommerce storefront or marketing page inside the admin shell.
+- A public ecommerce storefront inside the admin shell.
 - Generic, over-decorated SaaS dashboards that prioritize visual novelty over
   operational clarity.
 - Bespoke controls, unfamiliar modal-heavy interactions, or inconsistent form

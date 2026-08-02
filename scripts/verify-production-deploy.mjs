@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Commit-aware post-deploy smoke for Hostinger ops + the selected public surface.
+ * Commit-aware post-deploy smoke for Hostinger ops + the apex storefront.
  * Never logs response bodies or tokens.
  */
 import assert from "node:assert/strict";
@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 const FULL_SHA = /^[0-9a-f]{40}$/;
-const PUBLIC_SURFACES = new Set(["marketing", "storefront"]);
+const PUBLIC_SURFACES = new Set(["storefront"]);
 
 function normalizeCommit(raw) {
   const value = String(raw ?? "")
@@ -22,9 +22,9 @@ function normalizeCommit(raw) {
 }
 
 export function normalizePublicSurface(raw) {
-  const value = String(raw ?? "marketing").trim().toLowerCase();
+  const value = String(raw ?? "storefront").trim().toLowerCase();
   if (!PUBLIC_SURFACES.has(value)) {
-    throw new Error("public surface must be marketing or storefront");
+    throw new Error("public surface must be storefront");
   }
   return value;
 }
@@ -164,9 +164,8 @@ export function assertReleaseLockedCart(response) {
  * @param {{
  *   expectedCommit: string,
  *   opsBaseUrl?: string,
- *   publicSurface?: "marketing" | "storefront",
+ *   publicSurface?: "storefront",
  *   publicBaseUrl?: string,
- *   marketingBaseUrl?: string,
  *   timeoutMs?: number,
  *   pollIntervalMs?: number,
  *   fetchImpl?: typeof fetch,
@@ -181,11 +180,10 @@ export async function verifyProductionDeploy(options) {
     /\/$/,
     "",
   );
-  const publicBase = (
-    options.publicBaseUrl ??
-    options.marketingBaseUrl ??
-    "https://perfumeaura.com"
-  ).replace(/\/$/, "");
+  const publicBase = (options.publicBaseUrl ?? "https://perfumeaura.com").replace(
+    /\/$/,
+    "",
+  );
   const timeoutMs = options.timeoutMs ?? 15 * 60_000;
   const pollIntervalMs = options.pollIntervalMs ?? 10_000;
   if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1) {
@@ -286,67 +284,48 @@ export async function verifyProductionDeploy(options) {
     throw new Error(`${publicSurface} / expected 200, got ${publicRoot.status}`);
   }
 
-  if (publicSurface === "marketing") {
-    const favicon = await fetchStatus(`${publicBase}/assets/favicon.svg`, {
-      fetchImpl,
-    });
-    if (favicon.status !== 200) {
-      throw new Error(`marketing favicon expected 200, got ${favicon.status}`);
-    }
-
-    const protectedPath = await fetchStatus(
-      `${publicBase}/apps/ops/package.json`,
-      { fetchImpl },
-    );
-    if (protectedPath.status !== 403) {
-      throw new Error(
-        `marketing protected path expected 403, got ${protectedPath.status}`,
-      );
-    }
-  } else {
-    const storefrontStaticPath = findStaticAssetPath(publicRoot.text);
-    if (!storefrontStaticPath) {
-      throw new Error("storefront HTML missing /_next/static asset path");
-    }
-    const storefrontStaticAsset = await fetchStatus(
-      `${publicBase}${storefrontStaticPath}`,
-      { fetchImpl },
-    );
-    if (storefrontStaticAsset.status !== 200) {
-      throw new Error(
-        `storefront static asset expected 200, got ${storefrontStaticAsset.status}`,
-      );
-    }
-
-    for (const route of ["/shop", "/search"]) {
-      const response = await fetchStatus(`${publicBase}${route}`, { fetchImpl });
-      if (response.status !== 200) {
-        throw new Error(`storefront ${route} expected 200, got ${response.status}`);
-      }
-    }
-
-    const robots = await fetchStatus(`${publicBase}/robots.txt`, { fetchImpl });
-    if (
-      robots.status !== 200 ||
-      !robots.text.includes("Disallow: /") ||
-      !robots.text.includes(`${publicBase}/sitemap.xml`)
-    ) {
-      throw new Error("storefront robots.txt is not release locked at the apex");
-    }
-
-    const customerAuth = await fetchStatus(
-      `${publicBase}/api/customer-auth/get-session`,
-      { fetchImpl },
-    );
-    if (customerAuth.status !== 404) {
-      throw new Error(
-        `storefront disabled customer auth expected 404, got ${customerAuth.status}`,
-      );
-    }
-
-    const cart = await fetchStatus(`${publicBase}/api/cart`, { fetchImpl });
-    assertReleaseLockedCart(cart);
+  const storefrontStaticPath = findStaticAssetPath(publicRoot.text);
+  if (!storefrontStaticPath) {
+    throw new Error("storefront HTML missing /_next/static asset path");
   }
+  const storefrontStaticAsset = await fetchStatus(
+    `${publicBase}${storefrontStaticPath}`,
+    { fetchImpl },
+  );
+  if (storefrontStaticAsset.status !== 200) {
+    throw new Error(
+      `storefront static asset expected 200, got ${storefrontStaticAsset.status}`,
+    );
+  }
+
+  for (const route of ["/shop", "/search"]) {
+    const response = await fetchStatus(`${publicBase}${route}`, { fetchImpl });
+    if (response.status !== 200) {
+      throw new Error(`storefront ${route} expected 200, got ${response.status}`);
+    }
+  }
+
+  const robots = await fetchStatus(`${publicBase}/robots.txt`, { fetchImpl });
+  if (
+    robots.status !== 200 ||
+    !robots.text.includes("Disallow: /") ||
+    !robots.text.includes(`${publicBase}/sitemap.xml`)
+  ) {
+    throw new Error("storefront robots.txt is not release locked at the apex");
+  }
+
+  const customerAuth = await fetchStatus(
+    `${publicBase}/api/customer-auth/get-session`,
+    { fetchImpl },
+  );
+  if (customerAuth.status !== 404) {
+    throw new Error(
+      `storefront disabled customer auth expected 404, got ${customerAuth.status}`,
+    );
+  }
+
+  const cart = await fetchStatus(`${publicBase}/api/cart`, { fetchImpl });
+  assertReleaseLockedCart(cart);
 
   return {
     ok: true,
@@ -378,15 +357,17 @@ function createFixtureServer(routes) {
       if (!address || typeof address === "string") {
         throw new Error("failed to bind fixture server");
       }
-      resolve({
-        server,
-        baseUrl: `http://127.0.0.1:${address.port}`,
-      });
+      const baseUrl = `http://127.0.0.1:${address.port}`;
+      const robots = routes["/robots.txt"];
+      if (typeof robots?.body === "string") {
+        robots.body = robots.body.replace("pending/sitemap.xml", `${baseUrl}/sitemap.xml`);
+      }
+      resolve({ server, baseUrl });
     });
   });
 }
 
-function successRoutes(commit, staticPath) {
+function successRoutes(commit, staticPath, publicBase = "pending") {
   return {
     "/api/health/version": {
       status: 200,
@@ -407,15 +388,6 @@ function successRoutes(commit, staticPath) {
       body: "null",
     },
     [staticPath]: { status: 200, body: "js" },
-    "/": { status: 200, body: "marketing" },
-    "/assets/favicon.svg": { status: 200, body: "<svg></svg>" },
-    "/apps/ops/package.json": { status: 403, body: "forbidden" },
-  };
-}
-
-function storefrontSuccessRoutes(commit, staticPath, publicBase) {
-  return {
-    ...successRoutes(commit, staticPath),
     "/": {
       status: 200,
       body: `<html><script src="${staticPath}"></script></html>`,
@@ -504,11 +476,11 @@ async function selfTest() {
       }),
     /user field has invalid type/,
   );
-  assert.equal(normalizePublicSurface(undefined), "marketing");
+  assert.equal(normalizePublicSurface(undefined), "storefront");
   assert.equal(normalizePublicSurface("storefront"), "storefront");
   assert.throws(
     () => normalizePublicSurface("legacy"),
-    /must be marketing or storefront/,
+    /must be storefront/,
   );
   assertReleaseLockedCart({
     status: 200,
@@ -553,12 +525,15 @@ async function selfTest() {
     /invalid deploy verification polling bounds/,
   );
 
-  const success = await createFixtureServer(successRoutes(commit, staticPath));
+  const successRoutesFixture = successRoutes(commit, staticPath);
+  const success = await createFixtureServer(successRoutesFixture);
+  successRoutesFixture["/robots.txt"].body =
+    `User-Agent: *\nDisallow: /\nSitemap: ${success.baseUrl}/sitemap.xml\n`;
   try {
     const result = await verifyProductionDeploy({
       expectedCommit: commit,
       opsBaseUrl: success.baseUrl,
-      marketingBaseUrl: success.baseUrl,
+      publicBaseUrl: success.baseUrl,
       timeoutMs: 1_000,
       pollIntervalMs: 10,
     });
@@ -568,11 +543,7 @@ async function selfTest() {
     success.server.close();
   }
 
-  const storefrontRoutes = storefrontSuccessRoutes(
-    commit,
-    staticPath,
-    "pending",
-  );
+  const storefrontRoutes = successRoutes(commit, staticPath, "pending");
   const storefront = await createFixtureServer(storefrontRoutes);
   storefrontRoutes["/robots.txt"].body =
     `User-Agent: *\nDisallow: /\nSitemap: ${storefront.baseUrl}/sitemap.xml\n`;
@@ -602,7 +573,7 @@ async function selfTest() {
         verifyProductionDeploy({
           expectedCommit: commit,
           opsBaseUrl: stale.baseUrl,
-          marketingBaseUrl: stale.baseUrl,
+          publicBaseUrl: stale.baseUrl,
           timeoutMs: 50,
           pollIntervalMs: 10,
         }),
@@ -629,7 +600,7 @@ async function selfTest() {
     const result = await verifyProductionDeploy({
       expectedCommit: commit,
       opsBaseUrl: transient.baseUrl,
-      marketingBaseUrl: transient.baseUrl,
+      publicBaseUrl: transient.baseUrl,
       timeoutMs: 1_000,
       pollIntervalMs: 10,
       fetchImpl: transientFetch,
@@ -647,7 +618,7 @@ async function selfTest() {
       verifyProductionDeploy({
         expectedCommit: commit,
         opsBaseUrl: "https://ops.invalid.example",
-        marketingBaseUrl: "https://marketing.invalid.example",
+        publicBaseUrl: "https://storefront.invalid.example",
         timeoutMs: 50,
         pollIntervalMs: 10,
         fetchImpl: async () => {
@@ -676,7 +647,7 @@ async function selfTest() {
       verifyProductionDeploy({
         expectedCommit: commit,
         opsBaseUrl: "https://ops.invalid.example",
-        marketingBaseUrl: "https://marketing.invalid.example",
+        publicBaseUrl: "https://storefront.invalid.example",
         timeoutMs: 30,
         pollIntervalMs: 10,
         fetchImpl: async () => {
@@ -703,7 +674,7 @@ async function selfTest() {
         verifyProductionDeploy({
           expectedCommit: commit,
           opsBaseUrl: badStatus.baseUrl,
-          marketingBaseUrl: badStatus.baseUrl,
+          publicBaseUrl: badStatus.baseUrl,
           timeoutMs: 200,
           pollIntervalMs: 10,
         }),
@@ -732,7 +703,7 @@ async function selfTest() {
         verifyProductionDeploy({
           expectedCommit: commit,
           opsBaseUrl: missingStatic.baseUrl,
-          marketingBaseUrl: missingStatic.baseUrl,
+          publicBaseUrl: missingStatic.baseUrl,
           timeoutMs: 200,
           pollIntervalMs: 10,
         }),
@@ -754,7 +725,7 @@ async function selfTest() {
     const result = await verifyProductionDeploy({
       expectedCommit: commit,
       opsBaseUrl: objectSession.baseUrl,
-      marketingBaseUrl: objectSession.baseUrl,
+      publicBaseUrl: objectSession.baseUrl,
       timeoutMs: 1_000,
       pollIntervalMs: 10,
     });
@@ -783,7 +754,7 @@ async function selfTest() {
           verifyProductionDeploy({
             expectedCommit: commit,
             opsBaseUrl: fixture.baseUrl,
-            marketingBaseUrl: fixture.baseUrl,
+            publicBaseUrl: fixture.baseUrl,
             timeoutMs: 200,
             pollIntervalMs: 10,
           }),
@@ -805,7 +776,7 @@ async function main(argv) {
   }
   if (argv.length < 1) {
     throw new Error(
-      "usage: node scripts/verify-production-deploy.mjs <expected-commit> [--ops-base URL] [--public-base URL] [--public-surface marketing|storefront] [--timeout-ms N]",
+      "usage: node scripts/verify-production-deploy.mjs <expected-commit> [--ops-base URL] [--public-base URL] [--public-surface storefront] [--timeout-ms N]",
     );
   }
 
@@ -813,7 +784,6 @@ async function main(argv) {
   let opsBaseUrl;
   let publicBaseUrl;
   let publicSurface;
-  let marketingBaseUrl;
   let timeoutMs;
   for (let i = 1; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -823,8 +793,6 @@ async function main(argv) {
       publicBaseUrl = argv[++i];
     } else if (arg === "--public-surface") {
       publicSurface = argv[++i];
-    } else if (arg === "--marketing-base") {
-      marketingBaseUrl = argv[++i];
     } else if (arg === "--timeout-ms") {
       timeoutMs = Number(argv[++i]);
     } else {
@@ -837,7 +805,6 @@ async function main(argv) {
     opsBaseUrl,
     publicBaseUrl,
     publicSurface,
-    marketingBaseUrl,
     timeoutMs,
   });
   console.log(

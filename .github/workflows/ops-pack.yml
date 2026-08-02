@@ -1,4 +1,4 @@
-# CI gate, verified standalone pack, and automated Hostinger ops branch publish.
+# CI gate, verified standalone packs, and automated Hostinger ops branch publish.
 # Pure Hostinger monorepo source build (Path G) remains blocked by esbuild EACCES.
 # Routine ops target: publish exact prebuilt tree to branch hostinger-ops-production.
 # Production Hostinger watches the generated branch; Path Z is emergency fallback only.
@@ -60,9 +60,6 @@ jobs:
       - name: Frozen install
         run: pnpm install --frozen-lockfile
 
-      - name: Marketing publish surface
-        run: pnpm marketing:check
-
       - name: Deploy automation self-tests
         run: |
           set -euo pipefail
@@ -84,6 +81,18 @@ jobs:
 
       - name: Production dependency audit
         run: pnpm security:audit
+
+      - name: Storefront production build
+        env:
+          STOREFRONT_URL: https://perfumeaura.com
+          CUSTOMER_AUTH_URL: https://perfumeaura.com
+          STOREFRONT_CUSTOMER_AUTH_ENABLED: "false"
+          STOREFRONT_PREVIEW_CATALOG: "false"
+          STOREFRONT_PUBLIC_RELEASE: "false"
+          STOREFRONT_CHECKOUT_RELEASE_APPROVED: "false"
+          STOREFRONT_INQUIRIES_ENABLED: "false"
+          STANDALONE_SOURCE_COMMIT: ${{ github.sha }}
+        run: pnpm build:storefront
 
       - name: Ops production build
         env:
@@ -213,12 +222,13 @@ jobs:
       - name: Apply forward migrations for server smoke
         run: pnpm db:migrate
 
-      - name: Build and verify standalone archive
+      - name: Build and verify standalone archives
         run: |
           set -euo pipefail
           export STANDALONE_SOURCE_COMMIT="$GITHUB_SHA"
           export STANDALONE_STAMP="${GITHUB_SHA:0:12}"
           pnpm ops:pack
+          pnpm storefront:pack
 
       - name: Verify checksum and release metadata
         id: artifact
@@ -257,11 +267,33 @@ jobs:
           });
           assert.ok(manifest.archive.bytes <= 50_000_000);
           NODE
+          STOREFRONT_ZIP="dist/perfume-aura-storefront_${SHORT_SHA}.zip"
+          STOREFRONT_CHECKSUM="${STOREFRONT_ZIP}.sha256"
+          STOREFRONT_MANIFEST="dist/perfume-aura-storefront_${SHORT_SHA}.manifest.json"
+          test -f "$STOREFRONT_ZIP"
+          test -f "$STOREFRONT_CHECKSUM"
+          test -f "$STOREFRONT_MANIFEST"
+          (cd dist && sha256sum --check "$(basename "$STOREFRONT_CHECKSUM")")
+          node - "$STOREFRONT_MANIFEST" "$GITHUB_SHA" <<'NODE'
+          const assert = require("node:assert/strict");
+          const fs = require("node:fs");
+          const [manifestPath, sourceCommit] = process.argv.slice(2);
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+          assert.equal(manifest.application, "@perfume-aura/storefront");
+          assert.equal(manifest.source.commit, sourceCommit);
+          assert.equal(manifest.source.dirty, false);
+          assert.equal(manifest.entry, "apps/storefront/server.js");
+          assert.equal(manifest.extractedSmoke, "passed");
+          assert.ok(manifest.archive.bytes <= 50_000_000);
+          NODE
           echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
           echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
           echo "checksum=$CHECKSUM" >> "$GITHUB_OUTPUT"
           echo "manifest=$MANIFEST" >> "$GITHUB_OUTPUT"
-          echo "artifact_name=ops-standalone-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "storefront_zip=$STOREFRONT_ZIP" >> "$GITHUB_OUTPUT"
+          echo "storefront_checksum=$STOREFRONT_CHECKSUM" >> "$GITHUB_OUTPUT"
+          echo "storefront_manifest=$STOREFRONT_MANIFEST" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=hostinger-standalone-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Upload inspected artifact
         if: >-
@@ -269,11 +301,14 @@ jobs:
           (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ops-standalone-${{ steps.artifact.outputs.short_sha }}
+          name: hostinger-standalone-${{ steps.artifact.outputs.short_sha }}
           path: |
             ${{ steps.artifact.outputs.zip }}
             ${{ steps.artifact.outputs.checksum }}
             ${{ steps.artifact.outputs.manifest }}
+            ${{ steps.artifact.outputs.storefront_zip }}
+            ${{ steps.artifact.outputs.storefront_checksum }}
+            ${{ steps.artifact.outputs.storefront_manifest }}
           if-no-files-found: error
           compression-level: 0
           retention-days: 14
@@ -312,7 +347,7 @@ jobs:
       - name: Download exact package artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          name: ops-standalone-${{ steps.meta.outputs.short_sha }}
+          name: hostinger-standalone-${{ steps.meta.outputs.short_sha }}
           path: dist-publish
 
       - name: Re-verify artifact and publish generated branch
@@ -380,6 +415,6 @@ jobs:
         run: |
           set -euo pipefail
           node scripts/verify-production-deploy.mjs "$GITHUB_SHA" \
-            --public-surface marketing \
+            --public-surface storefront \
             --public-base https://perfumeaura.com \
             --timeout-ms 1200000

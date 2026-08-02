@@ -43,7 +43,8 @@ Graphify is a derived relationship map. Never edit `graphify-out/` as source mat
 
 ## Current baseline — 2026-07-30
 
-- Existing public marketing remains a cinematic, honest pre-launch experience.
+- The animated apex storefront remains a cinematic, honest pre-launch
+  experience while all commerce release flags stay closed.
 - Existing ops supports owner-managed products, size variants, inventory, customers, invoices, fulfillment, payments, and finance.
 - Owner confirmed India, INR, India-wide intended delivery, and that the first 82 entries represent inspired fragrances.
 - All 103 source entries remain selected for intended launch. Standard fragrances use 30/50/100 ml variants at approved fixed retail prices; Signature fragrances use 50/105 ml variants with per-product price approval still pending. 10 ml is not sold and discovery sets remain blocked until a different sample format is approved. Bundles, customer accounts, and verified reviews remain selected launch capabilities.

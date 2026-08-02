@@ -14,11 +14,10 @@ Change stack only through an explicit reviewed decision. Production hosting rema
 | Auth | Two isolated Better Auth boundaries: owner ops and storefront customer, each with separate tables, secrets, cookies, origins, and Drizzle adapter |
 | Database | Neon PostgreSQL + Drizzle ORM/Kit + `pg` Pool |
 | Validation | Zod |
-| Marketing | Static HTML/CSS |
 | Production | Hostinger Business hosting |
 | Ops deploy automation | GitHub Actions prebuilt standalone → generated branch `hostinger-ops-production` → Hostinger Node GitHub App start (`apps/ops/server.js`) |
 | Ops source build on Hostinger | Blocked (esbuild EACCES); not used |
-| Storefront deploy target | Separate Hostinger Node.js Web App at `shop.perfumeaura.com`; checksum-verified prebuilt ZIP, entry `apps/storefront/server.js`; not deployed yet |
+| Storefront deployment | Hostinger Node.js Web App at `perfumeaura.com`; checksum-verified prebuilt ZIP, entry `apps/storefront/server.js` |
 | Payments | Cashfree Payment Gateway (server-created INR orders, signed raw-body webhooks, server status verification, refunds) plus separately reconciled COD |
 | Registrar | GoDaddy; registration/renewal only |
 
@@ -32,7 +31,7 @@ Change stack only through an explicit reviewed decision. Production hosting rema
 | Better Auth | Official Next.js, Drizzle, email/password, security docs |
 | Drizzle | Official schema, Kit, migration, and PostgreSQL guides |
 | Neon | Official connection, branch, pooling, and role guidance |
-| Hostinger | Classic Git docs for marketing; Node.js Web App docs for ops |
+| Hostinger | Official Node.js Web App deployment and custom-domain docs for storefront and ops |
 | pnpm | Official workspace configuration |
 
 No hand-rolled substitutes for official install/setup paths. No Vercel production deployment.

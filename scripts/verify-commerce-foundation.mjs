@@ -927,10 +927,10 @@ async function verifyCommerceFoundation() {
   const decisionIds = decisionRows.map(([id]) => id);
   assert.deepEqual(
     decisionIds,
-    Array.from({ length: 26 }, (_, index) =>
+    Array.from({ length: 27 }, (_, index) =>
       `COM-ADR-${String(index + 1).padStart(3, "0")}`,
     ),
-    "commerce decision IDs must be unique and sequential through COM-ADR-026",
+    "commerce decision IDs must be unique and sequential through COM-ADR-027",
   );
   for (const [id, date, status, decision, reason] of decisionRows) {
     assertCalendarDate(date, `${id} decision date`);
@@ -965,6 +965,7 @@ async function verifyCommerceFoundation() {
     ["COM-ADR-024", "Accepted"],
     ["COM-ADR-025", "Accepted"],
     ["COM-ADR-026", "Accepted"],
+    ["COM-ADR-027", "Accepted"],
   ]) {
     assert.equal(
       decisionStatuses.get(id),
