@@ -52,8 +52,8 @@ mkdir -p "$STAGE" "$EXTRACTED" "$SHARP_TMP"
 
 echo "==> Building @perfume-aura/storefront standalone"
 NEXT_PHASE=phase-production-build \
-STOREFRONT_URL=https://shop.perfumeaura.com \
-CUSTOMER_AUTH_URL=https://shop.perfumeaura.com \
+STOREFRONT_URL=https://perfumeaura.com \
+CUSTOMER_AUTH_URL=https://perfumeaura.com \
 STOREFRONT_PREVIEW_CATALOG=false \
 STANDALONE_SOURCE_COMMIT="$SOURCE_COMMIT" \
   pnpm --filter @perfume-aura/storefront build
@@ -135,7 +135,7 @@ LOCK
 cat > "$STAGE/README.hostinger.txt" <<'TXT'
 Perfume Aura Storefront — Hostinger prebuilt standalone
 
-Source: upload this ZIP to a separate Node.js Web App for shop.perfumeaura.com
+Source: upload this ZIP to the Node.js Web App for perfumeaura.com
 Node: 24.x
 Framework: Other
 Root directory: ./

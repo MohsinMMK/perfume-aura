@@ -3,12 +3,19 @@ import { randomBytes } from "node:crypto";
 type CustomerAuthEnvironment = Record<string, string | undefined> & {
   CUSTOMER_AUTH_SECRET?: string;
   CUSTOMER_AUTH_URL?: string;
+  STOREFRONT_CUSTOMER_AUTH_ENABLED?: string;
   STOREFRONT_URL?: string;
   NEXT_PHASE?: string;
   NODE_ENV?: string;
 };
 
 const productionBuildPhase = "phase-production-build";
+
+export function isCustomerAuthEnabled(
+  environment: CustomerAuthEnvironment = process.env,
+): boolean {
+  return environment.STOREFRONT_CUSTOMER_AUTH_ENABLED === "true";
+}
 
 export function resolveCustomerAuthBaseUrl(
   environment: CustomerAuthEnvironment = process.env,
@@ -17,7 +24,7 @@ export function resolveCustomerAuthBaseUrl(
     environment.CUSTOMER_AUTH_URL ??
     environment.STOREFRONT_URL ??
     (environment.NEXT_PHASE === productionBuildPhase
-      ? "https://shop.perfumeaura.com"
+      ? "https://perfumeaura.com"
       : undefined);
   if (!candidate) {
     throw new Error("CUSTOMER_AUTH_URL is required for customer authentication");

@@ -1,20 +1,33 @@
 import { NextResponse } from "next/server";
-import { toNextJsHandler } from "better-auth/next-js";
-import { createCustomerAuth, type CustomerAuth } from "@/lib/customer-auth";
+import { isCustomerAuthEnabled } from "@/lib/customer-auth-policy";
 
-let customerAuth: CustomerAuth | undefined;
+type CustomerAuthHandlers = Readonly<{
+  GET: (request: Request) => Promise<Response>;
+  POST: (request: Request) => Promise<Response>;
+}>;
 
-function handlers() {
-  customerAuth ??= createCustomerAuth();
-  return toNextJsHandler(customerAuth);
+let customerAuthHandlers: Promise<CustomerAuthHandlers> | undefined;
+
+function handlers(): Promise<CustomerAuthHandlers> {
+  customerAuthHandlers ??= Promise.all([
+    import("better-auth/next-js"),
+    import("@/lib/customer-auth"),
+  ]).then(([{ toNextJsHandler }, { createCustomerAuth }]) =>
+    toNextJsHandler(createCustomerAuth()),
+  );
+  return customerAuthHandlers;
 }
 
 async function unavailableSafeHandler(
   request: Request,
   method: "GET" | "POST",
 ): Promise<Response> {
+  if (!isCustomerAuthEnabled()) {
+    return NextResponse.json({ error: "Not found." }, { status: 404 });
+  }
+
   try {
-    const nextHandlers = handlers();
+    const nextHandlers = await handlers();
     return method === "GET"
       ? nextHandlers.GET(request)
       : nextHandlers.POST(request);

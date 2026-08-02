@@ -11,6 +11,21 @@ const nextConfig: NextConfig = {
     "@perfume-aura/ui",
     "@perfume-aura/db",
   ],
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: "www.perfumeaura.com",
+          },
+        ],
+        destination: "https://perfumeaura.com/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

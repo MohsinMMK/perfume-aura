@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Commit-aware post-deploy smoke for Hostinger ops + marketing.
+ * Commit-aware post-deploy smoke for Hostinger ops + the selected public surface.
  * Never logs response bodies or tokens.
  */
 import assert from "node:assert/strict";
@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 const FULL_SHA = /^[0-9a-f]{40}$/;
+const PUBLIC_SURFACES = new Set(["marketing", "storefront"]);
 
 function normalizeCommit(raw) {
   const value = String(raw ?? "")
@@ -16,6 +17,14 @@ function normalizeCommit(raw) {
     .toLowerCase();
   if (!FULL_SHA.test(value)) {
     throw new Error("invalid expected commit");
+  }
+  return value;
+}
+
+export function normalizePublicSurface(raw) {
+  const value = String(raw ?? "marketing").trim().toLowerCase();
+  if (!PUBLIC_SURFACES.has(value)) {
+    throw new Error("public surface must be marketing or storefront");
   }
   return value;
 }
@@ -121,10 +130,42 @@ export function assertAuthSessionOk(response) {
   return body;
 }
 
+export function assertReleaseLockedCart(response) {
+  if (response.status !== 200) {
+    throw new Error(`storefront /api/cart expected 200, got ${response.status}`);
+  }
+
+  let body;
+  try {
+    body = JSON.parse(response.text);
+  } catch {
+    throw new Error("storefront /api/cart returned non-JSON body");
+  }
+
+  if (
+    !body ||
+    typeof body !== "object" ||
+    Array.isArray(body) ||
+    !body.subtotal ||
+    typeof body.subtotal !== "object" ||
+    body.subtotal.currency !== "INR" ||
+    body.subtotal.amountMinor !== 0 ||
+    body.checkoutEnabled !== false ||
+    !Array.isArray(body.lines) ||
+    body.lines.length !== 0
+  ) {
+    throw new Error("storefront /api/cart is not release locked");
+  }
+
+  return body;
+}
+
 /**
  * @param {{
  *   expectedCommit: string,
  *   opsBaseUrl?: string,
+ *   publicSurface?: "marketing" | "storefront",
+ *   publicBaseUrl?: string,
  *   marketingBaseUrl?: string,
  *   timeoutMs?: number,
  *   pollIntervalMs?: number,
@@ -135,12 +176,15 @@ export function assertAuthSessionOk(response) {
  */
 export async function verifyProductionDeploy(options) {
   const expectedCommit = normalizeCommit(options.expectedCommit);
+  const publicSurface = normalizePublicSurface(options.publicSurface);
   const opsBase = (options.opsBaseUrl ?? "https://app.perfumeaura.com").replace(
     /\/$/,
     "",
   );
-  const marketingBase = (
-    options.marketingBaseUrl ?? "https://perfumeaura.com"
+  const publicBase = (
+    options.publicBaseUrl ??
+    options.marketingBaseUrl ??
+    "https://perfumeaura.com"
   ).replace(/\/$/, "");
   const timeoutMs = options.timeoutMs ?? 15 * 60_000;
   const pollIntervalMs = options.pollIntervalMs ?? 10_000;
@@ -237,34 +281,78 @@ export async function verifyProductionDeploy(options) {
     );
   }
 
-  const marketingRoot = await fetchStatus(`${marketingBase}/`, { fetchImpl });
-  if (marketingRoot.status !== 200) {
-    throw new Error(`marketing / expected 200, got ${marketingRoot.status}`);
+  const publicRoot = await fetchStatus(`${publicBase}/`, { fetchImpl });
+  if (publicRoot.status !== 200) {
+    throw new Error(`${publicSurface} / expected 200, got ${publicRoot.status}`);
   }
 
-  const favicon = await fetchStatus(`${marketingBase}/assets/favicon.svg`, {
-    fetchImpl,
-  });
-  if (favicon.status !== 200) {
-    throw new Error(
-      `marketing favicon expected 200, got ${favicon.status}`,
-    );
-  }
+  if (publicSurface === "marketing") {
+    const favicon = await fetchStatus(`${publicBase}/assets/favicon.svg`, {
+      fetchImpl,
+    });
+    if (favicon.status !== 200) {
+      throw new Error(`marketing favicon expected 200, got ${favicon.status}`);
+    }
 
-  const protectedPath = await fetchStatus(
-    `${marketingBase}/apps/ops/package.json`,
-    { fetchImpl },
-  );
-  if (protectedPath.status !== 403) {
-    throw new Error(
-      `marketing protected path expected 403, got ${protectedPath.status}`,
+    const protectedPath = await fetchStatus(
+      `${publicBase}/apps/ops/package.json`,
+      { fetchImpl },
     );
+    if (protectedPath.status !== 403) {
+      throw new Error(
+        `marketing protected path expected 403, got ${protectedPath.status}`,
+      );
+    }
+  } else {
+    const storefrontStaticPath = findStaticAssetPath(publicRoot.text);
+    if (!storefrontStaticPath) {
+      throw new Error("storefront HTML missing /_next/static asset path");
+    }
+    const storefrontStaticAsset = await fetchStatus(
+      `${publicBase}${storefrontStaticPath}`,
+      { fetchImpl },
+    );
+    if (storefrontStaticAsset.status !== 200) {
+      throw new Error(
+        `storefront static asset expected 200, got ${storefrontStaticAsset.status}`,
+      );
+    }
+
+    for (const route of ["/shop", "/search"]) {
+      const response = await fetchStatus(`${publicBase}${route}`, { fetchImpl });
+      if (response.status !== 200) {
+        throw new Error(`storefront ${route} expected 200, got ${response.status}`);
+      }
+    }
+
+    const robots = await fetchStatus(`${publicBase}/robots.txt`, { fetchImpl });
+    if (
+      robots.status !== 200 ||
+      !robots.text.includes("Disallow: /") ||
+      !robots.text.includes(`${publicBase}/sitemap.xml`)
+    ) {
+      throw new Error("storefront robots.txt is not release locked at the apex");
+    }
+
+    const customerAuth = await fetchStatus(
+      `${publicBase}/api/customer-auth/get-session`,
+      { fetchImpl },
+    );
+    if (customerAuth.status !== 404) {
+      throw new Error(
+        `storefront disabled customer auth expected 404, got ${customerAuth.status}`,
+      );
+    }
+
+    const cart = await fetchStatus(`${publicBase}/api/cart`, { fetchImpl });
+    assertReleaseLockedCart(cart);
   }
 
   return {
     ok: true,
     commit: expectedCommit,
     staticPath,
+    publicSurface,
   };
 }
 
@@ -322,6 +410,36 @@ function successRoutes(commit, staticPath) {
     "/": { status: 200, body: "marketing" },
     "/assets/favicon.svg": { status: 200, body: "<svg></svg>" },
     "/apps/ops/package.json": { status: 403, body: "forbidden" },
+  };
+}
+
+function storefrontSuccessRoutes(commit, staticPath, publicBase) {
+  return {
+    ...successRoutes(commit, staticPath),
+    "/": {
+      status: 200,
+      body: `<html><script src="${staticPath}"></script></html>`,
+    },
+    "/shop": { status: 200, body: "shop" },
+    "/search": { status: 200, body: "search" },
+    "/robots.txt": {
+      status: 200,
+      body: `User-Agent: *\nDisallow: /\nSitemap: ${publicBase}/sitemap.xml\n`,
+    },
+    "/api/customer-auth/get-session": {
+      status: 404,
+      body: JSON.stringify({ error: "Not found." }),
+    },
+    "/api/cart": {
+      status: 200,
+      body: JSON.stringify({
+        checkoutEnabled: false,
+        checkoutBlockReason: "Commerce has not been released.",
+        lines: [],
+        itemCount: 0,
+        subtotal: { currency: "INR", amountMinor: 0 },
+      }),
+    },
   };
 }
 
@@ -386,6 +504,32 @@ async function selfTest() {
       }),
     /user field has invalid type/,
   );
+  assert.equal(normalizePublicSurface(undefined), "marketing");
+  assert.equal(normalizePublicSurface("storefront"), "storefront");
+  assert.throws(
+    () => normalizePublicSurface("legacy"),
+    /must be marketing or storefront/,
+  );
+  assertReleaseLockedCart({
+    status: 200,
+    text: JSON.stringify({
+      subtotal: { currency: "INR", amountMinor: 0 },
+      checkoutEnabled: false,
+      lines: [],
+    }),
+  });
+  assert.throws(
+    () =>
+      assertReleaseLockedCart({
+        status: 200,
+        text: JSON.stringify({
+          subtotal: { currency: "INR", amountMinor: 0 },
+          checkoutEnabled: true,
+          lines: [],
+        }),
+      }),
+    /not release locked/,
+  );
 
   await assert.rejects(
     () => verifyProductionDeploy({ expectedCommit: commit, timeoutMs: 0 }),
@@ -422,6 +566,28 @@ async function selfTest() {
     assert.equal(result.staticPath, staticPath);
   } finally {
     success.server.close();
+  }
+
+  const storefrontRoutes = storefrontSuccessRoutes(
+    commit,
+    staticPath,
+    "pending",
+  );
+  const storefront = await createFixtureServer(storefrontRoutes);
+  storefrontRoutes["/robots.txt"].body =
+    `User-Agent: *\nDisallow: /\nSitemap: ${storefront.baseUrl}/sitemap.xml\n`;
+  try {
+    const result = await verifyProductionDeploy({
+      expectedCommit: commit,
+      opsBaseUrl: storefront.baseUrl,
+      publicBaseUrl: storefront.baseUrl,
+      publicSurface: "storefront",
+      timeoutMs: 1_000,
+      pollIntervalMs: 10,
+    });
+    assert.equal(result.publicSurface, "storefront");
+  } finally {
+    storefront.server.close();
   }
 
   const stale = await createFixtureServer({
@@ -639,18 +805,24 @@ async function main(argv) {
   }
   if (argv.length < 1) {
     throw new Error(
-      "usage: node scripts/verify-production-deploy.mjs <expected-commit> [--ops-base URL] [--marketing-base URL] [--timeout-ms N]",
+      "usage: node scripts/verify-production-deploy.mjs <expected-commit> [--ops-base URL] [--public-base URL] [--public-surface marketing|storefront] [--timeout-ms N]",
     );
   }
 
   let expectedCommit = argv[0];
   let opsBaseUrl;
+  let publicBaseUrl;
+  let publicSurface;
   let marketingBaseUrl;
   let timeoutMs;
   for (let i = 1; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--ops-base") {
       opsBaseUrl = argv[++i];
+    } else if (arg === "--public-base") {
+      publicBaseUrl = argv[++i];
+    } else if (arg === "--public-surface") {
+      publicSurface = argv[++i];
     } else if (arg === "--marketing-base") {
       marketingBaseUrl = argv[++i];
     } else if (arg === "--timeout-ms") {
@@ -663,11 +835,13 @@ async function main(argv) {
   const result = await verifyProductionDeploy({
     expectedCommit,
     opsBaseUrl,
+    publicBaseUrl,
+    publicSurface,
     marketingBaseUrl,
     timeoutMs,
   });
   console.log(
-    `production-deploy ok commit=${result.commit} static=${result.staticPath}`,
+    `production-deploy ok commit=${result.commit} surface=${result.publicSurface} static=${result.staticPath}`,
   );
 }
 

@@ -14,7 +14,7 @@ const inquirySchema = z.object({
 });
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const expectedOrigin = new URL(process.env.STOREFRONT_URL ?? "https://shop.perfumeaura.com").origin;
+  const expectedOrigin = new URL(process.env.STOREFRONT_URL ?? "https://perfumeaura.com").origin;
   if (process.env.STOREFRONT_INQUIRIES_ENABLED !== "true") return NextResponse.json({ error: "Inquiries are not enabled." }, { status: 503 });
   if (request.headers.get("origin") !== expectedOrigin) return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
   const consentVersion = process.env.STOREFRONT_INQUIRY_CONSENT_VERSION;
