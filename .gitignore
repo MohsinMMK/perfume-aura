@@ -32,10 +32,6 @@ yarn-error.log*
 perfume-aura-standalone_*.zip
 *.standalone.zip
 
-# disposable marketing sync temp snapshots (never corpus/graph inputs)
-.marketing-sync.*
-.marketing-selftest.*
-
 # Python bytecode
 __pycache__/
 *.py[cod]

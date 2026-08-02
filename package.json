@@ -5,7 +5,7 @@
   "engines": {
     "node": ">=24.18.0 <25"
   },
-  "description": "Perfume Aura monorepo — marketing, storefront, and owner operations",
+  "description": "Perfume Aura monorepo — public storefront and owner operations",
   "scripts": {
     "dev:storefront": "pnpm --filter @perfume-aura/storefront dev",
     "build:storefront": "pnpm --filter @perfume-aura/storefront build",
@@ -19,8 +19,6 @@
     "ops:extract-zip": "python3 scripts/extract-hostinger-ops-zip.py",
     "ops:publish-branch": "bash scripts/publish-hostinger-ops-branch.sh",
     "ops:verify-production-deploy": "node scripts/verify-production-deploy.mjs",
-    "marketing:sync": "bash scripts/sync-marketing.sh sync",
-    "marketing:check": "bash scripts/sync-marketing.sh check",
     "commerce:verify": "node scripts/verify-commerce-foundation.mjs",
     "currency:audit": "pnpm --filter @perfume-aura/db audit:inr",
     "db:generate": "pnpm --filter @perfume-aura/db generate",
@@ -34,6 +32,6 @@
     "test:integration": "pnpm test:inventory && pnpm test:integration:workspaces",
     "test:integration:workspaces": "pnpm --filter @perfume-aura/db test:integration && pnpm --filter @perfume-aura/storefront test:integration && pnpm --filter @perfume-aura/ops test:integration",
     "security:audit": "pnpm audit --prod --audit-level=high && npm audit --omit=dev --audit-level=high --prefix scripts/ops-runtime-deps",
-    "check": "pnpm marketing:check && pnpm commerce:verify && pnpm lint && pnpm typecheck && pnpm test:unit && pnpm build:storefront && pnpm build:ops && pnpm security:audit"
+    "check": "pnpm commerce:verify && pnpm lint && pnpm typecheck && pnpm test:unit && pnpm build:storefront && pnpm build:ops && pnpm security:audit"
   }
 }
