@@ -213,7 +213,7 @@ for _ in {1..40}; do
   sleep 0.25
 done
 curl -fsS --max-time 5 "http://127.0.0.1:$PORT/" >/dev/null || { cat "$WORK_DIR/server.log" >&2; exit 1; }
-STATIC_ASSET="$(find "$EXTRACTED/apps/storefront/.next/static" -type f | head -1)"
+STATIC_ASSET="$(find "$EXTRACTED/apps/storefront/.next/static" -type f -print -quit)"
 [[ -n "$STATIC_ASSET" ]] || { echo "ERROR: no static asset found" >&2; exit 1; }
 STATIC_PATH="${STATIC_ASSET#"$EXTRACTED/apps/storefront/.next/static"/}"
 curl -fsS --max-time 5 "http://127.0.0.1:$PORT/_next/static/$STATIC_PATH" >/dev/null
