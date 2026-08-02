@@ -43,7 +43,7 @@ import {
   type ActionResult,
   zodFieldErrors,
 } from "@/lib/action-result";
-import { rupeesToCents } from "@/lib/money";
+import { rupeesToPaise } from "@/lib/money";
 import {
   normalizePageSize,
   pageOffset,
@@ -280,8 +280,8 @@ export async function createProductAction(
               sku: data.sku.trim(),
               barcode: emptyToNull(data.barcode),
               sizeMl: Number(data.sizeMl),
-              costCents: rupeesToCents(Number(data.cost ?? 0)),
-              retailCents: rupeesToCents(Number(data.retail ?? 0)),
+              costCents: rupeesToPaise(Number(data.cost ?? 0)),
+              retailCents: rupeesToPaise(Number(data.retail ?? 0)),
               reorderLevel: Number(data.reorderLevel ?? 0),
             }
           : undefined,
@@ -327,8 +327,8 @@ export async function createVariantAction(
         sku: data.sku.trim(),
         barcode: emptyToNull(data.barcode),
         sizeMl: data.sizeMl,
-        costCents: rupeesToCents(data.cost),
-        retailCents: rupeesToCents(data.retail),
+        costCents: rupeesToPaise(data.cost),
+        retailCents: rupeesToPaise(data.retail),
         reorderLevel: data.reorderLevel ?? 0,
       });
 
@@ -459,8 +459,8 @@ export async function updateVariantAction(
       sku: data.sku.trim(),
       barcode: emptyToNull(data.barcode),
       sizeMl: data.sizeMl,
-      costCents: rupeesToCents(data.cost),
-      retailCents: rupeesToCents(data.retail),
+      costCents: rupeesToPaise(data.cost),
+      retailCents: rupeesToPaise(data.retail),
       reorderLevel: data.reorderLevel,
     });
     revalidateProductPaths(data.productId);

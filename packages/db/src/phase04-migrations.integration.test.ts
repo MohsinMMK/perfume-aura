@@ -118,7 +118,7 @@ async function assertPhase04Catalog(pool: Pool): Promise<void> {
     SELECT count(*)::text AS count
     FROM drizzle.__drizzle_migrations
   `);
-  assert.equal(journal.rows[0]?.count, "9");
+  assert.equal(journal.rows[0]?.count, "10");
 
   const authCatalog = await pool.query<{
     rate_limit_exists: boolean;
@@ -275,7 +275,10 @@ async function assertAuthExpansionBoundary(pool: Pool): Promise<void> {
   });
 }
 
-async function createContractFixtures(pool: Pool): Promise<{
+async function createContractFixtures(
+  pool: Pool,
+  options: Readonly<{ zeroMoney?: boolean }> = {},
+): Promise<{
   customerId: string;
   invoiceId: string;
   locationId: string;
@@ -297,10 +300,15 @@ async function createContractFixtures(pool: Pool): Promise<{
         product_id, sku, size_ml, cost_cents, retail_cents,
         quantity_on_hand, qty_reserved, reorder_level, version
       )
-      VALUES ($1, $2, 50, 500, 1000, 1, 0, 0, 0)
+      VALUES ($1, $2, 50, $3, $4, 1, 0, 0, 0)
       RETURNING id
     `,
-    [productId, `CONTRACT-${suffix}`],
+    [
+      productId,
+      `CONTRACT-${suffix}`,
+      options.zeroMoney ? 0 : 500,
+      options.zeroMoney ? 0 : 1000,
+    ],
   );
   const variantId = variant.rows[0]?.id;
   assert.ok(variantId);
@@ -336,10 +344,10 @@ async function createContractFixtures(pool: Pool): Promise<{
         variant_id, location_id, type, quantity_delta, quantity_after,
         unit_cost_cents, cost_basis
       )
-      VALUES ($1, $2, 'sale', -1, 0, 500, 'snapshot')
+      VALUES ($1, $2, 'sale', -1, 0, $3, 'snapshot')
       RETURNING id
     `,
-    [variantId, locationId],
+    [variantId, locationId, options.zeroMoney ? 0 : 500],
   );
   const movementId = movement.rows[0]?.id;
   assert.ok(movementId);
@@ -668,14 +676,14 @@ describe(
       const pool = new Pool({ connectionString, max: 1 });
 
       try {
-        const fixture = await createContractFixtures(pool);
+        const fixture = await createContractFixtures(pool, { zeroMoney: true });
         await pool.query(
           `
             INSERT INTO invoice_lines (
               invoice_id, position, variant_id, description, quantity,
               unit_price_cents, line_total_cents, quantity_fulfilled
             )
-            VALUES ($1, 0, $2, 'Upgrade fixture', 1, 1000, 1000, 0)
+            VALUES ($1, 0, $2, 'Upgrade fixture', 1, 0, 0, 0)
           `,
           [fixture.invoiceId, fixture.variantId],
         );

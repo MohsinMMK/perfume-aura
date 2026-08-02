@@ -15,7 +15,7 @@ import {
 } from "@perfume-aura/ui/components/table";
 import { listPayments } from "@/lib/payments";
 import { safeDbQuery } from "@/lib/db-safe";
-import { formatPkr } from "@/lib/money";
+import { formatInr } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { formatBusinessDateTime } from "@/lib/business-date";
 import { requireOwnerSession } from "@/lib/session";
@@ -116,7 +116,7 @@ export default async function PaymentsPage({
                       {formatBusinessDateTime(p.paidAt)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatPkr(p.amountCents)}
+                      {formatInr(p.amountCents)}
                     </TableCell>
                   </TableRow>
                 ))}

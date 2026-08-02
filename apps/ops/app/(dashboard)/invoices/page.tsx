@@ -16,7 +16,7 @@ import {
 } from "@perfume-aura/ui/components/table";
 import { listInvoices } from "@/lib/invoices";
 import { safeDbQuery } from "@/lib/db-safe";
-import { formatPkr } from "@/lib/money";
+import { formatInr } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { requireOwnerSession } from "@/lib/session";
 import {
@@ -179,10 +179,10 @@ export default async function InvoicesPage({
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatPkr(inv.totalCents)}
+                      {formatInr(inv.totalCents)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatPkr(inv.balanceCents)}
+                      {formatInr(inv.balanceCents)}
                     </TableCell>
                   </TableRow>
                 ))}

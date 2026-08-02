@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /**
- * Variant money as major PKR units in forms (rupees), converted to cents server-side.
+ * Variant money as major INR units in forms (rupees), converted to integer paise server-side.
  */
 export const variantFormSchema = z.object({
   sku: z
@@ -164,7 +164,7 @@ export const invoiceLineSchema = z.object({
   variantId: z.string().uuid().optional().or(z.literal("")),
   description: z.string().min(1, "Description is required").max(500),
   quantity: z.number().int().positive("Quantity must be positive"),
-  /** Major PKR (rupees) */
+  /** Major INR (rupees) */
   unitPrice: z.number().min(0, "Price cannot be negative"),
 });
 
@@ -208,7 +208,7 @@ export const recordPaymentSchema = z.object({
   invoiceId: z.string().uuid(),
   /** Stable across retries/double submissions; never generated server-side. */
   idempotencyKey: z.string().uuid(),
-  /** Major PKR (rupees) */
+  /** Major INR (rupees) */
   amount: z.number().positive("Amount must be positive"),
   method: paymentMethodSchema.default("cash"),
   /** Stable ISO instant or datetime-local value, fixed for request retries. */

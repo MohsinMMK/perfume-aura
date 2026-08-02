@@ -1,0 +1,226 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
+
+export function StorefrontMotion() {
+  const progressRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let active = true;
+    let cleanup = () => {};
+
+    void Promise.all([import("gsap"), import("gsap/ScrollTrigger")]).then(
+      ([{ default: gsap }, { ScrollTrigger }]) => {
+        if (!active) return;
+        gsap.registerPlugin(ScrollTrigger);
+
+        const context = gsap.context(() => {
+          if (progressRef.current) {
+            gsap.fromTo(
+              progressRef.current,
+              { scaleX: 0 },
+              {
+                scaleX: 1,
+                ease: "none",
+                scrollTrigger: {
+                  trigger: document.documentElement,
+                  start: "top top",
+                  end: "max",
+                  scrub: 0.25,
+                },
+              },
+            );
+          }
+
+          gsap.utils.toArray<HTMLElement>("[data-motion-copy]").forEach((element) => {
+            gsap.from(element, {
+              y: 44,
+              clipPath: "inset(0 0 100% 0)",
+              duration: 0.78,
+              ease: "power4.out",
+              scrollTrigger: {
+                trigger: element,
+                start: "top 88%",
+                once: true,
+              },
+            });
+          });
+
+          gsap.utils
+            .toArray<HTMLElement>("[data-motion-product-card]")
+            .forEach((element, index) => {
+              gsap.from(element, {
+                y: 72,
+                rotate: index % 2 === 0 ? -0.8 : 0.8,
+                opacity: 0,
+                duration: 0.82,
+                delay: Math.min(index, 4) * 0.055,
+                ease: "power4.out",
+                scrollTrigger: {
+                  trigger: element,
+                  start: "top 91%",
+                  once: true,
+                },
+              });
+            });
+
+          gsap.utils.toArray<HTMLElement>("[data-motion-parallax]").forEach((element) => {
+            gsap.fromTo(
+              element,
+              { yPercent: -4, scale: 1.04 },
+              {
+                yPercent: 5,
+                ease: "none",
+                scrollTrigger: {
+                  trigger: element.parentElement ?? element,
+                  start: "top bottom",
+                  end: "bottom top",
+                  scrub: 0.7,
+                },
+              },
+            );
+          });
+
+          const trustItems = gsap.utils.toArray<HTMLElement>("[data-motion-trust]");
+          if (trustItems.length > 0) {
+            gsap.from(trustItems, {
+              y: 28,
+              opacity: 0,
+              stagger: 0.08,
+              duration: 0.55,
+              ease: "power4.out",
+              scrollTrigger: {
+                trigger: trustItems[0]?.parentElement ?? trustItems[0],
+                start: "top 88%",
+                once: true,
+              },
+            });
+          }
+
+          gsap.utils.toArray<HTMLElement>("[data-motion-rule]").forEach((element) => {
+            gsap.from(element, {
+              scaleX: 0,
+              transformOrigin: "left center",
+              duration: 0.9,
+              ease: "power4.out",
+              scrollTrigger: {
+                trigger: element,
+                start: "top 92%",
+                once: true,
+              },
+            });
+          });
+
+          const stackedPanels = gsap.utils.toArray<HTMLElement>("[data-motion-stack]");
+          if (stackedPanels.length > 0) {
+            gsap.from(stackedPanels, {
+              y: 70,
+              rotate: (index) => index % 2 === 0 ? -1.4 : 1.4,
+              opacity: 0,
+              stagger: 0.09,
+              duration: 0.82,
+              ease: "power4.out",
+              scrollTrigger: {
+                trigger: stackedPanels[0]?.parentElement ?? stackedPanels[0],
+                start: "top 84%",
+                once: true,
+              },
+            });
+          }
+
+          gsap.utils.toArray<HTMLElement>("[data-motion-float]").forEach((element, index) => {
+            gsap.fromTo(
+              element,
+              { yPercent: index % 2 === 0 ? -12 : 10, rotate: index % 2 === 0 ? -14 : 12 },
+              {
+                yPercent: index % 2 === 0 ? 18 : -16,
+                rotate: index % 2 === 0 ? -7 : 5,
+                ease: "none",
+                scrollTrigger: {
+                  trigger: element.parentElement ?? element,
+                  start: "top bottom",
+                  end: "bottom top",
+                  scrub: 0.8,
+                },
+              },
+            );
+          });
+
+          gsap.utils.toArray<HTMLElement>("[data-motion-horizontal]").forEach((element, index) => {
+            gsap.from(element, {
+              xPercent: index % 2 === 0 ? -18 : 18,
+              opacity: 0.25,
+              ease: "none",
+              scrollTrigger: {
+                trigger: element.parentElement ?? element,
+                start: "top bottom",
+                end: "bottom 35%",
+                scrub: 0.65,
+              },
+            });
+          });
+
+          gsap.utils.toArray<HTMLElement>("[data-motion-stage]").forEach((element, index) => {
+            gsap.from(element, {
+              y: 90 + index * 24,
+              rotate: index === 1 ? 1.8 : index === 2 ? -1.8 : 0,
+              opacity: 0,
+              duration: 0.9,
+              ease: "power4.out",
+              scrollTrigger: { trigger: element, start: "top 90%", once: true },
+            });
+          });
+
+          gsap.utils.toArray<HTMLElement>("[data-motion-marquee]").forEach((element) => {
+            gsap.to(element, {
+              xPercent: -28,
+              duration: 24,
+              repeat: -1,
+              ease: "none",
+            });
+          });
+
+          gsap.utils.toArray<HTMLElement>("[data-motion-journey]").forEach((section) => {
+            const track = section.querySelector<HTMLElement>("[data-motion-journey-track]");
+            if (!track || window.matchMedia("(max-width: 1023px)").matches) return;
+            gsap.to(track, {
+              x: () => -Math.max(0, track.scrollWidth - window.innerWidth + 32),
+              ease: "none",
+              scrollTrigger: {
+                trigger: section,
+                start: "top top",
+                end: "bottom bottom",
+                scrub: 0.75,
+                invalidateOnRefresh: true,
+              },
+            });
+          });
+        });
+
+        cleanup = () => {
+          context.revert();
+          ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+        };
+
+        requestAnimationFrame(() => ScrollTrigger.refresh());
+      },
+    );
+
+    return () => {
+      active = false;
+      cleanup();
+    };
+  }, [pathname]);
+
+  return (
+    <div
+      ref={progressRef}
+      className="pointer-events-none fixed inset-x-0 top-0 z-[80] h-[3px] origin-left bg-[var(--aura-orange)]"
+      aria-hidden="true"
+    />
+  );
+}

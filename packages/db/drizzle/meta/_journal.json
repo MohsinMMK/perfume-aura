@@ -64,6 +64,13 @@
       "when": 1784913049848,
       "tag": "0008_phase03_contract",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1785618937648,
+      "tag": "0009_storefront-commerce",
+      "breakpoints": true
     }
   ]
 }

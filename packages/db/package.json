@@ -9,6 +9,7 @@
   "scripts": {
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
+    "audit:inr": "tsx src/audit-inr-migration.ts",
     "migrate:through-auth-expansion": "tsx src/migrate-through-auth-expansion.ts",
     "seed": "tsx src/seed.ts",
     "typecheck": "tsc --noEmit",

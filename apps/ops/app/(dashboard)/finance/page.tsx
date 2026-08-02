@@ -10,7 +10,7 @@ import { Badge } from "@perfume-aura/ui/components/badge";
 import { buttonVariants } from "@perfume-aura/ui/components/button";
 import { getFinanceSummary } from "@/lib/finance";
 import { safeDbQuery } from "@/lib/db-safe";
-import { formatPkr } from "@/lib/money";
+import { formatInr } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { formatBusinessDate } from "@/lib/business-date";
 import { requireOwnerSession } from "@/lib/session";
@@ -36,49 +36,49 @@ export default async function FinancePage({
     ? [
         {
           label: "Inventory cost",
-          value: formatPkr(s.inventoryCostCents),
+          value: formatInr(s.inventoryCostCents),
           hint: "On-hand × cost (live)",
           href: "/products",
         },
         {
           label: "Inventory retail",
-          value: formatPkr(s.inventoryRetailCents),
+          value: formatInr(s.inventoryRetailCents),
           hint: "On-hand × retail (live)",
           href: "/products",
         },
         {
           label: "Open AR",
-          value: formatPkr(s.openArCents),
+          value: formatInr(s.openArCents),
           hint: "Issued unpaid balances",
           href: "/invoices/ar",
         },
         {
           label: "Revenue (issued)",
-          value: formatPkr(s.revenueIssuedCents),
+          value: formatInr(s.revenueIssuedCents),
           hint: `Invoices issued last ${days}d`,
           href: "/invoices",
         },
         {
           label: "Cash collected",
-          value: formatPkr(s.cashCollectedCents),
+          value: formatInr(s.cashCollectedCents),
           hint: `Payments last ${days}d`,
           href: "/payments",
         },
         {
           label: "COGS (captured)",
-          value: formatPkr(s.cogsSnapshotCents),
+          value: formatInr(s.cogsSnapshotCents),
           hint: "Sales × cost captured at fulfillment",
           href: "/stock",
         },
         {
           label: "Legacy COGS estimate",
-          value: formatPkr(s.cogsLegacyCurrentCents),
+          value: formatInr(s.cogsLegacyCurrentCents),
           hint: "Pre-snapshot sales × migration-time current cost",
           href: "/stock",
         },
         {
           label: "Gross margin (incl. legacy estimate)",
-          value: formatPkr(s.grossMarginCents),
+          value: formatInr(s.grossMarginCents),
           hint: "Revenue − captured COGS − legacy estimate",
           href: "/finance",
         },

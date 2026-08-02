@@ -41,7 +41,7 @@ pnpm ops:pack   (exact Node 24.18.0 + npm 11.16.0 + pnpm 11.1.3)
                     │
                     ▼  Hostinger Node GitHub App
                     Node 24.x · entry apps/ops/server.js
-                    build pnpm run build → echo prebuilt-standalone
+                    no build command (prebuilt branch)
 ```
 
 Workflow: `.github/workflows/ops-pack.yml`
@@ -65,5 +65,6 @@ The workflow keeps default `contents: read`; only the publication job receives
 `contents: write` to update `hostinger-ops-production` with force-with-lease.
 It stores no Hostinger credentials. Hostinger watches that generated branch,
 and the optional live job polls `/api/health/version` for the exact source SHA.
-Production branch auto-deployment was proven twice 2026-07-31; API, MCP, and
-Connector deployment remain unsupported.
+Production branch auto-deployment was recovered from plan-wide NPROC exhaustion
+and exact-SHA verified again 2026-08-01; API, MCP, and Connector deployment
+remain unsupported.

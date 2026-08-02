@@ -10,6 +10,7 @@ Safety-critical source for DNS, Hostinger deployment, Neon cutover, and producti
 | Authoritative DNS | Hostinger |
 | Marketing hosting | Hostinger classic Git |
 | Ops hosting | Hostinger Node.js Web App |
+| Storefront hosting | Separate Hostinger Node.js Web App at `shop.perfumeaura.com` (planned, not configured) |
 | Database | Neon PostgreSQL |
 | Source | GitHub `MohsinMMK/perfume-aura`, branch `main` |
 
@@ -102,7 +103,7 @@ Current Hostinger ops fields:
 | Node | `24.x` |
 | Package manager | `pnpm` |
 | Root | `./` |
-| Build | `pnpm run build` (generated branch root script runs `echo prebuilt-standalone`) |
+| Build | None (generated branch is already prebuilt) |
 | Output | empty |
 | Entry | `apps/ops/server.js` |
 | Env | existing hPanel runtime set only |
@@ -132,6 +133,56 @@ Provider API archive upload, MCP deploy, and Connector remain unsupported for
 routine release. Read-only provider inspection is allowed; mutations stay with
 authorized root operator.
 
+### Storefront — staged prebuilt ZIP (not deployed)
+
+The storefront must remain separate from marketing and owner ops. Build and
+verify its Hostinger-compatible archive locally:
+
+```bash
+nvm use
+pnpm storefront:pack
+```
+
+The pack builds `apps/storefront`, materializes the standalone runtime, installs
+the locked Linux x64/glibc Sharp tree, refuses secrets/symlinks/unsafe ZIP
+paths, extracts the candidate, starts it, and smokes `/` plus a real Next static
+asset. It writes a ZIP, checksum, and manifest under `dist/`; entry is
+`apps/storefront/server.js`.
+
+Do not create the Hostinger app, add `shop` DNS, upload the ZIP, set provider
+credentials, or enable release flags without explicit release authorization.
+When authorized, use Hostinger Node.js Web App (not classic Git and not Path G):
+
+| Field | Value |
+|---|---|
+| Domain | `shop.perfumeaura.com` |
+| Source | Verified `perfume-aura-storefront_*.zip` |
+| Framework | Other |
+| Node | `24.x` |
+| Root | `./` |
+| Build | `echo prebuilt-standalone` |
+| Output | empty |
+| Entry | `apps/storefront/server.js` |
+
+Migration `0009` was applied to production on 2026-08-02 after the read-only
+audit proved every legacy monetary category was zero. For a new environment,
+run the same audit first, apply the migration with the reviewed direct owner
+URL, then apply and verify the explicit runtime matrix:
+
+```bash
+psql "$DATABASE_URL_DIRECT" -v ON_ERROR_STOP=1 \
+  -v runtime_role='REDACTED_REVIEWED_RUNTIME_ROLE' \
+  -f packages/db/sql/storefront-runtime-grants.sql
+```
+
+The two verification queries at the end must both return zero rows. Configure
+secrets from
+`apps/storefront/.env.example` only in hPanel. `STOREFRONT_PUBLIC_RELEASE`,
+`STOREFRONT_CUSTOMER_AUTH_ENABLED`, and
+`STOREFRONT_CHECKOUT_RELEASE_APPROVED` remain false until their separate gates
+pass. Always re-smoke `app.perfumeaura.com` owner pages after a storefront
+deployment because both sites share the Hostinger plan/process ceiling.
+
 ### Production migrations are not auto-run by this deploy path
 
 Push-only schema changes are **not** complete yet. CI does not apply production
@@ -156,7 +207,7 @@ Hostinger artifact state and must not be used as current production truth.
 | `/api/health/live`, `/ready` | `404` |
 | Latest listed ops deploy | completed 2026-07-23 archive, Node 20, `apps/ops/server.js` |
 
-## Current live evidence — re-verified 2026-07-31
+## Current live evidence — recovered and re-verified 2026-08-01
 
 Provider/database schema baseline retains the 2026-07-27 cutover proof. Re-check
 before acting; dated evidence never replaces a fresh release smoke.
@@ -172,7 +223,7 @@ before acting; dated evidence never replaces a fresh release smoke.
 | `/api/health/live` · `/ready` | 200 / 200 after credential rotation and redeploy |
 | `/api/health/version` | 200 and matched the exact released source SHA on each proof |
 | Static runtime asset | Real `/_next/static/…` asset returned 200 with non-empty body |
-| Active Hostinger deploy | **Node 24.x** generated branch `hostinger-ops-production`, build `pnpm run build`, entry `apps/ops/server.js` |
+| Active Hostinger deploy | **Node 24.x** generated branch `hostinger-ops-production`, no build command, entry `apps/ops/server.js` |
 | Push deployment proof | GitHub runs `30615774862` and `30623386605` published sources `43edda3e7b05…` and `3e7fa94c1a18…`; hPanel listed corresponding completed deploy commits `db10bb11b724…` and `cd7f2d818d66…`, and immediate root-operator probes returned each exact source from `/api/health/version` |
 | Credential rotation | Restricted Neon runtime-role password and Better Auth secret rotated; hPanel values applied and current process re-smoked without recording values |
 | Neon production | Main branch migrated through `0008`; restricted runtime role, grants, constraints, trigger, and zero reconciliation drift verified |
@@ -180,6 +231,7 @@ before acting; dated evidence never replaces a fresh release smoke.
 | Password reset email | **Not verified** — SMTP hPanel variables/mailbox remain pending |
 | Client-IP rate limiting | Shared-bucket fallback until Hostinger trusted-proxy evidence is established |
 | Ops Path G monorepo source build | **Blocked** (esbuild EACCES) |
+| 2026-08-01 recovery | Hostinger support found the Business Web Hosting order at its hard 120 NPROC limit and stopped plan-wide running processes. Exact source `6d79a495…` then passed the complete production verifier; GitHub run `30690719178` rerun succeeded and live Max Processes fell to about 10/120. A later plan-level LVE snapshot was described as `lsphp`/`index.php` activity, which does not match the Node ops runtime; domain/document-root attribution remains unresolved. See `CURRENT_STATE.md`. |
 
 The first two proof runs predated the repository-variable switch, so their
 `verify-hostinger-ops-live` jobs were skipped and the provider completion rows
@@ -207,8 +259,11 @@ SMTP_USER=<mailbox>
 SMTP_PASSWORD=<mailbox password>
 SMTP_FROM=<approved sender>
 NODE_ENV=production
-PORT=3000
 ```
+
+Do not configure a fixed `PORT` in hPanel. Hostinger supplies
+`process.env.PORT`; the standalone server falls back to `3000` only when the
+platform does not provide one.
 
 `DATABASE_URL_DIRECT` belongs only in migration/admin session, not Hostinger runtime.
 
@@ -457,6 +512,9 @@ Never guess owner credentials. Password must be 12–256 characters.
 Check in this order:
 
 1. Public `/login`, `/api/health/live`, `/api/health/ready`, `/api/auth/get-session`.
+   If Hostinger/hCDN returns `503` while Next reports Ready, capture live and
+   historical NPROC evidence before any plan-wide process stop; follow
+   `CURRENT_STATE.md`.
 2. Hostinger deployment entry, Node version, build/start logs, restart state.
 3. Presence—not values—of required env keys.
 4. Database target, journal, restricted role, grants, reconciliation/catalog.
@@ -483,7 +541,7 @@ Do not enable trusted proxy/IP extraction until Hostinger header behavior is pro
 ## Production completion checklist
 
 - [ ] GitHub Dependency Review gate resolved and main artifact retained.
-- [x] Generated branch connected with Node 24.x settings and exact-SHA production smoke; retain checksum-verified Path Z ZIP for emergency rollback only — verified 2026-07-31.
+- [x] Generated branch connected with Node 24.x settings and exact-SHA production smoke; retain checksum-verified Path Z ZIP for emergency rollback only — recovered and re-verified 2026-08-01.
 - [ ] hPanel env and SMTP keys present.
 - [ ] Bare role, `0007`, grant proof, expansion smoke, reconciliation, `0008`, grant reproof complete.
 - [ ] MAIN and owner seeded on production.

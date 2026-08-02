@@ -9,7 +9,7 @@ Drizzle ORM schema, Neon Postgres client, and ledger-first inventory helpers for
 | ORM | **drizzle-orm 0.45.x** |
 | Driver | **node-postgres (`pg`) Pool** — interactive transactions + `FOR UPDATE` |
 | Database | **Neon Postgres** |
-| Money | **PKR integer cents** (`cost_cents`, `retail_cents`) |
+| Money | **INR integer paise** (legacy column names include `*_cents`) after the audited currency gate |
 | Inventory | **Ledger-first** via `applyMovement()` |
 
 Do **not** use `neon-http` for stock writes (no multi-step transactions).

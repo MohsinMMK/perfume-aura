@@ -30,7 +30,7 @@ import {
 } from "@perfume-aura/validators";
 import { revalidatePath } from "next/cache";
 import { requireOwnerSession } from "@/lib/session";
-import { rupeesToCents } from "@/lib/money";
+import { rupeesToPaise } from "@/lib/money";
 import {
   actionError,
   actionOk,
@@ -282,7 +282,7 @@ export async function addInvoiceLineAction(
       variantId: parsed.data.variantId || null,
       description: parsed.data.description,
       quantity: parsed.data.quantity,
-      unitPriceCents: rupeesToCents(parsed.data.unitPrice),
+      unitPriceCents: rupeesToPaise(parsed.data.unitPrice),
     });
     revalidateInvoicePaths(parsed.data.invoiceId);
     return actionOk();

@@ -18,7 +18,7 @@ import {
 } from "@perfume-aura/ui/components/table";
 import { getProduct } from "@/lib/products";
 import { safeDbQuery } from "@/lib/db-safe";
-import { formatPkr, formatQty } from "@/lib/money";
+import { formatInr, formatQty } from "@/lib/money";
 import { AddVariantForm } from "@/components/products/add-variant-form";
 import { ProductLifecycleActions } from "@/components/products/product-lifecycle-actions";
 import { ProductEditDialog } from "@/components/products/product-edit-dialog";
@@ -168,10 +168,10 @@ export default async function ProductDetailPage({ params }: Props) {
                         {formatQty(v.reorderLevel)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {formatPkr(v.costCents)}
+                        {formatInr(v.costCents)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {formatPkr(v.retailCents)}
+                        {formatInr(v.retailCents)}
                       </TableCell>
                       <TableCell>
                         <VariantActions

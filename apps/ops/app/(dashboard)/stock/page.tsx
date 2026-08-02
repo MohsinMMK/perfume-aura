@@ -25,7 +25,7 @@ import {
 import { listActiveVariantsForSelect } from "@/lib/products";
 import { listRecentMovements } from "@/lib/stock";
 import { safeDbQuery } from "@/lib/db-safe";
-import { formatPkr, formatQty } from "@/lib/money";
+import { formatInr, formatQty } from "@/lib/money";
 import { ReceiveStockForm } from "@/components/stock/receive-stock-form";
 import { AdjustStockForm } from "@/components/stock/adjust-stock-form";
 import { DbUnavailableState } from "@/components/db-empty-state";
@@ -177,12 +177,12 @@ export default async function StockPage({
                           {m.costBasis === "snapshot" &&
                           m.unitCostCents !== null ? (
                             <span>
-                              Captured · {formatPkr(m.unitCostCents)}
+                              Captured · {formatInr(m.unitCostCents)}
                             </span>
                           ) : m.costBasis === "legacy_current" &&
                             m.unitCostCents !== null ? (
                             <span className="text-muted-foreground">
-                              Legacy estimate · {formatPkr(m.unitCostCents)}
+                              Legacy estimate · {formatInr(m.unitCostCents)}
                             </span>
                           ) : (
                             <span className="text-muted-foreground">—</span>

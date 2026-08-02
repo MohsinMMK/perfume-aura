@@ -5,10 +5,11 @@
 ```text
 apps/marketing/       static marketing source
 apps/ops/             Next.js internal operations app
+apps/storefront/      Next.js public ecommerce storefront (release-gated)
 packages/ui/          shared shadcn UI package
 packages/db/          Drizzle schema, migrations, workflows, tests
 packages/validators/  shared validation
-scripts/              marketing sync and ops packaging
+scripts/              marketing sync, ops packaging, storefront packaging, verification
 ```
 
 Root `index.html`, `styles.css`, and `.htaccess` are generated from `apps/marketing`; never hand-edit them.
@@ -21,6 +22,8 @@ Root `index.html`, `styles.css`, and `.htaccess` are generated from `apps/market
 - PostgreSQL transactions use deterministic lock order and retry policy for retryable conflicts.
 - Shared UI primitives live in `packages/ui`; app-specific compositions stay in `apps/ops/components`.
 - Ops standalone output uses monorepo layout with entry `apps/ops/server.js`.
+- Storefront standalone output uses entry `apps/storefront/server.js` and is
+  independently packed/smoked for a separate Hostinger Node Web App.
 
 ## Database model
 
@@ -33,6 +36,11 @@ Core tables:
 | Inventory | `locations`, `stock_movements` |
 | Sales | `customers`, `invoices`, `invoice_lines`, `payments` |
 | Numbering | `document_number_counters` |
+| Store publication | `product_publications`, `product_media`, `commerce_collections`, `commerce_collection_products`, `variant_prices`, `commerce_settings` |
+| Customer auth | `storefront_user`, `storefront_session`, `storefront_account`, `storefront_verification`, `storefront_rate_limit` |
+| Store orders | `commerce_carts`, `commerce_cart_items`, `checkout_sessions`, `stock_reservations`, `commerce_orders`, `commerce_order_items`, `commerce_order_events` |
+| Store payments/fulfillment | `payment_attempts`, `payment_events`, `commerce_refunds`, `shipments` |
+| Merchandising/support | `promotions`, `promotion_redemptions`, `commerce_bundles`, `commerce_bundle_items`, `commerce_reviews`, `commerce_returns`, `commerce_return_items`, `commerce_inquiries`, `customer_order_claims` |
 
 Key invariants:
 
@@ -54,6 +62,7 @@ Key invariants:
 | `0003–0006` | Domain expansion, backfill, uniqueness, indexes |
 | `0007` | `rate_limit`, `user.role` default, verification-token lookup index |
 | `0008` | Required checks and stock append-only contract |
+| `0009` | Fail-closed INR semantic cutover plus storefront/customer-commerce schema; generated, not applied |
 
 `0003–0007` are compatible expansion migrations. `0008` is contract migration and must follow compatible deployment plus reconciliation. Production order lives only in [OPERATIONS.md](./OPERATIONS.md).
 
@@ -89,6 +98,10 @@ Never commit values. Use `apps/ops/.env.local` locally and hPanel environment va
 | `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | SMTP credentials/sender |
 | `NODE_ENV`, `PORT` | Runtime settings |
 
+Storefront-only hPanel keys are documented in `apps/storefront/.env.example`.
+They include isolated customer auth, Google/Apple, customer SMTP, Cashfree, and
+three independent release switches. Secrets never use `NEXT_PUBLIC_*`.
+
 Local example:
 
 ```bash
@@ -105,6 +118,7 @@ nvm use
 corepack enable
 pnpm install --frozen-lockfile
 pnpm dev:ops
+pnpm dev:storefront
 ```
 
 Prepare local database:
@@ -135,6 +149,8 @@ pnpm check
 pnpm marketing:sync
 pnpm marketing:check
 pnpm ops:pack
+pnpm storefront:pack
+pnpm currency:audit
 pnpm ops:verify-deploy-tree self-test
 pnpm ops:publish-branch self-test
 pnpm ops:verify-production-deploy self-test
@@ -154,7 +170,12 @@ pnpm db:migrate
 pnpm test:integration
 ```
 
-Coverage includes inventory concurrency/idempotency, invoice/payment/finance workflows, migration boundaries, constraints, owner auth/recovery, health, security headers, and lifecycle races.
+Coverage includes inventory concurrency/idempotency, checkout reservation
+normalization and exactly-once settlement contracts, explicit idempotent
+order-to-invoice linking at approved paid/COD-reconciled transitions,
+invoice/payment/finance
+workflows, migration boundaries, constraints, isolated auth, Cashfree money/
+signature/status/refund behavior, health, security headers, and lifecycle races.
 
 ## CI and release automation
 

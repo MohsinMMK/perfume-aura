@@ -927,10 +927,10 @@ async function verifyCommerceFoundation() {
   const decisionIds = decisionRows.map(([id]) => id);
   assert.deepEqual(
     decisionIds,
-    Array.from({ length: 22 }, (_, index) =>
+    Array.from({ length: 26 }, (_, index) =>
       `COM-ADR-${String(index + 1).padStart(3, "0")}`,
     ),
-    "commerce decision IDs must be unique and sequential through COM-ADR-022",
+    "commerce decision IDs must be unique and sequential through COM-ADR-026",
   );
   for (const [id, date, status, decision, reason] of decisionRows) {
     assertCalendarDate(date, `${id} decision date`);
@@ -945,14 +945,14 @@ async function verifyCommerceFoundation() {
     decisionRows.map(([id, , status]) => [id, status]),
   );
   for (const [id, expectedStatus] of [
-    ["COM-ADR-007", "Accepted"],
+    ["COM-ADR-007", "Superseded"],
     ["COM-ADR-008", "Superseded"],
-    ["COM-ADR-009", "Accepted"],
+    ["COM-ADR-009", "Superseded"],
     ["COM-ADR-010", "Accepted"],
-    ["COM-ADR-011", "Pending"],
+    ["COM-ADR-011", "Superseded"],
     ["COM-ADR-012", "Accepted"],
     ["COM-ADR-013", "Accepted"],
-    ["COM-ADR-014", "Accepted"],
+    ["COM-ADR-014", "Superseded"],
     ["COM-ADR-015", "Superseded"],
     ["COM-ADR-016", "Accepted"],
     ["COM-ADR-017", "Accepted"],
@@ -961,6 +961,10 @@ async function verifyCommerceFoundation() {
     ["COM-ADR-020", "Accepted"],
     ["COM-ADR-021", "Accepted"],
     ["COM-ADR-022", "Accepted"],
+    ["COM-ADR-023", "Accepted"],
+    ["COM-ADR-024", "Accepted"],
+    ["COM-ADR-025", "Accepted"],
+    ["COM-ADR-026", "Accepted"],
   ]) {
     assert.equal(
       decisionStatuses.get(id),
@@ -1806,22 +1810,21 @@ async function verifyCommerceFoundation() {
   });
   assert.equal(
     launchVariants.length,
-    rows.length * 4,
-    "launch variant workbook must contain four sizes for every selected product",
+    mainRows.length * 3 + signatureRows.length * 2,
+    "launch variant workbook must contain the approved collection-specific sizes",
   );
   assert.deepEqual(
     launchVariants.map(({ source_key, size_ml }) => `${source_key}:${size_ml}`),
     rows.flatMap((row) =>
-      [10, 30, 50, 100].map(
+      (row.source_section === "signature_series" ? [50, 105] : [30, 50, 100]).map(
         (size) => `${row.source_section}:${row.source_number}:${size}`,
       ),
     ),
-    "variant rows must be ordered one row per source product × 10/30/50/100 ml",
+    "variant rows must be ordered by source product and approved size set",
   );
   const unresolvedVariantFields = [
     "sku",
     "barcode",
-    "retail_price_minor",
     "cost_minor",
     "opening_stock",
     "reorder_level",
@@ -1830,11 +1833,7 @@ async function verifyCommerceFoundation() {
   for (const variant of launchVariants) {
     const key = `${variant.source_key}:${variant.size_ml}`;
     assert.equal(variant.currency, "INR", `${key} currency must be INR`);
-    assert.equal(
-      variant.variant_type,
-      variant.size_ml === "10" ? "tester" : "bottle",
-      `${key} variant type changed`,
-    );
+    assert.equal(variant.variant_type, "bottle", `${key} must be a bottle`);
     assert.equal(
       variant.availability_intent,
       "available",
@@ -1846,11 +1845,34 @@ async function verifyCommerceFoundation() {
       `${key} stock must remain pending`,
     );
     assert.equal(variant.launch_scope, "selected", `${key} must be selected`);
-    assert.equal(
-      variant.approval_status,
-      "needs_price_sku_stock",
-      `${key} must remain non-importable`,
-    );
+    if (variant.source_key.startsWith("signature_series:")) {
+      assert.equal(
+        variant.retail_price_minor,
+        "",
+        `${key} Signature price must remain owner-approved input`,
+      );
+      assert.equal(
+        variant.approval_status,
+        "needs_price_sku_cost_stock",
+        `${key} must remain non-importable until price, SKU, cost, and stock are approved`,
+      );
+    } else {
+      const expectedRetailPriceMinor = new Map([
+        ["30", "60000"],
+        ["50", "80000"],
+        ["100", "140000"],
+      ]).get(variant.size_ml);
+      assert.equal(
+        variant.retail_price_minor,
+        expectedRetailPriceMinor,
+        `${key} must retain the approved standard retail price in paise`,
+      );
+      assert.equal(
+        variant.approval_status,
+        "needs_sku_cost_stock",
+        `${key} must remain non-importable until SKU, cost, and stock are approved`,
+      );
+    }
     for (const field of unresolvedVariantFields) {
       assert.equal(variant[field], "", `${key} ${field} must remain unresolved`);
     }
