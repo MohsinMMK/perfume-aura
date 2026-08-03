@@ -4,7 +4,7 @@ import {
   STAFF_ROLE,
 } from "./auth-policy";
 
-export const OPS_ROLES = [
+const OPS_ROLES = [
   OWNER_ROLE,
   STAFF_ROLE,
   DEFAULT_USER_ROLE,

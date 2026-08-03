@@ -56,19 +56,19 @@ disallows indexing. Do not open a lock merely because runtime health is green.
 
 ## Active ops incident
 
-As rechecked on **2026-08-02 IST**, `https://perfumeaura.com/` remains `200`
-and `www` redirects to its equivalent apex path with `308`, but
-`app.perfumeaura.com` is intermittent: `/login` returns `200` while
+As of **2026-08-02 IST**, `https://perfumeaura.com/` still returns `200`, and
+`www` redirects to the equivalent apex path with `308`. However,
+`app.perfumeaura.com` remains intermittent: `/login` returns `200` while
 `/api/health/live`, `/ready`, `/version`, and `/api/auth/get-session` return
 Hostinger HCDN `503` “server temporarily busy.” At **23:24 IST**, hPanel
-reported 104/120 average Max Processes over the prior 24 hours; its runtime
-log contained repeated Next.js server starts roughly every two seconds with no
-application error recorded. The current `hostinger-ops-production` deployment
-is complete for source `cc38326d…`, but that is not readiness evidence. Do not
-deploy the staff release or run a plan-wide process stop. Obtain a scoped
-Hostinger repair that identifies the process owner/restart cause, then re-smoke
-ops live/ready/version/auth/static/authenticated owner page and the healthy
-apex before any deployment.
+showed a 24-hour average of 104/120 Max Processes. Its runtime log showed
+repeated Next.js server starts roughly every two seconds without application
+errors.
+The `hostinger-ops-production` deployment completed for source `cc38326d…`,
+but completion does not prove readiness. Do not deploy the staff release or
+use the plan-wide process stop. Obtain a scoped Hostinger repair identifying
+the process owner and restart cause. Before any deployment, re-smoke ops
+live/ready/version/auth/static/authenticated owner page and the healthy apex.
 
 ## Current repository work
 

@@ -106,7 +106,7 @@ export async function listPayments(opts?: {
   );
 }
 
-export async function getCashCollectedCents(
+async function getCashCollectedCents(
   from: Date,
   to: Date,
 ): Promise<number> {

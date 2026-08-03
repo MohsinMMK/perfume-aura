@@ -9,6 +9,7 @@ Read `docs/CURRENT_STATE.md` before acting. Then read the task-owning document:
 - `docs/OPERATIONS.md` — Hostinger, DNS, Neon, deployment, recovery
 - `docs/ROADMAP.md` — remaining work
 - `docs/STACK.md` — locked tooling
+- `docs/OPTIMIZATION.md` — ops performance plan, measurement protocol, and official references
 
 Fresh provider, repository, and database evidence outranks dated notes. Update
 `CURRENT_STATE.md` in the same change when a production state, deployment route,

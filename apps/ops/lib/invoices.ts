@@ -58,7 +58,7 @@ export type InvoiceListItem = {
   createdAt: Date;
 };
 
-export type InvoiceLineRow = {
+type InvoiceLineRow = {
   id: string;
   position: number;
   variantId: string | null;
