@@ -1,15 +1,15 @@
-# Operations optimization plan
+# Performance optimization plan
 
 ## Purpose and scope
 
-This document owns performance optimization for `apps/ops`: download and
-artifact size, load speed, interaction responsiveness, rendering cost, and
-motion smoothness. It is a measurement-led plan, not evidence that an
-optimization has shipped.
+This document owns performance optimization for `apps/ops` and
+`apps/storefront`: download and artifact size, load speed, interaction
+responsiveness, rendering cost, and motion smoothness. It is measurement-led;
+each implementation record states what was proven locally or in CI.
 
 The plan must preserve behavior, security boundaries, accessibility, database
-semantics, and the locked stack in `docs/STACK.md`. Do not optimize the public
-storefront through this plan. Do not deploy ops while the active incident in
+semantics, storefront release locks, and the locked stack in `docs/STACK.md`.
+Do not deploy either application while the active incident in
 `docs/CURRENT_STATE.md` blocks deployment.
 
 ## Current baseline facts
@@ -56,7 +56,10 @@ small checked-in report.
 Run from a clean tree:
 
 ```bash
-pnpm --filter @perfume-aura/ops build
+pnpm build:storefront
+(cd apps/storefront && pnpm next experimental-analyze --output)
+pnpm storefront:pack
+pnpm build:ops
 (cd apps/ops && pnpm next experimental-analyze --output)
 pnpm ops:pack
 ```
@@ -76,8 +79,9 @@ analyzer for module tracing and browser measurements for actual route cost.
 
 ### Browser evidence
 
-Measure authenticated, production-build journeys on representative desktop and
-mobile profiles:
+Measure production-build journeys on representative desktop and mobile
+profiles. For ops, authenticate with synthetic disposable-fixture credentials
+and cover:
 
 - login to dashboard;
 - dashboard navigation to products, stock, invoices, payments, and finance;
@@ -85,6 +89,15 @@ mobile profiles:
 - product or customer edit;
 - invoice drafting and payment recording;
 - sidebar open/close and other visible transitions.
+
+For storefront, preserve current release locks and cover:
+
+- homepage, shop, search, product/collection, cart, checkout, and account routes;
+- resource transfer, route prefetch, images, fonts, and optional SDK loading;
+- header/footer navigation, cart drawer, mobile menu, focus restoration, and
+  reduced-motion behavior;
+- enabled catalog/cart/checkout journeys only when an approved disposable
+  fixture can reproduce those release states.
 
 Capture:
 
@@ -371,6 +384,64 @@ Copy this section for each implemented optimization:
 - Decision: keep. Audit is clean after explicit entry/alias accounting; no
   speculative dependency or reachable-code deletion was applied.
 
+## Storefront measured optimization — 2026-08-03
+
+Detailed reproduction evidence: [`docs/optimization/STOREFRONT_LOCAL_E2E_2026-08-03.md`](optimization/STOREFRONT_LOCAL_E2E_2026-08-03.md).
+Baseline source was commit `46ad43aebfe8ae670750b4c32f43bf37da34cd25`;
+optimized implementation file-set SHA-256 is
+`4072e3a7c6cc1c0afc6f842b4956cce584257a462089a12f602d11d0a164a1ea`.
+
+### Initial navigation and locked-cart work
+
+- Before: desktop homepage entry issued 24 fetches, including one unconditional
+  `/api/cart` request and viewport prefetches for five primary destinations.
+  Fetch transfer was 21,865 encoded / 72,506 decoded bytes.
+- Change: preserve automatic prefetch only for primary `/shop` intent; disable it
+  for lower-intent primary, closed-menu, and footer links. When public and
+  preview catalog flags are both false, initialize the exact release-locked cart
+  snapshot in the Server Component and skip remote hydration. Enabled preview or
+  public commerce retains remote cart loading; abandoned loads now abort.
+- After at the same `1280 × 633` local viewport: 7 route-prefetch fetches, no
+  `/api/cart` request, and 10,715 encoded / 36,897 decoded fetch bytes. That is
+  17 fewer requests (`-70.8%`) and `-51.0%` encoded fetch transfer.
+- Whole-page resources fell from 49 to 28 entries, 387,152 to 363,424 encoded
+  bytes (`-6.1%`), and 1,097,943 to 1,027,933 decoded bytes (`-6.4%`).
+
+### Release-gated client code
+
+- Before: disabled sign-in, registration, and recovery routes each referenced
+  252,997 bytes of client JavaScript because the Better Auth client was imported
+  statically even though disabled controls could not invoke it.
+- Change: dynamically import the isolated customer-auth client only after the
+  explicit enabled-action guard.
+- After: each route references 222,042 bytes, saving 30,955 bytes (`-12.2%`).
+  Other guarded commerce routes changed by only 278–301 bytes (`<0.15%`) for the
+  cart-loading guard and measurement code.
+- A proposed Cashfree client split was built and browser-tested, then reverted:
+  Turbopack still loaded the dynamic payment chunk on locked checkout entry, so
+  no initial-load benefit was proven.
+
+### Media, rendering, motion, and regression control
+
+- All storefront images already use `next/image`, explicit responsive `sizes`,
+  local WebP assets, and priority only for credible above-fold candidates.
+  Fonts are self-hosted. No measured media or font change was justified.
+- Catalog and durable-cart independent reads already use `Promise.all`; release
+  gates return before database/payment/auth initialization. Release-only query
+  deduplication remains deferred until representative published data can prove a
+  latency bottleneck.
+- GSAP and ScrollTrigger remain dynamically loaded and are skipped for reduced
+  motion. One null-target hero animation call was guarded; final browser run had
+  no console or page errors. Reduced-motion CSS remained `0.01 ms`.
+- Added deterministic storefront route measurement, seven CI budgets, and a
+  reusable browser diagnostic program. `pnpm check` now verifies storefront
+  budgets after its production build.
+- Final storefront ZIP was 31,880,510 bytes, 11,275 bytes (`0.04%`) above the
+  baseline because deferred code remains packaged and guard/measurement support
+  was added. No archive-size improvement is claimed.
+- Knip `6.31.0` returned `{"issues":[]}`. No dependency or reachable file was
+  removed. No production/provider change occurred.
+
 ## Required verification for implementation work
 
 ```bash
@@ -394,6 +465,7 @@ made under this plan.
 | Next.js production review | [Next.js production checklist](https://nextjs.org/docs/app/guides/production-checklist) | Production measurement, Core Web Vitals, fonts, scripts, images, accessibility |
 | Bundle inspection | [Next.js package bundling](https://nextjs.org/docs/app/guides/package-bundling) | Turbopack analyzer, module tracing, large client workloads, package exports |
 | Optional client code | [Next.js lazy loading](https://nextjs.org/docs/app/guides/lazy-loading) | `next/dynamic` and dynamic library imports with Server Component limits |
+| Navigation prefetch | [Next.js prefetching guide](https://nextjs.org/docs/app/guides/prefetching) | Keep high-intent navigation fast without eagerly fetching every low-intent link |
 | Component boundaries | [Next.js Server and Client Components](https://nextjs.org/docs/app/getting-started/server-and-client-components) | Narrow Client Component boundaries and reduce client JavaScript |
 | Font loading | [Next.js font optimization](https://nextjs.org/docs/app/getting-started/fonts) | Self-hosting, external-request removal, and layout stability |
 | Experimental package imports | [Next.js `optimizePackageImports`](https://nextjs.org/docs/app/api-reference/config/next-config-js/optimizePackageImports) | Experimental status and required caution |

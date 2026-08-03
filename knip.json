@@ -2,7 +2,10 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
     ".": {
-      "entry": ["scripts/measure-ops-browser.browser.js"]
+      "entry": [
+        "scripts/measure-ops-browser.browser.js",
+        "scripts/measure-storefront-browser.browser.js"
+      ]
     },
     "packages/db": {
       "entry": ["drizzle.phase02-test.config.ts"]

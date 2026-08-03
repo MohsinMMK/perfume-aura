@@ -4,7 +4,7 @@ Read this file and the task-specific document before repository or provider
 work. Fresh live evidence outranks this snapshot; never place credentials,
 tokens, connection strings, or customer data here.
 
-Last refreshed: **2026-08-02 IST**.
+Last refreshed: **2026-08-03 IST**.
 
 ## Live topology
 
@@ -78,3 +78,11 @@ Better Auth Admin/2FA migration, strict owner/staff capability matrix,
 append-only invitation/audit records, and owner break-glass recovery. It is
 not deployed and both security flags stay false until the isolated-Neon,
 production-grant, SMTP, owner-TOTP, recovery-code, and staff-denial gates pass.
+
+The branch also contains CI-verified ops optimization at `46ad43a…` and a
+separate locally verified storefront optimization. Storefront entry now limits
+low-intent prefetch, skips release-locked cart hydration, and defers disabled
+customer-auth client code; all commerce flags remain false. No provider or
+production change occurred. Next action remains scoped Hostinger incident repair
+before any deployment; storefront changes can be committed and pushed for CI
+without deploying.

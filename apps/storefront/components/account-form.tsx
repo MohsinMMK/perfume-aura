@@ -4,7 +4,6 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@perfume-aura/ui/components/button";
 import { Input } from "@perfume-aura/ui/components/input";
-import { customerAuthClient } from "@/lib/customer-auth-client";
 
 const genericRecoveryMessage = "If an eligible account exists, a recovery email will be sent.";
 
@@ -32,6 +31,7 @@ export function AccountForm({
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim();
     try {
+      const { customerAuthClient } = await import("@/lib/customer-auth-client");
       if (mode === "recover") {
         await customerAuthClient.requestPasswordReset({
           email,
@@ -74,6 +74,7 @@ export function AccountForm({
     setPending(true);
     setError(null);
     try {
+      const { customerAuthClient } = await import("@/lib/customer-auth-client");
       const result = await customerAuthClient.signIn.social({ provider, callbackURL: "/account" });
       if (result?.error) setError(`${provider === "google" ? "Google" : "Apple"} sign-in could not be started.`);
     } catch {
