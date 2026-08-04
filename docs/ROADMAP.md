@@ -10,6 +10,7 @@
 | INR contract and legacy PKR audit gate | Implemented; no automatic FX conversion |
 | Apex cutover | `perfumeaura.com` is the deployed storefront; `www` redirects; `shop` is deleted |
 | Hostinger packages | Ops generated branch and apex storefront verified ZIP paths pass extracted smoke |
+| Observability foundation | PostHog and Sentry cloud projects plus privacy-filtered Storefront/Ops SDK wiring implemented locally; production activation remains incident-gated |
 
 ## Release gates still closed
 
@@ -42,3 +43,5 @@
   routine.
 - Keep production migrations manual and reviewed; never imply push-only schema
   deployment.
+- After the scoped Hostinger repair, activate and verify PostHog/Sentry using
+  `docs/OBSERVABILITY.md`; do not treat project creation as runtime proof.

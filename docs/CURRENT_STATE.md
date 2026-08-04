@@ -4,7 +4,7 @@ Read this file and the task-specific document before repository or provider
 work. Fresh live evidence outranks this snapshot; never place credentials,
 tokens, connection strings, or customer data here.
 
-Last refreshed: **2026-08-02 IST**.
+Last refreshed: **2026-08-04 IST**.
 
 ## Live topology
 
@@ -30,9 +30,9 @@ Git history and that backup are the only static rollback path.
 - `node scripts/verify-production-deploy.mjs
   89b79d8575687978f3c0b5eee09ea43bb9d1268a --public-surface storefront
   --public-base https://perfumeaura.com --timeout-ms 180000` passed.
-- Ops `/login`, live, ready, auth-session, a real static asset, and
-  `/api/health/version` pass. The version endpoint reports source
-  `89b79d8575687978f3c0b5eee09ea43bb9d1268a`.
+- Fresh checks at 14:53 IST found ops `/login`, live, ready, auth-session, a
+  real static asset, and `/api/health/version` healthy. The version endpoint
+  reports source `cc38326dcf46651e10cb618727e4c03ef1fdc948`.
 - Read-only Neon reconciliation found zero storefront users, sessions, cart
   items, checkouts, orders, payment records, inquiries, published products,
   published collections, invoices, payments, stock movements, inventory,
@@ -57,10 +57,33 @@ disallows indexing. Do not open a lock merely because runtime health is green.
   every deployment, and never use the plan-wide process-stop control without
   explicit authorization and confirmed scope.
 
+## Active ops incident
+
+The application recovered but the duplicate-process/NPROC incident is not
+resolved. The last-day runtime log still showed unexplained paired or repeated
+Next.js starts without application errors. A scoped Hostinger support
+escalation is assigned to a specialist and requests Linux user/domain/path/PID
+attribution, supervisor or restart-policy analysis, HCDN routing verification,
+and the relevant LVE snapshot. Hostinger has not yet supplied a case identifier
+or durable repair. Do not change Hostinger variables, redeploy, or use the
+plan-wide process-stop control until that evidence is received.
+
 ## Current repository work
 
-`main` is at `89b79d8575687978f3c0b5eee09ea43bb9d1268a`. The active cleanup
-work removes the obsolete static marketing deployment surface and changes CI,
-docs, and verification to apex-storefront checks. The next product phase is the
-separate Better Auth Admin/2FA staff-operations migration; keep both flags off
-until SMTP and owner TOTP recovery are proven.
+`main` is at `cc38326dcf46651e10cb618727e4c03ef1fdc948`. The obsolete static
+marketing surface is removed. The separate draft staff-operations release and
+its database migration are not part of this observability branch.
+
+The observability foundation is prepared for both applications. PostHog US
+Cloud project `Perfume Aura Web` (ID `541869`) has client IP storage disabled
+and separates traffic with `application=storefront|operations`. Sentry
+organization `khanect` contains `perfume-aura-storefront` and
+`perfume-aura-ops`, each with high-priority email alerts. GitHub repository
+variables contain the public client identifiers, and the limited `org:ci`
+source-map credential is stored only as `SENTRY_AUTH_TOKEN`. Controlled
+non-production events reached both providers, but no enabled artifact or
+runtime variables have been deployed and production sends no new telemetry.
+See `docs/OBSERVABILITY.md` for the activation gate.
+
+Next action is to publish this change as a separate draft PR and wait for the
+scoped Hostinger repair before merging or activating production telemetry.

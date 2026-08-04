@@ -23,11 +23,13 @@
     "@perfume-aura/db": "workspace:*",
     "@perfume-aura/ui": "workspace:*",
     "@perfume-aura/validators": "workspace:*",
+    "@sentry/nextjs": "10.69.0",
     "better-auth": "1.6.25",
     "drizzle-orm": "0.45.2",
     "next": "16.2.11",
     "nodemailer": "^9.0.3",
     "pg": "^8.22.0",
+    "posthog-js": "1.407.2",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "zod": "^3.25.76"

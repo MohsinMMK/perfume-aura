@@ -92,12 +92,24 @@ jobs:
           STOREFRONT_CHECKOUT_RELEASE_APPROVED: "false"
           STOREFRONT_INQUIRIES_ENABLED: "false"
           STANDALONE_SOURCE_COMMIT: ${{ github.sha }}
+          NEXT_PUBLIC_STOREFRONT_POSTHOG_TOKEN: ${{ vars.POSTHOG_PROJECT_TOKEN }}
+          NEXT_PUBLIC_STOREFRONT_POSTHOG_HOST: ${{ vars.POSTHOG_HOST }}
+          NEXT_PUBLIC_STOREFRONT_SENTRY_DSN: ${{ vars.STOREFRONT_SENTRY_DSN }}
+          NEXT_PUBLIC_STOREFRONT_SENTRY_TRACES_SAMPLE_RATE: "0.1"
+          SENTRY_ORG: khanect
+          STOREFRONT_SENTRY_PROJECT: perfume-aura-storefront
         run: pnpm build:storefront
 
       - name: Ops production build
         env:
           BETTER_AUTH_URL: https://app.perfumeaura.com
           STANDALONE_SOURCE_COMMIT: ${{ github.sha }}
+          NEXT_PUBLIC_OPS_POSTHOG_TOKEN: ${{ vars.POSTHOG_PROJECT_TOKEN }}
+          NEXT_PUBLIC_OPS_POSTHOG_HOST: ${{ vars.POSTHOG_HOST }}
+          NEXT_PUBLIC_OPS_SENTRY_DSN: ${{ vars.OPS_SENTRY_DSN }}
+          NEXT_PUBLIC_OPS_SENTRY_TRACES_SAMPLE_RATE: "0.1"
+          SENTRY_ORG: khanect
+          OPS_SENTRY_PROJECT: perfume-aura-ops
         run: pnpm build:ops
 
   integration:
@@ -194,6 +206,18 @@ jobs:
       DATABASE_URL_DIRECT: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_package
       BETTER_AUTH_URL: https://app.perfumeaura.com
       STANDALONE_REQUIRE_SERVER_SMOKE: "1"
+      NEXT_PUBLIC_STOREFRONT_POSTHOG_TOKEN: ${{ vars.POSTHOG_PROJECT_TOKEN }}
+      NEXT_PUBLIC_STOREFRONT_POSTHOG_HOST: ${{ vars.POSTHOG_HOST }}
+      NEXT_PUBLIC_STOREFRONT_SENTRY_DSN: ${{ vars.STOREFRONT_SENTRY_DSN }}
+      NEXT_PUBLIC_STOREFRONT_SENTRY_TRACES_SAMPLE_RATE: "0.1"
+      NEXT_PUBLIC_OPS_POSTHOG_TOKEN: ${{ vars.POSTHOG_PROJECT_TOKEN }}
+      NEXT_PUBLIC_OPS_POSTHOG_HOST: ${{ vars.POSTHOG_HOST }}
+      NEXT_PUBLIC_OPS_SENTRY_DSN: ${{ vars.OPS_SENTRY_DSN }}
+      NEXT_PUBLIC_OPS_SENTRY_TRACES_SAMPLE_RATE: "0.1"
+      SENTRY_ORG: khanect
+      STOREFRONT_SENTRY_PROJECT: perfume-aura-storefront
+      OPS_SENTRY_PROJECT: perfume-aura-ops
+      SENTRY_AUTH_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.SENTRY_AUTH_TOKEN || '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

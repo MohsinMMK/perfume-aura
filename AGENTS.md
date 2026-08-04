@@ -9,6 +9,8 @@ Read `docs/CURRENT_STATE.md` before acting. Then read the task-owning document:
 - `docs/OPERATIONS.md` — Hostinger, DNS, Neon, deployment, recovery
 - `docs/ROADMAP.md` — remaining work
 - `docs/STACK.md` — locked tooling
+- `docs/OPTIMIZATION.md` — ops/storefront performance plan, measurement protocol, and official references
+- `docs/OBSERVABILITY.md` — PostHog/Sentry topology, privacy, activation, and verification
 
 Fresh provider, repository, and database evidence outranks dated notes. Update
 `CURRENT_STATE.md` in the same change when a production state, deployment route,
@@ -39,6 +41,7 @@ unrelated Hostinger websites, mailboxes, DNS records, or databases.
 | Better Auth | Official Next.js + Drizzle integrations and plugins |
 | Drizzle and Neon | Official schema, migration, pooling, and grants paths |
 | Hostinger | Official Node.js Web App deployment/custom-domain workflow |
+| Observability | Official PostHog JavaScript and Sentry Next.js SDK workflows |
 | pnpm | Root workspaces and `workspace:*` dependencies |
 
 Do not hand-copy shadcn primitives. `apps/ops/components.json` and

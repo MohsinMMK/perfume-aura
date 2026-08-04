@@ -1,3 +1,5 @@
+import { reportOpsHandledError } from "@/lib/observability-log";
+
 /**
  * Run a DB-backed loader; on failure return a friendly error string
  * so pages never crash when DATABASE_URL is missing or Neon is down.
@@ -9,7 +11,7 @@ export async function safeDbQuery<T>(
     const data = await fn();
     return { data, error: null };
   } catch (err) {
-    console.error("[safeDbQuery]", err);
+    reportOpsHandledError(err, "database.query");
     const msg = err instanceof Error ? err.message : String(err);
     if (
       msg.includes("ECONNREFUSED") ||

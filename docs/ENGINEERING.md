@@ -90,6 +90,20 @@ node scripts/verify-production-deploy.mjs <40-character-sha> \
   --public-base https://perfumeaura.com
 ```
 
+## Observability boundary
+
+The browser, Node, and Edge integration is documented in
+`docs/OBSERVABILITY.md`. Provider SDKs remain disabled when their environment
+identifier is absent. PostHog initializes after page load, captures only
+page-view/page-leave activity, and registers an application discriminator.
+Sentry captures unhandled failures, sampled traces, and typed structured logs.
+
+Privacy sanitizers remove direct-identifier property keys, request bodies,
+headers, cookies, query strings, fragments, and opaque URL tokens before an
+event can leave either app. Tests for those filters run in each application's
+unit suite. Do not add console capture, DOM autocapture, session replay, or
+customer/staff email identification without a separate privacy review.
+
 ## Quality and security
 
 - Use the official shadcn CLI; shared primitives belong in `packages/ui`.
