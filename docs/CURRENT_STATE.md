@@ -4,7 +4,7 @@ Read this file and the task-specific document before repository or provider
 work. Fresh live evidence outranks this snapshot; never place credentials,
 tokens, connection strings, or customer data here.
 
-Last refreshed: **2026-08-03 IST**.
+Last refreshed: **2026-08-04 IST**.
 
 ## Live topology
 
@@ -56,19 +56,25 @@ disallows indexing. Do not open a lock merely because runtime health is green.
 
 ## Active ops incident
 
-As of **2026-08-02 IST**, `https://perfumeaura.com/` still returns `200`, and
-`www` redirects to the equivalent apex path with `308`. However,
-`app.perfumeaura.com` remains intermittent: `/login` returns `200` while
-`/api/health/live`, `/ready`, `/version`, and `/api/auth/get-session` return
-Hostinger HCDN `503` “server temporarily busy.” At **23:24 IST**, hPanel
-showed a 24-hour average of 104/120 Max Processes. Its runtime log showed
-repeated Next.js server starts roughly every two seconds without application
-errors.
-The `hostinger-ops-production` deployment completed for source `cc38326d…`,
-but completion does not prove readiness. Do not deploy the staff release or
-use the plan-wide process stop. Obtain a scoped Hostinger repair identifying
-the process owner and restart cause. Before any deployment, re-smoke ops
-live/ready/version/auth/static/authenticated owner page and the healthy apex.
+Fresh checks at **2026-08-04 14:53 IST** found the incident recovered but not
+resolved. Ops `/login`, live, ready, version, unauthenticated session, and a real
+Next static asset all returned `200`; the version endpoint reported
+`cc38326dcf46651e10cb618727e4c03ef1fdc948`. The apex, shop, search, cart,
+customer-auth lock, robots lock, and path/query-preserving `www` redirect also
+passed. hPanel showed 41/120 live Max Processes and a 26/120 24-hour average.
+
+The last-day runtime log still showed unexplained duplicate Next.js starts:
+six starts between **2026-08-03 16:09:09 and 16:09:13 IST**, paired starts at
+18:39:34, 19:01:53, and 22:09:40, and another pair at **2026-08-04 05:14:17
+IST**, without application errors. At **14:56 IST**, a scoped Hostinger support
+escalation was submitted with these timestamps and the prior HCDN `503`/104 of
+120 NPROC evidence. A specialist is assigned and reviewing the conversation;
+no case identifier has been supplied yet. The escalation explicitly forbids a
+plan-wide process stop or redeployment and requests Linux user/domain/path/PID
+attribution, supervisor/restart-policy analysis, HCDN routing verification, and
+the relevant LVE snapshot or equivalent evidence. Do not deploy the staff
+release until Hostinger supplies a durable scoped repair and both applications
+are re-smoked.
 
 ## Current repository work
 
@@ -83,5 +89,7 @@ The branch also contains CI-verified ops optimization at `46ad43a…` and
 CI-verified storefront optimization at `3dbbad6…` (GitHub Actions run
 `30841501283`). Storefront entry now limits low-intent prefetch, skips
 release-locked cart hydration, and defers disabled customer-auth client code;
-all commerce flags remain false. No provider or production change occurred.
-Next action remains scoped Hostinger incident repair before any deployment.
+all commerce flags remain false. No Hostinger configuration or production
+application change occurred. Next action remains the assigned specialist's
+scoped Hostinger repair before any deployment. Observability is isolated in
+draft PR #8 and must not be merged until that repair is proven.
