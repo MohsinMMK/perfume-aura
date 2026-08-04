@@ -14,6 +14,8 @@ Change stack only through an explicit reviewed decision. Production hosting rema
 | Auth | Two isolated Better Auth boundaries: owner ops and storefront customer, each with separate tables, secrets, cookies, origins, and Drizzle adapter |
 | Database | Neon PostgreSQL + Drizzle ORM/Kit + `pg` Pool |
 | Validation | Zod |
+| Product analytics | PostHog US Cloud free project + `posthog-js` `1.407.2`; explicit page activity only |
+| Error, performance, logs | Sentry Cloud free projects + `@sentry/nextjs` `10.69.0` |
 | Production | Hostinger Business hosting |
 | Ops deploy automation | GitHub Actions prebuilt standalone → generated branch `hostinger-ops-production` → Hostinger Node GitHub App start (`apps/ops/server.js`) |
 | Ops source build on Hostinger | Blocked (esbuild EACCES); not used |
@@ -32,13 +34,21 @@ Change stack only through an explicit reviewed decision. Production hosting rema
 | Drizzle | Official schema, Kit, migration, and PostgreSQL guides |
 | Neon | Official connection, branch, pooling, and role guidance |
 | Hostinger | Official Node.js Web App deployment and custom-domain docs for storefront and ops |
+| PostHog | Official Next.js/JavaScript SDK and privacy docs; shared free project separated by mandatory application property |
+| Sentry | Official Next.js SDK, Logs, releases, and source-map workflow |
 | pnpm | Official workspace configuration |
 
 No hand-rolled substitutes for official install/setup paths. No Vercel production deployment.
 
 ## Temporary transitive security compatibility
 
-`pnpm-workspace.yaml` pins patched `brace-expansion`, `@hono/node-server`, and `esbuild` releases while upstream parent ranges lag current advisories. `patches/minimatch@3.1.5.patch`, created through official `pnpm patch`, adapts minimatch 3 to brace-expansion 5's named CommonJS export. Remove overrides and patch when ESLint, MCP SDK/shadcn, and Drizzle Kit publish compatible dependency ranges; keep `pnpm audit`, lint, shadcn preset resolution, migrations, and packaging green when changing them.
+`pnpm-workspace.yaml` pins patched `brace-expansion`, `fast-uri`,
+`@hono/node-server`, and `esbuild` releases while upstream parent ranges lag
+current advisories. `patches/minimatch@3.1.5.patch`, created through official
+`pnpm patch`, adapts minimatch 3 to brace-expansion 5's named CommonJS export.
+Remove overrides and patch when parent packages publish compatible dependency
+ranges; keep `pnpm audit`, lint, shadcn preset resolution, migrations, and
+packaging green when changing them.
 
 ## shadcn monorepo contract
 

@@ -35,6 +35,9 @@ commerce is fail-closed:
   Neon;
 - cart totals are zero and checkout is blocked while public release is closed;
 - `robots.txt` disallows indexing until release approval.
+- Observability is fail-closed until configured. PostHog uses page activity
+  without DOM autocapture or session replay; Sentry excludes direct PII and
+  sensitive request material. Monitoring never changes a commerce release lock.
 
 ## Core operations invariants
 

@@ -146,6 +146,20 @@ owner authorizes credential use. Storefront checks must cover homepage, shop,
 search, cart, controlled media, branded 404, release locks, robots, canonical
 metadata, and the `www` redirect.
 
+## Observability activation
+
+Provider projects exist but production telemetry is not active until the
+Hostinger variables and an observability-enabled artifact are deployed. Follow
+`docs/OBSERVABILITY.md` for the exact provider names, environment mapping,
+privacy contract, source-map CI settings, and acceptance procedure.
+
+Observability activation is a normal application deployment and is therefore
+blocked by the active ops duplicate-process/NPROC incident. Do not save runtime
+variables if hPanel will trigger a redeploy or restart before the scoped repair.
+After activation, re-smoke both applications and verify actual PostHog and
+Sentry events; a successful build alone is not evidence that either service is
+connected.
+
 ## Process-limit incident control
 
 Hostinger Business hosting has a shared 120-NPROC ceiling. Its plan-wide

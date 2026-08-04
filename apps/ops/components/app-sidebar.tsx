@@ -39,6 +39,7 @@ import {
   SidebarSeparator,
 } from "@perfume-aura/ui/components/sidebar";
 import { signOut } from "@/lib/auth-client";
+import { resetOpsObservabilityUser } from "@/components/observability-user";
 
 const inventoryNav = [
   { href: "/dashboard", label: "Dashboard", icon: DashboardSquare01Icon },
@@ -87,6 +88,7 @@ export function AppSidebar({
   const router = useRouter();
 
   async function handleSignOut() {
+    await resetOpsObservabilityUser();
     await signOut();
     router.push("/login");
     router.refresh();
