@@ -7,6 +7,7 @@
 | `perfumeaura.com` | Animated public storefront | Node.js Web App | `apps/storefront/server.js` |
 | `www.perfumeaura.com` | Apex redirect | Storefront middleware | n/a |
 | `app.perfumeaura.com` | Owner and staff operations | Node.js Web App | `apps/ops/server.js` |
+| `www.app.perfumeaura.com` | Unintended alias removed from DNS; must remain absent | No active Hostinger binding | n/a |
 
 `shop.perfumeaura.com` is intentionally deleted and has no redirect. The
 previous static apex site is retained only as a downloaded backup and Git
@@ -22,6 +23,121 @@ history; no static marketing deployment remains.
 - All secrets live only in Hostinger environment settings. ZIPs, generated Git
   branches, repository files, logs, and documentation must contain none.
 - Do not set a fixed `PORT`; Hostinger supplies it.
+- Keep `www.app.perfumeaura.com` absent from DNS and outside Better Auth trusted
+  origins. The ops application retains a path- and query-preserving permanent
+  redirect to `https://app.perfumeaura.com` as defense-in-depth if a provider
+  binding is recreated accidentally.
+- Hostinger's `24.x` selector does not prove the deployed minor version. Reject
+  build logs below Node `24.18.0` or using a pnpm version other than `11.1.3`;
+  request a provider-managed runtime update instead of weakening repository
+  engine constraints.
+
+## Hostinger access workflow
+
+Use multiple evidence surfaces deliberately; no single Hostinger surface proves
+production readiness or process ownership.
+
+### Docker MCP Gateway
+
+Codex is connected to the Docker MCP profile `hostinger-api`. The profile has
+one pinned `hostinger-mcp-server`, reads its API token from the Docker Desktop
+OS-keychain provider, and exposes only this read-only allowlist by default:
+
+```text
+hosting_listWebsitesV1
+hosting_listOrdersV1
+hosting_listJsDeployments
+hosting_showJsDeploymentLogs
+DNS_getDNSRecordsV1
+DNS_getDNSSnapshotListV1
+DNS_getDNSSnapshotV1
+```
+
+Never print, export, copy, or document the token value. New Codex tasks should
+use the connected `MCP_DOCKER` tools. If the tools are not visible in an
+already-running task, start a new task or use the verified CLI bridge:
+
+```bash
+docker mcp profile show hostinger-api --format json
+docker mcp tools \
+  --gateway-arg=--profile \
+  --gateway-arg=hostinger-api \
+  count
+docker mcp tools \
+  --gateway-arg=--profile \
+  --gateway-arg=hostinger-api \
+  call hosting_listWebsitesV1 \
+  domain=app.perfumeaura.com per_page=10
+docker mcp tools \
+  --gateway-arg=--profile \
+  --gateway-arg=hostinger-api \
+  call hosting_listJsDeployments \
+  domain=app.perfumeaura.com page=1 perPage=20
+```
+
+Inspect a tool before its first use:
+
+```bash
+docker mcp tools \
+  --gateway-arg=--profile \
+  --gateway-arg=hostinger-api \
+  inspect <tool-name>
+```
+
+The gateway is appropriate for account-scoped website inventory, JavaScript
+deployment state/logs, and read-only DNS reconciliation. It does not expose
+shared-hosting resource graphs, Node runtime logs, environment-variable values,
+support conversations, or the hPanel restart/redeploy controls.
+
+### Choose the authoritative surface
+
+| Need | Required surface |
+|---|---|
+| Website/order/deployment inventory or deployment build logs | Hostinger MCP first |
+| DNS reconciliation | Hostinger MCP read + authoritative public DNS; mutate only after exact-zone approval |
+| Environment flags, live/24-hour resources, runtime logs, support, restart/redeploy | Authenticated hPanel |
+| Linux user/domain/path/PID, command counts, process tree, file ownership | Scoped SSH, read-only first |
+| Actual customer/runtime behavior | Public HTTPS and `verify-production-deploy.mjs` |
+
+### Ordered provider-operation procedure
+
+1. Read `CURRENT_STATE.md` and this document. Re-derive the exact domain,
+   deployment branch/SHA, current flags, and incident boundary.
+2. Start read-only: use MCP for inventory/deployment evidence, hPanel for
+   provider-only state, SSH for command ownership, and public HTTPS for live
+   behavior. Redact credentials, connection strings, customer data, and token
+   material from all evidence.
+3. State the exact proposed mutation and blast radius. Obtain explicit user
+   authorization before a production deploy/redeploy, environment or release
+   flag change, DNS write, process stop/restart, firewall/VPS mutation,
+   database migration, deletion, or support message that transmits new private
+   evidence.
+4. For an authorized API mutation, temporarily enable only the one required
+   MCP tool; never enable the complete Hostinger tool set:
+
+   ```bash
+   docker mcp profile tools hostinger-api \
+     --enable hostinger-mcp-server.<exact-tool-name>
+   ```
+
+   Inspect the tool, re-read the exact target, execute once, verify the returned
+   state, and then remove the temporary permission:
+
+   ```bash
+   docker mcp profile tools hostinger-api \
+     --disable hostinger-mcp-server.<exact-tool-name>
+   ```
+
+5. After every mutation, verify the exact deployment SHA and the complete ops
+   health/auth/static surface, re-smoke the storefront and release locks, check
+   the path/query-preserving `www.perfumeaura.com` redirect to the storefront
+   apex, and verify that `www.app.perfumeaura.com` remains absent from
+   authoritative and public DNS.
+   A plan-wide process action additionally requires rechecking every affected
+   site.
+6. Record the timestamped, privacy-safe result, remaining blocker, and next
+   action in `CURRENT_STATE.md`. Do not claim success from an MCP response,
+   hPanel `Completed`, `/login`, or a single cached route alone.
 
 ## Storefront deployment
 
@@ -107,6 +223,9 @@ invariants. Keep both flags below set to `false` until every gate completes:
 OPS_TWO_FACTOR_REQUIRED=false
 OPS_STAFF_INVITES_ENABLED=false
 ```
+
+**Detailed pass/fail checklist (function-mapped):**
+[STAFF_OPERATIONS_RELEASE_SMOKE.md](./STAFF_OPERATIONS_RELEASE_SMOKE.md) — capability denials, invite-flag order, dual checkout lock (`commerceSettings` ∧ storefront env), and `requireDisposableTestDatabaseUrl` safety. Use it after Hostinger repair; do not open `STOREFRONT_*` commerce flags as part of this release.
 
 1. Create an isolated Neon branch and apply `0010_curved_puma`; run the
    migration and authenticated integration suites there.

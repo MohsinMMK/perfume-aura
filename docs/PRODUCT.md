@@ -70,4 +70,5 @@ server action.
 `OPS_TWO_FACTOR_REQUIRED` and `OPS_STAFF_INVITES_ENABLED` remain false until
 the migration and restricted grants are applied, SMTP delivery is proven, the
 owner completes TOTP and recovery-code proof, and an authorized staff journey
-proves direct action denials.
+proves direct action denials. The function-mapped production smoke order is
+[STAFF_OPERATIONS_RELEASE_SMOKE.md](./STAFF_OPERATIONS_RELEASE_SMOKE.md).

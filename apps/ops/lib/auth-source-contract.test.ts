@@ -47,6 +47,21 @@ describe("Better Auth security source contract", () => {
     assert.doesNotMatch(proxy, /role|owner/);
   });
 
+  it("redirects the unexpected ops www alias without trusting it for auth", async () => {
+    const [config, policy] = await Promise.all([
+      source("../next.config.ts"),
+      source("auth-policy.ts"),
+    ]);
+
+    assert.match(config, /value:\s*"www\.app\.perfumeaura\.com"/);
+    assert.match(
+      config,
+      /destination:\s*"https:\/\/app\.perfumeaura\.com\/:path\*"/,
+    );
+    assert.match(config, /permanent:\s*true/);
+    assert.doesNotMatch(policy, /www\.app\.perfumeaura\.com/);
+  });
+
   it("does not trust query parameters as proof of a successful reset", async () => {
     const reset = await source(
       "../app/(auth)/reset-password/reset-password-form.tsx",

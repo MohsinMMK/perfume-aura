@@ -26,16 +26,24 @@
 
 ## Pending staff-operations release gate
 
-1. Test `0010_curved_puma` on an isolated Neon branch, then apply it to
-   production and reapply the reviewed runtime grant matrix.
-2. Deploy with `OPS_TWO_FACTOR_REQUIRED=false` and
+Execute the ordered smoke checklist in
+[STAFF_OPERATIONS_RELEASE_SMOKE.md](./STAFF_OPERATIONS_RELEASE_SMOKE.md) after
+Hostinger repair. Summary:
+
+1. Resolve the active Hostinger ops HCDN 503 / NPROC incident before any
+   staff-ops production deployment.
+2. Test `0010_curved_puma` on an isolated Neon branch (never use production as
+   `TEST_DATABASE_URL`), then apply it to production and reapply the reviewed
+   runtime grant matrix.
+3. Deploy with `OPS_TWO_FACTOR_REQUIRED=false` and
    `OPS_STAFF_INVITES_ENABLED=false`; prove current owner login and ops health.
-3. Prove Hostinger SMTP delivery, owner TOTP enrollment, and one recovery-code
+4. Prove Hostinger SMTP delivery, owner TOTP enrollment, and one recovery-code
    use before enabling mandatory 2FA.
-4. Enable invitations only after mandatory 2FA is proven; complete one
-   authorized staff setup and direct server-action authorization denial tests.
-5. Resolve the active Hostinger ops HCDN 503 incident before deploying this
-   release.
+5. Enable invitations only after mandatory 2FA is proven; complete one
+   authorized staff setup and direct server-action authorization denial tests
+   (`security.staff.manage`, finance, COD, release-gates, cost view, etc.).
+6. Keep all storefront commerce env flags closed; dual checkout lock is
+   `commerceSettings.checkoutEnabled` ∧ `STOREFRONT_CHECKOUT_RELEASE_APPROVED`.
 
 ## Operational follow-up
 
