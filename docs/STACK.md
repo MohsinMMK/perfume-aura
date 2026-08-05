@@ -69,11 +69,14 @@ Preset resolve must return `b23PPibQOI` without fallback. Never copy registry co
 
 ## Auth contract
 
-- Owner public sign-up disabled. Customer sign-up is a distinct verified-email
+- Owner/staff public sign-up disabled. Customer sign-up is a distinct verified-email
   flow and defaults off until `STOREFRONT_CUSTOMER_AUTH_ENABLED=true` plus all
   secret, SMTP, and callback-domain gates are proven.
 - Owner seeded explicitly.
 - Password length: 12–256 characters.
+- Ops roles are exact `owner`, `staff`, or `user`; roles and capability checks
+  fail closed. The official Admin + 2FA plugins use TOTP, encrypted recovery
+  codes, a 30-day trusted-device window, and feature flags that default off.
 - Generic reset responses prevent account enumeration.
 - SMTP reset tokens, sessions, trusted origins, and rate limits follow Better Auth official guidance.
 - Hostinger proxy/IP header trust stays disabled/unassumed until provider chain is proven non-forgeable through production gate in `OPERATIONS.md`.

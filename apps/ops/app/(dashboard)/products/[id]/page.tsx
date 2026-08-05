@@ -23,7 +23,8 @@ import { AddVariantForm } from "@/components/products/add-variant-form";
 import { ProductLifecycleActions } from "@/components/products/product-lifecycle-actions";
 import { ProductEditDialog } from "@/components/products/product-edit-dialog";
 import { VariantActions } from "@/components/products/variant-actions";
-import { requireOwnerSession } from "@/lib/session";
+import { hasOpsCapability } from "@/lib/ops-access";
+import { requireCapability } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,17 @@ type Props = {
 };
 
 export default async function ProductDetailPage({ params }: Props) {
-  await requireOwnerSession({ redirectToLogin: true });
+  const session = await requireCapability("catalog.view", {
+    redirectToLogin: true,
+  });
+  const canEditContent = hasOpsCapability(
+    session.user.role,
+    "catalog.edit-content",
+  );
+  const canManageCommercials = hasOpsCapability(
+    session.user.role,
+    "catalog.manage-commercials",
+  );
   const { id } = await params;
   const result = await safeDbQuery(() => getProduct(id));
 
@@ -91,23 +102,27 @@ export default async function ProductDetailPage({ params }: Props) {
           ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <ProductEditDialog
-            key={product.updatedAt.toISOString()}
-            product={{
-              id: product.id,
-              name: product.name,
-              brand: product.brand,
-              category: product.category,
-              description: product.description,
-              updatedAt: product.updatedAt.toISOString(),
-            }}
-          />
-          <ProductLifecycleActions
-            productId={product.id}
-            productName={product.name}
-            status={product.status}
-            expectedUpdatedAt={product.updatedAt.toISOString()}
-          />
+          {canEditContent ? (
+            <ProductEditDialog
+              key={product.updatedAt.toISOString()}
+              product={{
+                id: product.id,
+                name: product.name,
+                brand: product.brand,
+                category: product.category,
+                description: product.description,
+                updatedAt: product.updatedAt.toISOString(),
+              }}
+            />
+          ) : null}
+          {canManageCommercials ? (
+            <ProductLifecycleActions
+              productId={product.id}
+              productName={product.name}
+              status={product.status}
+              expectedUpdatedAt={product.updatedAt.toISOString()}
+            />
+          ) : null}
         </div>
       </div>
 
@@ -131,9 +146,13 @@ export default async function ProductDetailPage({ params }: Props) {
                   <TableHead className="text-right">Size</TableHead>
                   <TableHead className="text-right">On hand</TableHead>
                   <TableHead className="text-right">Reorder</TableHead>
-                  <TableHead className="text-right">Cost</TableHead>
-                  <TableHead className="text-right">Retail</TableHead>
-                  <TableHead>Actions</TableHead>
+                  {canManageCommercials ? (
+                    <TableHead className="text-right">Cost</TableHead>
+                  ) : null}
+                  {canManageCommercials ? (
+                    <TableHead className="text-right">Retail</TableHead>
+                  ) : null}
+                  {canManageCommercials ? <TableHead>Actions</TableHead> : null}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -167,21 +186,27 @@ export default async function ProductDetailPage({ params }: Props) {
                       <TableCell className="text-right tabular-nums text-muted-foreground">
                         {formatQty(v.reorderLevel)}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatInr(v.costCents)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatInr(v.retailCents)}
-                      </TableCell>
-                      <TableCell>
-                        <VariantActions
-                          key={`${v.id}:${v.version}:${v.status}`}
-                          productId={product.id}
-                          productName={product.name}
-                          productStatus={product.status}
-                          variant={v}
-                        />
-                      </TableCell>
+                      {canManageCommercials ? (
+                        <TableCell className="text-right tabular-nums">
+                          {v.costCents === null ? "—" : formatInr(v.costCents)}
+                        </TableCell>
+                      ) : null}
+                      {canManageCommercials ? (
+                        <TableCell className="text-right tabular-nums">
+                          {v.retailCents === null ? "—" : formatInr(v.retailCents)}
+                        </TableCell>
+                      ) : null}
+                      {canManageCommercials ? (
+                        <TableCell>
+                          <VariantActions
+                            key={`${v.id}:${v.version}:${v.status}`}
+                            productId={product.id}
+                            productName={product.name}
+                            productStatus={product.status}
+                            variant={v}
+                          />
+                        </TableCell>
+                      ) : null}
                     </TableRow>
                   );
                 })}
@@ -191,7 +216,7 @@ export default async function ProductDetailPage({ params }: Props) {
         </CardContent>
       </Card>
 
-      {product.status === "active" ? (
+      {product.status === "active" && canManageCommercials ? (
         <AddVariantForm productId={product.id} />
       ) : null}
     </div>

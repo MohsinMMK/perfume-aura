@@ -9,6 +9,7 @@ Read `docs/CURRENT_STATE.md` before acting. Then read the task-owning document:
 - `docs/OPERATIONS.md` — Hostinger, DNS, Neon, deployment, recovery
 - `docs/ROADMAP.md` — remaining work
 - `docs/STACK.md` — locked tooling
+- `docs/OPTIMIZATION.md` — ops/storefront performance plan, measurement protocol, and official references
 
 Fresh provider, repository, and database evidence outranks dated notes. Update
 `CURRENT_STATE.md` in the same change when a production state, deployment route,
@@ -114,6 +115,30 @@ The hosting plan has a recurrent shared NPROC risk. Capture plan resources and
 endpoint evidence before provider actions. The hPanel process-stop control is
 plan-wide; use it only after explicit authorization and re-smoke both apps
 immediately afterward.
+
+## Pending work
+
+Treat `docs/CURRENT_STATE.md` and `docs/ROADMAP.md` as source of truth. Ordered
+next work as of **2026-08-03 IST**:
+
+1. Obtain scoped Hostinger repair for the intermittent ops HCDN `503`/NPROC
+   incident. Identify process owner and restart cause before any deployment or
+   plan-wide process action.
+2. Complete staff-operations release gate: test `0010_curved_puma` on an
+   isolated Neon branch, apply it and restricted runtime grants in production,
+   deploy with both security flags false, then prove health, SMTP, owner TOTP,
+   recovery-code, invitation, and staff-denial gates in order.
+3. Keep storefront commerce closed until catalog/legal/media/price/stock,
+   shipping/tax/policy/support, Cashfree, SMTP/customer-auth, and authorized
+   prepaid/COD lifecycle approvals all pass.
+4. After hosting repair, collect privacy-safe production Core Web Vitals and
+   repeat storefront performance checks with an approved release-enabled
+   catalog/cart/checkout fixture.
+
+Ops optimization commit `46ad43a…` and storefront optimization commit
+`3dbbad6…` are pushed and CI-verified. Do not repeat broad optimization or
+cleanup without a measured regression or new representative release data.
+Neither optimization authorizes production deployment or opens a release flag.
 
 ## Quality and handoff
 

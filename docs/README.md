@@ -7,6 +7,7 @@
 | [ENGINEERING.md](ENGINEERING.md) | Repository boundaries, data contracts, tests, CI |
 | [OPERATIONS.md](OPERATIONS.md) | Hostinger, DNS, Neon, deploy and incident procedure |
 | [ROADMAP.md](ROADMAP.md) | Completed work, release gates, next staff phase |
+| [STAFF_OPERATIONS_RELEASE_SMOKE.md](STAFF_OPERATIONS_RELEASE_SMOKE.md) | Line-mapped post-Hostinger staff release smoke: capability denials, invite flags, dual checkout lock, disposable DB guard |
 | [STACK.md](STACK.md) | Locked versions and official tooling |
 | [commerce/](commerce/) | Commerce requirements, decisions, research, architecture, verification |
 

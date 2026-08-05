@@ -17,9 +17,9 @@ import { authClient } from "@/lib/auth-client";
 import {
   AUTH_PASSWORD_MAX_LENGTH,
   AUTH_PASSWORD_MIN_LENGTH,
-  isOwnerRole,
   safeReturnPath,
 } from "@/lib/auth-policy";
+import { isProtectedOpsRole } from "@/lib/ops-access";
 import {
   signInErrorMessage,
   signInNetworkErrorMessage,
@@ -34,7 +34,7 @@ function LoginFormInner() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(
     searchParams.get("error") === "access-denied"
-      ? "Owner access is required."
+      ? "Operations access is required."
       : null,
   );
   const [pending, setPending] = useState(false);
@@ -63,9 +63,9 @@ function LoginFormInner() {
         return;
       }
 
-      if (!isOwnerRole(session.data?.user.role)) {
+      if (!isProtectedOpsRole(session.data?.user.role)) {
         await authClient.signOut();
-        setError("Owner access is required.");
+        setError("Operations access is required.");
         setPending(false);
         return;
       }
@@ -91,7 +91,7 @@ function LoginFormInner() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="owner@example.com"
+            placeholder="staff@example.com"
             aria-invalid={error ? true : undefined}
           />
         </Field>

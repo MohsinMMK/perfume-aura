@@ -22,7 +22,7 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@perfume-aura/ui/components/empty";
-import { listActiveVariantsForSelect } from "@/lib/products";
+import { listActiveVariantsForStockSelect } from "@/lib/products";
 import { listRecentMovements } from "@/lib/stock";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatInr, formatQty } from "@/lib/money";
@@ -30,7 +30,8 @@ import { ReceiveStockForm } from "@/components/stock/receive-stock-form";
 import { AdjustStockForm } from "@/components/stock/adjust-stock-form";
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { formatBusinessDateTime } from "@/lib/business-date";
-import { requireOwnerSession } from "@/lib/session";
+import { hasOpsCapability } from "@/lib/ops-access";
+import { requireCapability } from "@/lib/session";
 import {
   canonicalPage,
   paginationHref,
@@ -60,12 +61,16 @@ export default async function StockPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
-  await requireOwnerSession({ redirectToLogin: true });
+  const session = await requireCapability("stock.view", {
+    redirectToLogin: true,
+  });
+  const canAdjustStock = hasOpsCapability(session.user.role, "stock.adjust");
+  const canViewCost = hasOpsCapability(session.user.role, "stock.view-cost");
   const page = parsePage((await searchParams).page);
 
   // Independent loaders — parallelize (vercel-react-best-practices: async-parallel)
   const [variantsResult, movementsResult] = await Promise.all([
-    safeDbQuery(() => listActiveVariantsForSelect()),
+    safeDbQuery(() => listActiveVariantsForStockSelect()),
     safeDbQuery(() => listRecentMovements({ page })),
   ]);
 
@@ -110,7 +115,7 @@ export default async function StockPage({
         <>
           <div className="grid gap-6 lg:grid-cols-2">
             <ReceiveStockForm variants={variantOptions} />
-            <AdjustStockForm variants={variantOptions} />
+            {canAdjustStock ? <AdjustStockForm variants={variantOptions} /> : null}
           </div>
 
           <Card className="overflow-hidden py-0">
@@ -139,7 +144,7 @@ export default async function StockPage({
                       <TableHead>Product / SKU</TableHead>
                       <TableHead className="text-right">Delta</TableHead>
                       <TableHead className="text-right">After</TableHead>
-                      <TableHead>Cost basis</TableHead>
+                      {canViewCost ? <TableHead>Cost basis</TableHead> : null}
                       <TableHead>Note</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -173,21 +178,23 @@ export default async function StockPage({
                         <TableCell className="text-right tabular-nums">
                           {formatQty(m.quantityAfter)}
                         </TableCell>
-                        <TableCell className="whitespace-nowrap text-xs">
-                          {m.costBasis === "snapshot" &&
-                          m.unitCostCents !== null ? (
-                            <span>
-                              Captured · {formatInr(m.unitCostCents)}
-                            </span>
-                          ) : m.costBasis === "legacy_current" &&
+                        {canViewCost ? (
+                          <TableCell className="whitespace-nowrap text-xs">
+                            {m.costBasis === "snapshot" &&
                             m.unitCostCents !== null ? (
-                            <span className="text-muted-foreground">
-                              Legacy estimate · {formatInr(m.unitCostCents)}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
+                              <span>
+                                Captured · {formatInr(m.unitCostCents)}
+                              </span>
+                            ) : m.costBasis === "legacy_current" &&
+                              m.unitCostCents !== null ? (
+                              <span className="text-muted-foreground">
+                                Legacy estimate · {formatInr(m.unitCostCents)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                        ) : null}
                         <TableCell className="max-w-[12rem] truncate text-muted-foreground">
                           {m.note ?? "—"}
                         </TableCell>

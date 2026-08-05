@@ -71,6 +71,13 @@
       "when": 1785618937648,
       "tag": "0009_storefront-commerce",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1785690486852,
+      "tag": "0010_curved_puma",
+      "breakpoints": true
     }
   ]
 }

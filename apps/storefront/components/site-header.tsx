@@ -64,6 +64,7 @@ export function SiteHeader() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={item.href === "/shop" ? null : false}
                 className="font-display text-[1.08rem] tracking-[0.02em] transition hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)]"
               >
                 {item.label}
@@ -123,16 +124,16 @@ export function SiteHeader() {
               </SheetHeader>
               <nav aria-label="Menu navigation" className="grid px-6 py-4">
                 {navigation.map((item, index) => (
-                  <Link key={item.href} href={item.href} className="flex min-h-16 items-center justify-between border-b border-dashed border-[color:rgb(245_228_199_/_22%)] font-display text-3xl">
+                  <Link key={item.href} href={item.href} prefetch={false} className="flex min-h-16 items-center justify-between border-b border-dashed border-[color:rgb(245_228_199_/_22%)] font-display text-3xl">
                     {item.label}
                     <span className="font-sans text-xs text-[color:rgb(245_228_199_/_45%)]">0{index + 1}</span>
                   </Link>
                 ))}
                 <div className="mt-8 grid grid-cols-2 gap-2">
-                  <Button render={<Link href="/search" />} nativeButton={false} variant="outline" className="min-h-12 rounded-none border-[color:rgb(245_228_199_/_35%)] bg-transparent text-[var(--aura-ivory)]">
+                  <Button render={<Link href="/search" prefetch={false} />} nativeButton={false} variant="outline" className="min-h-12 rounded-none border-[color:rgb(245_228_199_/_35%)] bg-transparent text-[var(--aura-ivory)]">
                     <HugeiconsIcon icon={Search01Icon} strokeWidth={1.7} /> Search
                   </Button>
-                  <Button render={<Link href="/account" />} nativeButton={false} variant="outline" className="min-h-12 rounded-none border-[color:rgb(245_228_199_/_35%)] bg-transparent text-[var(--aura-ivory)]">
+                  <Button render={<Link href="/account" prefetch={false} />} nativeButton={false} variant="outline" className="min-h-12 rounded-none border-[color:rgb(245_228_199_/_35%)] bg-transparent text-[var(--aura-ivory)]">
                     <HugeiconsIcon icon={UserCircleIcon} strokeWidth={1.7} /> Account
                   </Button>
                 </div>

@@ -23,6 +23,21 @@ const nextConfig: NextConfig = {
     "@perfume-aura/db",
     "@perfume-aura/validators",
   ],
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: "www.app.perfumeaura.com",
+          },
+        ],
+        destination: "https://app.perfumeaura.com/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

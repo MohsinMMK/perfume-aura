@@ -25,7 +25,7 @@ import { Spinner } from "@perfume-aura/ui/components/spinner";
 import { adjustStockAction } from "@/lib/stock";
 import { FormField, TextAreaField } from "@/components/form-field";
 
-export type VariantOption = {
+type VariantOption = {
   id: string;
   label: string;
 };

@@ -4,12 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@perf
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { safeDbQuery } from "@/lib/db-safe";
 import { getCommerceOverview } from "@/lib/commerce";
-import { requireOwnerSession } from "@/lib/session";
+import { requireCapability } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function CommercePage() {
-  await requireOwnerSession({ redirectToLogin: true });
+  await requireCapability("commerce.view", { redirectToLogin: true });
   const result = await safeDbQuery(() => getCommerceOverview());
   const metrics = result.data
     ? [

@@ -64,13 +64,19 @@ export function HomeHero({
             mediaRef.current,
             { scale: 0.88, opacity: 0, duration: 0.85 },
             0.22,
-          )
-          .from(
+          );
+        if (controlsRef.current) {
+          timeline.from(
             controlsRef.current,
             { scale: 0.8, opacity: 0, duration: 0.48 },
             0.5,
-          )
-          .from(ctaRef.current, { y: 28, opacity: 0, duration: 0.5 }, 0.58);
+          );
+        }
+        timeline.from(
+          ctaRef.current,
+          { y: 28, opacity: 0, duration: 0.5 },
+          0.58,
+        );
       }, sectionRef);
       cleanup = () => context.revert();
     });

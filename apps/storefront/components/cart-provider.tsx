@@ -25,6 +25,7 @@ const CartContext = createContext<CartContextValue | null>(null);
 async function requestCart(
   method: "GET" | "POST",
   body?: Readonly<{ variantId: string; quantity: number }>,
+  signal?: AbortSignal,
 ): Promise<CartSnapshot> {
   let response: Response;
   try {
@@ -32,8 +33,10 @@ async function requestCart(
       method,
       body: body ? JSON.stringify(body) : undefined,
       headers: body ? { "Content-Type": "application/json" } : undefined,
+      signal,
     });
   } catch (error: unknown) {
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
     throw new Error("Cart is temporarily unavailable. Please try again.", {
       cause: error,
     });
@@ -53,19 +56,32 @@ async function requestCart(
   return payload;
 }
 
-export function CartProvider({ children }: Readonly<{ children: ReactNode }>) {
-  const [cart, setCart] = useState<CartSnapshot | null>(null);
-  const [loading, setLoading] = useState(true);
+export function CartProvider({
+  children,
+  initialCart,
+  loadRemoteCart,
+}: Readonly<{
+  children: ReactNode;
+  initialCart: CartSnapshot | null;
+  loadRemoteCart: boolean;
+}>) {
+  const [cart, setCart] = useState<CartSnapshot | null>(initialCart);
+  const [loading, setLoading] = useState(loadRemoteCart);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
+    if (!loadRemoteCart) return;
+
     let active = true;
-    requestCart("GET")
+    const controller = new AbortController();
+    requestCart("GET", undefined, controller.signal)
       .then((nextCart) => {
         if (active) setCart(nextCart);
       })
       .catch((error: unknown) => {
-        console.error("Unable to load storefront cart", error);
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          console.error("Unable to load storefront cart", error);
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -73,8 +89,9 @@ export function CartProvider({ children }: Readonly<{ children: ReactNode }>) {
 
     return () => {
       active = false;
+      controller.abort();
     };
-  }, []);
+  }, [loadRemoteCart]);
 
   const setQuantity = useCallback(async (variantId: string, quantity: number) => {
     setLoading(true);
