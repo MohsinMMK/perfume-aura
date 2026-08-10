@@ -68,7 +68,7 @@ No requirement marked Proposed represents live behavior.
 
 | ID | Status | Requirement | Acceptance criteria |
 |---|---|---|---|
-| PAY-001 | Blocked | Prove approved India payment methods before production enablement. | Cashfree prepaid payments and COD are selected. Production remains blocked until merchant eligibility, account-specific fees, refund operations, signed webhook behavior, sandbox evidence, live credentials, and Hostinger staging compatibility pass. |
+| PAY-001 | Blocked | Prove approved India payment methods before production enablement. | Cashfree prepaid payments and COD are selected. Production remains blocked until merchant eligibility, account-specific fees, refund operations, signed webhook behavior, sandbox evidence, live credentials, and Hostinger runtime compatibility pass. |
 | PAY-002 | Proposed | Process payment callbacks idempotently. | Authentic duplicate or reordered callbacks cannot create duplicate payment, order, invoice, or stock effects. |
 | PAY-003 | Proposed | Never trust browser payment success alone. | Server verifies provider state before marking order paid. |
 | AUTH-001 | Accepted | Keep owner authentication separate from public customer identity. | Customer routes cannot use or weaken owner-only Better Auth configuration. |
@@ -83,7 +83,7 @@ No requirement marked Proposed represents live behavior.
 | A11Y-001 | Proposed | Meet WCAG 2.2 AA for core purchase journeys. | Keyboard, focus, names, errors, contrast, reduced motion, and screen-reader checks pass for home through confirmation. |
 | PERF-001 | Proposed | Protect mobile performance. | Performance budgets are recorded before launch; third-party scripts require owner, purpose, and measured cost. |
 | SEO-001 | Proposed | Publish accurate machine-readable catalog data. | Canonical, sitemap, Product structured data, availability, price, and images match public server truth. |
-| OPS-001 | Proposed | Stage storefront separately before apex cutover. | Hostinger Node staging serves exact tested artifact with isolated environment and no production customer impact. |
-| OPS-002 | Proposed | Verify every deployment beyond `/login` or homepage. | Readiness, static asset, public catalog, cart, checkout-safe smoke, and authenticated owner operations are checked as applicable. |
+| OPS-001 | Verified | Deploy the storefront through a separately verified artifact. | The apex runs the checksum-verified Hostinger ZIP; `www` redirects and the former staging host remains deleted. |
+| OPS-002 | Accepted | Verify every deployment beyond `/login` or homepage. | Readiness, version, session, static asset, storefront locks, cart, canonical redirect, and authenticated owner operations are checked as applicable. |
 | VER-001 | Accepted | Maintain requirement-to-evidence traceability. | Every completed requirement links implementation, automated check, manual check where needed, commit/artifact, date, and result. |
-| VER-002 | Accepted | Use Markdown, structured data, executable checks, and Graphify together. | `pnpm commerce:verify` passes; Graphify is updated after meaningful changes but is never treated as runtime proof. |
+| VER-002 | Accepted | Use Markdown, structured data, and executable checks together. | `pnpm commerce:verify` passes and code review protects deliberate changes to locked evidence. |

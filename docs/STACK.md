@@ -36,9 +36,16 @@ Change stack only through an explicit reviewed decision. Production hosting rema
 
 No hand-rolled substitutes for official install/setup paths. No Vercel production deployment.
 
-## Temporary transitive security compatibility
+## Temporary transitive compatibility
 
-`pnpm-workspace.yaml` pins patched `brace-expansion`, `@hono/node-server`, and `esbuild` releases while upstream parent ranges lag current advisories. `patches/minimatch@3.1.5.patch`, created through official `pnpm patch`, adapts minimatch 3 to brace-expansion 5's named CommonJS export. Remove overrides and patch when ESLint, MCP SDK/shadcn, and Drizzle Kit publish compatible dependency ranges; keep `pnpm audit`, lint, shadcn preset resolution, migrations, and packaging green when changing them.
+`pnpm-workspace.yaml` contains reviewed overrides for parent ranges that lag
+security or runtime fixes. `patches/minimatch@3.1.5.patch`, created with
+`pnpm patch`, adapts minimatch 3 to brace-expansion 5's CommonJS export.
+
+The exact current audit blockers belong in `CURRENT_STATE.md`. Change an
+override only with dependency-path evidence, then verify audit, lint, shadcn
+preset resolution, migrations, both builds, and both packages. Remove overrides
+when upstream ranges make them unnecessary.
 
 ## shadcn monorepo contract
 

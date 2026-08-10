@@ -1,15 +1,18 @@
-# Documentation index
+# Documentation
 
-| Document | Use it for |
+Read [CURRENT_STATE.md](CURRENT_STATE.md) first. Then open only the document
+that owns the task:
+
+| Document | Scope |
 |---|---|
-| [CURRENT_STATE.md](CURRENT_STATE.md) | Mandatory live handoff and current production evidence |
-| [PRODUCT.md](PRODUCT.md) | Product behavior, route scope, release locks |
-| [ENGINEERING.md](ENGINEERING.md) | Repository boundaries, data contracts, tests, CI |
-| [OPERATIONS.md](OPERATIONS.md) | Hostinger, DNS, Neon, deploy and incident procedure |
-| [ROADMAP.md](ROADMAP.md) | Completed work, release gates, next staff phase |
-| [STAFF_OPERATIONS_RELEASE_SMOKE.md](STAFF_OPERATIONS_RELEASE_SMOKE.md) | Line-mapped post-Hostinger staff release smoke: capability denials, invite flags, dual checkout lock, disposable DB guard |
-| [STACK.md](STACK.md) | Locked versions and official tooling |
-| [commerce/](commerce/) | Commerce requirements, decisions, research, architecture, verification |
+| [PRODUCT.md](PRODUCT.md) | Users, behavior, routes, and release locks |
+| [ENGINEERING.md](ENGINEERING.md) | Code, data contracts, local work, tests, and CI |
+| [OPERATIONS.md](OPERATIONS.md) | Hostinger, DNS, Neon, deployment, and recovery |
+| [ROADMAP.md](ROADMAP.md) | Remaining work in execution order |
+| [STACK.md](STACK.md) | Locked versions and tooling |
+| [OPTIMIZATION.md](OPTIMIZATION.md) | Performance measurement and regression policy |
+| [STAFF_OPERATIONS_RELEASE_SMOKE.md](STAFF_OPERATIONS_RELEASE_SMOKE.md) | Staff release acceptance checklist |
+| [commerce/](commerce/) | Executable commerce requirements and evidence records |
 
-The production topology is fixed to the public apex storefront and the private
-operations app. Read `CURRENT_STATE.md` before any provider or database action.
+`CURRENT_STATE.md` owns the live handoff. Do not duplicate its incident status
+or deployed SHA in other documents.
