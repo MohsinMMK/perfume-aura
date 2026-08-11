@@ -22,7 +22,8 @@ import {
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { actionError, actionOk, type ActionResult, zodFieldErrors } from "@/lib/action-result";
-import { requireOwnerSession } from "@/lib/session";
+import { hasOpsCapability } from "@/lib/ops-access";
+import { requireCapability } from "@/lib/session";
 
 export type CommerceOverview = {
   catalogBlocked: number;
@@ -35,17 +36,29 @@ export type CommerceOverview = {
 };
 
 export async function getCommerceOverview(): Promise<CommerceOverview> {
-  await requireOwnerSession();
+  const session = await requireCapability("commerce.view");
+  const canManagePayments = hasOpsCapability(
+    session.user.role,
+    "commerce.cod.reconcile",
+  );
+  const canManageReleaseGates = hasOpsCapability(
+    session.user.role,
+    "commerce.release-gates.manage",
+  );
 
   const [catalogRows, orderRows, paymentRows, reviewRows, inquiryRows, returnRows, settingsRows] =
     await Promise.all([
       db.select({ total: count(productPublications.productId) }).from(productPublications).where(sql`${productPublications.status} <> 'published'`),
       db.select({ total: count(commerceOrders.id) }).from(commerceOrders).where(sql`${commerceOrders.status} NOT IN ('delivered', 'cancelled', 'returned')`),
-      db.select({ total: count(paymentAttempts.id) }).from(paymentAttempts).where(sql`${paymentAttempts.status} IN ('pending', 'failed')`),
+      canManagePayments
+        ? db.select({ total: count(paymentAttempts.id) }).from(paymentAttempts).where(sql`${paymentAttempts.status} IN ('pending', 'failed')`)
+        : Promise.resolve([{ total: 0 }]),
       db.select({ total: count(reviews.id) }).from(reviews).where(eq(reviews.status, "pending")),
       db.select({ total: count(commerceInquiries.id) }).from(commerceInquiries).where(eq(commerceInquiries.status, "new")),
       db.select({ total: count(commerceReturns.id) }).from(commerceReturns).where(sql`${commerceReturns.status} NOT IN ('refunded', 'rejected', 'cancelled')`),
-      db.select({ checkoutEnabled: commerceSettings.checkoutEnabled }).from(commerceSettings).where(eq(commerceSettings.id, "primary")).limit(1),
+      canManageReleaseGates
+        ? db.select({ checkoutEnabled: commerceSettings.checkoutEnabled }).from(commerceSettings).where(eq(commerceSettings.id, "primary")).limit(1)
+        : Promise.resolve([]),
     ]);
 
   return {
@@ -74,7 +87,7 @@ export type CommerceCatalogRow = {
 };
 
 export async function listCommerceCatalog(): Promise<CommerceCatalogRow[]> {
-  await requireOwnerSession();
+  await requireCapability("catalog.manage-commercials");
   return db
     .select({
       productId: products.id,
@@ -109,8 +122,8 @@ export type CommerceOrderRow = {
   id: string;
   orderNumber: string;
   status: string;
-  paymentState: string;
-  totalAmountMinor: number;
+  paymentState: string | null;
+  totalAmountMinor: number | null;
   guestEmail: string | null;
   placedAt: Date;
   shipmentStatus: string | null;
@@ -121,21 +134,33 @@ export type CommerceOrderRow = {
 };
 
 export async function listCommerceOrders(): Promise<CommerceOrderRow[]> {
-  await requireOwnerSession();
+  const session = await requireCapability("commerce.view");
+  const canReconcileCod = hasOpsCapability(
+    session.user.role,
+    "commerce.cod.reconcile",
+  );
   return db
     .select({
       id: commerceOrders.id,
       orderNumber: commerceOrders.orderNumber,
       status: commerceOrders.status,
-      paymentState: commerceOrders.paymentState,
-      totalAmountMinor: commerceOrders.totalAmountMinor,
+      paymentState: canReconcileCod
+        ? commerceOrders.paymentState
+        : sql<string | null>`null::text`,
+      totalAmountMinor: canReconcileCod
+        ? commerceOrders.totalAmountMinor
+        : sql<number | null>`null::bigint`,
       guestEmail: commerceOrders.guestEmail,
       placedAt: commerceOrders.placedAt,
       shipmentStatus: shipments.status,
       courier: shipments.courier,
       trackingNumber: shipments.trackingNumber,
-      codCollectedAt: shipments.codCollectedAt,
-      codReconciledAt: shipments.codReconciledAt,
+      codCollectedAt: canReconcileCod
+        ? shipments.codCollectedAt
+        : sql<Date | null>`null::timestamptz`,
+      codReconciledAt: canReconcileCod
+        ? shipments.codReconciledAt
+        : sql<Date | null>`null::timestamptz`,
     })
     .from(commerceOrders)
     .leftJoin(shipments, eq(shipments.orderId, commerceOrders.id))
@@ -148,26 +173,35 @@ const shipmentUpdateSchema = z.object({
   status: z.enum(["pending", "booked", "shipped", "delivered", "rto", "cancelled"]),
   courier: z.string().trim().max(160).optional(),
   trackingNumber: z.string().trim().max(160).optional(),
-  codCollected: z.boolean(),
-  codReconciled: z.boolean(),
 }).superRefine((value, context) => {
   if (value.status === "shipped" && (!value.courier || !value.trackingNumber)) {
     context.addIssue({ code: z.ZodIssueCode.custom, path: ["trackingNumber"], message: "Courier and tracking number are required before marking shipped." });
   }
-  if (value.codReconciled && !value.codCollected) {
-    context.addIssue({ code: z.ZodIssueCode.custom, path: ["codReconciled"], message: "COD cannot be reconciled before collection is confirmed." });
-  }
 });
 
+const codReconciliationSchema = z
+  .object({
+    orderId: z.string().uuid(),
+    codCollected: z.boolean(),
+    codReconciled: z.boolean(),
+  })
+  .superRefine((value, context) => {
+    if (value.codReconciled && !value.codCollected) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["codReconciled"],
+        message: "COD cannot be reconciled before collection is confirmed.",
+      });
+    }
+  });
+
 export async function updateShipmentAction(formData: FormData): Promise<ActionResult> {
-  await requireOwnerSession();
+  await requireCapability("commerce.shipments.update");
   const parsed = shipmentUpdateSchema.safeParse({
     orderId: formData.get("orderId"),
     status: formData.get("status"),
     courier: String(formData.get("courier") ?? "").trim() || undefined,
     trackingNumber: String(formData.get("trackingNumber") ?? "").trim() || undefined,
-    codCollected: formData.get("codCollected") === "on",
-    codReconciled: formData.get("codReconciled") === "on",
   });
   if (!parsed.success) return actionError("Shipment was not updated.", zodFieldErrors(parsed.error));
 
@@ -180,8 +214,6 @@ export async function updateShipmentAction(formData: FormData): Promise<ActionRe
       status: parsed.data.status,
       courier: parsed.data.courier ?? null,
       trackingNumber: parsed.data.trackingNumber ?? null,
-      codCollectedAt: parsed.data.codCollected ? now : null,
-      codReconciledAt: parsed.data.codReconciled ? now : null,
       shippedAt: parsed.data.status === "shipped" ? now : undefined,
       deliveredAt: parsed.data.status === "delivered" ? now : undefined,
       rtoAt: parsed.data.status === "rto" ? now : undefined,
@@ -193,21 +225,74 @@ export async function updateShipmentAction(formData: FormData): Promise<ActionRe
       await transaction.insert(shipments).values({ orderId: order.id, ...values });
     }
     if (parsed.data.status === "delivered") {
-      const paymentState =
-        order.paymentState === "cod_due" && parsed.data.codCollected && parsed.data.codReconciled
-          ? "cod_collected"
-          : order.paymentState;
-      await transaction.update(commerceOrders).set({ status: "delivered", paymentState }).where(eq(commerceOrders.id, order.id));
+      await transaction.update(commerceOrders).set({ status: "delivered" }).where(eq(commerceOrders.id, order.id));
       await transaction
         .update(commerceOrderItems)
         .set({ fulfilledQuantity: sql`${commerceOrderItems.quantity}` })
         .where(eq(commerceOrderItems.orderId, order.id));
-      if (paymentState === "cod_collected") {
-        await transaction.update(paymentAttempts).set({ status: "succeeded", verifiedAt: now }).where(and(eq(paymentAttempts.orderId, order.id), eq(paymentAttempts.provider, "cod")));
-      }
     }
     if (parsed.data.status === "rto") {
-      await transaction.update(commerceOrders).set({ status: "returned", paymentState: order.paymentState === "cod_due" ? "failed" : order.paymentState }).where(eq(commerceOrders.id, order.id));
+      await transaction.update(commerceOrders).set({ status: "returned" }).where(eq(commerceOrders.id, order.id));
+    }
+  });
+  revalidatePath("/commerce/orders");
+  revalidatePath("/commerce");
+  return actionOk();
+}
+
+/** Owner-only money settlement, deliberately separate from staff fulfillment. */
+export async function reconcileCodAction(formData: FormData): Promise<ActionResult> {
+  await requireCapability("commerce.cod.reconcile");
+  const parsed = codReconciliationSchema.safeParse({
+    orderId: formData.get("orderId"),
+    codCollected: formData.get("codCollected") === "on",
+    codReconciled: formData.get("codReconciled") === "on",
+  });
+  if (!parsed.success) {
+    return actionError("COD reconciliation was not updated.", zodFieldErrors(parsed.error));
+  }
+
+  await db.transaction(async (transaction) => {
+    const [order] = await transaction
+      .select({ id: commerceOrders.id, paymentState: commerceOrders.paymentState, status: commerceOrders.status })
+      .from(commerceOrders)
+      .where(eq(commerceOrders.id, parsed.data.orderId))
+      .for("update")
+      .limit(1);
+    if (!order || order.paymentState !== "cod_due") {
+      throw new Error("COD order was not found");
+    }
+    const now = new Date();
+    const values = {
+      codCollectedAt: parsed.data.codCollected ? now : null,
+      codReconciledAt: parsed.data.codReconciled ? now : null,
+      updatedAt: now,
+    };
+    const [shipment] = await transaction
+      .select({ id: shipments.id })
+      .from(shipments)
+      .where(eq(shipments.orderId, order.id))
+      .for("update")
+      .limit(1);
+    if (shipment) {
+      await transaction.update(shipments).set(values).where(eq(shipments.id, shipment.id));
+    } else {
+      await transaction.insert(shipments).values({ orderId: order.id, status: "pending", ...values });
+    }
+    if (parsed.data.codCollected && parsed.data.codReconciled) {
+      await transaction
+        .update(commerceOrders)
+        .set({ paymentState: "cod_collected" })
+        .where(eq(commerceOrders.id, order.id));
+      await transaction
+        .update(paymentAttempts)
+        .set({ status: "succeeded", verifiedAt: now })
+        .where(
+          and(
+            eq(paymentAttempts.orderId, order.id),
+            eq(paymentAttempts.provider, "cod"),
+          ),
+        );
     }
   });
   revalidatePath("/commerce/orders");
@@ -216,7 +301,7 @@ export async function updateShipmentAction(formData: FormData): Promise<ActionRe
 }
 
 export async function listCommerceReviews() {
-  await requireOwnerSession();
+  await requireCapability("commerce.reviews.moderate");
   return db
     .select({
       id: reviews.id,
@@ -232,7 +317,7 @@ export async function listCommerceReviews() {
 }
 
 export async function listCommerceSupport() {
-  await requireOwnerSession();
+  await requireCapability("commerce.support.manage");
   const [inquiries, returns] = await Promise.all([
     db.select().from(commerceInquiries).orderBy(desc(commerceInquiries.createdAt)).limit(100),
     db.select().from(commerceReturns).orderBy(desc(commerceReturns.requestedAt)).limit(100),
@@ -241,12 +326,12 @@ export async function listCommerceSupport() {
 }
 
 export async function listCommercePromotions() {
-  await requireOwnerSession();
+  await requireCapability("commerce.promotions.manage");
   return db.select().from(promotions).orderBy(desc(promotions.createdAt)).limit(100);
 }
 
 export async function getCommerceSettings() {
-  await requireOwnerSession();
+  await requireCapability("commerce.release-gates.manage");
   const [row] = await db
     .select()
     .from(commerceSettings)
@@ -295,7 +380,7 @@ function parseRupees(value: FormDataEntryValue | null, optional = false): number
 export async function updateCommerceSettingsAction(
   formData: FormData,
 ): Promise<ActionResult<{ checkoutEnabled: boolean }>> {
-  const session = await requireOwnerSession();
+  const session = await requireCapability("commerce.release-gates.manage");
   const parsed = settingsSchema.safeParse({
     flatShippingAmountMinor: parseRupees(formData.get("flatShippingAmount")),
     freeShippingThresholdMinor: parseRupees(formData.get("freeShippingThreshold"), true),

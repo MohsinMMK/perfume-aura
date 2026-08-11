@@ -17,7 +17,7 @@ import {
   type CustomerFormInput,
 } from "@perfume-aura/validators";
 import { revalidatePath } from "next/cache";
-import { requireOwnerSession } from "@/lib/session";
+import { requireCapability } from "@/lib/session";
 import {
   actionError,
   actionOk,
@@ -60,7 +60,7 @@ export async function listCustomers(opts?: {
   page?: number;
   pageSize?: number;
 }): Promise<PaginatedResult<CustomerListItem>> {
-  await requireOwnerSession();
+  await requireCapability("customers.view");
 
   const q = opts?.q?.trim() ?? "";
   const status = opts?.status ?? "active";
@@ -123,7 +123,7 @@ export async function listCustomers(opts?: {
 export async function getCustomer(
   id: string,
 ): Promise<CustomerDetail | null> {
-  await requireOwnerSession();
+  await requireCapability("customers.view");
   const [row] = await db
     .select()
     .from(customers)
@@ -147,7 +147,7 @@ export async function getCustomer(
 export async function listActiveCustomersForSelect(): Promise<
   { id: string; name: string }[]
 > {
-  await requireOwnerSession();
+  await requireCapability("customers.view");
   return db
     .select({ id: customers.id, name: customers.name })
     .from(customers)
@@ -159,7 +159,7 @@ export async function createCustomerAction(
   raw: unknown,
 ): Promise<ActionResult<{ customerId: string }>> {
   try {
-    await requireOwnerSession();
+    await requireCapability("customers.create");
   } catch {
     return actionError("You must be signed in");
   }
@@ -198,7 +198,7 @@ export async function updateCustomerAction(
   raw: unknown,
 ): Promise<ActionResult> {
   try {
-    await requireOwnerSession();
+    await requireCapability("customers.update");
   } catch {
     return actionError("You must be signed in");
   }
@@ -237,7 +237,7 @@ export async function archiveCustomerAction(
   raw: unknown,
 ): Promise<ActionResult> {
   try {
-    await requireOwnerSession();
+    await requireCapability("customers.archive");
   } catch {
     return actionError("You must be signed in");
   }

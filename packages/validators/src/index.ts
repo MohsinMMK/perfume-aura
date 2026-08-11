@@ -91,6 +91,7 @@ export const updateProductSchema = z.object({
   description: z.string().max(5000).optional(),
 });
 
+/** @alias Intentional distinct action name for the same lifecycle payload. */
 export const reactivateProductSchema = archiveProductSchema;
 
 export const updateVariantSchema = variantFormSchema.extend({

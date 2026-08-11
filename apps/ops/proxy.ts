@@ -4,7 +4,8 @@ import { getSessionCookie } from "better-auth/cookies";
 /**
  * Next.js 16 proxy (formerly middleware).
  * Cookie presence gate only — not a security boundary.
- * Always call requireOwnerSession() in pages / Server Actions for real checks.
+ * Always call requireOpsSession() or requireCapability() in pages / Server
+ * Actions for real checks.
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -18,6 +19,7 @@ export function proxy(request: NextRequest) {
     pathname.startsWith("/invoices") ||
     pathname.startsWith("/payments") ||
     pathname.startsWith("/finance") ||
+    pathname.startsWith("/commerce") ||
     pathname.startsWith("/settings");
 
   if (isProtected && !sessionCookie) {
@@ -41,6 +43,7 @@ export const config = {
     "/invoices/:path*",
     "/payments/:path*",
     "/finance/:path*",
+    "/commerce/:path*",
     "/settings/:path*",
   ],
 };

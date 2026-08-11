@@ -4,8 +4,8 @@
  */
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { after, before, describe, it } from "node:test";
-import { verifyPassword } from "better-auth/crypto";
+import { after, before, beforeEach, describe, it } from "node:test";
+import { hashPassword, symmetricDecrypt, verifyPassword } from "better-auth/crypto";
 import { requireDisposableTestDatabaseUrl } from "../../../packages/db/src/test-database-guard";
 
 const testDatabaseUrl = requireDisposableTestDatabaseUrl(
@@ -46,30 +46,92 @@ describe(
   () => {
     let api: typeof import("@perfume-aura/db");
     let auth: typeof import("./auth").auth;
+    let createAuth: typeof import("./auth").createAuth;
     let ensureOwnerAccount: typeof import("./owner-maintenance").ensureOwnerAccount;
     let recoverOwnerCredential: typeof import("./owner-maintenance").recoverOwnerCredential;
+    let resetOwnerTwoFactorBreakGlass: typeof import("./owner-maintenance").resetOwnerTwoFactorBreakGlass;
+    let appendStaffInvitationEvent: typeof import("./staff-invitation-events").appendStaffInvitationEvent;
+    let markStaffInvitationAccepted: typeof import("./staff-invitation-events").markStaffInvitationAccepted;
     let decideOwnerAuthorization: typeof import("./session").decideOwnerAuthorization;
     let and: typeof import("@perfume-aura/db").and;
     let eq: typeof import("@perfume-aura/db").eq;
-    let inArray: typeof import("@perfume-aura/db").inArray;
     let like: typeof import("@perfume-aura/db").like;
     const resetDeliveries: Array<{ to: string; resetUrl: string }> = [];
-    const userIds = new Set<string>();
+
+    async function clearTestIdentities(): Promise<void> {
+      await api.pool.query("BEGIN");
+      try {
+        // The production trigger protects the final owner. This isolated test
+        // cleanup deliberately bypasses it so every case begins with zero
+        // identities and can prove one-owner creation independently.
+        await api.pool.query("SET LOCAL session_replication_role = replica");
+        await api.pool.query(
+          `
+            DELETE FROM ops_audit_events
+            WHERE actor_user_id IN (SELECT id FROM "user" WHERE email LIKE $1)
+               OR target_id IN (SELECT id FROM "user" WHERE email LIKE $1)
+          `,
+          [`${testPrefix}%`],
+        );
+        await api.pool.query(
+          `
+            DELETE FROM staff_invitation_events
+            WHERE staff_user_id IN (SELECT id FROM "user" WHERE email LIKE $1)
+               OR actor_user_id IN (SELECT id FROM "user" WHERE email LIKE $1)
+          `,
+          [`${testPrefix}%`],
+        );
+        await api.pool.query(
+          `DELETE FROM two_factor WHERE user_id IN (SELECT id FROM "user" WHERE email LIKE $1)`,
+          [`${testPrefix}%`],
+        );
+        await api.pool.query(
+          `DELETE FROM session WHERE user_id IN (SELECT id FROM "user" WHERE email LIKE $1)`,
+          [`${testPrefix}%`],
+        );
+        await api.pool.query(
+          `DELETE FROM account WHERE user_id IN (SELECT id FROM "user" WHERE email LIKE $1)`,
+          [`${testPrefix}%`],
+        );
+        await api.pool.query(
+          'DELETE FROM "user" WHERE email LIKE $1',
+          [`${testPrefix}%`],
+        );
+        await api.pool.query(
+          "DELETE FROM verification WHERE identifier LIKE $1",
+          [`%${testPrefix}%`],
+        );
+        await api.pool.query("DELETE FROM rate_limit");
+        await api.pool.query("COMMIT");
+      } catch (error) {
+        await api.pool.query("ROLLBACK");
+        throw error;
+      }
+      resetDeliveries.length = 0;
+    }
 
     before(async () => {
       api = await import("@perfume-aura/db");
-      ({ and, eq, inArray, like } = api);
+      ({ and, eq, like } = api);
       const authModule = await import("./auth");
       auth = authModule.createAuth({
         deliverPasswordResetEmail: async (mail) => {
           resetDeliveries.push(mail);
         },
       });
-      ({ ensureOwnerAccount, recoverOwnerCredential } = await import(
+      createAuth = authModule.createAuth;
+      ({ ensureOwnerAccount, recoverOwnerCredential, resetOwnerTwoFactorBreakGlass } = await import(
         "./owner-maintenance"
       ));
       ({ decideOwnerAuthorization } = await import("./session"));
+      ({ appendStaffInvitationEvent, markStaffInvitationAccepted } = await import(
+        "./staff-invitation-events"
+      ));
       await api.db.delete(api.rateLimit);
+    });
+
+    beforeEach(async () => {
+      await clearTestIdentities();
     });
 
     after(async () => {
@@ -79,17 +141,7 @@ describe(
       await api.pool
         .query("DROP FUNCTION IF EXISTS phase04_reject_session_delete()")
         .catch(() => undefined);
-      await api.db
-        .delete(api.verification)
-        .where(like(api.verification.identifier, `%${testPrefix}%`));
-      if (userIds.size > 0) {
-        await api.db
-          .delete(api.verification)
-          .where(inArray(api.verification.value, [...userIds]));
-        await api.db
-          .delete(api.user)
-          .where(inArray(api.user.id, [...userIds]));
-      }
+      await clearTestIdentities();
       await api.db.delete(api.rateLimit);
       await api.pool.end();
     });
@@ -118,7 +170,6 @@ describe(
         email,
         password: originalPassword,
       });
-      userIds.add(created.userId);
       assert.equal(created.state, "created");
       const originalHash = await credentialPassword(created.userId);
 
@@ -145,12 +196,26 @@ describe(
         }),
         false,
       );
+
+      await assert.rejects(
+        () =>
+          ensureOwnerAccount({
+            email: `${testPrefix}-second-owner@example.com`,
+            password: "Second owner password 123",
+          }),
+        /second owner identity/,
+      );
+
+      const owners = await api.db
+        .select({ id: api.user.id })
+        .from(api.user)
+        .where(eq(api.user.role, "owner"));
+      assert.equal(owners.length, 1);
     });
 
     it("repairs a wrong role, unverified email, and missing credential atomically", async () => {
       const email = `${testPrefix}-repair@example.com`;
       const userId = randomUUID();
-      userIds.add(userId);
       await api.db.insert(api.user).values({
         id: userId,
         name: "Partial owner",
@@ -177,21 +242,20 @@ describe(
     it("refuses ambiguous user and credential states", async () => {
       const ambiguousEmail = `${testPrefix}-ambiguous@example.com`;
       const ambiguousUsers = [randomUUID(), randomUUID()];
-      ambiguousUsers.forEach((id) => userIds.add(id));
       await api.db.insert(api.user).values([
         {
           id: ambiguousUsers[0],
           name: "Ambiguous A",
           email: ambiguousEmail,
           emailVerified: true,
-          role: "owner",
+          role: "user",
         },
         {
           id: ambiguousUsers[1],
           name: "Ambiguous B",
           email: ambiguousEmail.toUpperCase(),
           emailVerified: true,
-          role: "owner",
+          role: "user",
         },
       ]);
       await assert.rejects(
@@ -206,13 +270,12 @@ describe(
       const duplicateCredentialEmail =
         `${testPrefix}-duplicate-credential@example.com`;
       const duplicateCredentialUser = randomUUID();
-      userIds.add(duplicateCredentialUser);
       await api.db.insert(api.user).values({
         id: duplicateCredentialUser,
         name: "Duplicate credential owner",
         email: duplicateCredentialEmail,
         emailVerified: true,
-        role: "owner",
+        role: "user",
       });
       await api.db.insert(api.account).values([
         {
@@ -248,7 +311,6 @@ describe(
         email,
         password: originalPassword,
       });
-      userIds.add(owner.userId);
 
       await api.db.insert(api.session).values({
         id: randomUUID(),
@@ -327,8 +389,7 @@ describe(
 
       const email = `${testPrefix}-session@example.com`;
       const password = "Session owner password 123";
-      const owner = await ensureOwnerAccount({ email, password });
-      userIds.add(owner.userId);
+      await ensureOwnerAccount({ email, password });
 
       const signIn = await auth.handler(
         postRequest("/sign-in/email", { email, password }),
@@ -351,18 +412,216 @@ describe(
       assert.equal(sessionBody.user?.role, "owner");
     });
 
+    it("keeps direct Better Auth admin mutations unavailable", async () => {
+      for (const path of [
+        "/admin/ban-user",
+        "/admin/create-user",
+        "/admin/remove-user",
+        "/admin/revoke-user-sessions",
+        "/admin/set-role",
+        "/admin/unban-user",
+      ]) {
+        const response = await auth.handler(postRequest(path, {}));
+        assert.equal(response.status, 404, `${path} must remain disabled`);
+      }
+    });
+
+    it("removes direct 2FA disable when mandatory enrollment is enabled", async () => {
+      const prior = process.env.OPS_TWO_FACTOR_REQUIRED;
+      process.env.OPS_TWO_FACTOR_REQUIRED = "true";
+      try {
+        const enforcedAuth = createAuth({
+          deliverPasswordResetEmail: async () => undefined,
+        });
+        const response = await enforcedAuth.handler(
+          postRequest("/two-factor/disable", {}),
+        );
+        assert.equal(response.status, 404);
+      } finally {
+        if (prior === undefined) {
+          delete process.env.OPS_TWO_FACTOR_REQUIRED;
+        } else {
+          process.env.OPS_TWO_FACTOR_REQUIRED = prior;
+        }
+      }
+    });
+
+    it("completes official TOTP enrollment without persisting recovery codes in application data", async () => {
+      const email = `${testPrefix}-totp@example.com`;
+      const password = "TOTP enrollment password 123";
+      const owner = await ensureOwnerAccount({ email, password });
+
+      const signIn = await auth.handler(
+        postRequest("/sign-in/email", { email, password }),
+      );
+      assert.equal(signIn.status, 200);
+      const cookie = sessionCookie(signIn);
+      const enrollment = await auth.handler(
+        new Request(`${baseUrl}/api/auth/two-factor/enable`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            cookie,
+            origin: baseUrl,
+          },
+          body: JSON.stringify({ password }),
+        }),
+      );
+      assert.equal(enrollment.status, 200);
+      const enrollmentBody = (await enrollment.json()) as {
+        backupCodes?: string[];
+        totpURI?: string;
+      };
+      assert.equal(enrollmentBody.backupCodes?.length, 10);
+      assert.match(enrollmentBody.totpURI ?? "", /^otpauth:\/\/totp\//);
+
+      const [factor] = await api.db
+        .select({ secret: api.twoFactor.secret, verified: api.twoFactor.verified })
+        .from(api.twoFactor)
+        .where(eq(api.twoFactor.userId, owner.userId));
+      assert.ok(factor?.secret);
+      assert.equal(factor.verified, false);
+
+      const secret = await symmetricDecrypt({
+        key: process.env.BETTER_AUTH_SECRET as string,
+        data: factor.secret,
+      });
+      const generated = await auth.api.generateTOTP({ body: { secret } });
+      const verification = await auth.handler(
+        new Request(`${baseUrl}/api/auth/two-factor/verify-totp`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            cookie,
+            origin: baseUrl,
+          },
+          body: JSON.stringify({ code: generated.code, trustDevice: true }),
+        }),
+      );
+      assert.equal(verification.status, 200);
+
+      const [verifiedUser] = await api.db
+        .select({ enabled: api.user.twoFactorEnabled })
+        .from(api.user)
+        .where(eq(api.user.id, owner.userId));
+      assert.equal(verifiedUser?.enabled, true);
+      const [verifiedFactor] = await api.db
+        .select({ verified: api.twoFactor.verified })
+        .from(api.twoFactor)
+        .where(eq(api.twoFactor.userId, owner.userId));
+      assert.equal(verifiedFactor?.verified, true);
+    });
+
+    it("resets owner 2FA only through break-glass recovery and revokes every session", async () => {
+      const email = `${testPrefix}-two-factor-recovery@example.com`;
+      const owner = await ensureOwnerAccount({
+        email,
+        password: "Two factor recovery password 123",
+      });
+      await api.db
+        .update(api.user)
+        .set({ twoFactorEnabled: true })
+        .where(eq(api.user.id, owner.userId));
+      await api.db.insert(api.twoFactor).values({
+        id: randomUUID(),
+        userId: owner.userId,
+        secret: "test-encrypted-secret",
+        backupCodes: "test-encrypted-backup-codes",
+        verified: true,
+      });
+      await api.db.insert(api.session).values({
+        id: randomUUID(),
+        token: randomUUID(),
+        userId: owner.userId,
+        expiresAt: new Date(Date.now() + 60_000),
+      });
+
+      const result = await resetOwnerTwoFactorBreakGlass({ email });
+      assert.equal(result.userId, owner.userId);
+      assert.equal(result.revokedSessionCount, 1);
+
+      const [ownerAfterReset] = await api.db
+        .select({ enabled: api.user.twoFactorEnabled })
+        .from(api.user)
+        .where(eq(api.user.id, owner.userId));
+      assert.equal(ownerAfterReset?.enabled, false);
+      const remainingFactors = await api.db
+        .select({ id: api.twoFactor.id })
+        .from(api.twoFactor)
+        .where(eq(api.twoFactor.userId, owner.userId));
+      assert.equal(remainingFactors.length, 0);
+      const remainingSessions = await api.db
+        .select({ id: api.session.id })
+        .from(api.session)
+        .where(eq(api.session.userId, owner.userId));
+      assert.equal(remainingSessions.length, 0);
+      const auditEvents = await api.db
+        .select({ action: api.opsAuditEvents.action })
+        .from(api.opsAuditEvents)
+        .where(eq(api.opsAuditEvents.targetId, owner.userId));
+      assert.deepEqual(auditEvents, [
+        { action: "owner.two_factor.break_glass_reset" },
+      ]);
+    });
+
+    it("marks a staff invitation accepted exactly once after mailbox-proven password setup", async () => {
+      const staffId = randomUUID();
+      const email = `${testPrefix}-staff-acceptance@example.com`;
+      await api.db.insert(api.user).values({
+        id: staffId,
+        name: "Pending staff",
+        email,
+        emailVerified: false,
+        role: "staff",
+      });
+      await appendStaffInvitationEvent({
+        staffUserId: staffId,
+        email,
+        name: "Pending staff",
+        eventType: "created",
+        metadata: { initial_invite: true },
+      });
+
+      assert.equal(await markStaffInvitationAccepted(staffId), true);
+      assert.equal(await markStaffInvitationAccepted(staffId), true);
+
+      const [staff] = await api.db
+        .select({ emailVerified: api.user.emailVerified })
+        .from(api.user)
+        .where(eq(api.user.id, staffId));
+      assert.equal(staff?.emailVerified, true);
+      const acceptedEvents = await api.db
+        .select({ id: api.staffInvitationEvents.id })
+        .from(api.staffInvitationEvents)
+        .where(eq(api.staffInvitationEvents.eventType, "accepted"));
+      assert.equal(acceptedEvents.length, 1);
+      const acceptanceAudits = await api.db
+        .select({ action: api.opsAuditEvents.action })
+        .from(api.opsAuditEvents)
+        .where(eq(api.opsAuditEvents.targetId, staffId));
+      assert.deepEqual(acceptanceAudits, [
+        { action: "staff.invitation.accepted" },
+      ]);
+    });
+
     it("denies non-owner and stale-cookie sessions with stable page/action decisions", async () => {
       const userEmail = `${testPrefix}-non-owner@example.com`;
       const userPassword = "Non owner session password 123";
-      const seededUser = await ensureOwnerAccount({
+      const userId = randomUUID();
+      await api.db.insert(api.user).values({
+        id: userId,
+        name: "Non-owner user",
         email: userEmail,
-        password: userPassword,
+        emailVerified: true,
+        role: "user",
       });
-      userIds.add(seededUser.userId);
-      await api.db
-        .update(api.user)
-        .set({ role: "user" })
-        .where(eq(api.user.id, seededUser.userId));
+      await api.db.insert(api.account).values({
+        id: randomUUID(),
+        accountId: userId,
+        providerId: "credential",
+        userId,
+        password: await hashPassword(userPassword),
+      });
 
       const userSignIn = await auth.handler(
         postRequest("/sign-in/email", {
@@ -397,7 +656,6 @@ describe(
         email: ownerEmail,
         password: ownerPassword,
       });
-      userIds.add(owner.userId);
       const ownerSignIn = await auth.handler(
         postRequest("/sign-in/email", {
           email: ownerEmail,
@@ -443,17 +701,10 @@ describe(
         kind: "deny",
       });
 
-      const expiredEmail = `${testPrefix}-expired-cookie@example.com`;
-      const expiredPassword = "Expired cookie owner password 123";
-      const expiredOwner = await ensureOwnerAccount({
-        email: expiredEmail,
-        password: expiredPassword,
-      });
-      userIds.add(expiredOwner.userId);
       const expiredSignIn = await auth.handler(
         postRequest("/sign-in/email", {
-          email: expiredEmail,
-          password: expiredPassword,
+          email: ownerEmail,
+          password: ownerPassword,
         }),
       );
       assert.equal(expiredSignIn.status, 200);
@@ -461,7 +712,7 @@ describe(
       await api.db
         .update(api.session)
         .set({ expiresAt: new Date(Date.now() - 60_000) })
-        .where(eq(api.session.userId, expiredOwner.userId));
+        .where(eq(api.session.userId, owner.userId));
       const expiredSessionResponse = await auth.handler(
         new Request(`${baseUrl}/api/auth/get-session`, {
           headers: { cookie: expiredCookie },
@@ -487,7 +738,6 @@ describe(
         email,
         password: originalPassword,
       });
-      userIds.add(owner.userId);
       await api.db.insert(api.session).values({
         id: randomUUID(),
         token: randomUUID(),
@@ -559,11 +809,10 @@ describe(
 
     it("returns identical generic reset responses for known and unknown accounts", async () => {
       const knownEmail = `${testPrefix}-reset-request-known@example.com`;
-      const owner = await ensureOwnerAccount({
+      await ensureOwnerAccount({
         email: knownEmail,
         password: "Reset request owner password 123",
       });
-      userIds.add(owner.userId);
 
       const knownResponse = await auth.handler(
         postRequest("/request-password-reset", {

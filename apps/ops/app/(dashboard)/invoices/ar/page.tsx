@@ -20,7 +20,7 @@ import { safeDbQuery } from "@/lib/db-safe";
 import { formatInr } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { formatBusinessDate } from "@/lib/business-date";
-import { requireOwnerSession } from "@/lib/session";
+import { requireCapability } from "@/lib/session";
 import {
   canonicalPage,
   paginationHref,
@@ -35,7 +35,7 @@ export default async function ArPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
-  await requireOwnerSession({ redirectToLogin: true });
+  await requireCapability("finance.view", { redirectToLogin: true });
   const page = parsePage((await searchParams).page);
 
   const [listResult, totalResult] = await Promise.all([

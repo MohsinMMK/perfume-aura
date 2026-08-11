@@ -1,60 +1,103 @@
 # Operations
 
-## Production topology
+Read `CURRENT_STATE.md` before any provider or database action.
 
-| Domain | Purpose | Hostinger product | Runtime entry |
-|---|---|---|---|
-| `perfumeaura.com` | Animated public storefront | Node.js Web App | `apps/storefront/server.js` |
-| `www.perfumeaura.com` | Apex redirect | Storefront middleware | n/a |
-| `app.perfumeaura.com` | Owner and staff operations | Node.js Web App | `apps/ops/server.js` |
+## Topology
 
-`shop.perfumeaura.com` is intentionally deleted and has no redirect. The
-previous static apex site is retained only as a downloaded backup and Git
-history; no static marketing deployment remains.
+| Domain | Purpose | Entry |
+|---|---|---|
+| `perfumeaura.com` | Public storefront | `apps/storefront/server.js` |
+| `www.perfumeaura.com` | Path-preserving apex redirect | Storefront middleware |
+| `app.perfumeaura.com` | Private operations | `apps/ops/server.js` |
 
-## Non-negotiable boundaries
+`www.app.perfumeaura.com` and `shop.perfumeaura.com` must remain absent. The
+previous static storefront exists only in an external backup and Git history.
 
-- GoDaddy owns registration and renewal. Hostinger nameservers own DNS; do not
-  edit GoDaddy A/CNAME records while they are active.
-- Neon PostgreSQL is shared. Never delete, recreate, or migrate it as part of a
-  website cutover without the reviewed migration path.
-- Do not touch unrelated hPanel sites, mailboxes, databases, or DNS records.
-- All secrets live only in Hostinger environment settings. ZIPs, generated Git
-  branches, repository files, logs, and documentation must contain none.
-- Do not set a fixed `PORT`; Hostinger supplies it.
+## Managed Hostinger topology
+
+The existing managed deployment remains the production topology:
+
+| Platform | Production responsibility |
+|---|---|
+| Hostinger managed Node.js Web App | `perfumeaura.com` storefront and the `www` redirect |
+| Hostinger managed Node.js Web App | `app.perfumeaura.com` private operations |
+| Neon | Shared PostgreSQL, with separate restricted runtime connections and manual owner migrations |
+| GitHub Actions | Build, scan, package, publish, and identify the exact source commit for both deployments |
+
+The public URLs and DNS topology do not change. GoDaddy remains
+registration-only while Hostinger nameservers are authoritative. Neon remains
+independent of the web deployments and must never be copied into, deleted by,
+or recreated during a deployment.
+
+Both applications select Hostinger Node `24.x`. Live deployment logs currently
+show the provider-managed baseline Node `24.6.0` and pnpm `10.32.1`. Repository
+compatibility must be tested against that baseline; do not require an exact
+patch that hPanel cannot select. Reinspect the logs whenever Hostinger changes
+the managed runtime.
+
+The unresolved managed-hosting process incident must still be durably repaired
+before prepared application work is published. Require scoped process
+attribution, restart and routing causes, a case ID, and fresh smoke evidence for
+both applications. Do not use a plan-wide process stop or modify unrelated sites
+to work around the provider issue.
+
+## Safety boundaries
+
+- GoDaddy owns registration; Hostinger nameservers own DNS.
+- Neon is shared by storefront and ops. Never delete or recreate it during web
+  work.
+- Do not modify unrelated Hostinger sites, mail, DNS, databases, or processes.
+- Secrets belong only in ignored env files or Hostinger settings.
+- Do not set `PORT`; Hostinger supplies it.
+- Select Hostinger Node `24.x`; treat the exact Node patch and pnpm version from
+  fresh deployment logs as the production compatibility baseline.
+- Do not publish until CI, packers, lockfiles, and extracted-artifact smoke pass
+  against the observed managed baseline.
+- Deploy, redeploy, restart, process stop, DNS write, production migration, and
+  release-flag changes require explicit authorization.
+
+## Evidence workflow
+
+Use the narrowest authoritative surface:
+
+| Need | Surface |
+|---|---|
+| Website, deployment, build-log, or DNS inventory | Read-only Hostinger MCP |
+| Resource graphs, runtime logs, flags, or support | Authenticated hPanel |
+| Process owner/tree/path | Hostinger support evidence or scoped managed-hosting access |
+| Customer-visible behavior | Public HTTPS and the production verifier |
+
+The `hostinger-api` Docker MCP profile is read-only by default. Inspect a tool
+before first use and never print its token.
+
+```bash
+docker mcp tools --gateway-arg=--profile --gateway-arg=hostinger-api count
+docker mcp tools --gateway-arg=--profile --gateway-arg=hostinger-api \
+  call hosting_listWebsitesV1 domain=app.perfumeaura.com per_page=10
+docker mcp tools --gateway-arg=--profile --gateway-arg=hostinger-api \
+  call hosting_listJsDeployments domain=app.perfumeaura.com page=1 perPage=20
+```
+
+For an authorized provider mutation, enable only its exact MCP tool, execute it
+once, verify the result, then disable it. Record privacy-safe production changes
+in `CURRENT_STATE.md`.
 
 ## Storefront deployment
 
-The storefront is a prebuilt ZIP deployment because Hostinger's monorepo source
-build route is not accepted for this project.
+The storefront uses a verified prebuilt ZIP; the Hostinger monorepo source
+build is not the deployment path.
 
 ```bash
 pnpm check
-pnpm test:integration
+TEST_DATABASE_URL='<migrated-disposable-loopback-url>' pnpm test:integration
 pnpm storefront:pack
 ```
 
-Upload the clean `dist/perfume-aura-storefront_<sha>.zip` through Hostinger's
-Node.js Web App workflow:
+Hostinger settings: Node 24.x, Framework Other, root `./`, no build command,
+empty output directory, and entry `apps/storefront/server.js`. Set
+`STOREFRONT_URL` and `CUSTOMER_AUTH_URL` to `https://perfumeaura.com`.
 
-| Setting | Value |
-|---|---|
-| Domain | `perfumeaura.com` |
-| Framework | Other |
-| Node | 24.x |
-| Root directory | `./` |
-| Build command | None / prebuilt no-op |
-| Output directory | Empty |
-| Entry file | `apps/storefront/server.js` |
-
-Copy the existing storefront environment values and change only these origins:
-
-```text
-STOREFRONT_URL=https://perfumeaura.com
-CUSTOMER_AUTH_URL=https://perfumeaura.com
-```
-
-Keep these flags `false` until their independent gates pass:
+Keep these flags false until their separate gates pass:
 
 ```text
 STOREFRONT_CUSTOMER_AUTH_ENABLED
@@ -64,7 +107,7 @@ STOREFRONT_CHECKOUT_RELEASE_APPROVED
 STOREFRONT_INQUIRIES_ENABLED
 ```
 
-After deploy, verify the exact commit plus storefront surface:
+Verify after deployment:
 
 ```bash
 node scripts/verify-production-deploy.mjs <40-character-sha> \
@@ -74,37 +117,59 @@ node scripts/verify-production-deploy.mjs <40-character-sha> \
 curl -sSI 'https://www.perfumeaura.com/shop?probe=1'
 ```
 
-The expected `www` response is `308` with an apex `Location` preserving
-`/shop?probe=1`.
+The `www` response must be `308` and preserve `/shop?probe=1`.
 
 ## Ops deployment
 
-Routine ops deployment remains the generated Git branch:
+Routine deployment is:
 
 ```text
-main push
-  → CI quality + PostgreSQL integration + verified ZIP
-  → hostinger-ops-production
-  → Hostinger Node.js Web App
-  → exact-SHA live verifier
+main push → CI quality/integration/package → hostinger-ops-production
+  → Hostinger Node Web App → exact-SHA verification
 ```
 
-Use `pnpm ops:pack` only for the verified emergency ZIP fallback. Hostinger
-settings for the generated branch are Node 24.x, Framework Other, root `./`, no
-build command, empty output directory, and entry `apps/ops/server.js`.
+A change set containing only Markdown files still runs CI but does not publish
+the generated branch. Empty, invalid, or mixed change evidence publishes
+normally so the guard cannot silently suppress a runtime deployment.
 
-Ops production migrations are manual, reviewed operations using the direct Neon
-owner connection. Reapply restricted runtime grants after schema changes.
+Use `pnpm ops:pack` only for emergency fallback. Hostinger settings are Node
+24.x, Framework Other, root `./`, no build command, empty output directory, and
+entry `apps/ops/server.js`.
 
-### Restricted runtime-role proof
+Production migrations remain manual direct-owner operations. Reapply restricted
+runtime grants after every schema change.
 
-The verified operations grant matrix is explicit and never grants all tables or
-sequences. The authenticated owner applies it with a direct connection, then
-checks effective privileges before releasing a runtime credential:
+## Staff release order
+
+Migration `0010_curved_puma`, Admin/2FA, staff invitations, and mandatory 2FA
+are one ordered release. Follow
+[`STAFF_OPERATIONS_RELEASE_SMOKE.md`](STAFF_OPERATIONS_RELEASE_SMOKE.md).
+
+1. Prove the Hostinger incident is durably repaired.
+2. Test the migration on an isolated Neon branch.
+3. Apply it to production through the direct owner connection.
+4. Reapply and verify runtime grants.
+5. Deploy with both `OPS_*` flags false and verify owner login and health.
+6. Prove SMTP, owner TOTP, and one recovery-code journey.
+7. Enable mandatory 2FA, then invitations, then prove staff denials.
+
+Never open storefront commerce flags as part of this release.
+
+## Runtime grant contract
+
+Apply `packages/db/sql/ops-runtime-grants.sql` with the reviewed role name. The
+effective matrix is deliberately explicit:
 
 ```sql
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
   "user", "session", "account", "verification", "rate_limit"
+TO :"runtime_role";
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "two_factor"
+TO :"runtime_role";
+
+GRANT SELECT, INSERT ON TABLE
+  "staff_invitation_events", "ops_audit_events"
 TO :"runtime_role";
 
 GRANT SELECT, INSERT, UPDATE ON TABLE
@@ -119,20 +184,29 @@ GRANT SELECT, INSERT ON TABLE
 TO :"runtime_role";
 
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM PUBLIC;
+
 SELECT has_database_privilege(:"runtime_role", current_database(), 'TEMP')
   AS can_create_temp_objects;
 SELECT has_table_privilege(:"runtime_role", 'public.products', 'SELECT');
-SELECT has_sequence_privilege(:"runtime_role", 'public.document_number_counters_id_seq', 'USAGE');
-SELECT has_function_privilege(:"runtime_role", 'public.prevent_stock_movement_mutation()', 'EXECUTE');
+SELECT has_sequence_privilege(
+  :"runtime_role",
+  'public.document_number_counters_id_seq',
+  'USAGE'
+);
+SELECT has_function_privilege(
+  :"runtime_role",
+  'public.prevent_stock_movement_mutation()',
+  'EXECUTE'
+);
 SELECT * FROM pg_auth_members;
 ```
 
-Any unexpected effective privilege fails the migration handoff. The runtime role
-has no broad sequence grant, DDL, temporary-object, or role-membership power.
+Any unexpected effective privilege fails the handoff. The runtime role has no
+DDL, temporary-object, role-membership, or broad sequence power.
 
-## Health acceptance
+## Production acceptance
 
-Never treat `/login` alone as readiness. Check all of:
+Never infer readiness from `/login` or a Hostinger `Completed` label. Verify:
 
 ```text
 https://app.perfumeaura.com/api/health/live
@@ -141,15 +215,32 @@ https://app.perfumeaura.com/api/health/version
 https://app.perfumeaura.com/api/auth/get-session
 ```
 
-Also check a real Next static asset and an authenticated owner page when the
-owner authorizes credential use. Storefront checks must cover homepage, shop,
-search, cart, controlled media, branded 404, release locks, robots, canonical
-metadata, and the `www` redirect.
+Also verify a real static asset, the authenticated owner journey when
+authorized, storefront locks, robots, canonical metadata, and both DNS
+requirements.
 
-## Process-limit incident control
+## Observability activation
 
-Hostinger Business hosting has a shared 120-NPROC ceiling. Its plan-wide
-"Stop running processes" action interrupts every site on the plan. Before any
-provider change, capture resource usage and endpoint results. Prefer a scoped
-provider repair; use the plan-wide action only after explicit authorization,
-then re-smoke apex and ops and record the evidence in `CURRENT_STATE.md`.
+Provider projects exist but production telemetry is not active until the
+Hostinger variables and an observability-enabled artifact are deployed. Follow
+`docs/OBSERVABILITY.md` for provider names, environment mapping, privacy,
+source-map CI settings, and acceptance evidence.
+
+Activation is a normal deployment and remains blocked by the unresolved NPROC
+incident. After authorization and activation, re-smoke both applications and
+verify actual privacy-filtered PostHog and Sentry events; a successful build is
+not runtime proof.
+
+## NPROC incident control
+
+The shared plan has a 120-process ceiling. Its process-stop control affects the
+whole plan. Capture resources and endpoint evidence before provider action;
+prefer a scoped repair. Use plan-wide stop only with explicit authorization,
+then re-smoke every affected site and update `CURRENT_STATE.md`.
+
+## Official Hostinger references
+
+- [Node.js hosting options](https://www.hostinger.com/support/node-js-hosting-options-at-hostinger/)
+- [Select the Node.js version](https://www.hostinger.com/support/how-to-select-the-node-js-version-for-your-application/)
+- [Add a Node.js Web App](https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/)
+- [Troubleshoot Node.js build failures](https://www.hostinger.com/support/fix-failed-to-build-application-error-hostinger-node-js/)

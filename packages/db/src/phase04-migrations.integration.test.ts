@@ -118,7 +118,7 @@ async function assertPhase04Catalog(pool: Pool): Promise<void> {
     SELECT count(*)::text AS count
     FROM drizzle.__drizzle_migrations
   `);
-  assert.equal(journal.rows[0]?.count, "10");
+  assert.equal(journal.rows[0]?.count, "11");
 
   const authCatalog = await pool.query<{
     rate_limit_exists: boolean;
@@ -230,6 +230,104 @@ async function assertPhase04Catalog(pool: Pool): Promise<void> {
     ) AS allowed
   `);
   assert.equal(publicExecute.rows[0]?.allowed, false);
+}
+
+async function assertOpsSecurityBoundary(pool: Pool): Promise<void> {
+  const catalog = await pool.query<{
+    audit_exists: boolean;
+    invitation_exists: boolean;
+    two_factor_exists: boolean;
+  }>(`
+    SELECT
+      to_regclass('public.ops_audit_events') IS NOT NULL AS audit_exists,
+      to_regclass('public.staff_invitation_events') IS NOT NULL AS invitation_exists,
+      to_regclass('public.two_factor') IS NOT NULL AS two_factor_exists
+  `);
+  assert.deepEqual(catalog.rows[0], {
+    audit_exists: true,
+    invitation_exists: true,
+    two_factor_exists: true,
+  });
+
+  const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const ownerId = `ops-owner-${suffix}`;
+  const staffId = `ops-staff-${suffix}`;
+  await pool.query(
+    `INSERT INTO "user" (id, name, email, role) VALUES ($1, 'Ops owner', $2, 'owner')`,
+    [ownerId, `ops-owner-${suffix}@example.com`],
+  );
+  await pool.query(
+    `INSERT INTO "user" (id, name, email, role) VALUES ($1, 'Ops staff', $2, 'staff')`,
+    [staffId, `ops-staff-${suffix}@example.com`],
+  );
+
+  await assert.rejects(
+    () =>
+      pool.query(
+        `INSERT INTO "user" (id, name, email, role) VALUES ($1, 'Second owner', $2, 'owner')`,
+        [`ops-owner-second-${suffix}`, `ops-owner-second-${suffix}@example.com`],
+      ),
+    postgresError("23505", "user_exactly_one_owner_idx"),
+  );
+  await assert.rejects(
+    () =>
+      pool.query(
+        `INSERT INTO "user" (id, name, email, role) VALUES ($1, 'Unsafe role', $2, 'owner,staff')`,
+        [`ops-invalid-${suffix}`, `ops-invalid-${suffix}@example.com`],
+      ),
+    postgresError("23514", "user_ops_role_check"),
+  );
+  await assert.rejects(
+    () => pool.query(`UPDATE "user" SET role = 'staff' WHERE id = $1`, [ownerId]),
+    postgresError("55000"),
+  );
+  await assert.rejects(
+    () => pool.query(`DELETE FROM "user" WHERE id = $1`, [ownerId]),
+    postgresError("55000"),
+  );
+
+  const invitationId = `ops-invitation-${suffix}`;
+  await pool.query(
+    `
+      INSERT INTO staff_invitation_events (
+        id, staff_user_id, actor_user_id, event_type, email, name, metadata
+      )
+      VALUES ($1, $2, $3, 'created', $4, 'Ops staff', '{}'::jsonb)
+    `,
+    [invitationId, staffId, ownerId, `ops-staff-${suffix}@example.com`],
+  );
+  await assert.rejects(
+    () =>
+      pool.query(
+        `UPDATE staff_invitation_events SET name = 'Changed' WHERE id = $1`,
+        [invitationId],
+      ),
+    postgresError("55000"),
+  );
+  await assert.rejects(
+    () => pool.query(`DELETE FROM staff_invitation_events WHERE id = $1`, [invitationId]),
+    postgresError("55000"),
+  );
+
+  const auditId = `ops-audit-${suffix}`;
+  await pool.query(
+    `
+      INSERT INTO ops_audit_events (
+        id, actor_user_id, action, target_type, target_id, metadata
+      )
+      VALUES ($1, $2, 'ops.test', 'user', $3, '{}'::jsonb)
+    `,
+    [auditId, ownerId, staffId],
+  );
+  await assert.rejects(
+    () =>
+      pool.query(`UPDATE ops_audit_events SET action = 'changed' WHERE id = $1`, [auditId]),
+    postgresError("55000"),
+  );
+  await assert.rejects(
+    () => pool.query(`DELETE FROM ops_audit_events WHERE id = $1`, [auditId]),
+    postgresError("55000"),
+  );
 }
 
 async function assertAuthExpansionBoundary(pool: Pool): Promise<void> {
@@ -425,6 +523,7 @@ describe(
 
       try {
         await assertPhase04Catalog(pool);
+        await assertOpsSecurityBoundary(pool);
         const fixture = await createContractFixtures(pool);
 
         await assert.rejects(

@@ -23,12 +23,44 @@ permissions:
   contents: read
 
 env:
-  EXACT_NODE_VERSION: 24.18.0
-  EXACT_NPM_VERSION: 11.16.0
-  EXACT_PNPM_VERSION: 11.1.3
+  EXACT_NODE_VERSION: 24.6.0
+  EXACT_NPM_VERSION: 11.5.1
+  EXACT_PNPM_VERSION: 10.32.1
   HOSTINGER_OPS_BRANCH: hostinger-ops-production
 
 jobs:
+  deployment-impact:
+    name: deployment-impact
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should_publish: ${{ steps.impact.outputs.should_publish }}
+    steps:
+      - name: Checkout deployment classifier
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+
+      - name: Classify the main changeset
+        id: impact
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$BEFORE_SHA" =~ ^[0-9a-f]{40}$ ]] ||
+             [[ "$BEFORE_SHA" == "0000000000000000000000000000000000000000" ]] ||
+             ! git cat-file -e "${BEFORE_SHA}^{commit}"; then
+            SHOULD_PUBLISH=true
+          else
+            SHOULD_PUBLISH="$(
+              git diff --name-only -z "$BEFORE_SHA" "$GITHUB_SHA" |
+                node scripts/classify-deployment-impact.mjs --stdin0
+            )"
+          fi
+          [[ "$SHOULD_PUBLISH" == "true" || "$SHOULD_PUBLISH" == "false" ]]
+          echo "should_publish=$SHOULD_PUBLISH" >> "$GITHUB_OUTPUT"
+
   quality:
     name: quality
     runs-on: ubuntu-latest
@@ -40,7 +72,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
-          version: 11.1.3
+          version: 10.32.1
 
       - name: Setup exact Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -65,6 +97,7 @@ jobs:
           set -euo pipefail
           node scripts/verify-hostinger-ops-deploy-tree.mjs self-test
           node scripts/verify-production-deploy.mjs self-test
+          node scripts/classify-deployment-impact.mjs self-test
           bash -n scripts/publish-hostinger-ops-branch.sh
           bash scripts/publish-hostinger-ops-branch.sh self-test
           bash -n scripts/pack-ops-standalone.sh
@@ -92,12 +125,24 @@ jobs:
           STOREFRONT_CHECKOUT_RELEASE_APPROVED: "false"
           STOREFRONT_INQUIRIES_ENABLED: "false"
           STANDALONE_SOURCE_COMMIT: ${{ github.sha }}
+          NEXT_PUBLIC_STOREFRONT_POSTHOG_TOKEN: ${{ vars.POSTHOG_PROJECT_TOKEN }}
+          NEXT_PUBLIC_STOREFRONT_POSTHOG_HOST: ${{ vars.POSTHOG_HOST }}
+          NEXT_PUBLIC_STOREFRONT_SENTRY_DSN: ${{ vars.STOREFRONT_SENTRY_DSN }}
+          NEXT_PUBLIC_STOREFRONT_SENTRY_TRACES_SAMPLE_RATE: "0.1"
+          SENTRY_ORG: khanect
+          STOREFRONT_SENTRY_PROJECT: perfume-aura-storefront
         run: pnpm build:storefront
 
       - name: Ops production build
         env:
           BETTER_AUTH_URL: https://app.perfumeaura.com
           STANDALONE_SOURCE_COMMIT: ${{ github.sha }}
+          NEXT_PUBLIC_OPS_POSTHOG_TOKEN: ${{ vars.POSTHOG_PROJECT_TOKEN }}
+          NEXT_PUBLIC_OPS_POSTHOG_HOST: ${{ vars.POSTHOG_HOST }}
+          NEXT_PUBLIC_OPS_SENTRY_DSN: ${{ vars.OPS_SENTRY_DSN }}
+          NEXT_PUBLIC_OPS_SENTRY_TRACES_SAMPLE_RATE: "0.1"
+          SENTRY_ORG: khanect
+          OPS_SENTRY_PROJECT: perfume-aura-ops
         run: pnpm build:ops
 
   integration:
@@ -129,7 +174,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
-          version: 11.1.3
+          version: 10.32.1
 
       - name: Setup exact Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -194,6 +239,18 @@ jobs:
       DATABASE_URL_DIRECT: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_package
       BETTER_AUTH_URL: https://app.perfumeaura.com
       STANDALONE_REQUIRE_SERVER_SMOKE: "1"
+      NEXT_PUBLIC_STOREFRONT_POSTHOG_TOKEN: ${{ vars.POSTHOG_PROJECT_TOKEN }}
+      NEXT_PUBLIC_STOREFRONT_POSTHOG_HOST: ${{ vars.POSTHOG_HOST }}
+      NEXT_PUBLIC_STOREFRONT_SENTRY_DSN: ${{ vars.STOREFRONT_SENTRY_DSN }}
+      NEXT_PUBLIC_STOREFRONT_SENTRY_TRACES_SAMPLE_RATE: "0.1"
+      NEXT_PUBLIC_OPS_POSTHOG_TOKEN: ${{ vars.POSTHOG_PROJECT_TOKEN }}
+      NEXT_PUBLIC_OPS_POSTHOG_HOST: ${{ vars.POSTHOG_HOST }}
+      NEXT_PUBLIC_OPS_SENTRY_DSN: ${{ vars.OPS_SENTRY_DSN }}
+      NEXT_PUBLIC_OPS_SENTRY_TRACES_SAMPLE_RATE: "0.1"
+      SENTRY_ORG: khanect
+      STOREFRONT_SENTRY_PROJECT: perfume-aura-storefront
+      OPS_SENTRY_PROJECT: perfume-aura-ops
+      SENTRY_AUTH_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.SENTRY_AUTH_TOKEN || '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -201,7 +258,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
-          version: 11.1.3
+          version: 10.32.1
 
       - name: Setup exact Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -250,12 +307,12 @@ jobs:
           const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
           assert.equal(manifest.source.commit, sourceCommit);
           assert.equal(manifest.source.dirty, false);
-          assert.equal(manifest.runtime.node, "24.18.0");
-          assert.equal(manifest.runtime.npm, "11.16.0");
-          assert.equal(manifest.runtime.pnpm, "11.1.3");
+          assert.equal(manifest.runtime.node, "24.6.0");
+          assert.equal(manifest.runtime.npm, "11.5.1");
+          assert.equal(manifest.runtime.pnpm, "10.32.1");
           assert.equal(manifest.runtime.next, "16.2.11");
           assert.equal(manifest.runtime.sharp, "0.35.3");
-          assert.equal(manifest.runtime.postcss, "8.5.22");
+          assert.equal(manifest.runtime.postcss, "8.5.23");
           const runtimeLockSha256 = crypto
             .createHash("sha256")
             .update(fs.readFileSync("scripts/ops-runtime-deps/package-lock.json"))
@@ -315,8 +372,12 @@ jobs:
 
   publish-hostinger-ops:
     name: publish-hostinger-ops-branch
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.deployment-impact.outputs.should_publish == 'true'
     needs:
+      - deployment-impact
       - package
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -397,8 +458,10 @@ jobs:
     if: >-
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
+      needs.deployment-impact.outputs.should_publish == 'true' &&
       vars.HOSTINGER_OPS_AUTO_DEPLOY_ENABLED == 'true'
     needs:
+      - deployment-impact
       - publish-hostinger-ops
     runs-on: ubuntu-latest
     timeout-minutes: 30

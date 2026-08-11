@@ -47,6 +47,21 @@ describe("Better Auth security source contract", () => {
     assert.doesNotMatch(proxy, /role|owner/);
   });
 
+  it("redirects the unexpected ops www alias without trusting it for auth", async () => {
+    const [config, policy] = await Promise.all([
+      source("../next.config.ts"),
+      source("auth-policy.ts"),
+    ]);
+
+    assert.match(config, /value:\s*"www\.app\.perfumeaura\.com"/);
+    assert.match(
+      config,
+      /destination:\s*"https:\/\/app\.perfumeaura\.com\/:path\*"/,
+    );
+    assert.match(config, /permanent:\s*true/);
+    assert.doesNotMatch(policy, /www\.app\.perfumeaura\.com/);
+  });
+
   it("does not trust query parameters as proof of a successful reset", async () => {
     const reset = await source(
       "../app/(auth)/reset-password/reset-password-form.tsx",
@@ -61,7 +76,7 @@ describe("Better Auth security source contract", () => {
     assert.doesNotMatch(page, /getSession|getOwnerSession|requireOwnerSession|@perfume-aura\/db/);
   });
 
-  it("classifies a failed session fetch before treating a user as non-owner", async () => {
+  it("classifies a failed session fetch before treating a user as non-operations staff", async () => {
     const login = await source(
       "../app/(auth)/login/login-form.tsx",
     );
@@ -73,7 +88,7 @@ describe("Better Auth security source contract", () => {
       sessionFetch,
     );
     const roleCheck = login.indexOf(
-      "if (!isOwnerRole(session.data?.user.role))",
+      "if (!isProtectedOpsRole(session.data?.user.role))",
       sessionFetch,
     );
 
@@ -91,7 +106,7 @@ describe("Better Auth security source contract", () => {
     assert.doesNotMatch(seed, /console\.error\(\s*(err|error|cause)\b/);
   });
 
-  it("requires a verified owner in every protected page loader", async () => {
+  it("requires an operations session in the protected shell and a capability in each protected page", async () => {
     const dashboardDirectory = resolve(appDirectory, "(dashboard)");
     const files = (await filesRecursively(dashboardDirectory)).filter(
       (file) => file.endsWith("/page.tsx") || file.endsWith("/layout.tsx"),
@@ -100,11 +115,19 @@ describe("Better Auth security source contract", () => {
 
     for (const file of files) {
       const contents = await readFile(file, "utf8");
-      assert.match(
-        contents,
-        /await requireOwnerSession\(\{\s*redirectToLogin:\s*true\s*\}\)/,
-        `${file} must verify the owner`,
-      );
+      if (file.endsWith("/layout.tsx")) {
+        assert.match(
+          contents,
+          /await requireOpsSession\(\{\s*redirectToLogin:\s*true\s*\}\)/,
+          `${file} must verify the protected operations session`,
+        );
+      } else {
+        assert.match(
+          contents,
+          /await requireCapability\(/,
+          `${file} must require a typed operations capability`,
+        );
+      }
     }
   });
 });

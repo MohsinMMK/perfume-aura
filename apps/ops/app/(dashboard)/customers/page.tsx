@@ -19,7 +19,7 @@ import { listCustomers } from "@/lib/customers";
 import { safeDbQuery } from "@/lib/db-safe";
 import { ProductFilters } from "@/components/products/product-filters";
 import { DbUnavailableState } from "@/components/db-empty-state";
-import { requireOwnerSession } from "@/lib/session";
+import { requireCapability } from "@/lib/session";
 import {
   canonicalPage,
   paginationHref,
@@ -42,7 +42,7 @@ export default async function CustomersPage({
 }: {
   searchParams: SearchParams;
 }) {
-  await requireOwnerSession({ redirectToLogin: true });
+  await requireCapability("customers.view", { redirectToLogin: true });
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const status = parseStatus(sp.status);

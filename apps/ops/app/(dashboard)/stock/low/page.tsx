@@ -21,12 +21,16 @@ import {
   DbUnavailableState,
   LowStockClearState,
 } from "@/components/db-empty-state";
-import { requireOwnerSession } from "@/lib/session";
+import { hasOpsCapability } from "@/lib/ops-access";
+import { requireCapability } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function LowStockPage() {
-  await requireOwnerSession({ redirectToLogin: true });
+  const session = await requireCapability("stock.view", {
+    redirectToLogin: true,
+  });
+  const canViewCost = hasOpsCapability(session.user.role, "stock.view-cost");
 
   const result = await safeDbQuery(() => listLowStock());
 
@@ -77,7 +81,9 @@ export default async function LowStockPage() {
                   <TableHead className="text-right">Size</TableHead>
                   <TableHead className="text-right">On hand</TableHead>
                   <TableHead className="text-right">Reorder</TableHead>
-                  <TableHead className="text-right">Unit cost</TableHead>
+                  {canViewCost ? (
+                    <TableHead className="text-right">Unit cost</TableHead>
+                  ) : null}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -106,9 +112,11 @@ export default async function LowStockPage() {
                     <TableCell className="text-right tabular-nums text-muted-foreground">
                       {formatQty(row.reorderLevel)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatInr(row.costCents)}
-                    </TableCell>
+                    {canViewCost ? (
+                      <TableCell className="text-right tabular-nums">
+                        {row.costCents === null ? "—" : formatInr(row.costCents)}
+                      </TableCell>
+                    ) : null}
                   </TableRow>
                 ))}
               </TableBody>

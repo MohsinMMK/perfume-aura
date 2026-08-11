@@ -142,7 +142,7 @@ export async function createCashfreeOrder(
   return orderResponseSchema.parse(payload);
 }
 
-export async function getCashfreeOrder(
+async function getCashfreeOrder(
   orderId: string,
   dependencies: Readonly<{
     configuration?: CashfreeConfiguration;
@@ -234,24 +234,6 @@ export async function createCashfreeRefund(
     dependencies.fetchImplementation ?? fetch,
   );
   return refundResponseSchema.parse(Array.isArray(payload) ? payload[0] : payload);
-}
-
-export async function getCashfreeRefund(
-  orderId: string,
-  refundId: string,
-  dependencies: Readonly<{
-    configuration?: CashfreeConfiguration;
-    fetchImplementation?: typeof fetch;
-  }> = {},
-): Promise<CashfreeRefund> {
-  const configuration = dependencies.configuration ?? resolveCashfreeConfiguration();
-  const payload = await cashfreeRequest(
-    `/orders/${encodeURIComponent(orderId)}/refunds/${encodeURIComponent(refundId)}`,
-    { method: "GET" },
-    configuration,
-    dependencies.fetchImplementation ?? fetch,
-  );
-  return refundResponseSchema.parse(payload);
 }
 
 export function verifyCashfreeWebhookSignature(input: Readonly<{

@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { CreateProductForm } from "@/components/products/create-product-form";
-import { requireOwnerSession } from "@/lib/session";
+import { requireCapability } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewProductPage() {
-  await requireOwnerSession({ redirectToLogin: true });
+  await requireCapability("catalog.manage-commercials", {
+    redirectToLogin: true,
+  });
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">

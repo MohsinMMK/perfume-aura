@@ -1,9 +1,9 @@
 {
   "name": "perfume-aura",
   "private": true,
-  "packageManager": "pnpm@11.1.3",
+  "packageManager": "pnpm@10.32.1",
   "engines": {
-    "node": ">=24.18.0 <25"
+    "node": ">=24.6.0 <25"
   },
   "description": "Perfume Aura monorepo — public storefront and owner operations",
   "scripts": {
@@ -11,10 +11,14 @@
     "build:storefront": "pnpm --filter @perfume-aura/storefront build",
     "start:storefront": "pnpm --filter @perfume-aura/storefront start",
     "storefront:pack": "bash scripts/pack-storefront-standalone.sh",
+    "storefront:measure-client": "node scripts/measure-storefront-route-client-js.mjs",
+    "storefront:verify-client-budget": "node scripts/measure-storefront-route-client-js.mjs --assert-budgets",
     "dev:ops": "pnpm --filter @perfume-aura/ops dev",
     "build:ops": "pnpm --filter @perfume-aura/ops build",
     "start:ops": "pnpm --filter @perfume-aura/ops start",
     "ops:pack": "bash scripts/pack-ops-standalone.sh",
+    "ops:measure-client": "node scripts/measure-ops-route-client-js.mjs",
+    "ops:verify-client-budget": "node scripts/measure-ops-route-client-js.mjs --assert-budgets",
     "ops:verify-deploy-tree": "node scripts/verify-hostinger-ops-deploy-tree.mjs",
     "ops:extract-zip": "python3 scripts/extract-hostinger-ops-zip.py",
     "ops:publish-branch": "bash scripts/publish-hostinger-ops-branch.sh",
@@ -31,7 +35,7 @@
     "test:unit:workspaces": "pnpm --filter @perfume-aura/db test:unit && pnpm --filter @perfume-aura/storefront test:unit && pnpm --filter @perfume-aura/ops test:unit",
     "test:integration": "pnpm test:inventory && pnpm test:integration:workspaces",
     "test:integration:workspaces": "pnpm --filter @perfume-aura/db test:integration && pnpm --filter @perfume-aura/storefront test:integration && pnpm --filter @perfume-aura/ops test:integration",
-    "security:audit": "pnpm audit --prod --audit-level=high && npm audit --omit=dev --audit-level=high --prefix scripts/ops-runtime-deps",
-    "check": "pnpm commerce:verify && pnpm lint && pnpm typecheck && pnpm test:unit && pnpm build:storefront && pnpm build:ops && pnpm security:audit"
+    "security:audit": "pnpm audit --audit-level=low && npm audit --omit=dev --audit-level=low --prefix scripts/ops-runtime-deps",
+    "check": "pnpm commerce:verify && pnpm lint && pnpm typecheck && pnpm test:unit && pnpm build:storefront && pnpm storefront:verify-client-budget && pnpm build:ops && pnpm ops:verify-client-budget && pnpm security:audit"
   }
 }

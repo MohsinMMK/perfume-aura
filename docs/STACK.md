@@ -6,14 +6,16 @@ Change stack only through an explicit reviewed decision. Production hosting rema
 
 | Area | Choice |
 |---|---|
-| Workspace | pnpm `11.1.3` monorepo |
-| Runtime | Node `24.18.0` local/CI/package; Hostinger Node `24.x` target |
+| Workspace | pnpm `10.32.1` monorepo, aligned to the observed Hostinger deployment baseline |
+| Runtime | Hostinger-managed Node `24.x`; repository and CI baseline `24.6.0`, engines `>=24.6.0 <25` |
 | Ops + storefront | Next.js `16.2.11`, App Router, React 19, TypeScript `7.0.2` native CLI |
 | TypeScript compatibility | `@typescript/native` aliases TypeScript `7.0.2`; `typescript` aliases `@typescript/typescript6` for Next.js and ESLint compiler-API consumers |
 | UI | shadcn/ui, Base UI, Tailwind CSS 4, Hugeicons |
 | Auth | Two isolated Better Auth boundaries: owner ops and storefront customer, each with separate tables, secrets, cookies, origins, and Drizzle adapter |
 | Database | Neon PostgreSQL + Drizzle ORM/Kit + `pg` Pool |
 | Validation | Zod |
+| Analytics | Privacy-filtered PostHog JavaScript SDK; shared project separated by mandatory `application` property |
+| Errors and traces | Official Sentry Next.js SDK with separate storefront and ops projects |
 | Production | Hostinger Business hosting |
 | Ops deploy automation | GitHub Actions prebuilt standalone → generated branch `hostinger-ops-production` → Hostinger Node GitHub App start (`apps/ops/server.js`) |
 | Ops source build on Hostinger | Blocked (esbuild EACCES); not used |
@@ -32,13 +34,41 @@ Change stack only through an explicit reviewed decision. Production hosting rema
 | Drizzle | Official schema, Kit, migration, and PostgreSQL guides |
 | Neon | Official connection, branch, pooling, and role guidance |
 | Hostinger | Official Node.js Web App deployment and custom-domain docs for storefront and ops |
+| PostHog | Official JavaScript SDK and privacy configuration |
+| Sentry | Official Next.js SDK, Logs, releases, and source-map workflow |
 | pnpm | Official workspace configuration |
 
 No hand-rolled substitutes for official install/setup paths. No Vercel production deployment.
 
-## Temporary transitive security compatibility
+## Managed runtime contract
 
-`pnpm-workspace.yaml` pins patched `brace-expansion`, `@hono/node-server`, and `esbuild` releases while upstream parent ranges lag current advisories. `patches/minimatch@3.1.5.patch`, created through official `pnpm patch`, adapts minimatch 3 to brace-expansion 5's named CommonJS export. Remove overrides and patch when ESLint, MCP SDK/shadcn, and Drizzle Kit publish compatible dependency ranges; keep `pnpm audit`, lint, shadcn preset resolution, migrations, and packaging green when changing them.
+Hostinger Business Web Hosting exposes Node.js by major-version selector. The
+supported managed choices currently include `18.x`, `20.x`, `22.x`, and `24.x`;
+both Perfume Aura applications select `24.x`. Hostinger supports pnpm but owns
+the installed patch. Live deployment logs are therefore the authority for the
+exact production compatibility baseline, currently Node `24.6.0` and pnpm
+`10.32.1`.
+
+The repository tests against that observed baseline and does not require a
+newer exact patch that hPanel cannot select. CI and package generation are
+reproducible on Node `24.6.0`, npm `11.5.1`, and pnpm `10.32.1`; application
+engines accept compatible Node `24.x` patches from `24.6.0` onward. A future
+Hostinger patch or package-manager change is not accepted silently: inspect
+fresh deployment logs, update the compatibility lane if necessary, run the
+complete local gate, and verify an exact-SHA deployment before release.
+
+## Temporary transitive compatibility
+
+`pnpm-workspace.yaml` contains reviewed overrides for parent ranges that lag
+security or runtime fixes. `patches/minimatch@3.1.5.patch`, created with
+`pnpm patch`, adapts minimatch 3 to brace-expansion 5's CommonJS export.
+
+The reviewed security overrides currently pin `postcss@8.5.23`,
+`nanoid@3.3.17`, `brace-expansion@5.0.9`, `fast-uri@3.1.5`,
+`ip-address@10.3.1`, `undici@7.29.0`, `js-yaml@4.3.1`, and `hono@4.12.34`.
+Change an override only with dependency-path evidence, then verify the audit,
+lint, shadcn preset resolution, migrations, both builds, and both packages.
+Remove overrides when upstream ranges make them unnecessary.
 
 ## shadcn monorepo contract
 
@@ -69,11 +99,14 @@ Preset resolve must return `b23PPibQOI` without fallback. Never copy registry co
 
 ## Auth contract
 
-- Owner public sign-up disabled. Customer sign-up is a distinct verified-email
+- Owner/staff public sign-up disabled. Customer sign-up is a distinct verified-email
   flow and defaults off until `STOREFRONT_CUSTOMER_AUTH_ENABLED=true` plus all
   secret, SMTP, and callback-domain gates are proven.
 - Owner seeded explicitly.
 - Password length: 12–256 characters.
+- Ops roles are exact `owner`, `staff`, or `user`; roles and capability checks
+  fail closed. The official Admin + 2FA plugins use TOTP, encrypted recovery
+  codes, a 30-day trusted-device window, and feature flags that default off.
 - Generic reset responses prevent account enumeration.
 - SMTP reset tokens, sessions, trusted origins, and rate limits follow Better Auth official guidance.
 - Hostinger proxy/IP header trust stays disabled/unassumed until provider chain is proven non-forgeable through production gate in `OPERATIONS.md`.

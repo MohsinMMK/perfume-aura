@@ -29,7 +29,7 @@ export function SiteFooter() {
 
         <nav aria-label="Footer navigation" className="grid content-center border-b border-[color:rgb(245_228_199_/_24%)] p-6 lg:border-b-0 lg:border-r">
           {navigation.map(([label, href]) => (
-            <Link key={href} href={href} className="flex min-h-8 items-center font-display text-base hover:text-white">
+            <Link key={href} href={href} prefetch={false} className="flex min-h-8 items-center font-display text-base hover:text-white">
               {label}
             </Link>
           ))}
@@ -47,15 +47,15 @@ export function SiteFooter() {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-1">
-          <Link href="/account" className="grid min-h-24 place-items-center border-r border-[color:rgb(245_228_199_/_24%)] font-display text-lg hover:bg-white/5 lg:border-b lg:border-r-0">Account</Link>
-          <Link href="/search" className="grid min-h-24 place-items-center font-display text-lg hover:bg-white/5">Search</Link>
+          <Link href="/account" prefetch={false} className="grid min-h-24 place-items-center border-r border-[color:rgb(245_228_199_/_24%)] font-display text-lg hover:bg-white/5 lg:border-b lg:border-r-0">Account</Link>
+          <Link href="/search" prefetch={false} className="grid min-h-24 place-items-center font-display text-lg hover:bg-white/5">Search</Link>
         </div>
       </div>
 
       <div className="mx-auto mt-3 flex max-w-[94rem] flex-col gap-3 text-[0.62rem] uppercase tracking-[0.08em] text-[color:rgb(245_228_199_/_45%)] sm:flex-row sm:items-center sm:justify-between">
         <p>© {new Date().getFullYear()} Perfume Aura. All rights reserved.</p>
         <div className="flex flex-wrap gap-x-4 gap-y-2">
-          {policies.map(([label, href]) => <Link key={href} href={href} className="hover:text-[var(--aura-ivory)]">{label}</Link>)}
+          {policies.map(([label, href]) => <Link key={href} href={href} prefetch={false} className="hover:text-[var(--aura-ivory)]">{label}</Link>)}
         </div>
       </div>
     </footer>

@@ -21,7 +21,8 @@ import {
   type AdjustStockInput,
 } from "@perfume-aura/validators";
 import { revalidatePath } from "next/cache";
-import { requireOwnerSession } from "@/lib/session";
+import { hasOpsCapability } from "@/lib/ops-access";
+import { requireCapability } from "@/lib/session";
 import {
   actionError,
   actionOk,
@@ -46,7 +47,7 @@ export type LowStockRow = {
   sizeMl: number;
   quantityOnHand: number;
   reorderLevel: number;
-  costCents: number;
+  costCents: number | null;
 };
 
 export type MovementRow = {
@@ -68,11 +69,12 @@ export type DashboardStats = {
   productCount: number;
   totalUnits: number;
   lowStockCount: number;
-  inventoryCostCents: number;
+  inventoryCostCents: number | null;
 };
 
 export async function listLowStock(): Promise<LowStockRow[]> {
-  await requireOwnerSession();
+  const session = await requireCapability("stock.view");
+  const canViewCost = hasOpsCapability(session.user.role, "stock.view-cost");
 
   const rows = await db
     .select({
@@ -84,7 +86,9 @@ export async function listLowStock(): Promise<LowStockRow[]> {
       sizeMl: productVariants.sizeMl,
       quantityOnHand: productVariants.quantityOnHand,
       reorderLevel: productVariants.reorderLevel,
-      costCents: productVariants.costCents,
+      costCents: canViewCost
+        ? productVariants.costCents
+        : sql<number | null>`null::int`,
     })
     .from(productVariants)
     .innerJoin(products, eq(products.id, productVariants.productId))
@@ -105,7 +109,8 @@ export async function listRecentMovements(opts?: {
   page?: number;
   pageSize?: number;
 }): Promise<PaginatedResult<MovementRow>> {
-  await requireOwnerSession();
+  const session = await requireCapability("stock.view");
+  const canViewCost = hasOpsCapability(session.user.role, "stock.view-cost");
 
   const page = parsePage(opts?.page);
   const pageSize = normalizePageSize(opts?.pageSize);
@@ -118,8 +123,12 @@ export async function listRecentMovements(opts?: {
         quantityDelta: stockMovements.quantityDelta,
         quantityAfter: stockMovements.quantityAfter,
         note: stockMovements.note,
-        unitCostCents: stockMovements.unitCostCents,
-        costBasis: stockMovements.costBasis,
+        unitCostCents: canViewCost
+          ? stockMovements.unitCostCents
+          : sql<number | null>`null::int`,
+        costBasis: canViewCost
+          ? stockMovements.costBasis
+          : sql<"snapshot" | "legacy_current" | null>`null::text`,
         createdAt: stockMovements.createdAt,
         sku: productVariants.sku,
         productName: products.name,
@@ -146,7 +155,7 @@ export async function listRecentMovements(opts?: {
 }
 
 export async function getLowStockCount(): Promise<number> {
-  await requireOwnerSession();
+  await requireCapability("stock.view");
   const [row] = await db
     .select({ lowStockCount: sql<number>`count(*)::int` })
     .from(productVariants)
@@ -162,7 +171,8 @@ export async function getLowStockCount(): Promise<number> {
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
-  await requireOwnerSession();
+  const session = await requireCapability("dashboard.view");
+  const canViewCost = hasOpsCapability(session.user.role, "stock.view-cost");
 
   const [[productRow], [stockRow], lowStockCount] = await Promise.all([
     db
@@ -174,7 +184,9 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     db
       .select({
         totalUnits: sql<number>`coalesce(sum(${productVariants.quantityOnHand}), 0)::int`,
-        inventoryCostCents: sql<number>`coalesce(sum(${productVariants.quantityOnHand} * ${productVariants.costCents}), 0)::bigint`,
+        inventoryCostCents: canViewCost
+          ? sql<number>`coalesce(sum(${productVariants.quantityOnHand} * ${productVariants.costCents}), 0)::bigint`
+          : sql<number | null>`null::bigint`,
       })
       .from(productVariants)
       .where(eq(productVariants.status, "active")),
@@ -185,7 +197,9 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     productCount: Number(productRow?.productCount ?? 0),
     totalUnits: Number(stockRow?.totalUnits ?? 0),
     lowStockCount,
-    inventoryCostCents: Number(stockRow?.inventoryCostCents ?? 0),
+    inventoryCostCents: canViewCost
+      ? Number(stockRow?.inventoryCostCents ?? 0)
+      : null,
   };
 }
 
@@ -204,7 +218,7 @@ export async function receiveStockAction(
 ): Promise<ActionResult<{ quantityAfter: number }>> {
   let session;
   try {
-    session = await requireOwnerSession();
+    session = await requireCapability("stock.receive");
   } catch {
     return actionError("You must be signed in");
   }
@@ -244,7 +258,7 @@ export async function adjustStockAction(
 ): Promise<ActionResult<{ quantityAfter: number }>> {
   let session;
   try {
-    session = await requireOwnerSession();
+    session = await requireCapability("stock.adjust");
   } catch {
     return actionError("You must be signed in");
   }

@@ -20,8 +20,14 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
-  /** App role; server-owned (not set via public sign-up input). */
+  /** Server-owned role; constrained to the defined operations roles in SQL. */
   role: text("role").notNull().default("user"),
+  /** Official Better Auth Admin-plugin ban fields. */
+  banned: boolean("banned").notNull().default(false),
+  banReason: text("ban_reason"),
+  banExpires: timestamp("ban_expires", { withTimezone: true }),
+  /** Official Better Auth 2FA-plugin enrollment flag. */
+  twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -46,6 +52,8 @@ export const session = pgTable(
       .$onUpdate(() => new Date()),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
+    /** Official Better Auth Admin-plugin impersonation marker (never used by Ops UI). */
+    impersonatedBy: text("impersonated_by"),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -115,9 +123,35 @@ export const rateLimit = pgTable("rate_limit", {
   lastRequest: bigint("last_request", { mode: "number" }).notNull(),
 });
 
+/**
+ * Official Better Auth 2FA-plugin model. Secrets and recovery codes are never
+ * returned by Better Auth and must never be selected by application code.
+ */
+export const twoFactor = pgTable(
+  "two_factor",
+  {
+    id: text("id").primaryKey(),
+    secret: text("secret").notNull(),
+    backupCodes: text("backup_codes").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    verified: boolean("verified").notNull().default(true),
+    failedVerificationCount: integer("failed_verification_count")
+      .notNull()
+      .default(0),
+    lockedUntil: timestamp("locked_until", { withTimezone: true }),
+  },
+  (table) => [
+    index("two_factor_secret_idx").on(table.secret),
+    index("two_factor_user_id_idx").on(table.userId),
+  ],
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
+  twoFactors: many(twoFactor),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -130,6 +164,13 @@ export const sessionRelations = relations(session, ({ one }) => ({
 export const accountRelations = relations(account, ({ one }) => ({
   user: one(user, {
     fields: [account.userId],
+    references: [user.id],
+  }),
+}));
+
+export const twoFactorRelations = relations(twoFactor, ({ one }) => ({
+  user: one(user, {
+    fields: [twoFactor.userId],
     references: [user.id],
   }),
 }));

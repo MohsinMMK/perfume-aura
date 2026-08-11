@@ -4,8 +4,8 @@
   "private": true,
   "description": "Narrow reviewed lock for Linux x64 glibc Sharp runtime files in the Hostinger standalone artifact.",
   "engines": {
-    "node": "24.18.0",
-    "npm": "11.16.0"
+    "node": "24.6.0",
+    "npm": "11.5.1"
   },
   "dependencies": {
     "sharp": "0.35.3"

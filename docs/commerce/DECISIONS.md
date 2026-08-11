@@ -6,7 +6,7 @@ Only **Accepted** decisions authorize implementation assumptions. Proposed and P
 
 | ID | Date | Status | Decision | Reason / consequence |
 |---|---|---|---|---|
-| COM-ADR-001 | 2026-07-29 | Accepted | Use Markdown, structured catalog data, executable checks, and Graphify as a combined verification system. | No single layer proves requirements, runtime behavior, and relationships. Graphify remains derived. |
+| COM-ADR-001 | 2026-07-29 | Accepted | Use Markdown, structured catalog data, and executable checks as the commerce verification system. | Requirements, source records, and rerunnable checks cover different evidence classes. Generated relationship maps are optional local analysis and are not tracked source. |
 | COM-ADR-002 | 2026-07-29 | Accepted | Preserve source PDF names exactly during transcription and flag ambiguity rather than silently correcting it. | Source fidelity enables later review and audit. |
 | COM-ADR-003 | 2026-07-29 | Accepted | Keep current public marketing honest until real commerce is operationally proven. | Prevents fabricated price, stock, review, shipping, payment, or checkout claims. |
 | COM-ADR-004 | 2026-07-29 | Proposed | Build public commerce as a separate `apps/storefront` Next.js application sharing controlled packages and data. | Static marketing cannot safely own server-authoritative checkout; private ops boundaries must remain intact. |

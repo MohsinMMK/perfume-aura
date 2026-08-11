@@ -61,6 +61,8 @@ Package scripts:
 |-------|---------|
 | `user`, `session`, `account`, `verification` | Better Auth (`user.role` defaults to non-privileged `user`) |
 | `rate_limit` | Better Auth durable rate-limit counters |
+| `two_factor` | Official Better Auth TOTP and encrypted recovery-code record |
+| `staff_invitation_events`, `ops_audit_events` | Append-only staff lifecycle and redacted operations audit history |
 | `products` | Perfume catalog |
 | `product_variants` | SKU × size; `quantity_on_hand`, `version` |
 | `locations` | Warehouses (`MAIN` seeded) |
@@ -131,7 +133,19 @@ TEST_DATABASE_URL='postgresql://...@127.0.0.1:55432/perfume_aura_phase04_root_ad
 ```
 
 This covers a fresh database and a clean exact-`0006` upgrade. The full
-business integration suite expects migrations through `0008`.
+business integration suite expects migrations through `0010`.
+
+Migration `0010_curved_puma` adds the official Better Auth Admin/2FA schema,
+strict `owner`/`staff`/`user` role validation, an at-most-one-owner index plus
+a trigger that prevents removal or demotion of the final owner, and immutable
+staff-invitation/audit records. A newly initialized database can have zero
+owners until the explicit owner seed creates its first owner; once one exists,
+the database blocks a second owner and any removal of the final one.
+
+Production rollout is manual: first test this migration on an isolated Neon
+branch, then apply it with the reviewed direct owner connection and reapply
+the additive grant matrix in `packages/db/sql/ops-runtime-grants.sql`. Never
+point integration tests at Neon.
 
 ## Inventory API
 
