@@ -38,9 +38,10 @@ All storefront release flags remain closed:
 `robots.txt` disallows indexing. Green runtime health does not authorize opening
 any release flag.
 
-The complete verified implementation is published for review in draft PR #9 on
-`codex/managed-hosting-release`. Its first published head passed fresh quality,
-integration, dependency-review, CodeQL, and verified-package checks. Superseded
+The complete verified implementation is published for review in ready PR #9 on
+`codex/managed-hosting-release`. Commit
+`49836b4dc7d5fcd4f2e21b84f04fc86b98fd3f91` passed fresh quality, integration,
+dependency-review, CodeQL, CodeRabbit, and verified-package checks. Superseded
 PRs #7 and #8 are closed and their local and remote branches are deleted;
 nothing is merged or deployed.
 `OPS_TWO_FACTOR_REQUIRED` and `OPS_STAFF_INVITES_ENABLED` stay false until the
@@ -69,12 +70,15 @@ tests, and both checksum-verified packages with extracted-server smoke. Remote
 `main` and production remain on
 `cc38326dcf46651e10cb618727e4c03ef1fdc948`.
 
-Superseded drafts #7/#8 are not release sources. Draft PR #9 passed fresh CI,
-CodeQL, dependency, package, and review automation on its first published head;
-its documentation-only cleanup head must remain green. GitHub's default branch
-continues to report 14 Dependabot alerts, including four high severity alerts,
-until the reviewed remediation reaches `main`. `main` also still lacks the
-prepared branch protection and required human approval.
+Superseded drafts #7/#8 are not release sources. Ready PR #9 passed fresh CI,
+CodeQL, dependency, package, and review automation on its documentation-cleanup
+head. GitHub's default branch continues to report 14 Dependabot alerts,
+including four high severity alerts, until the reviewed remediation reaches
+`main`. `main` is protected with strict required checks, one approval, stale-
+review dismissal, last-push approval, conversation resolution, linear history,
+administrator enforcement, and force-push/deletion denial. No independent
+human reviewer is currently a repository collaborator, so approval remains
+blocked.
 
 ### Hostinger runtime alignment and process incident
 
@@ -95,6 +99,12 @@ attribution, supervisor restart cause, HCDN routing evidence, a durable scoped
 repair, or a case ID. Current public health does not close this blocker. Do not
 redeploy, stop plan-wide processes, migrate production, or enable flags until a
 scoped repair is proven and both applications are re-smoked.
+
+Fresh read-only Hostinger API evidence on 2026-08-11 confirms both managed
+websites are enabled, select Node `24`, use `apps/storefront/server.js` and
+`apps/ops/server.js`, and have completed recorded deployments. The API does not
+expose the missing process attribution, supervisor, routing, resource, repair,
+or support-case evidence and therefore does not clear the blocker.
 
 ### Storefront browser hardening
 
@@ -119,7 +129,7 @@ the prepared work.
 ## Repository
 
 - One primary worktree.
-- Draft PR #9 is the only intended review source for the combined verified tree.
+- Ready PR #9 is the only intended review source for the combined verified tree.
 - Superseded PRs #7/#8 are closed and their local and remote branches are
   deleted.
 - One primary worktree is present.
@@ -129,8 +139,8 @@ the prepared work.
 
 ## Next action
 
-1. Keep draft PR #9 green and obtain the prepared branch protection plus one
-   human approval.
+1. Keep ready PR #9 green and add an independent repository collaborator to
+   provide the required human approval.
 2. Obtain the scoped managed-Hostinger process repair before separately
    authorizing any PR #9 merge or production release.
 3. Keep all storefront commerce and staff security flags closed.
