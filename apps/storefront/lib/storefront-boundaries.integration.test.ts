@@ -61,6 +61,35 @@ describe("storefront customer-auth boundary", () => {
     );
   });
 
+  it("defers the customer-auth browser SDK until an enabled user action", async () => {
+    const accountForm = await readFile(
+      new URL("../components/account-form.tsx", import.meta.url),
+      "utf8",
+    );
+    assert.doesNotMatch(accountForm, /^import .*customer-auth-client/m);
+    assert.match(accountForm, /import\("@\/lib\/customer-auth-client"\)/);
+  });
+
+  it("avoids release-locked cart hydration and limits automatic prefetch", async () => {
+    const shell = await readFile(
+      new URL("../components/storefront-shell.tsx", import.meta.url),
+      "utf8",
+    );
+    const cartProvider = await readFile(
+      new URL("../components/cart-provider.tsx", import.meta.url),
+      "utf8",
+    );
+    const header = await readFile(
+      new URL("../components/site-header.tsx", import.meta.url),
+      "utf8",
+    );
+
+    assert.match(shell, /initialCart=\{loadRemoteCart \? null : readReleaseLockedCart\(\)\}/);
+    assert.match(cartProvider, /if \(!loadRemoteCart\) return/);
+    assert.match(cartProvider, /controller\.abort\(\)/);
+    assert.match(header, /prefetch=\{item\.href === "\/shop" \? null : false\}/);
+  });
+
   it("defines a host-aware permanent apex redirect", async () => {
     const config = await readFile(
       new URL("../next.config.ts", import.meta.url),

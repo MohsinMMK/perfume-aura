@@ -29,6 +29,7 @@ yarn-error.log*
 .claude/
 .pi/
 .pi-subagents/
+graphify-out/
 perfume-aura-standalone_*.zip
 *.standalone.zip
 

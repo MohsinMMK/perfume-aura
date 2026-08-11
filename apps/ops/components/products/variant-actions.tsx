@@ -56,6 +56,13 @@ export function VariantActions({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+
+  // Commercial values are deliberately omitted from staff projections. Never
+  // render an editable commercial form from an incomplete projection.
+  if (variant.costCents === null || variant.retailCents === null) {
+    return null;
+  }
+
   const archiving = variant.status === "active";
 
   async function onEdit(event: FormEvent<HTMLFormElement>) {

@@ -18,7 +18,9 @@ No static marketing application or generated root publish surface remains.
 - Storefront uses a controlled public catalog projection and a secure HttpOnly
   cart token. It never returns costs, raw stock, internal notes, or archived
   records.
-- Ops uses independent Better Auth owner sessions and private server actions.
+- Ops uses independent Better Auth owner/staff sessions and private,
+  capability-authorized server actions. Roles are exact `owner`, `staff`, or
+  `user`; missing, unknown, and comma-separated values fail closed.
 - Storefront customer auth has separate tables, secrets, cookies, and trusted
   origins. It is disabled and must not import auth/database code on disabled
   routes.
@@ -34,6 +36,9 @@ No static marketing application or generated root publish surface remains.
 - Money persists as integer INR paise; no browser float is authoritative.
 - Inventory, invoice/payment, and commerce reservation/order lifecycles are
   transactionally locked and idempotent where a client or provider may retry.
+- The Admin/2FA schema uses immutable invitation/audit tables and a database
+  owner invariant: a blank database may have zero owners until seeded, then it
+  permits one owner only and prevents removal/demotion of the final owner.
 
 ### Retained financial and inventory contracts
 
@@ -70,8 +75,9 @@ git diff --check
 ```
 
 `pnpm check` runs commerce verification, lint, typecheck, unit tests, both
-production builds, and production dependency audit. Run integration tests
-separately with explicitly supplied disposable database URLs.
+production builds, and the full workspace dependency audit. The audit fails on
+any known severity and also checks the separate ops runtime lock. Run
+integration tests separately with explicitly supplied disposable database URLs.
 
 ## CI and packages
 
@@ -81,6 +87,11 @@ only the ops package is published automatically to
 `hostinger-ops-production`. The storefront artifact remains a deliberate
 Hostinger ZIP deployment with exact checksum verification.
 
+Markdown-only main changes still run CI and packaging but do not update the
+generated production branch. Missing or unclassifiable change evidence fails
+closed to publication. CodeQL scans JavaScript and TypeScript on pull requests,
+main pushes, and the weekly schedule.
+
 The production verifier always checks the apex storefront plus ops exact SHA,
 health, auth-session response, and static assets:
 
@@ -89,6 +100,20 @@ node scripts/verify-production-deploy.mjs <40-character-sha> \
   --public-surface storefront \
   --public-base https://perfumeaura.com
 ```
+
+## Observability boundary
+
+The browser, Node, and Edge integration is documented in
+`docs/OBSERVABILITY.md`. Provider SDKs remain disabled when their environment
+identifier is absent. PostHog initializes after page load, captures only
+page-view/page-leave activity, and registers an application discriminator.
+Sentry captures unhandled failures, sampled traces, and typed structured logs.
+
+Privacy sanitizers remove direct-identifier property keys, request bodies,
+headers, cookies, query strings, fragments, and opaque URL tokens before an
+event can leave either app. Tests for those filters run in each application's
+unit suite. Do not add console capture, DOM autocapture, session replay, or
+customer/staff email identification without a separate privacy review.
 
 ## Quality and security
 

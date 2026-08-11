@@ -11,6 +11,14 @@ describe("security headers", () => {
     );
     assert.match(headers.get("Content-Security-Policy") ?? "", /default-src 'self'/);
     assert.match(headers.get("Content-Security-Policy") ?? "", /frame-ancestors 'none'/);
+    assert.match(
+      headers.get("Content-Security-Policy") ?? "",
+      /connect-src[^;]+https:\/\/\*\.posthog\.com/,
+    );
+    assert.match(
+      headers.get("Content-Security-Policy") ?? "",
+      /connect-src[^;]+https:\/\/\*\.ingest\.sentry\.io/,
+    );
     assert.match(headers.get("Content-Security-Policy") ?? "", /upgrade-insecure-requests/);
     assert.equal(headers.get("Strict-Transport-Security"), "max-age=31536000");
     assert.equal(headers.get("X-Frame-Options"), "DENY");

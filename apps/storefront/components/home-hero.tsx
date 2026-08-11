@@ -42,17 +42,24 @@ export function HomeHero({
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const section = sectionRef.current;
+    const kicker = kickerRef.current;
+    const heading = headingRef.current;
+    const media = mediaRef.current;
+    const controls = controlsRef.current;
+    const cta = ctaRef.current;
+    if (!section || !kicker || !heading || !media || !cta) return;
     let active = true;
     let cleanup = () => {};
 
     void import("gsap").then(({ default: gsap }) => {
-      if (!active || !sectionRef.current) return;
+      if (!active) return;
       const context = gsap.context(() => {
         const timeline = gsap.timeline({ defaults: { ease: "power4.out" } });
         timeline
-          .from(kickerRef.current, { y: 18, opacity: 0, duration: 0.45 })
+          .from(kicker, { y: 18, opacity: 0, duration: 0.45 })
           .from(
-            headingRef.current,
+            heading,
             {
               y: 80,
               clipPath: "inset(0 0 100% 0)",
@@ -61,17 +68,23 @@ export function HomeHero({
             0.08,
           )
           .from(
-            mediaRef.current,
+            media,
             { scale: 0.88, opacity: 0, duration: 0.85 },
             0.22,
-          )
-          .from(
-            controlsRef.current,
+          );
+        if (controls) {
+          timeline.from(
+            controls,
             { scale: 0.8, opacity: 0, duration: 0.48 },
             0.5,
-          )
-          .from(ctaRef.current, { y: 28, opacity: 0, duration: 0.5 }, 0.58);
-      }, sectionRef);
+          );
+        }
+        timeline.from(
+          cta,
+          { y: 28, opacity: 0, duration: 0.5 },
+          0.58,
+        );
+      }, section);
       cleanup = () => context.revert();
     });
 
@@ -83,14 +96,18 @@ export function HomeHero({
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const section = sectionRef.current;
+    const image = imageRef.current;
+    const name = nameRef.current;
+    if (!section || !image || !name) return;
     let active = true;
     let cleanup = () => {};
 
     void import("gsap").then(({ default: gsap }) => {
-      if (!active || !sectionRef.current) return;
+      if (!active) return;
       const context = gsap.context(() => {
         gsap.fromTo(
-          imageRef.current,
+          image,
           { y: 34, scale: 1.06, opacity: 0.2, filter: "blur(9px)" },
           {
             y: 0,
@@ -102,11 +119,11 @@ export function HomeHero({
           },
         );
         gsap.fromTo(
-          nameRef.current,
+          name,
           { y: 12, opacity: 0 },
           { y: 0, opacity: 1, duration: 0.38, ease: "power4.out" },
         );
-        gsap.to(imageRef.current, {
+        gsap.to(image, {
           y: -10,
           duration: 2.8,
           delay: 0.72,
@@ -114,7 +131,7 @@ export function HomeHero({
           yoyo: true,
           ease: "sine.inOut",
         });
-      }, sectionRef);
+      }, section);
       cleanup = () => context.revert();
     });
 

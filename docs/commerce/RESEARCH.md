@@ -87,20 +87,24 @@ Observed weaknesses to avoid or improve:
 - Copied brand assets, product descriptions, designer logos, or customer claims
 - Payment, shipping, stock, review, or delivery promises before systems and policies are proven
 
-## India payment and trademark review — 2026-07-30
+## India payment and trademark sources
 
-### INR and UPI gateway candidate
+### Cashfree and COD
 
-Owner confirmed India and INR, then asked whether UPI should be used. UPI remains a researched option rather than an approved payment requirement. [Cashfree Payments](https://www.cashfree.com/docs/payments/manage/payment-methods/upi) is a documented candidate, not an approved provider:
+COM-ADR-025 selects Cashfree prepaid payments and COD. The official sources
+below support implementation review but do not prove merchant approval or
+production readiness:
 
 - Its official UPI documentation covers India UPI payments.
 - Its [sandbox](https://www.cashfree.com/docs/payments/online/resources/sandbox-environment) supports test UPI VPAs.
 - Its [webhook documentation](https://www.cashfree.com/docs/payments/online/webhooks/overview) requires signature verification and documents retries/resends; implementation must still be idempotent.
 - Its [refund documentation](https://www.cashfree.com/docs/payments/manage/refunds/overview) supports full/partial refund APIs, status lookup, and refund webhooks.
-- Its [server SDK list](https://www.cashfree.com/docs/api-reference/payments/sdk) includes a JavaScript/TypeScript Node.js SDK. This supports architectural compatibility with a Hostinger Node app but does not prove this repository's staging or production integration.
-- Its [pricing page](https://www.cashfree.com/payment-gateway-charges/) lists INR payment-gateway modes and time-limited/promotional terms. Fees must be captured from the approved merchant account and contract at provider selection and rechecked before release; promotional page copy is not a durable fee decision.
+- Its [server SDK list](https://www.cashfree.com/docs/api-reference/payments/sdk) includes a JavaScript/TypeScript Node.js SDK.
+- Its [pricing page](https://www.cashfree.com/payment-gateway-charges/) is not a durable merchant fee decision; use the approved account contract.
 
-[Razorpay's official UPI test documentation](https://razorpay.com/docs/payments/payments/test-upi-details/) confirms domestic Indian one-time UPI test IDs, so Razorpay remains another candidate. No provider is selected until merchant eligibility, KYC, current fees/taxes, settlements, refunds, signed webhooks, sandbox behavior, support, and Hostinger staging are compared and approved. COD and manual bank-transfer scope also remain unanswered.
+Release still requires KYC, sandbox and live credentials, signed-webhook proof,
+refund/reconciliation proof, account-specific fees, and an authorized prepaid
+and COD lifecycle test. No substitute provider is approved.
 
 ### Designer-reference risk
 

@@ -36,7 +36,8 @@ import {
   type UpdateVariantInput,
 } from "@perfume-aura/validators";
 import { revalidatePath } from "next/cache";
-import { requireOwnerSession } from "@/lib/session";
+import { hasOpsCapability } from "@/lib/ops-access";
+import { requireCapability } from "@/lib/session";
 import {
   actionError,
   actionOk,
@@ -71,8 +72,8 @@ export type VariantRow = {
   sku: string;
   barcode: string | null;
   sizeMl: number;
-  costCents: number;
-  retailCents: number;
+  costCents: number | null;
+  retailCents: number | null;
   quantityOnHand: number;
   qtyReserved: number;
   reorderLevel: number;
@@ -120,7 +121,7 @@ export type ListProductsFilter = {
 export async function listProducts(
   filter: ListProductsFilter = {},
 ): Promise<PaginatedResult<ProductListItem>> {
-  await requireOwnerSession();
+  await requireCapability("catalog.view");
 
   const q = filter.q?.trim() ?? "";
   const status = filter.status ?? "active";
@@ -200,7 +201,11 @@ export async function listProducts(
 }
 
 export async function getProduct(id: string): Promise<ProductDetail | null> {
-  await requireOwnerSession();
+  const session = await requireCapability("catalog.view");
+  const canManageCommercials = hasOpsCapability(
+    session.user.role,
+    "catalog.manage-commercials",
+  );
 
   const [product] = await db
     .select()
@@ -217,8 +222,12 @@ export async function getProduct(id: string): Promise<ProductDetail | null> {
       sku: productVariants.sku,
       barcode: productVariants.barcode,
       sizeMl: productVariants.sizeMl,
-      costCents: productVariants.costCents,
-      retailCents: productVariants.retailCents,
+      costCents: canManageCommercials
+        ? productVariants.costCents
+        : sql<number | null>`null::int`,
+      retailCents: canManageCommercials
+        ? productVariants.retailCents
+        : sql<number | null>`null::int`,
       quantityOnHand: productVariants.quantityOnHand,
       qtyReserved: productVariants.qtyReserved,
       reorderLevel: productVariants.reorderLevel,
@@ -253,7 +262,7 @@ export async function createProductAction(
   raw: unknown,
 ): Promise<ActionResult<{ productId: string }>> {
   try {
-    await requireOwnerSession();
+    await requireCapability("catalog.manage-commercials");
   } catch {
     return actionError("You must be signed in");
   }
@@ -310,7 +319,7 @@ export async function createVariantAction(
   raw: unknown,
 ): Promise<ActionResult<{ variantId: string }>> {
   try {
-    await requireOwnerSession();
+    await requireCapability("catalog.manage-commercials");
   } catch {
     return actionError("You must be signed in");
   }
@@ -356,7 +365,7 @@ export async function archiveProductAction(
   raw: unknown,
 ): Promise<ActionResult> {
   try {
-    await requireOwnerSession();
+    await requireCapability("catalog.manage-commercials");
   } catch {
     return actionError("You must be signed in");
   }
@@ -385,7 +394,7 @@ export async function updateProductAction(
   raw: unknown,
 ): Promise<ActionResult<{ updatedAt: string }>> {
   try {
-    await requireOwnerSession();
+    await requireCapability("catalog.edit-content");
   } catch {
     return actionError("You must be signed in");
   }
@@ -416,7 +425,7 @@ export async function reactivateProductAction(
   raw: unknown,
 ): Promise<ActionResult<{ updatedAt: string }>> {
   try {
-    await requireOwnerSession();
+    await requireCapability("catalog.manage-commercials");
   } catch {
     return actionError("You must be signed in");
   }
@@ -440,7 +449,7 @@ export async function updateVariantAction(
   raw: unknown,
 ): Promise<ActionResult<{ version: number }>> {
   try {
-    await requireOwnerSession();
+    await requireCapability("catalog.manage-commercials");
   } catch {
     return actionError("You must be signed in");
   }
@@ -492,7 +501,7 @@ async function setVariantStatusAction(
   status: "active" | "archived",
 ): Promise<ActionResult<{ version: number }>> {
   try {
-    await requireOwnerSession();
+    await requireCapability("catalog.manage-commercials");
   } catch {
     return actionError("You must be signed in");
   }
@@ -546,7 +555,7 @@ export async function listActiveVariantsForSelect(): Promise<
     retailCents: number;
   }[]
 > {
-  await requireOwnerSession();
+  await requireCapability("invoices.draft");
 
   const rows = await db
     .select({
@@ -575,6 +584,40 @@ export async function listActiveVariantsForSelect(): Promise<
     productName: r.productName,
     retailCents: r.retailCents,
     label: `${r.productName}${r.brand ? ` · ${r.brand}` : ""} — ${r.sku} (${r.sizeMl} ml) · ${r.quantityOnHand} on hand`,
+  }));
+}
+
+/** Stock receiving needs a safe selector without commercial values. */
+export async function listActiveVariantsForStockSelect(): Promise<
+  {
+    id: string;
+    label: string;
+  }[]
+> {
+  await requireCapability("stock.view");
+
+  const rows = await db
+    .select({
+      id: productVariants.id,
+      sku: productVariants.sku,
+      sizeMl: productVariants.sizeMl,
+      quantityOnHand: productVariants.quantityOnHand,
+      productName: products.name,
+      brand: products.brand,
+    })
+    .from(productVariants)
+    .innerJoin(products, eq(products.id, productVariants.productId))
+    .where(
+      and(
+        eq(productVariants.status, "active"),
+        eq(products.status, "active"),
+      ),
+    )
+    .orderBy(products.name, productVariants.sizeMl, productVariants.id);
+
+  return rows.map((row) => ({
+    id: row.id,
+    label: `${row.productName}${row.brand ? ` · ${row.brand}` : ""} — ${row.sku} (${row.sizeMl} ml) · ${row.quantityOnHand} on hand`,
   }));
 }
 

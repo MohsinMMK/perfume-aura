@@ -120,9 +120,17 @@ function InvoiceActionDialog({ action }: { action: InvoiceActionConfig }) {
 }
 
 export function InvoiceStatusActions({
+  canFulfill,
+  canIssue,
+  canRecordPayment,
+  canVoid,
   invoiceId,
   status,
 }: {
+  canFulfill: boolean;
+  canIssue: boolean;
+  canRecordPayment: boolean;
+  canVoid: boolean;
   invoiceId: string;
   status: string;
 }) {
@@ -179,15 +187,19 @@ export function InvoiceStatusActions({
 
   return (
     <div className="flex flex-wrap gap-2">
-      {status === "draft" ? <InvoiceActionDialog action={issue} /> : null}
+      {status === "draft" && canIssue ? (
+        <InvoiceActionDialog action={issue} />
+      ) : null}
       {status === "issued" ? (
         <>
-          <InvoiceActionDialog action={markPaid} />
-          <InvoiceActionDialog action={fulfill} />
-          <InvoiceActionDialog action={voidAction} />
+          {canRecordPayment ? <InvoiceActionDialog action={markPaid} /> : null}
+          {canFulfill ? <InvoiceActionDialog action={fulfill} /> : null}
+          {canVoid ? <InvoiceActionDialog action={voidAction} /> : null}
         </>
       ) : null}
-      {status === "paid" ? <InvoiceActionDialog action={fulfill} /> : null}
+      {status === "paid" && canFulfill ? (
+        <InvoiceActionDialog action={fulfill} />
+      ) : null}
       <Link
         href={`/invoices/${invoiceId}/print`}
         target="_blank"

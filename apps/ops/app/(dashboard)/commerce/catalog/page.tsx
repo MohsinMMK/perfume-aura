@@ -5,12 +5,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { listCommerceCatalog } from "@/lib/commerce";
 import { safeDbQuery } from "@/lib/db-safe";
-import { requireOwnerSession } from "@/lib/session";
+import { requireCapability } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function CommerceCatalogPage() {
-  await requireOwnerSession({ redirectToLogin: true });
+  await requireCapability("catalog.manage-commercials", { redirectToLogin: true });
   const result = await safeDbQuery(() => listCommerceCatalog());
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">

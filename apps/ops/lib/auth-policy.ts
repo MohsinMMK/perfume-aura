@@ -1,4 +1,5 @@
 export const OWNER_ROLE = "owner";
+export const STAFF_ROLE = "staff";
 export const DEFAULT_USER_ROLE = "user";
 
 export const AUTH_PASSWORD_MIN_LENGTH = 12;
@@ -9,7 +10,7 @@ export const LOCAL_AUTH_ORIGIN = "http://localhost:3000";
 export const LOCAL_AUTH_IP_ORIGIN = "http://127.0.0.1:3000";
 export const PRODUCTION_AUTH_ORIGIN = "https://app.perfumeaura.com";
 
-export const DEVELOPMENT_AUTH_ORIGINS = [
+const DEVELOPMENT_AUTH_ORIGINS = [
   LOCAL_AUTH_ORIGIN,
   LOCAL_AUTH_IP_ORIGIN,
 ] as const;
@@ -24,6 +25,7 @@ const ALLOWED_RETURN_PATH_PREFIXES = [
   "/invoices",
   "/payments",
   "/finance",
+  "/commerce",
   "/settings/security",
 ] as const;
 

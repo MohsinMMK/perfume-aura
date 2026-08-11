@@ -63,7 +63,7 @@ export function quantityAfterDelta(
   return quantityOnHand + delta;
 }
 
-export function assertPositiveInt(value: number, field: string): number {
+function assertPositiveInt(value: number, field: string): number {
   if (!Number.isInteger(value) || value <= 0) {
     throw new InventoryMathError(
       `${field} must be a positive integer`,
@@ -73,7 +73,7 @@ export function assertPositiveInt(value: number, field: string): number {
   return value;
 }
 
-export function assertNonZeroInt(value: number, field: string): number {
+function assertNonZeroInt(value: number, field: string): number {
   if (!Number.isInteger(value) || value === 0) {
     throw new InventoryMathError(
       `${field} must be a non-zero integer`,

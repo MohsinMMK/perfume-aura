@@ -28,7 +28,8 @@ import {
 import { RecordPaymentForm } from "@/components/invoices/record-payment-form";
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { formatBusinessDateTime } from "@/lib/business-date";
-import { requireOwnerSession } from "@/lib/session";
+import { hasOpsCapability } from "@/lib/ops-access";
+import { requireCapability } from "@/lib/session";
 import {
   canonicalPage,
   paginationHref,
@@ -45,7 +46,17 @@ export default async function InvoiceDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  await requireOwnerSession({ redirectToLogin: true });
+  const session = await requireCapability("invoices.view", {
+    redirectToLogin: true,
+  });
+  const canDraft = hasOpsCapability(session.user.role, "invoices.draft");
+  const canIssue = hasOpsCapability(session.user.role, "invoices.issue");
+  const canFulfill = hasOpsCapability(session.user.role, "invoices.fulfill");
+  const canVoid = hasOpsCapability(session.user.role, "invoices.void");
+  const canRecordPayment = hasOpsCapability(
+    session.user.role,
+    "payments.record",
+  );
   const { id } = await params;
   const resolvedSearch = await searchParams;
   const paymentsPage = parsePage(resolvedSearch.paymentsPage);
@@ -53,8 +64,12 @@ export default async function InvoiceDetailPage({
   delete preservedSearch.paymentsPage;
   const [invResult, variantsResult, paymentsResult] = await Promise.all([
     safeDbQuery(() => getInvoice(id)),
-    safeDbQuery(() => listActiveVariantsForSelect()),
-    safeDbQuery(() => listPayments({ invoiceId: id, page: paymentsPage })),
+    canDraft
+      ? safeDbQuery(() => listActiveVariantsForSelect())
+      : Promise.resolve({ data: [], error: null }),
+    canRecordPayment
+      ? safeDbQuery(() => listPayments({ invoiceId: id, page: paymentsPage }))
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
   if (invResult.error) {
@@ -108,7 +123,14 @@ export default async function InvoiceDetailPage({
             <Badge>{inv.status}</Badge>
           </div>
         </div>
-        <InvoiceStatusActions invoiceId={inv.id} status={inv.status} />
+        <InvoiceStatusActions
+          canFulfill={canFulfill}
+          canIssue={canIssue}
+          canRecordPayment={canRecordPayment}
+          canVoid={canVoid}
+          invoiceId={inv.id}
+          status={inv.status}
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -154,14 +176,14 @@ export default async function InvoiceDetailPage({
                 <TableHead className="text-right">Unit</TableHead>
                 <TableHead className="text-right">Line</TableHead>
                 <TableHead className="text-right">Fulfilled</TableHead>
-                {inv.status === "draft" ? <TableHead /> : null}
+                {inv.status === "draft" && canDraft ? <TableHead /> : null}
               </TableRow>
             </TableHeader>
             <TableBody>
               {inv.lines.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={inv.status === "draft" ? 6 : 5}
+                    colSpan={inv.status === "draft" && canDraft ? 6 : 5}
                     className="text-center text-muted-foreground"
                   >
                     No lines yet.
@@ -184,7 +206,7 @@ export default async function InvoiceDetailPage({
                       {formatQty(line.quantityFulfilled)}
                       {line.variantId ? "" : " · no SKU"}
                     </TableCell>
-                    {inv.status === "draft" ? (
+                    {inv.status === "draft" && canDraft ? (
                       <TableCell className="text-right">
                         <RemoveLineButton
                           invoiceId={inv.id}
@@ -200,11 +222,11 @@ export default async function InvoiceDetailPage({
         </CardContent>
       </Card>
 
-      {inv.status === "draft" ? (
+      {inv.status === "draft" && canDraft ? (
         <AddInvoiceLineForm invoiceId={inv.id} variants={variants} />
       ) : null}
 
-      {inv.status === "issued" ? (
+      {inv.status === "issued" && canRecordPayment ? (
         <RecordPaymentForm
           key={inv.balanceCents}
           invoiceId={inv.id}
@@ -212,7 +234,7 @@ export default async function InvoiceDetailPage({
         />
       ) : null}
 
-      {paymentRows.length > 0 ? (
+      {canRecordPayment && paymentRows.length > 0 ? (
         <Card className="overflow-hidden py-0">
           <CardHeader className="border-b px-4 py-3">
             <CardTitle className="text-base">

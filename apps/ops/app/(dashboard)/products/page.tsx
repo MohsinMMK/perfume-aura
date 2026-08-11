@@ -23,7 +23,8 @@ import {
   DbUnavailableState,
 } from "@/components/db-empty-state";
 import { ProductFilters } from "@/components/products/product-filters";
-import { requireOwnerSession } from "@/lib/session";
+import { hasOpsCapability } from "@/lib/ops-access";
+import { requireCapability } from "@/lib/session";
 import {
   canonicalPage,
   paginationHref,
@@ -48,7 +49,13 @@ export default async function ProductsPage({
 }: {
   searchParams: SearchParams;
 }) {
-  await requireOwnerSession({ redirectToLogin: true });
+  const session = await requireCapability("catalog.view", {
+    redirectToLogin: true,
+  });
+  const canManageCommercials = hasOpsCapability(
+    session.user.role,
+    "catalog.manage-commercials",
+  );
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const status = parseStatus(sp.status);
@@ -84,12 +91,14 @@ export default async function ProductsPage({
             Catalog of fragrances and sellable sizes.
           </p>
         </div>
-        <Link
-          href="/products/new"
-          className={cn(buttonVariants(), "w-full sm:w-auto")}
-        >
-          New product
-        </Link>
+        {canManageCommercials ? (
+          <Link
+            href="/products/new"
+            className={cn(buttonVariants(), "w-full sm:w-auto")}
+          >
+            New product
+          </Link>
+        ) : null}
       </div>
 
       <Suspense fallback={null}>

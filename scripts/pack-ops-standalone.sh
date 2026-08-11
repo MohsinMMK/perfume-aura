@@ -320,12 +320,12 @@ if [[ "${1:-}" == "self-test" ]]; then
   exit 0
 fi
 
-EXPECTED_NODE_VERSION="24.18.0"
-EXPECTED_NPM_VERSION="11.16.0"
-EXPECTED_PNPM_VERSION="11.1.3"
+EXPECTED_NODE_VERSION="24.6.0"
+EXPECTED_NPM_VERSION="11.5.1"
+EXPECTED_PNPM_VERSION="10.32.1"
 EXPECTED_NEXT_VERSION="16.2.11"
 EXPECTED_SHARP_VERSION="0.35.3"
-EXPECTED_POSTCSS_VERSION="8.5.22"
+EXPECTED_POSTCSS_VERSION="8.5.23"
 MAX_ARCHIVE_BYTES="50000000"
 RUNTIME_DEPS_DIR="$ROOT/scripts/ops-runtime-deps"
 RUNTIME_DEPS_PACKAGE="$RUNTIME_DEPS_DIR/package.json"
@@ -660,13 +660,18 @@ copy_sharp_into() {
   cp -R "$SHARP_SRC" "$dest_nm/sharp"
   if [[ -d "$IMG_SRC" ]]; then
     mkdir -p "$dest_nm/@img"
-    shopt -s nullglob
-    for pkg in "$IMG_SRC"/sharp-linux-* "$IMG_SRC"/sharp-libvips-linux-* "$IMG_SRC"/colour; do
+    for pkg in \
+      "$IMG_SRC/sharp-linux-x64" \
+      "$IMG_SRC/sharp-libvips-linux-x64" \
+      "$IMG_SRC/colour"; do
+      [[ -e "$pkg" ]] || {
+        echo "ERROR: locked Sharp runtime is missing $(basename "$pkg")" >&2
+        return 1
+      }
       base="$(basename "$pkg")"
       rm -rf "$dest_nm/@img/$base"
       cp -R "$pkg" "$dest_nm/@img/$base"
     done
-    shopt -u nullglob
   fi
   # Sibling deps required by sharp package resolution
   shopt -s nullglob
@@ -760,7 +765,7 @@ cat > "$STAGE/apps/ops/package.json" << 'OPSPKG'
   "name": "perfume-aura-ops-standalone-app",
   "private": true,
   "engines": {
-    "node": ">=24.18.0 <25"
+    "node": ">=24.6.0 <25"
   },
   "scripts": {
     "start": "node server.js"
@@ -775,7 +780,7 @@ cat > "$STAGE/package.json" << 'PKG'
   "name": "perfume-aura-ops-standalone",
   "private": true,
   "engines": {
-    "node": ">=24.18.0 <25"
+    "node": ">=24.6.0 <25"
   },
   "dependencies": {},
   "scripts": {
@@ -805,7 +810,7 @@ Hostinger Node.js Web App — prebuilt standalone (Perfume Aura ops)
 Settings and redeploy:
   Source: upload this zip
   Framework: Other (or Next.js)
-  Node: 24.x (archive built and validated with 24.18.0)
+  Node: 24.x (archive built and validated with 24.6.0)
   Root directory: ./
   Build command: echo prebuilt-standalone
   Package manager: pnpm (or npm)
@@ -829,7 +834,7 @@ Required env (hPanel only — never bake into zip):
   SMTP_FROM=<approved sender>
   BUSINESS_TIMEZONE=Asia/Karachi
   NODE_ENV=production
-  PORT=3000
+  PORT=<injected by Hostinger; do not set manually>
 
 Phase 07 staged rollout (run from the reviewed repository, outside this zip):
   Read the direct URL without echoing it, then reuse the exported value:

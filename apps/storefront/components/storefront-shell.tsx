@@ -1,4 +1,9 @@
 import type { ReactNode } from "react";
+import {
+  isPreviewCatalogEnabled,
+  isPublicCatalogEnabled,
+} from "@/lib/catalog-policy";
+import { readReleaseLockedCart } from "@/lib/cart-store";
 import { CartProvider } from "./cart-provider";
 import { CartDrawer } from "./cart-drawer";
 import { OpeningIntro } from "./opening-intro";
@@ -7,8 +12,14 @@ import { SiteHeader } from "./site-header";
 import { StorefrontMotion } from "./storefront-motion";
 
 export function StorefrontShell({ children }: Readonly<{ children: ReactNode }>) {
+  const loadRemoteCart =
+    isPreviewCatalogEnabled() || isPublicCatalogEnabled();
+
   return (
-    <CartProvider>
+    <CartProvider
+      initialCart={loadRemoteCart ? null : readReleaseLockedCart()}
+      loadRemoteCart={loadRemoteCart}
+    >
       <StorefrontMotion />
       <OpeningIntro />
       <a

@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans, Raleway } from "next/font/google";
-import { Toaster } from "@perfume-aura/ui/components/sonner";
-import { TooltipProvider } from "@perfume-aura/ui/components/tooltip";
 import "./globals.css";
 import { cn } from "@perfume-aura/ui/lib/utils";
 
@@ -38,10 +36,7 @@ export default function RootLayout({
       )}
     >
       <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
-        <TooltipProvider>
-          {children}
-          <Toaster position="top-right" richColors closeButton />
-        </TooltipProvider>
+        {children}
       </body>
     </html>
   );

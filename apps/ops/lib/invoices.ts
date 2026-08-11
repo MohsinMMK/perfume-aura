@@ -29,7 +29,7 @@ import {
   removeInvoiceLineSchema,
 } from "@perfume-aura/validators";
 import { revalidatePath } from "next/cache";
-import { requireOwnerSession } from "@/lib/session";
+import { requireCapability } from "@/lib/session";
 import { rupeesToPaise } from "@/lib/money";
 import {
   actionError,
@@ -58,7 +58,7 @@ export type InvoiceListItem = {
   createdAt: Date;
 };
 
-export type InvoiceLineRow = {
+type InvoiceLineRow = {
   id: string;
   position: number;
   variantId: string | null;
@@ -113,7 +113,7 @@ export async function listInvoices(opts?: {
   page?: number;
   pageSize?: number;
 }): Promise<PaginatedResult<InvoiceListItem>> {
-  await requireOwnerSession();
+  await requireCapability("invoices.view");
   const status = opts?.status ?? "all";
   const page = parsePage(opts?.page);
   const pageSize = normalizePageSize(opts?.pageSize);
@@ -162,7 +162,7 @@ export async function listInvoices(opts?: {
 }
 
 export async function getOpenArTotalCents(): Promise<number> {
-  await requireOwnerSession();
+  await requireCapability("finance.view");
   const [row] = await db
     .select({
       total: sql<number>`coalesce(sum(${invoices.totalCents} - ${invoices.amountPaidCents}), 0)::bigint`,
@@ -173,7 +173,7 @@ export async function getOpenArTotalCents(): Promise<number> {
 }
 
 export async function getInvoice(id: string): Promise<InvoiceDetail | null> {
-  await requireOwnerSession();
+  await requireCapability("invoices.view");
 
   const [invoice] = await db
     .select({
@@ -233,7 +233,7 @@ export async function createInvoiceDraftAction(
 ): Promise<ActionResult<{ invoiceId: string }>> {
   let session;
   try {
-    session = await requireOwnerSession();
+    session = await requireCapability("invoices.draft");
   } catch {
     return actionError("You must be signed in");
   }
@@ -263,7 +263,7 @@ export async function addInvoiceLineAction(
   raw: unknown,
 ): Promise<ActionResult> {
   try {
-    await requireOwnerSession();
+    await requireCapability("invoices.draft");
   } catch {
     return actionError("You must be signed in");
   }
@@ -295,7 +295,7 @@ export async function removeInvoiceLineAction(
   raw: unknown,
 ): Promise<ActionResult> {
   try {
-    await requireOwnerSession();
+    await requireCapability("invoices.draft");
   } catch {
     return actionError("You must be signed in");
   }
@@ -316,7 +316,7 @@ export async function issueInvoiceAction(
   raw: unknown,
 ): Promise<ActionResult<{ number: string }>> {
   try {
-    await requireOwnerSession();
+    await requireCapability("invoices.issue");
   } catch {
     return actionError("You must be signed in");
   }
@@ -337,7 +337,7 @@ export async function voidInvoiceAction(
   raw: unknown,
 ): Promise<ActionResult> {
   try {
-    await requireOwnerSession();
+    await requireCapability("invoices.void");
   } catch {
     return actionError("You must be signed in");
   }
@@ -360,7 +360,7 @@ export async function markInvoicePaidAction(
 ): Promise<ActionResult> {
   let session;
   try {
-    session = await requireOwnerSession();
+    session = await requireCapability("payments.record");
   } catch {
     return actionError("You must be signed in");
   }
@@ -391,7 +391,7 @@ export async function fulfillInvoiceAction(
 ): Promise<ActionResult<{ fulfilledLines: number }>> {
   let session;
   try {
-    session = await requireOwnerSession();
+    session = await requireCapability("invoices.fulfill");
   } catch {
     return actionError("You must be signed in");
   }

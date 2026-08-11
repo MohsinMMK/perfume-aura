@@ -7,7 +7,8 @@ import { safeDbQuery } from "@/lib/db-safe";
 import { CustomerForm } from "@/components/customers/customer-form";
 import { ArchiveCustomerButton } from "@/components/customers/archive-customer-button";
 import { DbUnavailableState } from "@/components/db-empty-state";
-import { requireOwnerSession } from "@/lib/session";
+import { requireCapability } from "@/lib/session";
+import { hasOpsCapability } from "@/lib/ops-access";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,9 @@ export default async function CustomerDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireOwnerSession({ redirectToLogin: true });
+  const session = await requireCapability("customers.view", {
+    redirectToLogin: true,
+  });
   const { id } = await params;
   const result = await safeDbQuery(() => getCustomer(id));
 
@@ -53,7 +56,8 @@ export default async function CustomerDetailPage({
           >
             New invoice
           </Link>
-          {c.status === "active" ? (
+          {c.status === "active" &&
+          hasOpsCapability(session.user.role, "customers.archive") ? (
             <ArchiveCustomerButton customerId={c.id} />
           ) : null}
         </div>

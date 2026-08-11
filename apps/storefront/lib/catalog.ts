@@ -1,5 +1,8 @@
 import type { Money } from "./money";
-import { isPublicCatalogEnabled } from "./catalog-policy";
+import {
+  isPreviewCatalogEnabled,
+  isPublicCatalogEnabled,
+} from "./catalog-policy";
 
 export type StorefrontVariant = Readonly<{
   id: string;
@@ -159,13 +162,6 @@ const previewProducts: readonly StorefrontProduct[] = [
     }),
   ),
 ];
-
-export function isPreviewCatalogEnabled(): boolean {
-  return (
-    process.env.STOREFRONT_PREVIEW_CATALOG === "true" ||
-    process.env.NODE_ENV === "development"
-  );
-}
 
 export async function getStorefrontProducts(): Promise<readonly StorefrontProduct[]> {
   if (isPreviewCatalogEnabled()) return previewProducts;

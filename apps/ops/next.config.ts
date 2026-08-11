@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 import { resolveBuildSourceCommit } from "./lib/build-version";
 import { securityHeaders } from "./lib/security-headers";
 
@@ -9,6 +10,12 @@ const monorepoRoot = path.join(__dirname, "../..");
 
 // Embed only a validated full source SHA at build time for /api/health/version.
 const buildSourceCommit = resolveBuildSourceCommit();
+const sentryOrg = process.env.SENTRY_ORG?.trim();
+const sentryProject = process.env.OPS_SENTRY_PROJECT?.trim();
+const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN?.trim();
+const uploadSentrySourceMaps = Boolean(
+  sentryOrg && sentryProject && sentryAuthToken,
+);
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
@@ -23,6 +30,21 @@ const nextConfig: NextConfig = {
     "@perfume-aura/db",
     "@perfume-aura/validators",
   ],
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: "www.app.perfumeaura.com",
+          },
+        ],
+        destination: "https://app.perfumeaura.com/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
@@ -37,4 +59,27 @@ const nextConfig: NextConfig = {
   // Do not use output: "export" — ops needs Server Actions + auth + DB
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: sentryOrg,
+  project: sentryProject,
+  authToken: sentryAuthToken,
+  telemetry: false,
+  silent: !uploadSentrySourceMaps,
+  sourcemaps: {
+    disable: !uploadSentrySourceMaps,
+    deleteSourcemapsAfterUpload: true,
+  },
+  release: {
+    name: buildSourceCommit || undefined,
+    create: uploadSentrySourceMaps,
+  },
+  webpack: {
+    automaticVercelMonitors: false,
+    treeshake: {
+      removeDebugLogging: true,
+      excludeReplayIframe: true,
+      excludeReplayShadowDOM: true,
+      excludeReplayCompressionWorker: true,
+    },
+  },
+});

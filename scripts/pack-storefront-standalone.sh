@@ -6,9 +6,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-EXPECTED_NODE="24.18.0"
-EXPECTED_NPM="11.16.0"
-EXPECTED_PNPM="11.1.3"
+EXPECTED_NODE="24.6.0"
+EXPECTED_NPM="11.5.1"
+EXPECTED_PNPM="10.32.1"
 MAX_ARCHIVE_BYTES="50000000"
 RUNTIME_DEPS_DIR="$ROOT/scripts/ops-runtime-deps"
 
@@ -101,7 +101,12 @@ for destination in "$STAGE/apps/storefront/node_modules" "$STAGE/node_modules"; 
   mkdir -p "$destination"
   rm -rf "$destination/sharp" "$destination/@img"
   cp -R "$SHARP_TMP/node_modules/sharp" "$destination/sharp"
-  cp -R "$SHARP_TMP/node_modules/@img" "$destination/@img"
+  mkdir -p "$destination/@img"
+  for runtime_package in sharp-linux-x64 sharp-libvips-linux-x64 colour; do
+    runtime_source="$SHARP_TMP/node_modules/@img/$runtime_package"
+    [[ -e "$runtime_source" ]] || { echo "ERROR: locked Sharp runtime is missing $runtime_package" >&2; exit 1; }
+    cp -R "$runtime_source" "$destination/@img/$runtime_package"
+  done
   for dependency in detect-libc semver; do
     if [[ -e "$SHARP_TMP/node_modules/$dependency" ]]; then rm -rf "$destination/$dependency"; cp -R "$SHARP_TMP/node_modules/$dependency" "$destination/$dependency"; fi
   done
@@ -112,7 +117,7 @@ cat > "$STAGE/package.json" <<'JSON'
 {
   "name": "perfume-aura-storefront-standalone",
   "private": true,
-  "engines": { "node": ">=24.18.0 <25" },
+  "engines": { "node": ">=24.6.0 <25" },
   "dependencies": {},
   "scripts": {
     "build": "echo prebuilt-standalone",
