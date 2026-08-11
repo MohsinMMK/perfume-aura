@@ -15,8 +15,8 @@ in [CURRENT_STATE.md](CURRENT_STATE.md).
   and target-only Linux Sharp packaging completed and verified in the local
   working tree on 2026-08-11.
 
-None of this local preparation has been pushed, deployed, migrated, or enabled
-in production.
+The verified tree is published only as draft PR #9. It has not been merged,
+deployed, migrated, or enabled in production.
 
 ## Implementation phases
 
@@ -42,8 +42,8 @@ deployed**.
 
 ### Phase 2 — Reconcile security and CI
 
-Status: **local code and browser verification complete; remote analysis and
-repository-setting changes remain gated**.
+Status: **local code and browser verification complete; draft PR #9 remote
+analysis and repository-setting changes remain gated**.
 
 - Confirm the runtime-aligned lockfiles retain every compatible security
   override and resolve all 14 current Dependabot alerts.
@@ -77,8 +77,8 @@ authorization**.
 Status: **local implementation prepared; production migration, publication,
 and activation require their listed approvals and evidence**.
 
-- Publish the rebased PR #7 with lease protection; require current CI, CodeQL,
-  CodeRabbit, and one human approval.
+- Review the staff implementation within consolidated draft PR #9; require
+  current CI, CodeQL, CodeRabbit, and one human approval.
 - Test migration `0010_curved_puma` on an isolated Neon branch.
 - Only after separate authorization, apply the production migration and
   restricted grants, merge with both staff flags false, and complete the ordered
@@ -91,8 +91,8 @@ and activation require their listed approvals and evidence**.
 Status: **local implementation prepared; secrets, publication, and production
 verification remain external release gates**.
 
-- Restack PR #8 on released staff `main`, push with lease, and obtain fresh
-  checks and approvals.
+- Review the observability implementation within consolidated draft PR #9 and
+  obtain fresh checks and approvals.
 - Configure the existing PostHog and Sentry variables without committing
   secrets, then merge only after authorization.
 - Verify exact-SHA deployments, Sentry events/source maps/logs, PostHog
@@ -106,9 +106,11 @@ implementation work**.
 
 - Verify zero unresolved Dependabot, CodeQL, and secret-scanning alerts and
   enable the prepared `main` protection rules.
-- After both PRs merge, delete their local and remote branches, retain generated
-  `hostinger-ops-production`, return to local `main`, and verify one clean
-  worktree aligned with `origin/main`.
+- After draft PR #9 passes fresh checks, close superseded PRs #7/#8 and delete
+  their local and remote branches.
+- After a separately authorized PR #9 merge, delete its local and remote branch,
+  retain generated `hostinger-ops-production`, return to local `main`, and
+  verify one clean worktree aligned with `origin/main`.
 
 ### Phase 7 — Prepare storefront commerce separately
 
