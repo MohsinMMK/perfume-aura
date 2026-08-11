@@ -39,8 +39,10 @@ All storefront release flags remain closed:
 any release flag.
 
 The complete verified implementation is published for review in draft PR #9 on
-`codex/managed-hosting-release`. Draft PRs #7 and #8 are superseded and remain
-only until PR #9 completes fresh checks; nothing is merged or deployed.
+`codex/managed-hosting-release`. Its first published head passed fresh quality,
+integration, dependency-review, CodeQL, and verified-package checks. Superseded
+PRs #7 and #8 are closed and their local and remote branches are deleted;
+nothing is merged or deployed.
 `OPS_TWO_FACTOR_REQUIRED` and `OPS_STAFF_INVITES_ENABLED` stay false until the
 complete staff release checklist passes. Observability remains fail-closed
 without its environment values.
@@ -67,12 +69,12 @@ tests, and both checksum-verified packages with extracted-server smoke. Remote
 `main` and production remain on
 `cc38326dcf46651e10cb618727e4c03ef1fdc948`.
 
-Superseded draft PR #7 failed its old dependency audit and draft PR #8's checks
-predate the reconciled implementation; neither is a release source. Draft PR #9
-must pass fresh CI, CodeQL, dependency, package, and review gates. GitHub's
-default branch continues to report 14 Dependabot alerts, including four high
-severity alerts, until the reviewed remediation reaches `main`. `main` also
-still lacks the prepared branch protection.
+Superseded drafts #7/#8 are not release sources. Draft PR #9 passed fresh CI,
+CodeQL, dependency, package, and review automation on its first published head;
+its documentation-only cleanup head must remain green. GitHub's default branch
+continues to report 14 Dependabot alerts, including four high severity alerts,
+until the reviewed remediation reaches `main`. `main` also still lacks the
+prepared branch protection and required human approval.
 
 ### Hostinger runtime alignment and process incident
 
@@ -118,18 +120,17 @@ the prepared work.
 
 - One primary worktree.
 - Draft PR #9 is the only intended review source for the combined verified tree.
-- Superseded PR #7/#8 branches are retained temporarily and should be deleted
-  only after PR #9 passes fresh checks.
+- Superseded PRs #7/#8 are closed and their local and remote branches are
+  deleted.
 - One primary worktree is present.
+- Local `main` exactly matches `origin/main`.
 - `hostinger-ops-production` remains generated deployment state and must not be
   treated as a source branch.
 
 ## Next action
 
-1. Require fresh CI, CodeQL, dependency, package, and review evidence on draft
-   PR #9.
-2. After those checks pass, close superseded PRs #7/#8 and delete only their
-   local and remote branches.
-3. Obtain the scoped managed-Hostinger process repair before separately
+1. Keep draft PR #9 green and obtain the prepared branch protection plus one
+   human approval.
+2. Obtain the scoped managed-Hostinger process repair before separately
    authorizing any PR #9 merge or production release.
-4. Keep all storefront commerce and staff security flags closed.
+3. Keep all storefront commerce and staff security flags closed.
