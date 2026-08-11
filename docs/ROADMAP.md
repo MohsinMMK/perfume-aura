@@ -68,6 +68,9 @@ authorization**.
 - Obtain Linux user/domain/path/PID attribution, supervisor restart and HCDN
   routing causes, a durable scoped repair, a case ID, and fresh resource evidence
   for the prior shared NPROC incident.
+- Current authenticated hPanel usage is healthy, but the monthly log still shows
+  paired application starts and the LVE snapshot promised by support is not
+  present in the visible File Manager search results; this is not repair proof.
 - After explicit authorization, publish prepared `main` and require current CI,
   CodeQL, dependency, package, publication, and live checks.
 - Verify the exact deployed SHA, storefront locks, ops live/ready/version/session,
