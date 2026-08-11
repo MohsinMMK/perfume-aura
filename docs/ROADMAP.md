@@ -15,8 +15,9 @@ in [CURRENT_STATE.md](CURRENT_STATE.md).
   and target-only Linux Sharp packaging completed and verified in the local
   working tree on 2026-08-11.
 
-The verified tree is published only as draft PR #9. It has not been merged,
-deployed, migrated, or enabled in production.
+The verified tree is published only as draft PR #9 and its first head passed
+fresh remote checks. Superseded PRs #7/#8 and their branches are deleted. Draft
+PR #9 has not been merged, deployed, migrated, or enabled in production.
 
 ## Implementation phases
 
@@ -42,8 +43,8 @@ deployed**.
 
 ### Phase 2 — Reconcile security and CI
 
-Status: **local code and browser verification complete; draft PR #9 remote
-analysis and repository-setting changes remain gated**.
+Status: **local code/browser verification and draft PR #9 analysis complete;
+repository protection and human approval remain gated**.
 
 - Confirm the runtime-aligned lockfiles retain every compatible security
   override and resolve all 14 current Dependabot alerts.
@@ -106,8 +107,8 @@ implementation work**.
 
 - Verify zero unresolved Dependabot, CodeQL, and secret-scanning alerts and
   enable the prepared `main` protection rules.
-- After draft PR #9 passes fresh checks, close superseded PRs #7/#8 and delete
-  their local and remote branches.
+- Superseded PRs #7/#8 and their local and remote branches are deleted after the
+  replacement passed fresh checks.
 - After a separately authorized PR #9 merge, delete its local and remote branch,
   retain generated `hostinger-ops-production`, return to local `main`, and
   verify one clean worktree aligned with `origin/main`.
