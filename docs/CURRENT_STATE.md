@@ -113,11 +113,15 @@ processes. The 30-day view averages 3% CPU, 255 MB memory, and 33 of 120 maximum
 processes, while the runtime log reports no errors. The same monthly runtime log
 contains repeated paired Next.js startup banners as recently as 2026-08-10, so
 healthy current usage does not prove the supervisor or NPROC cause was repaired.
-The existing support conversation still provides no case ID, scoped process
-attribution, restart-policy cause, HCDN routing evidence, or durable repair.
-Support said it generated an LVE snapshot in File Manager, but the visible
-account root and filename searches for `LVE`, `LVE_snapshot`, `snapshot`, and
-`.logs` did not locate that evidence.
+The support conversation still provides no case ID, scoped process attribution,
+restart-policy cause, HCDN routing evidence, or durable repair. Support said it
+generated an LVE snapshot in File Manager, but the visible account root and
+filename searches for `LVE`, `LVE_snapshot`, `snapshot`, and `.logs` did not
+locate that evidence. On 2026-08-11 the existing human-support thread was
+reopened with the fresh resource and paired-start evidence and an explicit
+request for the missing provider evidence and durable scoped repair. No provider
+reply has arrived yet, and no customer-side process or configuration action was
+authorized or performed.
 
 ### Storefront browser hardening
 
