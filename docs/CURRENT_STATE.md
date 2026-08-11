@@ -40,7 +40,7 @@ any release flag.
 
 The complete verified implementation is published for review in ready PR #9 on
 `codex/managed-hosting-release`. Commit
-`49836b4dc7d5fcd4f2e21b84f04fc86b98fd3f91` passed fresh quality, integration,
+`7b25dd7cc237667af2d4ee9cc77511eb97aad396` passed fresh quality, integration,
 dependency-review, CodeQL, CodeRabbit, and verified-package checks. Superseded
 PRs #7 and #8 are closed and their local and remote branches are deleted;
 nothing is merged or deployed.
@@ -105,6 +105,19 @@ websites are enabled, select Node `24`, use `apps/storefront/server.js` and
 `apps/ops/server.js`, and have completed recorded deployments. The API does not
 expose the missing process attribution, supervisor, routing, resource, repair,
 or support-case evidence and therefore does not clear the blocker.
+
+Fresh authenticated hPanel evidence on 2026-08-11 shows the ops application
+running its completed `hostinger-ops-production` deployment and current plan
+usage within limits: 0% CPU, about 205 MB memory, and 30 of 120 maximum
+processes. The 30-day view averages 3% CPU, 255 MB memory, and 33 of 120 maximum
+processes, while the runtime log reports no errors. The same monthly runtime log
+contains repeated paired Next.js startup banners as recently as 2026-08-10, so
+healthy current usage does not prove the supervisor or NPROC cause was repaired.
+The existing support conversation still provides no case ID, scoped process
+attribution, restart-policy cause, HCDN routing evidence, or durable repair.
+Support said it generated an LVE snapshot in File Manager, but the visible
+account root and filename searches for `LVE`, `LVE_snapshot`, `snapshot`, and
+`.logs` did not locate that evidence.
 
 ### Storefront browser hardening
 
