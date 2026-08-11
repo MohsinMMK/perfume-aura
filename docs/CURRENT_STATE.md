@@ -38,9 +38,9 @@ All storefront release flags remain closed:
 `robots.txt` disallows indexing. Green runtime health does not authorize opening
 any release flag.
 
-The staff and observability implementations are reconciled locally on the
-combined `codex/observability` branch. Remote draft PRs #7 and #8 are unchanged;
-nothing is deployed.
+The complete verified implementation is published for review in draft PR #9 on
+`codex/managed-hosting-release`. Draft PRs #7 and #8 are superseded and remain
+only until PR #9 completes fresh checks; nothing is merged or deployed.
 `OPS_TWO_FACTOR_REQUIRED` and `OPS_STAFF_INVITES_ENABLED` stay false until the
 complete staff release checklist passes. Observability remains fail-closed
 without its environment values.
@@ -57,8 +57,9 @@ include staff and observability. Repository tooling, CI, lockfiles, and both
 packers are now aligned to the observed Hostinger baseline of Node `24.6.0`, npm
 `11.5.1`, and pnpm `10.32.1`, with application engines accepting compatible
 Node `24.x` patches from `24.6.0` onward. The current alignment and browser
-hardening changes passed the consolidated local gate on 2026-08-11 in the
-uncommitted working tree based on `4b7450476dc13760969b032133e219089121c796`.
+hardening changes passed the consolidated local gate on 2026-08-11. The exact
+verified code tree was consolidated without content drift as
+`41d8018ab6d401689c9c4b0d9c5fb53496bc9f93` in draft PR #9.
 The evidence includes the frozen install, deployment self-tests, commerce
 verification, lint, type checks, 142 unit tests, both builds and client budgets,
 zero-vulnerability pnpm/npm audits, all 62 disposable-PostgreSQL integration
@@ -66,12 +67,12 @@ tests, and both checksum-verified packages with extracted-server smoke. Remote
 `main` and production remain on
 `cc38326dcf46651e10cb618727e4c03ef1fdc948`.
 
-The remote staff PR currently fails its dependency audit on the old `nanoid`
-resolution; the observability PR's last checks predate the reconciled local
-work. GitHub currently reports 14 open Dependabot alerts, including four high
-severity alerts, no available CodeQL analysis, and no `main` branch protection.
-The locally remediated dependency and CI changes must be republished and pass
-fresh remote checks before release.
+Superseded draft PR #7 failed its old dependency audit and draft PR #8's checks
+predate the reconciled implementation; neither is a release source. Draft PR #9
+must pass fresh CI, CodeQL, dependency, package, and review gates. GitHub's
+default branch continues to report 14 Dependabot alerts, including four high
+severity alerts, until the reviewed remediation reaches `main`. `main` also
+still lacks the prepared branch protection.
 
 ### Hostinger runtime alignment and process incident
 
@@ -116,18 +117,19 @@ the prepared work.
 ## Repository
 
 - One primary worktree.
-- Local `main` contains unpublished cleanup and CI-security commits.
-- The existing staff and observability branches are rebased locally; their
-  remote draft PR heads are not changed.
-- One worktree and three local branches are present during reconciliation.
-- Required remote branches: `main`, both open PR branches, and generated
-  `hostinger-ops-production`.
+- Draft PR #9 is the only intended review source for the combined verified tree.
+- Superseded PR #7/#8 branches are retained temporarily and should be deleted
+  only after PR #9 passes fresh checks.
+- One primary worktree is present.
+- `hostinger-ops-production` remains generated deployment state and must not be
+  treated as a source branch.
 
 ## Next action
 
-1. Obtain the scoped managed-Hostinger process repair, then publish prepared
-   `main` only after authorization and exact-SHA acceptance.
-2. Require fresh remote CI, CodeQL, dependency-alert, approval, and protection
-   evidence before any merge or release.
-3. Release staff operations and observability in their ordered phases.
+1. Require fresh CI, CodeQL, dependency, package, and review evidence on draft
+   PR #9.
+2. After those checks pass, close superseded PRs #7/#8 and delete only their
+   local and remote branches.
+3. Obtain the scoped managed-Hostinger process repair before separately
+   authorizing any PR #9 merge or production release.
 4. Keep all storefront commerce and staff security flags closed.
