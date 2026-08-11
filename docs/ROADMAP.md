@@ -15,9 +15,10 @@ in [CURRENT_STATE.md](CURRENT_STATE.md).
   and target-only Linux Sharp packaging completed and verified in the local
   working tree on 2026-08-11.
 
-The verified tree is published only as draft PR #9 and its first head passed
-fresh remote checks. Superseded PRs #7/#8 and their branches are deleted. Draft
-PR #9 has not been merged, deployed, migrated, or enabled in production.
+The verified tree is published only as ready PR #9 and its documentation-cleanup
+head passed fresh remote checks. Superseded PRs #7/#8 and their branches are
+deleted. PR #9 has not been merged, deployed, migrated, or enabled in
+production.
 
 ## Implementation phases
 
@@ -43,8 +44,8 @@ deployed**.
 
 ### Phase 2 — Reconcile security and CI
 
-Status: **local code/browser verification and draft PR #9 analysis complete;
-repository protection and human approval remain gated**.
+Status: **local code/browser verification, PR #9 analysis, and repository
+protection complete; independent human approval remains gated**.
 
 - Confirm the runtime-aligned lockfiles retain every compatible security
   override and resolve all 14 current Dependabot alerts.
@@ -102,8 +103,8 @@ verification remain external release gates**.
 
 ### Phase 6 — Protect and clean the repository
 
-Status: **prepared only; GitHub protection and branch mutations are not local
-implementation work**.
+Status: **`main` protection and superseded branch cleanup complete; PR #9 merge
+and post-merge branch deletion remain gated**.
 
 - Verify zero unresolved Dependabot, CodeQL, and secret-scanning alerts and
   enable the prepared `main` protection rules.
