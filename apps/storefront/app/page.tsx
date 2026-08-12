@@ -24,28 +24,49 @@ const processSteps: readonly Readonly<{
   {
     icon: PackageIcon,
     number: "01",
-    title: "Controlled editions",
-    description: "Identity, imagery, scent data, pricing, stock, and legal review must all pass before a fragrance becomes public.",
+    title: "Begin with feeling",
+    description: "Start with the atmosphere you want to carry: quiet, vivid, intimate, or after dark.",
   },
   {
     icon: Shield01Icon,
     number: "02",
-    title: "Verified commerce",
-    description: "Prices and availability are rechecked by the server whenever the cart changes and again before checkout.",
+    title: "Follow the composition",
+    description: "Move through fragrance family, note structure, and intensity without needing to speak in perfume jargon.",
   },
   {
     icon: DeliveryTruck01Icon,
     number: "03",
-    title: "India first",
-    description: "The delivery plan is India-wide, with fees, policies, tax treatment, and courier rules kept behind owner approval.",
+    title: "Find your presence",
+    description: "Choose the direction that feels like you. Only complete, approved editions will enter the public collection.",
   },
 ];
 
 const proofRows = [
-  ["Publication", "Only fully approved products can appear publicly."],
-  ["Pricing", "INR values use exact paise amounts, never browser totals."],
-  ["Inventory", "Stock is revalidated and reserved transactionally."],
-  ["Reviews", "Only eligible fulfilled orders can produce moderated reviews."],
+  ["Mood", "Start with the way you want the room to feel."],
+  ["Intensity", "Move from close-wearing restraint to a bolder trail."],
+  ["Occasion", "Find a direction for daylight, evening, work, or celebration."],
+  ["Release", "Every public edition must be complete, reviewed, and ready."],
+] as const;
+
+const editorialPreviews = [
+  {
+    title: "Velvet",
+    image: "/images/regent-noir-50ml.webp",
+    imageAlt: "Perfume Aura bottle staged with deep burgundy silk",
+    color: "bg-[var(--aura-wine)]",
+  },
+  {
+    title: "Tidal",
+    image: "/images/azure-tides-50ml.webp",
+    imageAlt: "Perfume Aura bottle staged with sculpted blue glass",
+    color: "bg-[#10263c]",
+  },
+  {
+    title: "Petal",
+    image: "/images/petalia-noir-50ml.webp",
+    imageAlt: "Perfume Aura bottle staged with a rose glass form",
+    color: "bg-[#6a3943]",
+  },
 ] as const;
 
 export default async function HomePage() {
@@ -68,21 +89,21 @@ export default async function HomePage() {
           </div>
         </div>
         <div className="relative z-10 mx-auto flex min-h-[62svh] max-w-[66rem] items-center justify-center text-center">
-          <h2 data-motion-copy className="text-[clamp(2.7rem,6vw,6.5rem)] leading-[0.98] tracking-[-0.045em]">
-            Perfume Aura is built around <span className="font-[var(--font-playfair)] italic text-[var(--aura-brass)]">presence</span>, not a wall of promises. Every image can be expressive. Every product fact still has to be approved.
+          <h2 data-motion-copy className="max-w-[17ch] text-[clamp(2.7rem,6vw,6.5rem)] leading-[0.98] tracking-[-0.04em] text-balance">
+            Perfume lives between <span className="font-[var(--font-playfair)] italic text-[var(--aura-brass)]">arrival</span> and memory. Find the composition that feels unmistakably yours.
           </h2>
         </div>
       </section>
 
       <section className="bg-[var(--aura-ink)] px-3 py-16 text-[var(--aura-ivory)] sm:px-5 lg:py-24">
         <div className="mx-auto max-w-[78rem]">
-          <p className="mb-8 text-center text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-[color:rgb(245_228_199_/_55%)]">What holds the experience together</p>
-          <div className="grid gap-2">
+          <p className="mb-8 text-center text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-[color:rgb(245_228_199_/_65%)]">Four ways into the collection</p>
+          <div className="border-y border-dashed border-[color:rgb(245_228_199_/_28%)]">
             {proofRows.map(([title, description], index) => (
-              <article data-motion-stack key={title} className="grid min-h-24 items-center rounded-[0.7rem] border border-[color:rgb(245_228_199_/_30%)] bg-[var(--aura-ivory)] px-5 py-5 text-[var(--aura-ink)] sm:grid-cols-[4rem_15rem_1fr] sm:px-8">
-                <span className="font-display text-2xl">0{index + 1}</span>
-                <h3 className="font-display text-3xl">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-black/65 sm:mt-0">{description}</p>
+              <article data-motion-stack key={title} className="grid min-h-28 items-center border-b border-dashed border-[color:rgb(245_228_199_/_22%)] px-3 py-6 last:border-b-0 sm:grid-cols-[4rem_15rem_1fr] sm:px-6">
+                <span className="font-display text-2xl text-[var(--aura-brass)]">0{index + 1}</span>
+                <h3 className="font-display text-4xl">{title}</h3>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_72%)] sm:mt-0">{description}</p>
               </article>
             ))}
           </div>
@@ -102,9 +123,29 @@ export default async function HomePage() {
               ))}
             </div>
           ) : (
-            <div className="border border-dashed border-[color:rgb(245_228_199_/_30%)] px-6 py-16 text-center">
-              <p className="font-display text-4xl">The collection is not public yet.</p>
-              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_58%)]">Approved products appear only after every publication gate passes.</p>
+            <div>
+              <div className="grid gap-2 lg:grid-cols-3">
+                {editorialPreviews.map((preview, index) => (
+                  <figure key={preview.title} data-motion-product-card className={`relative min-h-[32rem] overflow-hidden ${preview.color}`}>
+                    <Image
+                      src={preview.image}
+                      alt={preview.imageAlt}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 33vw"
+                      className="object-cover transition duration-500 ease-out hover:scale-[1.025]"
+                    />
+                    <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_55%,rgba(16,11,6,.84)_100%)]" />
+                    <figcaption className="absolute inset-x-5 bottom-5 flex items-end justify-between border-t border-dashed border-white/35 pt-4">
+                      <span className="font-display text-4xl">{preview.title}</span>
+                      <span className="text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-white/70">Study 0{index + 1}</span>
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+              <div className="mt-5 flex flex-col items-center justify-between gap-3 border-y border-dashed border-[color:rgb(245_228_199_/_28%)] px-2 py-5 text-center sm:flex-row sm:text-left">
+                <p className="font-display text-2xl">A preview of the visual world</p>
+                <p className="max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_68%)]">The public collection opens only when every product detail and release gate is complete.</p>
+              </div>
             </div>
           )}
         </div>
@@ -115,7 +156,7 @@ export default async function HomePage() {
           <div className="relative z-10 mb-14 lg:mb-16 lg:px-8">
             <h2 data-motion-horizontal className="font-display -rotate-2 text-[clamp(5rem,14vw,13rem)] leading-[0.72]">Why Perfume</h2>
             <h2 data-motion-horizontal className="font-display text-outline ml-[8vw] rotate-1 text-[clamp(5rem,14vw,13rem)] leading-[0.72]">Aura</h2>
-            <p className="ml-auto mt-10 max-w-xl text-xl leading-8 text-[color:rgb(245_228_199_/_72%)]">The drama belongs in the imagery and motion. The commercial facts stay controlled, traceable, and honest.</p>
+            <p className="ml-auto mt-10 max-w-xl text-xl leading-8 text-[color:rgb(245_228_199_/_76%)]">A guided way to move from atmosphere to composition—without needing to know every note by name.</p>
           </div>
 
           <div data-motion-journey-track className="relative grid gap-3 lg:flex lg:w-max lg:px-8">
@@ -141,9 +182,9 @@ export default async function HomePage() {
         </div>
         <div className="flex items-center px-6 py-16 sm:px-12 lg:px-16">
           <div className="max-w-xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-black/55">Find the right direction</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-black/65">Find the right direction</p>
             <h2 data-motion-copy className="font-display mt-4 text-[clamp(4.5rem,8vw,8rem)] leading-[0.8]">Start with the feeling</h2>
-            <p className="mt-7 text-base leading-7 text-black/65">Choose mood, intensity, and occasion. The finder only recommends fragrances with complete, approved scent data.</p>
+            <p className="mt-7 text-base leading-7 text-black/70">Choose mood, intensity, and occasion. The finder stays quiet until there is enough approved scent data to make a recommendation worth trusting.</p>
             <Button render={<Link href="/find-your-scent" />} nativeButton={false} className="mt-8 min-h-16 rounded-[0.65rem] bg-[var(--aura-ink)] px-8 font-display text-xl text-[var(--aura-ivory)] hover:bg-black">
               Find your scent <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={1.8} />
             </Button>
@@ -153,18 +194,32 @@ export default async function HomePage() {
 
       <section className="overflow-hidden bg-[var(--aura-ink)] py-20 text-[var(--aura-ivory)] lg:py-28">
         <h2 className="font-display text-outline whitespace-nowrap px-3 text-[clamp(6rem,17vw,16rem)] leading-[0.72] sm:px-5">The opening edit</h2>
-        <div data-motion-marquee className="mt-12 flex w-max gap-2 px-3 sm:px-5">
-          {(featuredProducts.length ? [...featuredProducts, ...featuredProducts] : []).map((product, index) => (
-            <article key={`${product.id}-${index}`} className="w-[82vw] max-w-[34rem] shrink-0 rounded-[0.7rem] border border-[color:rgb(245_228_199_/_28%)] p-6 sm:p-8">
-              <div className="flex items-start justify-between border-b border-dashed border-[color:rgb(245_228_199_/_25%)] pb-4">
-                <h3 className="font-display text-3xl">{product.name}</h3>
-                <span className="text-xs text-[color:rgb(245_228_199_/_48%)]">0{(index % Math.max(featuredProducts.length, 1)) + 1}</span>
-              </div>
-              <p className="mt-8 font-[var(--font-playfair)] text-2xl leading-snug">{product.summary}</p>
-              <Link href={`/products/${product.slug}`} className="mt-8 inline-flex min-h-11 items-center gap-2 font-display text-xl underline underline-offset-8">View product <span aria-hidden="true">→</span></Link>
-            </article>
-          ))}
-        </div>
+        {featuredProducts.length ? (
+          <div data-motion-marquee className="mt-12 flex w-max gap-2 px-3 sm:px-5">
+            {[...featuredProducts, ...featuredProducts].map((product, index) => {
+              const isDuplicate = index >= featuredProducts.length;
+              return (
+                <article aria-hidden={isDuplicate || undefined} key={`${product.id}-${index}`} className="w-[82vw] max-w-[34rem] shrink-0 rounded-[0.7rem] border border-[color:rgb(245_228_199_/_28%)] p-6 sm:p-8">
+                  <div className="flex items-start justify-between border-b border-dashed border-[color:rgb(245_228_199_/_25%)] pb-4">
+                    <h3 className="font-display text-3xl">{product.name}</h3>
+                    <span className="text-xs text-[color:rgb(245_228_199_/_58%)]">0{(index % featuredProducts.length) + 1}</span>
+                  </div>
+                  <p className="mt-8 font-[var(--font-playfair)] text-2xl leading-snug">{product.summary}</p>
+                  <Link tabIndex={isDuplicate ? -1 : undefined} href={`/products/${product.slug}`} className="mt-8 inline-flex min-h-11 items-center gap-2 font-display text-xl underline underline-offset-8">View product <span aria-hidden="true">→</span></Link>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="relative mx-3 mt-10 min-h-[36rem] overflow-hidden border-y border-dashed border-[color:rgb(245_228_199_/_28%)] sm:mx-5 lg:min-h-[44rem]">
+            <Image src="/images/hero-bottle-still-life.webp" alt="Three Perfume Aura bottles arranged on a dark stone plinth" fill sizes="100vw" className="object-cover opacity-75" />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(16,11,6,.92)_0%,rgba(16,11,6,.5)_52%,rgba(16,11,6,.12)_100%)]" />
+            <div className="relative flex min-h-[36rem] max-w-2xl flex-col justify-end p-6 sm:p-10 lg:min-h-[44rem] lg:p-16">
+              <p className="font-display text-[clamp(3.5rem,8vw,7rem)] leading-[0.86] text-balance">Made for the moment after you arrive.</p>
+              <p className="mt-5 max-w-lg text-base leading-7 text-[color:rgb(245_228_199_/_76%)]">Explore the house, the scent finder, and the world taking shape before the first approved collection goes live.</p>
+            </div>
+          </div>
+        )}
         <div className="mt-14 text-center">
           <Link href="/shop" className="inline-flex min-h-12 items-center gap-2 font-display text-2xl underline underline-offset-8">Shop the collection <span aria-hidden="true">→</span></Link>
         </div>
