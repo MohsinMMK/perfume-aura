@@ -5,14 +5,15 @@ QA date: **2026-08-12**
 ## Compared state
 
 - Reference: `https://buckssauce.com/`, settled home hero.
-- Implementation: `http://127.0.0.1:3217/`, production build with every
-  storefront release flag closed.
+- Implementation: this PR's production build with every storefront release
+  flag closed. Reproduce it with `pnpm build:storefront`, followed by
+  `pnpm start:storefront`, and use the loopback URL printed by Next.js.
 - Matched viewports: `1440 × 900` and `390 × 844`.
-- Comparison inputs:
-  - `reference-vs-perfume-aura-desktop.png`
-  - `reference-vs-perfume-aura-mobile.png`
-- Evidence workspace:
-  `/Users/mohsinkhan/.codex/visualizations/2026/08/12/019ff527-0739-70f2-96e8-1002d49b69e3/buckssauce-reference/`
+- Stable evidence identifier: `PR-11/2026-08-12-bucks-home-v1`.
+- Capture procedure: follow `docs/commerce/STOREFRONT-REFERENCE.md`, capture
+  the settled reference and implementation at both matched viewports, then
+  compare desktop and mobile pairs. Screenshot pixels remain untracked local
+  QA evidence under the documented no-copy boundary.
 
 ## Result
 

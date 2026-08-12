@@ -242,6 +242,8 @@ textarea {
   }
 
   [data-motion-journey-track] {
+    display: grid !important;
+    width: 100% !important;
     transform: none !important;
   }
 }

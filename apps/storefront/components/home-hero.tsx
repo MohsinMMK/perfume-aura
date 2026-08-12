@@ -197,7 +197,8 @@ export function HomeHero({
               src={activeProduct.image}
               alt={activeProduct.imageAlt}
               fill
-              priority
+              preload
+              loading="eager"
               sizes="(max-width: 768px) 100vw, 46rem"
               className="object-contain object-center"
             />
