@@ -139,6 +139,23 @@ production build returned the enforced CSP and one-year HSTS header, rendered
 the release-gated home in Chromium, and produced zero browser warnings or
 errors after the animation effects settled.
 
+The primary worktree now contains a new, not-yet-published storefront candidate
+grounded in a fresh 2026-08-12 Bucks Sauce route and interaction audit. It adds
+the open-licensed Inter Tight body face, retains Bebas Neue instead of copying
+the source's commercially licensed display font, aligns the hero, cream menu and
+cart sheets, mobile scroll-snap editorial sections, product-card states, footer,
+and scoped GSAP motion, and records the repeatable evidence in
+`docs/commerce/STOREFRONT-REFERENCE.md`. Production remains unchanged and the
+Hostinger publication blocker still applies.
+
+The final local candidate passed commerce verification, lint, type checks, all
+142 unit tests, both production builds and client budgets, zero-vulnerability
+audits, all 62 disposable-loopback PostgreSQL integration tests, `git diff
+--check`, and matched desktop/mobile browser QA. The temporary database was
+removed. The verification shell used Node `25.9.0`, so pnpm reported the
+expected engine warning against the supported production-compatible Node `24.x`
+range; no check failed.
+
 ### Managed Hostinger deployment boundary
 
 Both production applications remain on their existing Hostinger managed
@@ -152,7 +169,9 @@ the prepared work.
 - One primary worktree.
 - PR #9 is merged; its feature branch and the superseded PR #7/#8 branches are
   deleted locally and remotely.
-- Local `main` exactly matches `origin/main`.
+- Local `main` still points to the `origin/main` commit; the primary worktree has
+  the pending storefront-reference, UI, and documentation changes described
+  above.
 - `hostinger-ops-production` remains generated deployment state and must not be
   treated as a source branch.
 

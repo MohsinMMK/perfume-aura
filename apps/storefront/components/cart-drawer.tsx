@@ -3,10 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Add01Icon, MinusSignIcon } from "@hugeicons/core-free-icons";
+import { Add01Icon, Cancel01Icon, MinusSignIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@perfume-aura/ui/components/button";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
   SheetFooter,
@@ -21,8 +22,20 @@ export function CartDrawer() {
 
   return (
     <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-      <SheetContent className="top-3! right-3! bottom-auto! h-auto! max-h-[calc(100svh-1.5rem)]! w-[calc(100%-1.5rem)]! overflow-hidden rounded-[0.7rem] border border-[var(--aura-ink)] bg-[var(--aura-ivory)] text-[var(--aura-ink)] sm:max-w-[44rem]!">
-        <SheetHeader className="border-b border-black/15 px-5 py-5 sm:px-7">
+      <SheetContent showCloseButton={false} className="right-[5px]! top-[5px]! bottom-auto! h-auto! max-h-[calc(100svh-10px)]! w-[calc(100%-10px)]! overflow-hidden rounded-[0.65rem] border-0 bg-[var(--aura-ivory)] text-[var(--aura-ink)] sm:max-w-[44rem]!">
+        <SheetClose
+          render={
+            <Button
+              variant="outline"
+              size="icon-lg"
+              className="absolute right-4 top-4 z-10 min-h-12 min-w-12 rounded-full border-black/30 bg-transparent text-[var(--aura-ink)] hover:bg-[var(--aura-ink)] hover:text-[var(--aura-ivory)]"
+              aria-label="Close cart"
+            />
+          }
+        >
+          <HugeiconsIcon icon={Cancel01Icon} strokeWidth={1.7} />
+        </SheetClose>
+        <SheetHeader className="border-b border-black/15 px-5 py-5 pr-20 sm:px-7 sm:pr-24">
           <SheetTitle className="font-display text-4xl text-[var(--aura-ink)]">
             Your selection
           </SheetTitle>
@@ -42,7 +55,7 @@ export function CartDrawer() {
                 <Button
                   render={<Link href="/shop" />}
                   nativeButton={false}
-                  className="mt-6 min-h-11 rounded-none px-6"
+                  className="mt-6 min-h-11 rounded-[0.6rem] px-6"
                   onClick={() => setDrawerOpen(false)}
                 >
                   Shop the collection
@@ -72,7 +85,7 @@ export function CartDrawer() {
                         type="button"
                         variant="outline"
                         size="icon-lg"
-                        className="min-h-11 min-w-11 rounded-none border-black/25 bg-transparent"
+                        className="min-h-11 min-w-11 rounded-[0.45rem] border-black/25 bg-transparent"
                         aria-label={`Decrease ${line.productName} quantity`}
                         disabled={loading}
                         onClick={() => setQuantity(line.variantId, line.quantity - 1)}
@@ -86,7 +99,7 @@ export function CartDrawer() {
                         type="button"
                         variant="outline"
                         size="icon-lg"
-                        className="min-h-11 min-w-11 rounded-none border-black/25 bg-transparent"
+                        className="min-h-11 min-w-11 rounded-[0.45rem] border-black/25 bg-transparent"
                         aria-label={`Increase ${line.productName} quantity`}
                         disabled={loading || line.quantity >= 10}
                         onClick={() => setQuantity(line.variantId, line.quantity + 1)}

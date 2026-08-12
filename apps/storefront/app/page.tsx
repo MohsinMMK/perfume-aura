@@ -112,10 +112,10 @@ export default async function HomePage() {
 
       <section className="overflow-hidden bg-[var(--aura-ink)] px-3 pb-24 pt-10 text-[var(--aura-ivory)] sm:px-5 lg:pb-36">
         <div className="mx-auto max-w-[94rem]">
-          <div className="mb-10 text-center lg:mb-16">
-            <p className="font-display text-[clamp(4.8rem,13vw,12rem)] leading-[0.68]">Choose your</p>
-            <p className="font-display text-outline text-[clamp(5.2rem,15vw,14rem)] leading-[0.78]">Aura</p>
-          </div>
+          <h2 className="mb-10 text-center font-display lg:mb-16">
+            <span className="block text-[clamp(4.8rem,13vw,12rem)] leading-[0.68]">Choose your</span>
+            <span className="text-outline block text-[clamp(5.2rem,15vw,14rem)] leading-[0.78]">Aura</span>
+          </h2>
           {featuredProducts.length ? (
             <div className="aura-product-grid grid gap-2">
               {featuredProducts.map((product, index) => (
@@ -124,9 +124,9 @@ export default async function HomePage() {
             </div>
           ) : (
             <div>
-              <div className="grid gap-2 lg:grid-cols-3">
+              <div className="aura-snap-row -mx-3 flex snap-x snap-mandatory gap-2 overflow-x-auto px-3 pb-3 sm:-mx-5 sm:px-5 lg:mx-0 lg:grid lg:grid-cols-3 lg:overflow-visible lg:px-0 lg:pb-0">
                 {editorialPreviews.map((preview, index) => (
-                  <figure key={preview.title} data-motion-product-card className={`relative min-h-[32rem] overflow-hidden ${preview.color}`}>
+                  <figure key={preview.title} data-motion-product-card className={`relative min-h-[32rem] w-[88vw] shrink-0 snap-center overflow-hidden rounded-[0.65rem] sm:w-[70vw] lg:w-auto lg:min-w-0 ${preview.color}`}>
                     <Image
                       src={preview.image}
                       alt={preview.imageAlt}
@@ -154,14 +154,16 @@ export default async function HomePage() {
       <section data-motion-journey className="relative overflow-x-clip bg-[var(--aura-ink)] px-3 py-20 text-[var(--aura-ivory)] sm:px-5 lg:min-h-[280svh] lg:py-0">
         <div className="mx-auto max-w-[94rem] lg:sticky lg:top-0 lg:flex lg:h-[100svh] lg:max-w-none lg:flex-col lg:justify-center lg:overflow-hidden">
           <div className="relative z-10 mb-14 lg:mb-16 lg:px-8">
-            <h2 data-motion-horizontal className="font-display -rotate-2 text-[clamp(5rem,14vw,13rem)] leading-[0.72]">Why Perfume</h2>
-            <h2 data-motion-horizontal className="font-display text-outline ml-[8vw] rotate-1 text-[clamp(5rem,14vw,13rem)] leading-[0.72]">Aura</h2>
+            <h2 className="font-display">
+              <span data-motion-horizontal className="block -rotate-2 text-[clamp(5rem,14vw,13rem)] leading-[0.72]">Why Perfume</span>
+              <span data-motion-horizontal className="text-outline ml-[8vw] block rotate-1 text-[clamp(5rem,14vw,13rem)] leading-[0.72]">Aura</span>
+            </h2>
             <p className="ml-auto mt-10 max-w-xl text-xl leading-8 text-[color:rgb(245_228_199_/_76%)]">A guided way to move from atmosphere to composition—without needing to know every note by name.</p>
           </div>
 
-          <div data-motion-journey-track className="relative grid gap-3 lg:flex lg:w-max lg:px-8">
+          <div data-motion-journey-track className="aura-snap-row relative -mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-3 sm:-mx-5 sm:px-5 lg:mx-0 lg:w-max lg:overflow-visible lg:px-8 lg:pb-0">
             {processSteps.map((step, index) => (
-              <article data-motion-stage key={step.number} className={`relative min-h-[30rem] overflow-hidden rounded-[0.75rem] border border-[color:rgb(245_228_199_/_28%)] p-6 lg:w-[48vw] lg:shrink-0 ${index === 0 ? "bg-[var(--aura-brass)] text-[var(--aura-ink)]" : index === 1 ? "bg-[var(--aura-orange)] text-[var(--aura-ink)]" : "bg-[var(--aura-red)] text-[var(--aura-ivory)]"}`}>
+              <article data-motion-stage key={step.number} className={`relative min-h-[30rem] w-[88vw] shrink-0 snap-center overflow-hidden rounded-[0.75rem] border border-[color:rgb(245_228_199_/_28%)] p-6 sm:w-[70vw] lg:w-[48vw] ${index === 0 ? "bg-[var(--aura-brass)] text-[var(--aura-ink)]" : index === 1 ? "bg-[var(--aura-orange)] text-[var(--aura-ink)]" : "bg-[var(--aura-red)] text-[var(--aura-ivory)]"}`}>
                 <div className="flex items-start justify-between">
                   <span className="font-display text-5xl">{step.number}</span>
                   <HugeiconsIcon icon={step.icon} strokeWidth={1.4} className="size-10" />

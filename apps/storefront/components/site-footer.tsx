@@ -29,7 +29,7 @@ export function SiteFooter() {
 
         <nav aria-label="Footer navigation" className="grid content-center border-b border-[color:rgb(245_228_199_/_24%)] p-6 lg:border-b-0 lg:border-r">
           {navigation.map(([label, href]) => (
-            <Link key={href} href={href} prefetch={false} className="flex min-h-8 items-center font-display text-base hover:text-white">
+            <Link key={href} href={href} prefetch={false} className="flex min-h-11 items-center font-display text-base hover:text-white">
               {label}
             </Link>
           ))}
@@ -40,9 +40,9 @@ export function SiteFooter() {
           <p className="mt-2 text-xs leading-5 text-[color:rgb(245_228_199_/_65%)]">
             New compositions, launch notes, and the first word when the collection opens.
           </p>
-          <div className="mt-6 flex min-h-14 items-center rounded-[0.6rem] border border-[color:rgb(245_228_199_/_32%)] px-4 text-xs text-[color:rgb(245_228_199_/_62%)]" aria-label="Aura list opening soon">
-            Opening soon
-            <span className="ml-auto text-xl" aria-hidden="true">→</span>
+          <div className="mt-6 flex min-h-14 items-center border-y border-dashed border-[color:rgb(245_228_199_/_32%)] px-1 text-xs text-[color:rgb(245_228_199_/_68%)]" aria-label="Aura list opening soon">
+            House dispatch
+            <span className="ml-auto font-semibold uppercase tracking-[0.12em]">Opening soon</span>
           </div>
         </div>
 
@@ -52,10 +52,10 @@ export function SiteFooter() {
         </div>
       </div>
 
-      <div className="mx-auto mt-3 flex max-w-[94rem] flex-col gap-3 text-[0.62rem] uppercase tracking-[0.08em] text-[color:rgb(245_228_199_/_45%)] sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto mt-3 flex max-w-[94rem] flex-col gap-3 text-[0.62rem] uppercase tracking-[0.08em] text-[color:rgb(245_228_199_/_65%)] sm:flex-row sm:items-center sm:justify-between">
         <p>© {new Date().getFullYear()} Perfume Aura. All rights reserved.</p>
         <div className="flex flex-wrap gap-x-4 gap-y-2">
-          {policies.map(([label, href]) => <Link key={href} href={href} prefetch={false} className="hover:text-[var(--aura-ivory)]">{label}</Link>)}
+          {policies.map(([label, href]) => <Link key={href} href={href} prefetch={false} className="inline-flex min-h-11 items-center hover:text-[var(--aura-ivory)]">{label}</Link>)}
         </div>
       </div>
     </footer>

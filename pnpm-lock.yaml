@@ -119,6 +119,9 @@ importers:
       '@cashfreepayments/cashfree-js':
         specifier: ^1.0.7
         version: 1.0.7
+      '@fontsource-variable/inter-tight':
+        specifier: 5.3.0
+        version: 5.3.0
       '@fontsource/bebas-neue':
         specifier: 5.3.0
         version: 5.3.0
@@ -951,6 +954,9 @@ packages:
 
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
+
+  '@fontsource-variable/inter-tight@5.3.0':
+    resolution: {integrity: sha512-ZhZZ29sNZ15P1K+cUt13GeBRYON0akgmNiftshUeDLos7X7zGcRgPzt434879Xhq1QbwlW3M/apBMk7jWabwvA==}
 
   '@fontsource/bebas-neue@5.3.0':
     resolution: {integrity: sha512-nCxMEb9Bg9sjNWm9TIOsvHKDMLRUfEZPWpLgYu6m9KavZZVSA/WoHzI5wROwqA+eNwEi/PNBAcB5Co7HA3S0Cw==}
@@ -5251,6 +5257,8 @@ snapshots:
       react-dom: 19.2.4(react@19.2.4)
 
   '@floating-ui/utils@0.2.12': {}
+
+  '@fontsource-variable/inter-tight@5.3.0': {}
 
   '@fontsource/bebas-neue@5.3.0': {}
 

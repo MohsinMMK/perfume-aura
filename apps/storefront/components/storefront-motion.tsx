@@ -12,11 +12,14 @@ export function StorefrontMotion() {
 
     let active = true;
     let cleanup = () => {};
+    let refreshFrame: number | null = null;
 
     void Promise.all([import("gsap"), import("gsap/ScrollTrigger")]).then(
       ([{ default: gsap }, { ScrollTrigger }]) => {
         if (!active) return;
         gsap.registerPlugin(ScrollTrigger);
+        const listenerCleanups: Array<() => void> = [];
+        const motionMedia = gsap.matchMedia();
 
         const context = gsap.context(() => {
           if (progressRef.current) {
@@ -176,37 +179,76 @@ export function StorefrontMotion() {
           });
 
           gsap.utils.toArray<HTMLElement>("[data-motion-marquee]").forEach((element) => {
-            gsap.to(element, {
+            const marquee = gsap.to(element, {
               xPercent: -28,
               duration: 24,
               repeat: -1,
               ease: "none",
             });
+
+            const pause = () => marquee.pause();
+            const resumeWhenIdle = () => {
+              if (
+                !document.hidden &&
+                !element.matches(":hover") &&
+                !element.matches(":focus-within")
+              ) {
+                marquee.resume();
+              }
+            };
+            const handleFocusOut = (event: FocusEvent) => {
+              const nextTarget = event.relatedTarget;
+              if (!(nextTarget instanceof Node) || !element.contains(nextTarget)) {
+                resumeWhenIdle();
+              }
+            };
+            const handleVisibilityChange = () => {
+              if (document.hidden) pause();
+              else resumeWhenIdle();
+            };
+
+            element.addEventListener("mouseenter", pause);
+            element.addEventListener("mouseleave", resumeWhenIdle);
+            element.addEventListener("focusin", pause);
+            element.addEventListener("focusout", handleFocusOut);
+            document.addEventListener("visibilitychange", handleVisibilityChange);
+
+            listenerCleanups.push(() => {
+              element.removeEventListener("mouseenter", pause);
+              element.removeEventListener("mouseleave", resumeWhenIdle);
+              element.removeEventListener("focusin", pause);
+              element.removeEventListener("focusout", handleFocusOut);
+              document.removeEventListener("visibilitychange", handleVisibilityChange);
+            });
           });
 
-          gsap.utils.toArray<HTMLElement>("[data-motion-journey]").forEach((section) => {
-            const track = section.querySelector<HTMLElement>("[data-motion-journey-track]");
-            if (!track || window.matchMedia("(max-width: 1023px)").matches) return;
-            gsap.to(track, {
-              x: () => -Math.max(0, track.scrollWidth - window.innerWidth + 32),
-              ease: "none",
-              scrollTrigger: {
-                trigger: section,
-                start: "top top",
-                end: "bottom bottom",
-                scrub: 0.75,
-                invalidateOnRefresh: true,
-              },
+          motionMedia.add("(min-width: 1024px)", () => {
+            gsap.utils.toArray<HTMLElement>("[data-motion-journey]").forEach((section) => {
+              const track = section.querySelector<HTMLElement>("[data-motion-journey-track]");
+              if (!track) return;
+              gsap.to(track, {
+                x: () => -Math.max(0, track.scrollWidth - window.innerWidth + 32),
+                ease: "none",
+                scrollTrigger: {
+                  trigger: section,
+                  start: "top top",
+                  end: "bottom bottom",
+                  scrub: 0.75,
+                  invalidateOnRefresh: true,
+                },
+              });
             });
           });
         });
 
         cleanup = () => {
+          if (refreshFrame !== null) cancelAnimationFrame(refreshFrame);
+          listenerCleanups.forEach((removeListeners) => removeListeners());
+          motionMedia.revert();
           context.revert();
-          ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
         };
 
-        requestAnimationFrame(() => ScrollTrigger.refresh());
+        refreshFrame = requestAnimationFrame(() => ScrollTrigger.refresh());
       },
     );
 

@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Menu01Icon,
+  Cancel01Icon,
   Search01Icon,
   ShoppingBag01Icon,
   UserCircleIcon,
@@ -13,6 +15,7 @@ import { Button } from "@perfume-aura/ui/components/button";
 import {
   Sheet,
   SheetContent,
+  SheetClose,
   SheetDescription,
   SheetHeader,
   SheetTitle,
@@ -30,7 +33,9 @@ const navigation = [
 
 export function SiteHeader() {
   const { cart, setDrawerOpen } = useCart();
+  const pathname = usePathname();
   const [compact, setCompact] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const update = () => setCompact(window.scrollY > 96);
@@ -49,7 +54,8 @@ export function SiteHeader() {
         <Link
           href="/"
           aria-label="Perfume Aura home"
-          className="pointer-events-auto grid min-h-14 min-w-24 place-items-center border border-[color:rgb(245_228_199_/_24%)] bg-[var(--aura-ink)]/88 px-4 text-center backdrop-blur-sm"
+          aria-current={pathname === "/" ? "page" : undefined}
+          className={`pointer-events-auto grid place-items-center border border-[color:rgb(245_228_199_/_24%)] bg-[var(--aura-ink)]/88 text-center backdrop-blur-sm transition-[min-width,padding] duration-300 ${compact ? "min-h-12 min-w-20 px-3" : "min-h-14 min-w-24 px-4"}`}
         >
           <span className="font-[var(--font-playfair)] text-lg leading-[0.9] tracking-[0.08em]">PERFUME</span>
           <span className="font-display text-xl leading-[0.8]">AURA</span>
@@ -65,7 +71,8 @@ export function SiteHeader() {
                 key={item.href}
                 href={item.href}
                 prefetch={item.href === "/shop" ? null : false}
-                className="font-display text-[1.08rem] tracking-[0.02em] transition hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)]"
+                aria-current={pathname === item.href || pathname.startsWith(`${item.href}/`) ? "page" : undefined}
+                className="font-display min-h-11 content-center border-b border-transparent text-[1.08rem] tracking-[0.02em] transition hover:border-[var(--aura-ivory)] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] aria-[current=page]:border-[var(--aura-ivory)]"
               >
                 {item.label}
               </Link>
@@ -104,7 +111,7 @@ export function SiteHeader() {
             ) : null}
           </Button>
 
-          <Sheet>
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger
               render={
                 <Button
@@ -117,23 +124,42 @@ export function SiteHeader() {
             >
               <HugeiconsIcon icon={Menu01Icon} strokeWidth={1.7} />
             </SheetTrigger>
-            <SheetContent side="right" className="w-full border-l-[color:rgb(245_228_199_/_25%)] bg-[var(--aura-ink)] text-[var(--aura-ivory)] sm:max-w-[34rem]">
-              <SheetHeader className="border-b border-dashed border-[color:rgb(245_228_199_/_25%)] p-6">
-                <SheetTitle className="font-display text-5xl text-[var(--aura-ivory)]">Perfume Aura</SheetTitle>
-                <SheetDescription className="text-[color:rgb(245_228_199_/_60%)]">Composed for presence.</SheetDescription>
+            <SheetContent side="right" showCloseButton={false} className="data-[side=right]:inset-y-[5px] data-[side=right]:h-auto data-[side=right]:w-[calc(100%_-_10px)] rounded-[0.65rem] border-0 bg-[var(--aura-ivory)] text-[var(--aura-ink)] data-[side=right]:sm:max-w-[38.75rem]">
+              <SheetClose
+                render={
+                  <Button
+                    variant="outline"
+                    size="icon-lg"
+                    className="absolute right-4 top-4 z-10 min-h-12 min-w-12 rounded-full border-[color:rgb(16_11_6_/_35%)] bg-transparent text-[var(--aura-ink)] hover:bg-[var(--aura-ink)] hover:text-[var(--aura-ivory)]"
+                    aria-label="Close navigation menu"
+                  />
+                }
+              >
+                <HugeiconsIcon icon={Cancel01Icon} strokeWidth={1.7} />
+              </SheetClose>
+              <SheetHeader className="border-b border-dashed border-[color:rgb(16_11_6_/_25%)] p-6 pr-20">
+                <SheetTitle className="font-display text-5xl text-[var(--aura-ink)]">Perfume Aura</SheetTitle>
+                <SheetDescription className="text-[color:rgb(16_11_6_/_62%)]">Composed for presence.</SheetDescription>
               </SheetHeader>
               <nav aria-label="Menu navigation" className="grid px-6 py-4">
                 {navigation.map((item, index) => (
-                  <Link key={item.href} href={item.href} prefetch={false} className="flex min-h-16 items-center justify-between border-b border-dashed border-[color:rgb(245_228_199_/_22%)] font-display text-3xl">
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    prefetch={false}
+                    aria-current={pathname === item.href || pathname.startsWith(`${item.href}/`) ? "page" : undefined}
+                    onClick={() => setMenuOpen(false)}
+                    className="flex min-h-16 items-center justify-between border-b border-dashed border-[color:rgb(16_11_6_/_22%)] font-display text-3xl transition-[padding] hover:pl-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)] aria-[current=page]:pl-2"
+                  >
                     {item.label}
-                    <span className="font-sans text-xs text-[color:rgb(245_228_199_/_45%)]">0{index + 1}</span>
+                    <span className="text-xs text-[color:rgb(16_11_6_/_48%)]">0{index + 1}</span>
                   </Link>
                 ))}
                 <div className="mt-8 grid grid-cols-2 gap-2">
-                  <Button render={<Link href="/search" prefetch={false} />} nativeButton={false} variant="outline" className="min-h-12 rounded-none border-[color:rgb(245_228_199_/_35%)] bg-transparent text-[var(--aura-ivory)]">
+                  <Button render={<Link href="/search" prefetch={false} onClick={() => setMenuOpen(false)} />} nativeButton={false} variant="outline" className="min-h-12 rounded-[0.55rem] border-[color:rgb(16_11_6_/_35%)] bg-transparent text-[var(--aura-ink)] hover:bg-[var(--aura-ink)] hover:text-[var(--aura-ivory)]">
                     <HugeiconsIcon icon={Search01Icon} strokeWidth={1.7} /> Search
                   </Button>
-                  <Button render={<Link href="/account" prefetch={false} />} nativeButton={false} variant="outline" className="min-h-12 rounded-none border-[color:rgb(245_228_199_/_35%)] bg-transparent text-[var(--aura-ivory)]">
+                  <Button render={<Link href="/account" prefetch={false} onClick={() => setMenuOpen(false)} />} nativeButton={false} variant="outline" className="min-h-12 rounded-[0.55rem] border-[color:rgb(16_11_6_/_35%)] bg-transparent text-[var(--aura-ink)] hover:bg-[var(--aura-ink)] hover:text-[var(--aura-ivory)]">
                     <HugeiconsIcon icon={UserCircleIcon} strokeWidth={1.7} /> Account
                   </Button>
                 </div>
