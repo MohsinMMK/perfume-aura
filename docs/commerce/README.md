@@ -15,6 +15,7 @@ These files are executable specification inputs to `pnpm commerce:verify`:
 | [VERIFICATION.md](VERIFICATION.md) | Requirement-to-evidence protocol |
 | [REFERENCE-MAPPINGS.md](REFERENCE-MAPPINGS.md) | Reviewed inspired-reference register |
 | [RESEARCH.md](RESEARCH.md) | Source and legal research record |
+| [STOREFRONT-REFERENCE.md](STOREFRONT-REFERENCE.md) | Repeatable Bucks Sauce visual and interaction reference |
 
 Structured catalog inputs live in `data/catalog/`. Selection never means
 publication approval.

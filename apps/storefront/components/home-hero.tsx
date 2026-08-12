@@ -164,22 +164,22 @@ export function HomeHero({
   }
 
   return (
-    <section ref={sectionRef} className="relative min-h-[58rem] overflow-hidden bg-[var(--aura-ink)] text-[var(--aura-ivory)] lg:min-h-[100svh]">
+    <section ref={sectionRef} className="relative min-h-[100svh] overflow-hidden bg-[var(--aura-ink)] text-[var(--aura-ivory)]">
       <div
         className="pointer-events-none absolute left-1/2 top-[46%] h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-[var(--aura-brass)] opacity-[0.08] blur-[90px]"
         aria-hidden="true"
       />
-      <div className="relative mx-auto grid min-h-[58rem] max-w-[100rem] grid-rows-[auto_1fr] px-3 pb-8 pt-32 sm:px-5 sm:pt-24 lg:min-h-[100svh] lg:px-6 lg:pt-20">
+      <div className="relative mx-auto grid min-h-[100svh] max-w-[100rem] grid-rows-[auto_1fr] px-3 pb-3 pt-28 sm:px-5 sm:pt-24 lg:px-6 lg:pb-8 lg:pt-20">
         <div className="relative z-20 mx-auto max-w-[72rem] text-center">
           <p ref={kickerRef} className="text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-[color:rgb(245_228_199_/_62%)]">
             Perfume Aura · India
           </p>
-          <h1 ref={headingRef} className="font-display mx-auto mt-3 max-w-[12ch] text-[clamp(3.7rem,8vw,7.5rem)] leading-[0.78] tracking-[-0.035em] text-balance">
-            The scent <span className="text-outline">that leaves an aura behind</span>
+          <h1 ref={headingRef} className="font-display mx-auto mt-3 max-w-[12ch] text-[clamp(3.25rem,6.9444vw,8.3333rem)] leading-[0.88] tracking-[-0.02em] text-balance lg:leading-[0.84]">
+            The scent <span className="text-outline">that leaves an aura</span>
           </h1>
         </div>
 
-        <div className="relative mt-6 min-h-[37rem] lg:mt-3 lg:min-h-0">
+        <div className="relative mt-4 min-h-[27rem] sm:min-h-[34rem] lg:mt-3 lg:min-h-0">
           <div className="absolute inset-x-0 top-0 z-20 flex items-center gap-3" aria-live="polite">
             <span className="hidden pl-2 text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-[color:rgb(245_228_199_/_60%)] sm:block">
               Product no. 0{activeIndex + 1}
@@ -190,14 +190,15 @@ export function HomeHero({
             </span>
           </div>
 
-          <div ref={mediaRef} className="absolute inset-x-0 bottom-20 top-10 mx-auto max-w-[47rem] overflow-hidden lg:bottom-0">
+          <div ref={mediaRef} className="absolute inset-x-0 bottom-10 top-12 mx-auto max-w-[47rem] overflow-hidden lg:bottom-0">
             <Image
               ref={imageRef}
               key={activeProduct.image}
               src={activeProduct.image}
               alt={activeProduct.imageAlt}
               fill
-              priority
+              preload
+              loading="eager"
               sizes="(max-width: 768px) 100vw, 46rem"
               className="object-contain object-center"
             />
@@ -205,7 +206,7 @@ export function HomeHero({
           </div>
 
           {canRotate ? (
-            <div ref={controlsRef} className="absolute inset-x-2 top-[52%] z-30 flex -translate-y-1/2 justify-between sm:inset-x-8 lg:inset-x-14">
+            <div ref={controlsRef} className="absolute inset-x-2 top-[58%] z-30 flex -translate-y-1/2 justify-between sm:inset-x-8 lg:inset-x-14 lg:top-[52%]">
               <button
                 type="button"
                 className="grid min-h-14 min-w-14 place-items-center rounded-full bg-[var(--aura-ivory)] text-[var(--aura-ink)] transition hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] lg:min-h-20 lg:min-w-20"
@@ -226,7 +227,7 @@ export function HomeHero({
           ) : null}
         </div>
 
-        <div ref={ctaRef} className="absolute inset-x-5 bottom-5 z-30 flex justify-center sm:inset-x-8 lg:bottom-6">
+        <div ref={ctaRef} className="absolute inset-x-3 bottom-3 z-30 flex justify-center sm:inset-x-8 lg:bottom-6">
           <Button
             render={<Link href={activeProduct.slug ? `/products/${activeProduct.slug}` : "/shop"} />}
             nativeButton={false}

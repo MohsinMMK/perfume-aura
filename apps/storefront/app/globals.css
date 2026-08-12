@@ -1,3 +1,4 @@
+@import "@fontsource-variable/inter-tight";
 @import "@fontsource/bebas-neue/400.css";
 @import "tailwindcss";
 @import "@perfume-aura/ui/globals.css";
@@ -5,9 +6,9 @@
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
 
 :root {
-  --font-sans: var(--font-manrope), system-ui, sans-serif;
-  --font-heading: var(--font-playfair), serif;
-  --font-display: "Bebas Neue", var(--font-manrope), sans-serif;
+  --aura-font-sans: "Inter Tight Variable", var(--font-manrope, system-ui), sans-serif;
+  --aura-font-heading: var(--font-playfair, serif), serif;
+  --aura-font-display: "Bebas Neue", var(--font-manrope, system-ui), sans-serif;
   --aura-ink: #100b06;
   --aura-graphite: #100b06;
   --aura-brass: #be8d3f;
@@ -16,6 +17,9 @@
   --aura-paper: #f5e4c7;
   --aura-orange: #f15726;
   --aura-red: #da1f27;
+  --aura-menu: #322c23;
+  --aura-elevated: #272119;
+  --aura-brown: #593e2c;
   --aura-wine: #4f1e25;
   --background: #100b06;
   --foreground: #f5e4c7;
@@ -50,11 +54,11 @@ body {
   overflow-x: clip;
   background: var(--aura-ink);
   color: var(--aura-ivory);
-  font-family: var(--font-manrope), system-ui, sans-serif;
+  font-family: var(--aura-font-sans);
 }
 
 .font-display {
-  font-family: var(--font-display);
+  font-family: var(--aura-font-display);
   font-weight: 400;
   letter-spacing: -0.025em;
   text-transform: uppercase;
@@ -96,6 +100,19 @@ body {
   contain: paint;
 }
 
+.product-card-title {
+  transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.aura-snap-row {
+  scrollbar-width: none;
+  scroll-padding-inline: 0.75rem;
+}
+
+.aura-snap-row::-webkit-scrollbar {
+  display: none;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .product-card-actions {
     opacity: 0;
@@ -115,6 +132,11 @@ body {
   [data-motion-product-card]:focus-within .product-card-actions {
     opacity: 1;
     transform: translateY(0);
+  }
+
+  [data-motion-product-card]:hover .product-card-title,
+  [data-motion-product-card]:focus-within .product-card-title {
+    transform: translateY(-0.5rem);
   }
 }
 
@@ -221,11 +243,7 @@ textarea {
 
   [data-motion-journey-track] {
     display: grid !important;
-    width: auto !important;
+    width: 100% !important;
     transform: none !important;
-  }
-
-  [data-motion-journey-track] > * {
-    width: auto !important;
   }
 }

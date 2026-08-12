@@ -1,6 +1,8 @@
 # Commerce research
 
-Research snapshot: 2026-07-29. Public reference sites can change. Observations below are design inputs, not claims about their current business operations.
+General commerce snapshot: 2026-07-29. Bucks Sauce visual-reference snapshot:
+2026-08-12. Public reference sites can change. Observations below are design
+inputs, not claims about their current business operations.
 
 ## Method and safety boundary
 
@@ -8,6 +10,22 @@ Research snapshot: 2026-07-29. Public reference sites can change. Observations b
 - No order, payment, checkout submission, account creation, or destructive interaction.
 - Browser resource counts are session observations, not Core Web Vitals measurements.
 - Perfume Aura will not copy foreign branding, assets, descriptions, code, analytics, or customer claims.
+
+## Bucks Sauce storefront reference
+
+The 2026-08-12 read-only crawl covered the public home, shop, representative
+product, about, FAQ, contact, and wholesale routes at desktop and mobile sizes.
+It confirmed Inter Tight body typography, a commercially licensed Peperoncino
+Sans display face, the existing Perfume Aura dark/cream/gold/orange/red palette
+relationship, a 12-column responsive system, compact scroll navigation, cream
+menu/cart sheets, product-led editorial cards, and GSAP/ScrollTrigger-driven
+pinned and scrubbed motion.
+
+The durable measurements, route list, licensing decision, interaction model,
+adaptation matrix, and defects not to copy are recorded in
+[`STOREFRONT-REFERENCE.md`](./STOREFRONT-REFERENCE.md). That file is the current
+visual implementation authority for COM-ADR-026; this broader research record
+continues to own cross-site commerce and legal inputs.
 
 ## ScentGPT snapshot
 
