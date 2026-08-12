@@ -18,12 +18,12 @@ Last refreshed: **2026-08-12 IST**.
 Storefront and ops share Neon PostgreSQL. Their auth tables, secrets, cookies,
 origins, and recovery flows remain separate.
 
-Fresh public verification on 2026-08-12 passed for ops source commit
-`6bbf82b5a553f97ea97389ebf6fa84466c5aecfc`. Ops live, ready, version,
-unauthenticated session, login, and a real Next static asset passed. Storefront
-home, shop, search, cart lock, customer-auth lock, robots lock, static assets,
-and the `www` redirect also passed, but the storefront still renders the prior
-pre-refinement content from its separately deployed prebuilt artifact.
+Fresh public verification on 2026-08-12 passed for merged source commit
+`b1f5c9cf24c9375446052596870e2bfdf534f422`. The release workflow built and
+checksum-verified both standalone artifacts, published the generated Hostinger
+branch, and returned `production-deploy ok` for the storefront and a real Next
+static font asset. Ops live, ready, version, unauthenticated session, login,
+and static-asset checks passed alongside the storefront and redirect locks.
 
 ## Release state
 
@@ -38,13 +38,12 @@ All storefront release flags remain closed:
 `robots.txt` disallows indexing. Green runtime health does not authorize opening
 any release flag.
 
-PR #9 was squash-merged to `main` as
-`6bbf82b5a553f97ea97389ebf6fa84466c5aecfc`. Its main run passed quality,
-integration, CodeQL, verified-package, generated-branch publication, and exact-
-SHA live ops verification. The merged feature branch and superseded PR #7/#8
-branches are deleted. The generated ops deployment branch is
-`1219f1432f857f915febe2b6df32cc528f635f52`; the separately packaged storefront
-refinement is not yet deployed.
+PR #11 was squash-merged to `main` as
+`b1f5c9cf24c9375446052596870e2bfdf534f422`. Main workflow run `31624174105`
+passed quality, all 62 integration tests, verified packaging, publication to
+generated branch `10d10ff0fe7a3549d7c500ee5e830a8d824896ca`, and exact-SHA live
+verification. Separate CodeQL run `31624174069` also passed. The storefront
+reference refinement is deployed; no release flag changed.
 `OPS_TWO_FACTOR_REQUIRED` and `OPS_STAFF_INVITES_ENABLED` stay false until the
 complete staff release checklist passes. Observability remains fail-closed
 without its environment values.
@@ -160,25 +159,22 @@ range; no check failed.
 
 Both production applications remain on their existing Hostinger managed
 Node.js Web Apps. Neon remains independent and shared. No alternate hosting
-implementation or DNS topology change is planned. The unresolved Hostinger
-process incident remains the infrastructure gate for publishing or releasing
-the prepared work.
+implementation or DNS topology change is planned. The authorized PR #11
+release passed exact-SHA verification, but the unresolved Hostinger process
+incident remains an infrastructure risk: the green deployment does not supply
+the missing scoped process attribution, restart cause, or durable-repair proof.
 
 ## Repository
 
 - One primary worktree.
-- PR #9 is merged; its feature branch and the superseded PR #7/#8 branches are
-  deleted locally and remotely.
-- Local `main` still points to the `origin/main` commit; the primary worktree has
-  the pending storefront-reference, UI, and documentation changes described
-  above.
+- PR #11 is merged. Its source branch remains local and remote pending explicit
+  branch cleanup.
+- `main` and `origin/main` point to the deployed source commit above.
 - `hostinger-ops-production` remains generated deployment state and must not be
   treated as a source branch.
 
 ## Next action
 
-1. Obtain the scoped managed-Hostinger process repair before another production
-   publication.
-2. After that gate clears, deploy the verified storefront prebuilt artifact and
-   prove its refined content at the public apex.
-3. Keep all storefront commerce and staff security flags closed.
+1. Obtain scoped managed-Hostinger process attribution, restart-cause evidence,
+   and durable-repair proof before treating the historical incident as closed.
+2. Keep all storefront commerce and staff security flags closed.
