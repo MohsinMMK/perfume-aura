@@ -3,7 +3,7 @@
 Fresh repository, provider, database, and endpoint evidence outranks this file.
 Never record secrets, connection strings, credentials, or customer data here.
 
-Last refreshed: **2026-08-11 IST**.
+Last refreshed: **2026-08-12 IST**.
 
 ## Production
 
@@ -40,10 +40,10 @@ any release flag.
 
 The complete verified implementation is published for review in ready PR #9 on
 `codex/managed-hosting-release`. Commit
-`7b25dd7cc237667af2d4ee9cc77511eb97aad396` passed fresh quality, integration,
-dependency-review, CodeQL, CodeRabbit, and verified-package checks. Superseded
-PRs #7 and #8 are closed and their local and remote branches are deleted;
-nothing is merged or deployed.
+`b5ce965a96c95078db3e102c290c2ab773b3c0fd` passed fresh quality, integration,
+dependency-review, CodeQL, CodeRabbit status, and verified-package checks.
+Superseded PRs #7 and #8 are closed and their local and remote branches are
+deleted; nothing is merged or deployed.
 `OPS_TWO_FACTOR_REQUIRED` and `OPS_STAFF_INVITES_ENABLED` stay false until the
 complete staff release checklist passes. Observability remains fail-closed
 without its environment values.
@@ -71,14 +71,14 @@ tests, and both checksum-verified packages with extracted-server smoke. Remote
 `cc38326dcf46651e10cb618727e4c03ef1fdc948`.
 
 Superseded drafts #7/#8 are not release sources. Ready PR #9 passed fresh CI,
-CodeQL, dependency, package, and review automation on its documentation-cleanup
-head. GitHub's default branch continues to report 14 Dependabot alerts,
-including four high severity alerts, until the reviewed remediation reaches
-`main`. `main` is protected with strict required checks, one approval, stale-
-review dismissal, last-push approval, conversation resolution, linear history,
-administrator enforcement, and force-push/deletion denial. No independent
-human reviewer is currently a repository collaborator, so approval remains
-blocked.
+CodeQL, dependency, package, and review-status automation on its current head.
+GitHub's default branch continues to report dependency alerts until the reviewed
+remediation reaches `main`. `main` remains protected with strict required
+checks, conversation resolution, linear history, administrator enforcement, and
+force-push/deletion denial. On 2026-08-12 the owner changed only the required
+approval count from one to zero and disabled last-pusher approval so the policy
+matches the repository's solo-maintainer ownership. PR #9 is now clean and
+mergeable but remains intentionally unmerged behind the Hostinger release gate.
 
 ### Hostinger runtime alignment and process incident
 
@@ -156,8 +156,9 @@ the prepared work.
 
 ## Next action
 
-1. Keep ready PR #9 green and add an independent repository collaborator to
-   provide the required human approval.
-2. Obtain the scoped managed-Hostinger process repair before separately
-   authorizing any PR #9 merge or production release.
-3. Keep all storefront commerce and staff security flags closed.
+1. Keep ready PR #9 green and unmerged while the Hostinger incident remains an
+   active release gate.
+2. Obtain the scoped managed-Hostinger process repair before merging PR #9 or
+   triggering production publication.
+3. After the provider gate clears, squash-merge and verify the exact deployed
+   SHA while keeping all storefront commerce and staff security flags closed.
