@@ -60,9 +60,11 @@ Current blockers:
   limit and still shows paired Next.js starts. Hostinger has not supplied scoped
   process attribution, supervisor/HCDN root cause, a case ID, or durable-repair
   proof. Current health is not incident closure.
-- **GitHub:** ready PR #9 is green and mergeable. Solo-maintainer review approval
-  is not required, while strict checks, conversation resolution, linear history,
-  administrator enforcement, and force-push/deletion denial remain protected.
+
+PR #9 is merged and its feature branch is deleted. Solo-maintainer review
+approval is not required, while strict checks, conversation resolution, linear
+history, administrator enforcement, and force-push/deletion denial remain
+protected.
 
 Do not redeploy/restart, stop plan-wide processes, write DNS, migrate production,
 merge, or change release flags without explicit authorization and owning-gate
