@@ -19,15 +19,31 @@ type HeroProduct = Readonly<{
 
 const fallbackProduct: HeroProduct = {
   slug: "",
-  name: "The opening edit",
-  image: "/images/hero-bottle-still-life.webp",
-  imageAlt: "Perfume Aura black bottles on a polished stone plinth",
+  name: "Velvet composition",
+  image: "/images/regent-noir-50ml.webp",
+  imageAlt: "Perfume Aura black bottle arranged against deep burgundy silk",
 };
+
+const fallbackSlides: readonly HeroProduct[] = [
+  fallbackProduct,
+  {
+    slug: "",
+    name: "Tidal composition",
+    image: "/images/azure-tides-50ml.webp",
+    imageAlt: "Perfume Aura black bottle arranged with sculpted blue glass",
+  },
+  {
+    slug: "",
+    name: "Petal composition",
+    image: "/images/petalia-noir-50ml.webp",
+    imageAlt: "Perfume Aura black bottle arranged with a soft rose glass form",
+  },
+];
 
 export function HomeHero({
   products,
 }: Readonly<{ products: readonly HeroProduct[] }>) {
-  const slides = products.length > 0 ? products : [fallbackProduct];
+  const slides = products.length > 0 ? products : fallbackSlides;
   const [activeIndex, setActiveIndex] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
   const kickerRef = useRef<HTMLParagraphElement>(null);
@@ -148,27 +164,33 @@ export function HomeHero({
   }
 
   return (
-    <section ref={sectionRef} className="relative min-h-[100svh] overflow-hidden bg-[var(--aura-ink)] text-[var(--aura-ivory)]">
-      <div className="relative mx-auto min-h-[100svh] max-w-[100rem] px-3 pb-8 pt-24 sm:px-5 lg:px-6 lg:pt-20">
+    <section ref={sectionRef} className="relative min-h-[58rem] overflow-hidden bg-[var(--aura-ink)] text-[var(--aura-ivory)] lg:min-h-[100svh]">
+      <div
+        className="pointer-events-none absolute left-1/2 top-[46%] h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-[var(--aura-brass)] opacity-[0.08] blur-[90px]"
+        aria-hidden="true"
+      />
+      <div className="relative mx-auto grid min-h-[58rem] max-w-[100rem] grid-rows-[auto_1fr] px-3 pb-8 pt-32 sm:px-5 sm:pt-24 lg:min-h-[100svh] lg:px-6 lg:pt-20">
         <div className="relative z-20 mx-auto max-w-[72rem] text-center">
           <p ref={kickerRef} className="text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-[color:rgb(245_228_199_/_62%)]">
-            Product no. 0{activeIndex + 1} · Perfume Aura India
+            Perfume Aura · India
           </p>
-          <h1 ref={headingRef} className="font-display mx-auto mt-3 max-w-[12ch] text-[clamp(4rem,8vw,7.5rem)] leading-[0.77] tracking-[-0.035em]">
+          <h1 ref={headingRef} className="font-display mx-auto mt-3 max-w-[12ch] text-[clamp(3.7rem,8vw,7.5rem)] leading-[0.78] tracking-[-0.035em] text-balance">
             The scent <span className="text-outline">that leaves an aura behind</span>
           </h1>
         </div>
 
-        <div className="absolute inset-x-0 bottom-[6.8rem] top-[15rem] sm:top-[16rem] lg:bottom-0 lg:top-[14.5rem]">
-          <div className="absolute inset-x-0 top-3 z-20 flex items-center" aria-live="polite">
-            <span className="h-px flex-1 border-t border-dashed border-white/20" />
-            <span ref={nameRef} data-testid="hero-scent-name" className="font-display px-4 text-lg tracking-[0.04em] text-white/88 sm:px-7">
-              {activeProduct.name}
+        <div className="relative mt-6 min-h-[37rem] lg:mt-3 lg:min-h-0">
+          <div className="absolute inset-x-0 top-0 z-20 flex items-center gap-3" aria-live="polite">
+            <span className="hidden pl-2 text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-[color:rgb(245_228_199_/_60%)] sm:block">
+              Product no. 0{activeIndex + 1}
             </span>
             <span className="h-px flex-1 border-t border-dashed border-white/20" />
+            <span ref={nameRef} data-testid="hero-scent-name" className="font-display pr-2 text-lg tracking-[0.04em] text-white/88 sm:pl-4">
+              {activeProduct.name}
+            </span>
           </div>
 
-          <div ref={mediaRef} className="absolute inset-x-0 bottom-0 top-10 mx-auto max-w-[47rem] overflow-hidden">
+          <div ref={mediaRef} className="absolute inset-x-0 bottom-20 top-10 mx-auto max-w-[47rem] overflow-hidden lg:bottom-0">
             <Image
               ref={imageRef}
               key={activeProduct.image}
@@ -177,13 +199,13 @@ export function HomeHero({
               fill
               priority
               sizes="(max-width: 768px) 100vw, 46rem"
-              className="object-cover object-center lg:object-contain"
+              className="object-contain object-center"
             />
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(13,12,11,.18)_0%,transparent_20%,transparent_72%,rgba(13,12,11,.82)_100%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(16,11,6,.1)_0%,transparent_18%,transparent_70%,rgba(16,11,6,.78)_100%)]" />
           </div>
 
           {canRotate ? (
-            <div ref={controlsRef} className="absolute inset-x-4 top-[52%] z-30 flex -translate-y-1/2 justify-between sm:inset-x-8 lg:inset-x-14">
+            <div ref={controlsRef} className="absolute inset-x-2 top-[52%] z-30 flex -translate-y-1/2 justify-between sm:inset-x-8 lg:inset-x-14">
               <button
                 type="button"
                 className="grid min-h-14 min-w-14 place-items-center rounded-full bg-[var(--aura-ivory)] text-[var(--aura-ink)] transition hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] lg:min-h-20 lg:min-w-20"
@@ -211,7 +233,7 @@ export function HomeHero({
             size="lg"
             className="min-h-16 w-full max-w-sm rounded-[0.65rem] bg-[var(--aura-ivory)] px-8 font-display text-xl tracking-[0.02em] text-[var(--aura-ink)] hover:bg-white"
           >
-            {activeProduct.slug ? `Explore ${activeProduct.name}` : "Explore the collection"}
+            {activeProduct.slug ? `Explore ${activeProduct.name}` : "Explore the edit"}
             <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={1.8} />
           </Button>
         </div>

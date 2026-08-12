@@ -23,7 +23,7 @@ export function SiteFooter() {
           <div>
             <p className="font-[var(--font-playfair)] text-3xl leading-none tracking-[0.06em]">PERFUME</p>
             <p className="font-display text-5xl leading-none">AURA</p>
-            <p className="mt-3 text-[0.62rem] uppercase tracking-[0.2em] text-[color:rgb(245_228_199_/_55%)]">India · in progress</p>
+            <p className="mt-3 text-[0.62rem] uppercase tracking-[0.2em] text-[color:rgb(245_228_199_/_65%)]">India · composed for presence</p>
           </div>
         </div>
 
@@ -37,11 +37,11 @@ export function SiteFooter() {
 
         <div className="border-b border-[color:rgb(245_228_199_/_24%)] p-6 lg:border-b-0 lg:border-r lg:p-8">
           <h2 className="font-display text-3xl">Join the Aura list</h2>
-          <p className="mt-2 text-xs leading-5 text-[color:rgb(245_228_199_/_52%)]">
-            New scents, restocks, and launch notes. Signup opens after consent copy and email delivery are approved.
+          <p className="mt-2 text-xs leading-5 text-[color:rgb(245_228_199_/_65%)]">
+            New compositions, launch notes, and the first word when the collection opens.
           </p>
-          <div className="mt-6 flex min-h-14 items-center rounded-[0.6rem] border border-[color:rgb(245_228_199_/_24%)] px-4 text-xs text-[color:rgb(245_228_199_/_45%)]" aria-label="Newsletter signup unavailable pending approval">
-            Your email…
+          <div className="mt-6 flex min-h-14 items-center rounded-[0.6rem] border border-[color:rgb(245_228_199_/_32%)] px-4 text-xs text-[color:rgb(245_228_199_/_62%)]" aria-label="Aura list opening soon">
+            Opening soon
             <span className="ml-auto text-xl" aria-hidden="true">→</span>
           </div>
         </div>
