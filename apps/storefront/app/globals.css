@@ -82,8 +82,8 @@ body {
   --aura-logo-wordmark-start-y: 86px;
   --aura-logo-wordmark-compact-y: 19px;
 
-  background: rgb(16 11 6 / 88%);
-  backdrop-filter: blur(6px);
+  background: transparent;
+  backdrop-filter: none;
 }
 
 .aura-header-logo:focus-visible {
