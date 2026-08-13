@@ -22,7 +22,7 @@ export default async function SearchPage({
     <section className="min-h-[80svh] bg-[var(--aura-ink)] px-5 pb-24 pt-28 text-[var(--aura-ivory)] sm:px-8 lg:px-10 lg:pt-32">
       <div className="mx-auto max-w-[94rem]">
         <div className="max-w-4xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:rgb(245_228_199_/_48%)]">Search</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--aura-text-muted-on-ink)]">Search</p>
           <h1 className="font-display mt-3 text-[clamp(5rem,11vw,11rem)] leading-[0.74]">What are you drawn to?</h1>
           <form action="/search" className="mt-8 flex flex-col gap-3 sm:flex-row">
             <div className="flex-1">

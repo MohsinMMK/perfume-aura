@@ -84,7 +84,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const previewCatalog = isPreviewCatalogEnabled();
     if (!previewCatalog && !isPublicCatalogEnabled()) {
       return NextResponse.json(
-        { error: "The public catalog is not released yet." },
+        { error: "The collection is not available yet." },
         { status: 409 },
       );
     }

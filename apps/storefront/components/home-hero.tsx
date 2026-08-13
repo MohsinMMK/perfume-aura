@@ -73,7 +73,7 @@ export function HomeHero({
       const context = gsap.context(() => {
         const timeline = gsap.timeline({ defaults: { ease: "power4.out" } });
         timeline
-          .from(kicker, { y: 18, opacity: 0, duration: 0.45 })
+          .from(kicker, { y: 18, duration: 0.45 })
           .from(
             heading,
             {
@@ -91,13 +91,13 @@ export function HomeHero({
         if (controls) {
           timeline.from(
             controls,
-            { scale: 0.8, opacity: 0, duration: 0.48 },
+            { scale: 0.8, duration: 0.48 },
             0.5,
           );
         }
         timeline.from(
           cta,
-          { y: 28, opacity: 0, duration: 0.5 },
+          { y: 28, duration: 0.5 },
           0.58,
         );
       }, section);
@@ -136,8 +136,8 @@ export function HomeHero({
         );
         gsap.fromTo(
           name,
-          { y: 12, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.38, ease: "power4.out" },
+          { y: 12 },
+          { y: 0, duration: 0.38, ease: "power4.out" },
         );
         gsap.to(image, {
           y: -10,
@@ -198,7 +198,6 @@ export function HomeHero({
               alt={activeProduct.imageAlt}
               fill
               preload
-              loading="eager"
               sizes="(max-width: 768px) 100vw, 46rem"
               className="object-contain object-center"
             />

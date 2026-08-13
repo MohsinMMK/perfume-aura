@@ -19,7 +19,7 @@ export type CartSnapshot = Readonly<{
 }>;
 
 const checkoutReleaseBlockReason =
-  "Checkout is locked until shipping, policy, tax, Cashfree, and production catalog approvals are complete.";
+  "Online checkout is not available yet.";
 
 type MutableCart = {
   lines: Map<string, CartLine>;

@@ -1,11 +1,102 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+
+const historyScrollStateKey = "__perfumeAuraScroll";
+
+type HistoryScrollPosition = Readonly<{
+  x: number;
+  y: number;
+}>;
+
+function readHistoryScrollPosition(state: unknown): HistoryScrollPosition | null {
+  if (!state || typeof state !== "object") return null;
+  const position = (state as Record<string, unknown>)[historyScrollStateKey];
+  if (!position || typeof position !== "object") return null;
+  const { x, y } = position as Record<string, unknown>;
+  return typeof x === "number" && typeof y === "number" ? { x, y } : null;
+}
 
 export function StorefrontMotion() {
   const progressRef = useRef<HTMLDivElement>(null);
+  const [popstateRevision, setPopstateRevision] = useState(0);
+  const previousPathnameRef = useRef<string | null>(null);
+  const popstateNavigationRef = useRef<Readonly<{
+    pathname: string;
+    position: HistoryScrollPosition;
+  }> | null>(null);
   const pathname = usePathname();
+
+  useEffect(() => {
+    const previousScrollRestoration = window.history.scrollRestoration;
+    let recordFrame: number | null = null;
+
+    const recordScrollPosition = () => {
+      if (recordFrame !== null) return;
+      recordFrame = window.requestAnimationFrame(() => {
+        recordFrame = null;
+        const state = window.history.state;
+        if (!state || typeof state !== "object") return;
+        window.history.replaceState(
+          {
+            ...state,
+            [historyScrollStateKey]: { x: window.scrollX, y: window.scrollY },
+          },
+          "",
+        );
+      });
+    };
+
+    const markPopstateNavigation = (event: PopStateEvent) => {
+      popstateNavigationRef.current = {
+        pathname: window.location.pathname,
+        position: readHistoryScrollPosition(event.state) ?? { x: 0, y: 0 },
+      };
+      setPopstateRevision((revision) => revision + 1);
+    };
+
+    window.history.scrollRestoration = "manual";
+    recordScrollPosition();
+    window.addEventListener("scroll", recordScrollPosition, { passive: true });
+    window.addEventListener("popstate", markPopstateNavigation);
+    return () => {
+      if (recordFrame !== null) window.cancelAnimationFrame(recordFrame);
+      window.history.scrollRestoration = previousScrollRestoration;
+      window.removeEventListener("scroll", recordScrollPosition);
+      window.removeEventListener("popstate", markPopstateNavigation);
+    };
+  }, []);
+
+  useEffect(() => {
+    const previousPathname = previousPathnameRef.current;
+    previousPathnameRef.current = pathname;
+    const popstateNavigation = popstateNavigationRef.current;
+
+    if (popstateNavigation?.pathname === pathname) {
+      popstateNavigationRef.current = null;
+      let restoreFrame = window.requestAnimationFrame(() => {
+        restoreFrame = window.requestAnimationFrame(() => {
+          const root = document.documentElement;
+          const previousScrollBehavior = root.style.scrollBehavior;
+          root.style.scrollBehavior = "auto";
+          window.scrollTo(popstateNavigation.position.x, popstateNavigation.position.y);
+          root.style.scrollBehavior = previousScrollBehavior;
+        });
+      });
+      return () => window.cancelAnimationFrame(restoreFrame);
+    }
+
+    if (previousPathname === null || previousPathname === pathname) return;
+
+    popstateNavigationRef.current = null;
+
+    const root = document.documentElement;
+    const previousScrollBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = "auto";
+    window.scrollTo({ top: 0, left: 0 });
+    root.style.scrollBehavior = previousScrollBehavior;
+  }, [pathname, popstateRevision]);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -59,7 +150,6 @@ export function StorefrontMotion() {
               gsap.from(element, {
                 y: 72,
                 rotate: index % 2 === 0 ? -0.8 : 0.8,
-                opacity: 0,
                 duration: 0.82,
                 delay: Math.min(index, 4) * 0.055,
                 ease: "power4.out",
@@ -92,7 +182,6 @@ export function StorefrontMotion() {
           if (trustItems.length > 0) {
             gsap.from(trustItems, {
               y: 28,
-              opacity: 0,
               stagger: 0.08,
               duration: 0.55,
               ease: "power4.out",
@@ -123,7 +212,6 @@ export function StorefrontMotion() {
             gsap.from(stackedPanels, {
               y: 70,
               rotate: (index) => index % 2 === 0 ? -1.4 : 1.4,
-              opacity: 0,
               stagger: 0.09,
               duration: 0.82,
               ease: "power4.out",
@@ -156,7 +244,6 @@ export function StorefrontMotion() {
           gsap.utils.toArray<HTMLElement>("[data-motion-horizontal]").forEach((element, index) => {
             gsap.from(element, {
               xPercent: index % 2 === 0 ? -18 : 18,
-              opacity: 0.25,
               ease: "none",
               scrollTrigger: {
                 trigger: element.parentElement ?? element,
@@ -171,7 +258,6 @@ export function StorefrontMotion() {
             gsap.from(element, {
               y: 90 + index * 24,
               rotate: index === 1 ? 1.8 : index === 2 ? -1.8 : 0,
-              opacity: 0,
               duration: 0.9,
               ease: "power4.out",
               scrollTrigger: { trigger: element, start: "top 90%", once: true },

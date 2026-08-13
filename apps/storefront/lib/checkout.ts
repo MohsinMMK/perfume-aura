@@ -57,7 +57,7 @@ export async function placeCheckoutOrder(
 ): Promise<CheckoutResult> {
   const input = checkoutInputSchema.parse(rawInput);
   if (process.env.STOREFRONT_CHECKOUT_RELEASE_APPROVED !== "true") {
-    throw new Error("Checkout has not passed the production release gate");
+    throw new Error("Online checkout is not available yet");
   }
   const [settings] = await db
     .select()

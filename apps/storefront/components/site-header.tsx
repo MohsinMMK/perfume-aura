@@ -90,7 +90,7 @@ export function SiteHeader() {
           <Button
             render={<Link href="/shop" />}
             nativeButton={false}
-            className={`min-h-12 rounded-[0.6rem] bg-[var(--aura-ivory)] px-5 font-display text-base text-[var(--aura-ink)] hover:bg-white sm:px-7 ${compact ? "inline-flex" : "inline-flex lg:hidden"}`}
+            className={`min-h-12 rounded-[0.6rem] bg-[var(--aura-ivory)] px-5 font-display text-base text-[var(--aura-ink)] hover:bg-white max-[359px]:hidden sm:px-7 ${compact ? "inline-flex" : "inline-flex lg:hidden"}`}
           >
             Get scent
           </Button>
@@ -105,7 +105,7 @@ export function SiteHeader() {
           >
             <HugeiconsIcon icon={ShoppingBag01Icon} strokeWidth={1.7} />
             {(cart?.quantity ?? 0) > 0 ? (
-              <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-[var(--aura-orange)] text-[0.62rem] font-bold text-white">
+              <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-[var(--aura-orange)] text-[0.62rem] font-bold text-[var(--aura-ink)]">
                 {cart?.quantity}
               </span>
             ) : null}
@@ -152,7 +152,7 @@ export function SiteHeader() {
                     className="flex min-h-16 items-center justify-between border-b border-dashed border-[color:rgb(16_11_6_/_22%)] font-display text-3xl transition-[padding] hover:pl-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)] aria-[current=page]:pl-2"
                   >
                     {item.label}
-                    <span className="text-xs text-[color:rgb(16_11_6_/_48%)]">0{index + 1}</span>
+                    <span className="text-xs text-[var(--aura-text-muted-on-ivory)]">0{index + 1}</span>
                   </Link>
                 ))}
                 <div className="mt-8 grid grid-cols-2 gap-2">

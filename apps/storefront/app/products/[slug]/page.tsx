@@ -42,9 +42,9 @@ const galleryColors = {
 } as const;
 
 const productAssurances = [
-  [PackageIcon, "Controlled data"],
-  [Shield01Icon, "Server verified"],
-  [DeliveryTruck01Icon, "India plan"],
+  [PackageIcon, "Product details"],
+  [Shield01Icon, "Availability checked"],
+  [DeliveryTruck01Icon, "India-first"],
 ] as const satisfies readonly (readonly [IconSvgElement, string])[];
 
 export default async function ProductPage({ params }: Readonly<{ params: Promise<{ slug: string }> }>) {
@@ -71,7 +71,7 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
       }
     : null;
   const approvedReviews = product.publicationState === "published" ? await loadApprovedProductReviews(product.id) : [];
-  const detailValue = (value: string) => product.publicationState === "published" ? value : "Approval pending";
+  const detailValue = (value: string) => product.publicationState === "published" ? value : "Details coming soon";
 
   return (
     <>
@@ -79,10 +79,10 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
 
       <section className="grid min-h-[100svh] bg-[var(--aura-ink)] text-[var(--aura-ivory)] lg:grid-cols-2">
         <div className="relative min-h-[22svh] overflow-hidden pt-20 sm:min-h-[52svh] lg:min-h-[100svh] lg:pt-0" style={{ backgroundColor: galleryColors[product.accent] }}>
-          <Image src={product.image} alt={product.imageAlt} fill priority sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
-          <div className="absolute inset-x-4 bottom-4 flex items-center justify-between text-[0.58rem] font-semibold uppercase tracking-[0.15em] text-white/70">
+          <Image src={product.image} alt={product.imageAlt} fill preload sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
+          <div className="absolute inset-x-4 bottom-4 flex items-center justify-between text-[0.58rem] font-semibold uppercase tracking-[0.15em] text-white drop-shadow-[0_1px_8px_rgba(16,11,6,.9)]">
             <span>Perfume Aura</span>
-            <span>{product.publicationState === "design_preview" ? "Design preview" : "Approved edition"}</span>
+            <span>{product.publicationState === "design_preview" ? "Preview" : "Perfume Aura edition"}</span>
           </div>
         </div>
 
@@ -91,15 +91,15 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
             <Link href="/shop" className="inline-flex min-h-8 items-center font-display text-lg text-[color:rgb(245_228_199_/_62%)] underline-offset-8 hover:underline">Shop / {product.collectionSlug === "signature" ? "Signature" : "Collection"}</Link>
             <h1 className="font-display mt-1 text-[clamp(3.6rem,7vw,7.8rem)] leading-[0.77]">{product.name}</h1>
             <p className="mt-3 max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_62%)] max-sm:line-clamp-2">{product.summary}</p>
-            <p className="font-display mt-4 text-4xl">{firstPrice ? `From ${formatMoney(firstPrice)}` : "Price approval pending"}</p>
+            <p className="font-display mt-4 text-4xl">{firstPrice ? `From ${formatMoney(firstPrice)}` : "Price not available yet"}</p>
 
             <div className="mt-5 hidden grid-cols-2 gap-2 sm:grid">
               <div className="rounded-[0.65rem] border border-[color:rgb(245_228_199_/_28%)] p-3">
-                <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-[color:rgb(245_228_199_/_48%)]">Scent profile</p>
+                <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-[var(--aura-text-muted-on-ink)]">Scent profile</p>
                 <p className="font-display mt-2 text-2xl">{detailValue(product.family)}</p>
               </div>
               <div className="rounded-[0.65rem] border border-[color:rgb(245_228_199_/_28%)] p-3">
-                <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-[color:rgb(245_228_199_/_48%)]">Made for</p>
+                <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-[var(--aura-text-muted-on-ink)]">Made for</p>
                 <p className="font-display mt-2 text-2xl">{detailValue(product.occasion)}</p>
               </div>
             </div>
@@ -123,7 +123,7 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
           <Image data-motion-parallax src="/images/bottle-detail.webp" alt="" fill sizes="22rem" className="object-cover" />
         </div>
         <div className="relative z-10 mx-auto max-w-[94rem]">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:rgb(245_228_199_/_48%)]">Behind the bottle</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--aura-text-muted-on-ink)]">Behind the bottle</p>
           <h2 data-motion-copy className="font-display mt-8 max-w-[8ch] text-[clamp(5.2rem,13vw,13rem)] leading-[0.72]">The scent you did not know the room remembered</h2>
           <p className="ml-auto mt-16 max-w-xl text-lg leading-8 text-[color:rgb(245_228_199_/_65%)]">{product.story}</p>
         </div>
@@ -131,20 +131,20 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
 
       <section className="bg-[var(--aura-ivory)] px-5 py-20 text-[var(--aura-ink)] sm:px-8 lg:py-32">
         <div className="mx-auto max-w-[82rem]">
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-black/45">The approved composition record</p>
+          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-[var(--aura-text-muted-on-ivory)]">The composition record</p>
           <h2 className="font-display mx-auto mt-4 max-w-[11ch] text-center text-[clamp(5rem,11vw,11rem)] leading-[0.75]">Built from the detail up</h2>
           <Accordion className="mx-auto mt-14 max-w-4xl rounded-none border-black/25">
             <AccordionItem value="profile" className="border-black/20 data-open:bg-black/5">
               <AccordionTrigger className="min-h-16 px-5 font-display text-2xl hover:no-underline">Scent profile</AccordionTrigger>
-              <AccordionContent className="px-5 text-black/62">{product.publicationState === "published" ? `${product.family} · ${product.intensity} · ${product.occasion}. Top: ${product.notes.top.join(", ")}. Heart: ${product.notes.heart.join(", ")}. Base: ${product.notes.base.join(", ")}. ${product.longevity}` : "Family, intensity, occasion, longevity, and note data remain hidden until approval."}</AccordionContent>
+              <AccordionContent className="px-5 text-black/62">{product.publicationState === "published" ? `${product.family} · ${product.intensity} · ${product.occasion}. Top: ${product.notes.top.join(", ")}. Heart: ${product.notes.heart.join(", ")}. Base: ${product.notes.base.join(", ")}. ${product.longevity}` : "Scent profile details are coming soon."}</AccordionContent>
             </AccordionItem>
             <AccordionItem value="ingredients" className="border-black/20 data-open:bg-black/5">
               <AccordionTrigger className="min-h-16 px-5 font-display text-2xl hover:no-underline">Ingredients and usage</AccordionTrigger>
-              <AccordionContent className="px-5 text-black/62">{product.publicationState === "published" ? `${product.ingredients} ${product.usage}` : "Ingredients, allergens, warnings, and usage instructions require owner and legal approval before publication."}</AccordionContent>
+              <AccordionContent className="px-5 text-black/62">{product.publicationState === "published" ? `${product.ingredients} ${product.usage}` : "Ingredients, warnings, and usage details are coming soon."}</AccordionContent>
             </AccordionItem>
             <AccordionItem value="delivery" className="data-open:bg-black/5">
               <AccordionTrigger className="min-h-16 px-5 font-display text-2xl hover:no-underline">Delivery and returns</AccordionTrigger>
-              <AccordionContent className="px-5 text-black/62">Fees, free-shipping threshold, delivery estimates, cancellation rules, and return window are not yet approved.</AccordionContent>
+              <AccordionContent className="px-5 text-black/62">Shipping, cancellation, and return details are not available yet.</AccordionContent>
             </AccordionItem>
           </Accordion>
         </div>
@@ -162,7 +162,7 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
       {approvedReviews.length > 0 ? (
         <section className="bg-[var(--aura-ink)] px-5 py-20 text-[var(--aura-ivory)] sm:px-8 lg:px-10 lg:py-28">
           <div className="mx-auto max-w-[94rem]">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:rgb(245_228_199_/_48%)]">Verified purchases</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--aura-text-muted-on-ink)]">Verified purchases</p>
             <h2 className="font-display mt-3 text-7xl sm:text-9xl">Reviews</h2>
             <div className="mt-9 grid gap-2 md:grid-cols-3">{approvedReviews.map((review) => <article key={review.id} className="rounded-[0.65rem] border border-[color:rgb(245_228_199_/_28%)] p-6"><p className="font-display text-2xl">{review.rating}/5</p><h3 className="mt-5 font-[var(--font-playfair)] text-2xl">{review.title ?? "Verified review"}</h3><p className="mt-3 text-sm leading-6 text-[color:rgb(245_228_199_/_60%)]">{review.body}</p></article>)}</div>
           </div>

@@ -12,8 +12,7 @@ import { useCart } from "./cart-provider";
 
 export function ProductCard({
   product,
-  priority = false,
-}: Readonly<{ product: StorefrontProduct; priority?: boolean }>) {
+}: Readonly<{ product: StorefrontProduct }>) {
   const router = useRouter();
   const { addItem, loading, setDrawerOpen } = useCart();
   const [actionError, setActionError] = useState<string | null>(null);
@@ -25,7 +24,7 @@ export function ProductCard({
   const canPurchase = Boolean(purchasableVariant);
   const priceLabel = firstPrice
     ? `From ${formatMoney(firstPrice)}`
-    : "Price approval pending";
+    : "Price not available yet";
 
   async function handleAddToCart() {
     if (!purchasableVariant) return;
@@ -63,7 +62,6 @@ export function ProductCard({
           src={product.cardImage ?? product.image}
           alt={product.imageAlt}
           fill
-          priority={priority}
           sizes="(max-width: 1023px) 92vw, 31vw"
           className="product-card-flat object-cover"
         />
@@ -83,7 +81,7 @@ export function ProductCard({
         </div>
         {product.publicationState === "design_preview" ? (
           <span className="absolute left-3 top-3 z-10 border border-[color:rgb(245_228_199_/_35%)] bg-[var(--aura-ink)]/78 px-2.5 py-1.5 text-[0.56rem] font-semibold uppercase tracking-[0.14em] text-[var(--aura-ivory)] group-hover:opacity-0 group-focus-within:opacity-0">
-            Design preview
+            Preview
           </span>
         ) : null}
         <Link
@@ -92,18 +90,17 @@ export function ProductCard({
           aria-label={`View ${product.name}`}
         />
 
-        <div className="product-card-actions absolute inset-x-0 bottom-0 z-20 p-3 sm:p-4">
+        <div className="product-card-actions pointer-events-none absolute inset-x-0 bottom-0 z-20 p-3 sm:p-4">
           <div className="mb-3 flex items-end justify-between gap-3 text-[var(--aura-ivory)]">
             <span className="font-display text-lg tracking-[0.03em]">
               {priceLabel}
             </span>
-            <Link
-              href={`/products/${product.slug}`}
-              className="grid min-h-11 min-w-11 place-items-center rounded-[0.45rem] border border-[color:rgb(245_228_199_/_55%)] bg-[var(--aura-ink)]/40 transition hover:bg-[var(--aura-ivory)] hover:text-[var(--aura-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-              aria-label={`View ${product.name} details`}
+            <span
+              className="grid min-h-11 min-w-11 place-items-center rounded-[0.45rem] border border-[color:rgb(245_228_199_/_55%)] bg-[var(--aura-ink)]/40"
+              aria-hidden="true"
             >
               <HugeiconsIcon icon={ArrowUpRight01Icon} strokeWidth={1.7} />
-            </Link>
+            </span>
           </div>
           {canPurchase ? (
             <div className="grid grid-cols-2 gap-2">
@@ -111,7 +108,7 @@ export function ProductCard({
                 type="button"
                 onClick={handleBuyNow}
                 disabled={loading}
-                className="min-h-12 rounded-[0.55rem] border border-[var(--aura-ivory)] bg-[var(--aura-ivory)] px-3 font-display text-base tracking-[0.03em] text-[var(--aura-ink)] transition enabled:hover:bg-white disabled:cursor-not-allowed disabled:opacity-55"
+                className="pointer-events-auto min-h-12 rounded-[0.55rem] border border-[var(--aura-ivory)] bg-[var(--aura-ivory)] px-3 font-display text-base tracking-[0.03em] text-[var(--aura-ink)] transition enabled:hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)] disabled:cursor-not-allowed disabled:opacity-55"
               >
                 Buy now
               </button>
@@ -119,32 +116,30 @@ export function ProductCard({
                 type="button"
                 onClick={handleAddToCart}
                 disabled={loading}
-                className="min-h-12 rounded-[0.55rem] border border-[color:rgb(245_228_199_/_60%)] bg-[var(--aura-ink)]/45 px-3 font-display text-base tracking-[0.03em] text-white transition enabled:hover:bg-white enabled:hover:text-[var(--aura-ink)] disabled:cursor-not-allowed disabled:opacity-55"
+                className="pointer-events-auto min-h-12 rounded-[0.55rem] border border-[color:rgb(245_228_199_/_60%)] bg-[var(--aura-ink)]/45 px-3 font-display text-base tracking-[0.03em] text-white transition enabled:hover:bg-white enabled:hover:text-[var(--aura-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)] disabled:cursor-not-allowed disabled:opacity-55"
               >
                 Add to cart
               </button>
             </div>
           ) : (
-            <Link
-              href={`/products/${product.slug}`}
-              className="flex min-h-12 w-full items-center justify-between rounded-[0.55rem] border border-[var(--aura-ivory)] bg-[var(--aura-ivory)] px-4 font-display text-base tracking-[0.03em] text-[var(--aura-ink)] transition hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            <div
+              className="flex min-h-12 w-full items-center justify-between rounded-[0.55rem] border border-[var(--aura-ivory)] bg-[var(--aura-ivory)] px-4 font-display text-base tracking-[0.03em] text-[var(--aura-ink)]"
+              aria-hidden="true"
             >
               View scent
               <HugeiconsIcon icon={ArrowUpRight01Icon} strokeWidth={1.7} />
-            </Link>
+            </div>
           )}
         </div>
       </div>
 
       <div className="product-card-title flex items-start justify-between gap-4 px-1 py-4">
         <div className="min-w-0">
-          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[color:rgb(245_228_199_/_55%)]">
+          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[var(--aura-text-muted-on-ink)]">
             {product.eyebrow}
           </p>
           <h2 className="mt-1 font-display text-2xl tracking-[0.01em] sm:text-3xl">
-            <Link href={`/products/${product.slug}`} className="hover:underline hover:underline-offset-8">
-              View {product.name}
-            </Link>
+            {product.name}
           </h2>
         </div>
       </div>

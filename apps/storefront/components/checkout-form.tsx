@@ -105,7 +105,7 @@ export function CheckoutForm() {
           <label className="flex min-h-12 items-center gap-3 border border-black/20 px-3 text-sm"><input type="radio" name="paymentMethod" value="cod" />Cash on delivery</label>
         </fieldset>
         <div className="mt-6 flex justify-between border-t border-black/20 pt-4 text-sm"><span>Subtotal</span><strong>{cart ? formatMoney(cart.subtotal) : "—"}</strong></div>
-        <p className="mt-3 text-xs leading-5 text-[#655f57]">Approved delivery and tax rules are recalculated on the server before the order is created.</p>
+        <p className="mt-3 text-xs leading-5 text-[#655f57]">Shipping and tax totals are checked again before the order is created.</p>
         <Button type="submit" className="mt-6 min-h-12 w-full rounded-none" disabled={!enabled || pending || loading} focusableWhenDisabled={pending}>
           {pending ? "Creating order…" : "Place order"}
         </Button>
