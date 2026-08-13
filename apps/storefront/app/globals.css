@@ -81,6 +81,7 @@ body {
   --aura-logo-wordmark-start-scale: 0.68;
   --aura-logo-wordmark-start-y: 86px;
   --aura-logo-wordmark-compact-y: 19px;
+
   background: rgb(16 11 6 / 88%);
   backdrop-filter: blur(6px);
 }

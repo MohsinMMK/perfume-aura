@@ -130,7 +130,7 @@ export function StorefrontMotion() {
               scrollTrigger: {
                 trigger: document.documentElement,
                 start: "top top",
-                end: () => `+=${window.innerWidth < 640 ? 96 : 160}`,
+                end: () => `+=${window.innerWidth < 640 ? 96 : 144}`,
                 scrub: 0.35,
                 invalidateOnRefresh: true,
               },
