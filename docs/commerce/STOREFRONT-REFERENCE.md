@@ -1,6 +1,6 @@
 # Storefront reference system
 
-Source snapshot: **2026-08-12**. Public websites and build assets can change;
+Source snapshot: **2026-08-13**. Public websites and build assets can change;
 re-capture the reference before a later visual rewrite.
 
 This record makes COM-ADR-026 repeatable. It documents the Bucks Sauce design
@@ -23,12 +23,14 @@ Routes inspected read-only:
 - [Contact](https://buckssauce.com/contact)
 - [Wholesale](https://buckssauce.com/wholesale)
 
-The 2026-08-12 pass used `1440 × 900` desktop and `390 × 844` mobile
+The 2026-08-12 full pass used `1440 × 900` desktop and `390 × 844` mobile
 viewports. It inspected the settled header, compact scrolled header, navigation
 drawer, cart drawer, homepage, catalog, product, FAQ open state, contact,
-wholesale, and about compositions. No product was added, no checkout was
-entered, and no form was submitted. Screenshots remain untracked local QA
-evidence in the Codex visualization workspace rather than repository assets.
+wholesale, and about compositions. The 2026-08-13 refresh rechecked the
+expanded and compact homepage headers at the same viewports. No product was
+added, no checkout was entered, and no form was submitted. Screenshots remain
+untracked local QA evidence in the Codex visualization workspace rather than
+repository assets.
 
 ## Typography and licensing
 
@@ -96,6 +98,12 @@ panel. On mobile each becomes an almost full-viewport sheet inset from the
 edges. Perfume Aura keeps its existing inert modal primitive, focus trap,
 labelled controls, focus restoration, and route-aware menu closing.
 
+The source retains a simplified icon after its full mark leaves. Perfume Aura
+adapts that transition to its own supplied assets: the bottle icon lifts and
+fades while the `PERFUME AURA` wordmark settles into the compact header. This
+owner-selected inversion preserves brand recognition without copying the
+source mark or its exact animation.
+
 Catalog cards use a second-image reveal, title movement, arrow transition, and
 two actions when the product is purchasable. A locked preview must not expose
 disabled commerce theater: it shows one honest `View scent` action instead.
@@ -127,7 +135,7 @@ animations must:
 | Peperoncino display typography | Bebas Neue substitute with matched role, tracking, and leading | No source WOFF copying without WebFont rights |
 | Dark cream/gold/orange/red palette | Exact relationship using Perfume Aura tokens | Perfume Aura imagery and content only |
 | Product-led hero and manual slider | Perfume Aura bottle compositions and labelled controls | No automatic carousel or copied fruit/media |
-| Compact scrolled header | Route-aware Perfume Aura CTA, cart, and menu cluster | Existing release locks remain authoritative |
+| Compact scrolled header | Supplied full mark transitions to the supplied wordmark beside the route-aware CTA, cart, and menu cluster | Existing release locks remain authoritative |
 | Cream menu/cart sheets | Accessible controlled sheets with focus management | Do not copy non-inert closed panels |
 | Pinned horizontal narrative | Desktop GSAP journey; mobile native scroll-snap cards | Reduced motion remains complete and readable |
 | Hover product reveal | CSS-owned reveal with real routes and honest locked state | No duplicated GSAP hover ownership |

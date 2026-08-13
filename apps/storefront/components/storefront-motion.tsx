@@ -113,6 +113,61 @@ export function StorefrontMotion() {
         const motionMedia = gsap.matchMedia();
 
         const context = gsap.context(() => {
+          const headerLogo = document.querySelector<HTMLElement>("[data-header-logo]");
+          const headerLogoIcon = headerLogo?.querySelector<HTMLElement>(
+            "[data-header-logo-icon]",
+          );
+          const headerLogoWordmark = headerLogo?.querySelector<HTMLElement>(
+            "[data-header-logo-wordmark]",
+          );
+
+          if (headerLogo && headerLogoIcon && headerLogoWordmark) {
+            const readLogoValue = (name: string) =>
+              Number.parseFloat(
+                window.getComputedStyle(headerLogo).getPropertyValue(name),
+              );
+            const logoTimeline = gsap.timeline({
+              scrollTrigger: {
+                trigger: document.documentElement,
+                start: "top top",
+                end: () => `+=${window.innerWidth < 640 ? 96 : 160}`,
+                scrub: 0.35,
+                invalidateOnRefresh: true,
+              },
+            });
+
+            logoTimeline
+              .fromTo(
+                headerLogoIcon,
+                { opacity: 1, scale: 1, y: 0 },
+                {
+                  opacity: 0,
+                  scale: 0.8,
+                  y: () => readLogoValue("--aura-logo-icon-exit-y"),
+                  duration: 0.58,
+                  ease: "none",
+                },
+                0,
+              )
+              .fromTo(
+                headerLogoWordmark,
+                {
+                  opacity: 1,
+                  scale: () =>
+                    readLogoValue("--aura-logo-wordmark-start-scale"),
+                  y: () => readLogoValue("--aura-logo-wordmark-start-y"),
+                },
+                {
+                  opacity: 1,
+                  scale: 1,
+                  y: () => readLogoValue("--aura-logo-wordmark-compact-y"),
+                  duration: 0.82,
+                  ease: "none",
+                },
+                0.18,
+              );
+          }
+
           if (progressRef.current) {
             gsap.fromTo(
               progressRef.current,
