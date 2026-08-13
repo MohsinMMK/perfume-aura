@@ -3,7 +3,7 @@
 Fresh repository, provider, database, and endpoint evidence outranks this file.
 Never record secrets, connection strings, credentials, or customer data here.
 
-Last refreshed: **2026-08-13 IST**.
+Last refreshed: **2026-08-14 IST**.
 
 ## Production
 
@@ -18,17 +18,20 @@ Last refreshed: **2026-08-13 IST**.
 Storefront and ops share Neon PostgreSQL. Their auth tables, secrets, cookies,
 origins, and recovery flows remain separate.
 
-Fresh public verification on 2026-08-13 passed for merged source commit
-`a58e1252c745450113a237e4a9c53d4d0360003f`. Main workflow run
-`31714977191` built and checksum-verified both standalone artifacts, published
+Fresh public verification on 2026-08-14 passed for merged source commit
+`3f9e3a0b34f15dd4bf6a40244c87b2de6cb0130e`. Main workflow run
+`31731361882` built and checksum-verified both standalone artifacts, published
 the generated ops branch, verified the exact ops SHA live, and supplied the
-storefront archive `perfume-aura-storefront_a58e1252c745.zip`. The archive was
-checksum-verified locally, deployed through the existing Hostinger Web App,
-and completed with Node `24`, no build command or output directory, and entry
-`apps/storefront/server.js`. The production verifier passed ops live, ready,
-version, unauthenticated session, login, and static-asset checks together with
-the storefront release locks and a real Next static asset. The exact `www`
-path-and-query redirect also returned `308`.
+storefront archive `perfume-aura-storefront_3f9e3a0b34f1.zip`. The storefront
+archive SHA-256 is
+`2c127e93deb8db851597f59768c3e20ba5e4a6e2683f0f17d42645e5e652d50f`.
+It was deployed through the existing Hostinger Web App as deployment
+`019ffc72-ceb7-73d2-b267-6164899c382d` and completed with Node `24`, no build
+command or output directory, and entry `apps/storefront/server.js`. The
+production verifier passed ops live, ready, version, unauthenticated session,
+login, and static-asset checks together with the storefront release locks and a
+real Next static asset. The exact `www` path-and-query redirect also returned
+`308`.
 
 ## Release state
 
@@ -43,12 +46,12 @@ All storefront release flags remain closed:
 `robots.txt` disallows indexing. Green runtime health does not authorize opening
 any release flag.
 
-PR #13 was squash-merged to `main` as
-`a58e1252c745450113a237e4a9c53d4d0360003f`. Main workflow run `31714977191`
+PR #15 was squash-merged to `main` as
+`3f9e3a0b34f15dd4bf6a40244c87b2de6cb0130e`. Main workflow run `31731361882`
 passed quality, all 62 integration tests, verified packaging, generated-branch
 ops publication, and exact-SHA live verification. Separate CodeQL run
-`31714977365` also passed. The storefront audit remediation is deployed; no
-release flag changed.
+`31731361952` also passed. The responsive scroll-reactive storefront logo and
+the nanoid `3.3.18` advisory remediation are deployed; no release flag changed.
 `OPS_TWO_FACTOR_REQUIRED` and `OPS_STAFF_INVITES_ENABLED` stay false until the
 complete staff release checklist passes. Observability remains fail-closed
 without its environment values.
@@ -65,14 +68,14 @@ include staff and observability. Repository tooling, CI, lockfiles, and both
 packers are now aligned to the observed Hostinger baseline of Node `24.6.0`, npm
 `11.5.1`, and pnpm `10.32.1`, with application engines accepting compatible
 Node `24.x` patches from `24.6.0` onward. The current alignment and browser
-hardening changes passed the consolidated local gate again on 2026-08-13, and
-the exact release source is merged PR #13.
+hardening changes passed the consolidated local gate again on 2026-08-14, and
+the exact release source is merged PR #15.
 The evidence includes the frozen install, deployment self-tests, commerce
 verification, lint, type checks, 142 unit tests, both builds and client budgets,
 zero-vulnerability pnpm/npm audits, all 62 disposable-PostgreSQL integration
 tests, and both checksum-verified packages with extracted-server smoke. Remote
 `main`, live ops, and the public storefront now run source commit
-`a58e1252c745450113a237e4a9c53d4d0360003f`.
+`3f9e3a0b34f15dd4bf6a40244c87b2de6cb0130e`.
 
 Superseded drafts #7/#8 are not release sources. Merged PR #9 passed fresh CI,
 CodeQL, dependency, package, and review-status automation. `main` remains
@@ -102,7 +105,7 @@ repair, or a case ID. Current public health does not close this blocker. Do not
 perform another deployment, stop plan-wide processes, migrate production, or
 enable flags without explicit authorization and fresh owning-gate evidence.
 
-The automated 2026-08-13 ops publication, the authorized storefront archive
+The automated 2026-08-14 ops publication, the authorized storefront archive
 deployment, and exact-SHA live verification passed, but these successful
 deployments are runtime health evidence rather than the missing provider
 root-cause and durable-repair evidence.
@@ -132,10 +135,12 @@ authorized or performed during that investigation.
 
 ### Storefront browser hardening
 
-The deployed audit remediation now provides pathname-aware top navigation and
-history restoration, one detail link per product card, corrected cart hierarchy
-and customer-facing language, WCAG AA muted-text tokens, surface-appropriate
-focus indicators, and current Next Image loading hints. Preview fixtures remain
+The deployed storefront now provides a responsive full brand mark at the top of
+the page. Scrolling fades and lifts the bottle icon while retaining the compact
+wordmark, with separate mobile and desktop thresholds and reduced-motion
+behavior. The prior audit remediation still provides pathname-aware top
+navigation and history restoration, corrected cart hierarchy, WCAG AA tokens,
+focus behavior, and current Next Image loading hints. Preview fixtures remain
 unpublished and all commerce locks remain closed.
 
 Immediately after the 2026-08-13 archive deployment, HCDN served stale HTML
@@ -148,11 +153,18 @@ restoration, menu and cart focus trapping, Escape focus restoration, and the
 48px empty-cart action. Future storefront archive releases must include a fresh
 edge-cache browser pass before acceptance.
 
+The 2026-08-14 logo release reproduced the same stale-edge failure in a clean
+mobile session: stale HTML referenced a removed CSS chunk and the chunk returned
+`404 text/plain`. A narrowly scoped `perfumeaura.com` cache clear restored the
+current document. Fresh 1440x900 and 390x844 sessions then had zero console
+errors or warnings, no horizontal overflow, the full logo at the top, and the
+compact wordmark with bottle opacity `0` after scrolling.
+
 ### Managed Hostinger deployment boundary
 
 Both production applications remain on their existing Hostinger managed
 Node.js Web Apps. Neon remains independent and shared. No alternate hosting
-implementation or DNS topology change is planned. The authorized PR #13
+implementation or DNS topology change is planned. The authorized PR #15
 release passed exact-SHA verification, but the unresolved Hostinger process
 incident remains an infrastructure risk: the green deployment does not supply
 the missing scoped process attribution, restart cause, or durable-repair proof.
@@ -160,7 +172,7 @@ the missing scoped process attribution, restart cause, or durable-repair proof.
 ## Repository
 
 - One primary worktree.
-- PR #13 is merged and its remote source branch is deleted.
+- PR #15 is merged and its remote source branch is deleted.
 - `main` includes this documentation-only state record after the deployed source
   commit above; the live applications remain at that deployed source commit.
 - `hostinger-ops-production` remains generated deployment state and must not be
