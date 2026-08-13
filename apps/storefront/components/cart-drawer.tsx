@@ -74,7 +74,7 @@ export function CartDrawer() {
                   <div className="min-w-0">
                     <Link
                       href={`/products/${line.productSlug}`}
-                      className="font-display text-2xl hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)]"
+                      className="inline-flex min-h-11 items-center font-display text-2xl hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)]"
                       onClick={() => setDrawerOpen(false)}
                     >
                       {line.productName}

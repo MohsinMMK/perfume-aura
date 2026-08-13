@@ -50,7 +50,7 @@ export default async function ShopPage() {
           <div className="mt-4 grid gap-2 lg:grid-cols-3">
             {[
               ["01", "Choose the mood", "Start with the atmosphere you want the fragrance to leave behind."],
-              ["02", "Check the detail", "Approved notes, intensity, occasion, and longevity sit on every public product page."],
+              ["02", "Check the detail", "Complete notes, intensity, occasion, and longevity appear on every public product page."],
               ["03", "Shop with clarity", "Price and availability are checked again whenever your cart changes."],
             ].map(([number, title, copy]) => (
               <article key={number} className="border-t border-dashed border-[color:rgb(245_228_199_/_28%)] px-2 py-8">

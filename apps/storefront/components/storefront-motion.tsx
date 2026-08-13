@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
 const historyScrollStateKey = "__perfumeAuraScroll";
@@ -20,6 +20,7 @@ function readHistoryScrollPosition(state: unknown): HistoryScrollPosition | null
 
 export function StorefrontMotion() {
   const progressRef = useRef<HTMLDivElement>(null);
+  const [popstateRevision, setPopstateRevision] = useState(0);
   const previousPathnameRef = useRef<string | null>(null);
   const popstateNavigationRef = useRef<Readonly<{
     pathname: string;
@@ -52,6 +53,7 @@ export function StorefrontMotion() {
         pathname: window.location.pathname,
         position: readHistoryScrollPosition(event.state) ?? { x: 0, y: 0 },
       };
+      setPopstateRevision((revision) => revision + 1);
     };
 
     window.history.scrollRestoration = "manual";
@@ -69,13 +71,10 @@ export function StorefrontMotion() {
   useEffect(() => {
     const previousPathname = previousPathnameRef.current;
     previousPathnameRef.current = pathname;
-
-    if (previousPathname === null || previousPathname === pathname) return;
-
     const popstateNavigation = popstateNavigationRef.current;
-    popstateNavigationRef.current = null;
 
     if (popstateNavigation?.pathname === pathname) {
+      popstateNavigationRef.current = null;
       let restoreFrame = window.requestAnimationFrame(() => {
         restoreFrame = window.requestAnimationFrame(() => {
           const root = document.documentElement;
@@ -88,12 +87,16 @@ export function StorefrontMotion() {
       return () => window.cancelAnimationFrame(restoreFrame);
     }
 
+    if (previousPathname === null || previousPathname === pathname) return;
+
+    popstateNavigationRef.current = null;
+
     const root = document.documentElement;
     const previousScrollBehavior = root.style.scrollBehavior;
     root.style.scrollBehavior = "auto";
     window.scrollTo({ top: 0, left: 0 });
     root.style.scrollBehavior = previousScrollBehavior;
-  }, [pathname]);
+  }, [pathname, popstateRevision]);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
