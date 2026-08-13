@@ -76,6 +76,50 @@ body {
   border-style: dashed;
 }
 
+.aura-header-logo {
+  --aura-logo-icon-exit-y: -24px;
+  --aura-logo-wordmark-start-scale: 0.68;
+  --aura-logo-wordmark-start-y: 86px;
+  --aura-logo-wordmark-compact-y: 19px;
+
+  background: rgb(16 11 6 / 88%);
+  backdrop-filter: blur(6px);
+}
+
+.aura-header-logo:focus-visible {
+  outline: 2px solid var(--aura-ivory);
+  outline-offset: 4px;
+}
+
+.aura-header-logo__icon,
+.aura-header-logo__wordmark {
+  transform-origin: left top;
+  transition:
+    opacity 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.aura-header-logo__icon {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.aura-header-logo__wordmark {
+  opacity: 1;
+  transform: translate3d(0, var(--aura-logo-wordmark-start-y), 0)
+    scale(var(--aura-logo-wordmark-start-scale));
+}
+
+[data-site-header][data-compact="true"] .aura-header-logo__icon {
+  opacity: 0;
+  transform: translate3d(0, var(--aura-logo-icon-exit-y), 0) scale(0.8);
+}
+
+[data-site-header][data-compact="true"] .aura-header-logo__wordmark {
+  opacity: 1;
+  transform: translate3d(0, var(--aura-logo-wordmark-compact-y), 0) scale(1);
+}
+
 .aura-corner-grid {
   background-image:
     linear-gradient(rgb(245 228 199 / 10%) 1px, transparent 1px),
@@ -205,8 +249,22 @@ textarea {
 }
 
 @media (min-width: 1024px) {
+  .aura-header-logo {
+    --aura-logo-wordmark-start-scale: 0.755;
+    --aura-logo-wordmark-start-y: 153px;
+    --aura-logo-wordmark-compact-y: 16px;
+  }
+
   .aura-product-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .aura-header-logo {
+    --aura-logo-wordmark-start-scale: 0.7;
+    --aura-logo-wordmark-start-y: 118px;
+    --aura-logo-wordmark-compact-y: 18px;
   }
 }
 
