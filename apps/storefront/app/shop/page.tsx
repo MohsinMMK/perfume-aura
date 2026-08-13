@@ -6,7 +6,7 @@ import { getStorefrontProducts } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Shop",
-  description: "Explore the Perfume Aura storefront preview in INR.",
+  description: "Explore Perfume Aura scents, sizes, and prices in INR.",
   alternates: { canonical: "/shop" },
 };
 
@@ -30,7 +30,7 @@ export default async function ShopPage() {
           <h1 data-motion-copy className="font-display mt-5 text-[clamp(5rem,13vw,13rem)] leading-[0.72]">
             Scent made <span className="text-outline">for presence</span>
           </h1>
-          <p className="mt-8 max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_60%)]">The preview keeps unfinished commerce facts closed while showing the intended product, cart, and checkout experience.</p>
+          <p className="mt-8 max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_60%)]">Explore the collection as each scent, size, and price is prepared for online shopping.</p>
         </div>
       </section>
 
@@ -38,12 +38,12 @@ export default async function ShopPage() {
         <div className="mx-auto max-w-[94rem]">
           {products.length ? (
             <div className="aura-product-grid grid gap-2">
-              {products.map((product, index) => <ProductCard key={product.id} product={product} priority={index < 3} />)}
+              {products.map((product) => <ProductCard key={product.id} product={product} />)}
             </div>
           ) : (
             <div className="border border-dashed border-[color:rgb(245_228_199_/_30%)] p-12 text-center">
-              <h2 className="font-display text-4xl">No products are published.</h2>
-              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_58%)]">The catalog fails closed until identity, legal, media, SKU, cost, stock, and price data are approved.</p>
+              <h2 className="font-display text-4xl">The collection is being prepared.</h2>
+              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_58%)]">Product details will appear here when each scent is complete and ready to share.</p>
             </div>
           )}
 
@@ -51,7 +51,7 @@ export default async function ShopPage() {
             {[
               ["01", "Choose the mood", "Start with the atmosphere you want the fragrance to leave behind."],
               ["02", "Check the detail", "Approved notes, intensity, occasion, and longevity sit on every public product page."],
-              ["03", "Buy with control", "The server revalidates price, publication state, and available stock."],
+              ["03", "Shop with clarity", "Price and availability are checked again whenever your cart changes."],
             ].map(([number, title, copy]) => (
               <article key={number} className="border-t border-dashed border-[color:rgb(245_228_199_/_28%)] px-2 py-8">
                 <span className="font-display text-3xl text-[var(--aura-brass)]">{number}</span>
@@ -75,9 +75,9 @@ export default async function ShopPage() {
         </div>
         <div className="flex items-center p-7 sm:p-12 lg:p-16">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-black/50">The house in progress</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--aura-text-muted-on-ivory)]">The house in progress</p>
             <h2 data-motion-copy className="font-display mt-4 text-[clamp(4.5rem,8vw,8rem)] leading-[0.8]">Built one product at a time</h2>
-            <p className="mt-6 max-w-xl text-sm leading-7 text-black/65">No title, note, image, SKU, stock number, price, review, or policy is treated as public until its approval trail is complete.</p>
+            <p className="mt-6 max-w-xl text-sm leading-7 text-black/65">Every public scent arrives with its name, composition, imagery, size, price, and care details complete.</p>
             <Link href="/about" className="mt-8 inline-flex min-h-12 items-center font-display text-2xl underline underline-offset-8">How it is built →</Link>
           </div>
         </div>

@@ -29,13 +29,13 @@ export default function WholesalePage() {
           <h2 className="font-display text-center text-[clamp(6rem,15vw,15rem)] leading-[0.72]">Why?</h2>
           <div className="mt-12 grid gap-2 lg:grid-cols-3">
             {[
-              ["#be8d3f", "Controlled catalog", "Only products with approved identity, price, media, SKU, stock, cost, and publication records can enter a live assortment."],
-              ["#f15726", "Distinct presentation", "Each fragrance receives its own color, bottle stage, gallery, and campaign composition."],
-              ["#da1f27", "Clear operations", "Wholesale terms, territories, minimums, fulfillment, and support ownership stay explicit rather than assumed."],
-            ].map(([color, title, copy]) => (
-              <article key={title} data-motion-stage className="min-h-[28rem] rounded-[0.7rem] p-7 text-[var(--aura-ink)]" style={{ backgroundColor: color }}>
+              ["#be8d3f", "text-[var(--aura-ink)]", "Complete catalog", "Every live product includes its confirmed identity, price, imagery, size, and availability."],
+              ["#f15726", "text-[var(--aura-ink)]", "Distinct presentation", "Each fragrance receives its own color, bottle stage, gallery, and campaign composition."],
+              ["#da1f27", "text-white", "Clear operations", "Wholesale terms, territories, minimums, fulfillment, and support ownership stay explicit rather than assumed."],
+            ].map(([color, textColor, title, copy]) => (
+              <article key={title} data-motion-stage className={`min-h-[28rem] rounded-[0.7rem] p-7 ${textColor}`} style={{ backgroundColor: color }}>
                 <h3 className="font-display text-5xl leading-none">{title}</h3>
-                <p className="mt-8 max-w-sm text-sm leading-7 text-black/65">{copy}</p>
+                <p className="mt-8 max-w-sm text-sm leading-7">{copy}</p>
               </article>
             ))}
           </div>
@@ -45,9 +45,9 @@ export default function WholesalePage() {
       <section className="border-t border-dashed border-[color:rgb(245_228_199_/_25%)] bg-[var(--aura-ink)] px-5 py-24 text-[var(--aura-ivory)] sm:px-8 lg:px-10 lg:py-32">
         <div className="mx-auto grid max-w-[94rem] gap-14 lg:grid-cols-[0.8fr_1.2fr]">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:rgb(245_228_199_/_48%)]">Wholesale inquiry</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--aura-text-muted-on-ink)]">Wholesale inquiry</p>
             <h2 className="font-display mt-5 text-[clamp(5rem,9vw,9rem)] leading-[0.75]">Bring the aura to your space</h2>
-            <p className="mt-6 max-w-md text-sm leading-7 text-[color:rgb(245_228_199_/_58%)]">Commercial terms, minimums, territories, and support ownership are intentionally not invented.</p>
+            <p className="mt-6 max-w-md text-sm leading-7 text-[color:rgb(245_228_199_/_58%)]">Wholesale terms, minimums, territories, and support details will be published before inquiries open.</p>
           </div>
           <GatedInquiryForm kind="wholesale" enabled={process.env.STOREFRONT_INQUIRIES_ENABLED === "true"} />
         </div>

@@ -15,8 +15,8 @@ export function CartPageContent() {
     return (
       <div className="border border-dashed border-black/30 px-6 py-20 text-center">
         <h2 className="font-[var(--font-playfair)] text-4xl">Your cart is quiet.</h2>
-        <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#5f584f]">Add an approved standard-price fixture to exercise the server-authoritative cart.</p>
-        <Button render={<Link href="/shop" />} nativeButton={false} className="mt-7 min-h-12 rounded-none px-8">Explore the collection</Button>
+        <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[var(--aura-text-muted-on-ivory)]">Explore the collection and choose a scent to add here.</p>
+        <Button render={<Link href="/shop" />} nativeButton={false} className="mt-7 min-h-12 rounded-none bg-[var(--aura-ink)] px-8 text-[var(--aura-ivory)] hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[var(--aura-ink)] focus-visible:ring-0">Explore the collection</Button>
       </div>
     );
   }
@@ -31,16 +31,16 @@ export function CartPageContent() {
             </div>
             <div className="flex min-w-0 flex-col justify-between py-1 sm:flex-row sm:items-center">
               <div>
-                <Link href={`/products/${line.productSlug}`} className="font-[var(--font-playfair)] text-2xl hover:underline">{line.productName}</Link>
+                <Link href={`/products/${line.productSlug}`} className="font-[var(--font-playfair)] text-2xl hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)]">{line.productName}</Link>
                 <p className="mt-1 text-xs uppercase tracking-[0.16em] text-[#655f57]">{line.sizeMl} ml</p>
                 <p className="mt-2 text-sm">{formatMoney(line.unitPrice)}</p>
               </div>
               <div className="mt-4 flex items-center sm:mt-0">
-                <Button type="button" variant="outline" size="icon-lg" className="min-h-11 min-w-11 rounded-none border-black/25 bg-transparent" aria-label={`Decrease ${line.productName} quantity`} disabled={loading} onClick={() => setQuantity(line.variantId, line.quantity - 1)}>
+                <Button type="button" variant="outline" size="icon-lg" className="min-h-11 min-w-11 rounded-none border-black/25 bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)] focus-visible:ring-0" aria-label={`Decrease ${line.productName} quantity`} disabled={loading} onClick={() => setQuantity(line.variantId, line.quantity - 1)}>
                   <HugeiconsIcon icon={MinusSignIcon} strokeWidth={1.8} />
                 </Button>
                 <output className="grid min-h-11 min-w-11 place-items-center" aria-live="polite">{line.quantity}</output>
-                <Button type="button" variant="outline" size="icon-lg" className="min-h-11 min-w-11 rounded-none border-black/25 bg-transparent" aria-label={`Increase ${line.productName} quantity`} disabled={loading || line.quantity >= 10} onClick={() => setQuantity(line.variantId, line.quantity + 1)}>
+                <Button type="button" variant="outline" size="icon-lg" className="min-h-11 min-w-11 rounded-none border-black/25 bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)] focus-visible:ring-0" aria-label={`Increase ${line.productName} quantity`} disabled={loading || line.quantity >= 10} onClick={() => setQuantity(line.variantId, line.quantity + 1)}>
                   <HugeiconsIcon icon={Add01Icon} strokeWidth={1.8} />
                 </Button>
               </div>
@@ -54,15 +54,15 @@ export function CartPageContent() {
           <span>Subtotal</span>
           <strong>{formatMoney(cart.subtotal)}</strong>
         </div>
-        <p className="mt-4 text-xs leading-5 text-[#655f57]">Shipping and tax are not calculated until the owner approves the required rules.</p>
+        <p className="mt-4 text-xs leading-5 text-[var(--aura-text-muted-on-ivory)]">Shipping and tax details are not available yet.</p>
         <Button
           render={cart.checkoutEnabled ? <Link href="/checkout" /> : undefined}
-          className="mt-6 min-h-12 w-full rounded-none"
+          className="mt-6 min-h-12 w-full rounded-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)] focus-visible:ring-0"
           disabled={!cart.checkoutEnabled}
         >
           {cart.checkoutEnabled ? "Continue to checkout" : "Checkout not yet available"}
         </Button>
-        <p className="mt-3 text-xs leading-5 text-[#655f57]">{cart.checkoutBlockReason}</p>
+        <p className="mt-3 text-xs leading-5 text-[var(--aura-text-muted-on-ivory)]">{cart.checkoutBlockReason}</p>
       </aside>
     </div>
   );

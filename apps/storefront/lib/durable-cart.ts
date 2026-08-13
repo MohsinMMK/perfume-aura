@@ -131,7 +131,7 @@ export async function readDurableCart(token: string): Promise<CartSnapshot> {
     checkoutEnabled,
     checkoutBlockReason: checkoutEnabled
       ? ""
-      : "Checkout is locked until shipping, policy, tax, Cashfree, and production release approvals are complete.",
+      : "Online checkout is not available yet.",
   };
 }
 

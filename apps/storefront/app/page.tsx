@@ -37,7 +37,7 @@ const processSteps: readonly Readonly<{
     icon: DeliveryTruck01Icon,
     number: "03",
     title: "Find your presence",
-    description: "Choose the direction that feels like you. Only complete, approved editions will enter the public collection.",
+    description: "Choose the direction that feels like you. Only complete editions will enter the public collection.",
   },
 ];
 
@@ -118,8 +118,8 @@ export default async function HomePage() {
           </h2>
           {featuredProducts.length ? (
             <div className="aura-product-grid grid gap-2">
-              {featuredProducts.map((product, index) => (
-                <ProductCard key={product.id} product={product} priority={index < 3} />
+              {featuredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
               ))}
             </div>
           ) : (
@@ -144,7 +144,7 @@ export default async function HomePage() {
               </div>
               <div className="mt-5 flex flex-col items-center justify-between gap-3 border-y border-dashed border-[color:rgb(245_228_199_/_28%)] px-2 py-5 text-center sm:flex-row sm:text-left">
                 <p className="font-display text-2xl">A preview of the visual world</p>
-                <p className="max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_68%)]">The public collection opens only when every product detail and release gate is complete.</p>
+                <p className="max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_68%)]">The public collection opens when every product detail is complete and ready to share.</p>
               </div>
             </div>
           )}
@@ -163,14 +163,14 @@ export default async function HomePage() {
 
           <div data-motion-journey-track className="aura-snap-row relative -mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-3 sm:-mx-5 sm:px-5 lg:mx-0 lg:w-max lg:overflow-visible lg:px-8 lg:pb-0">
             {processSteps.map((step, index) => (
-              <article data-motion-stage key={step.number} className={`relative min-h-[30rem] w-[88vw] shrink-0 snap-center overflow-hidden rounded-[0.75rem] border border-[color:rgb(245_228_199_/_28%)] p-6 sm:w-[70vw] lg:w-[48vw] ${index === 0 ? "bg-[var(--aura-brass)] text-[var(--aura-ink)]" : index === 1 ? "bg-[var(--aura-orange)] text-[var(--aura-ink)]" : "bg-[var(--aura-red)] text-[var(--aura-ivory)]"}`}>
+              <article data-motion-stage key={step.number} className={`relative min-h-[30rem] w-[88vw] shrink-0 snap-center overflow-hidden rounded-[0.75rem] border border-[color:rgb(245_228_199_/_28%)] p-6 sm:w-[70vw] lg:w-[48vw] ${index === 0 ? "bg-[var(--aura-brass)] text-[var(--aura-ink)]" : index === 1 ? "bg-[var(--aura-orange)] text-[var(--aura-ink)]" : "bg-[var(--aura-red)] text-white"}`}>
                 <div className="flex items-start justify-between">
                   <span className="font-display text-5xl">{step.number}</span>
                   <HugeiconsIcon icon={step.icon} strokeWidth={1.4} className="size-10" />
                 </div>
                 <div className="absolute inset-x-6 bottom-7">
                   <h3 className="font-display text-5xl leading-none">{step.title}</h3>
-                  <p className="mt-4 max-w-sm text-sm leading-6 opacity-75">{step.description}</p>
+                  <p className="mt-4 max-w-sm text-sm leading-6">{step.description}</p>
                 </div>
               </article>
             ))}
@@ -186,7 +186,7 @@ export default async function HomePage() {
           <div className="max-w-xl">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-black/65">Find the right direction</p>
             <h2 data-motion-copy className="font-display mt-4 text-[clamp(4.5rem,8vw,8rem)] leading-[0.8]">Start with the feeling</h2>
-            <p className="mt-7 text-base leading-7 text-black/70">Choose mood, intensity, and occasion. The finder stays quiet until there is enough approved scent data to make a recommendation worth trusting.</p>
+            <p className="mt-7 text-base leading-7 text-black/70">Choose mood, intensity, and occasion. The finder stays quiet until there is enough complete scent data to make a recommendation worth trusting.</p>
             <Button render={<Link href="/find-your-scent" />} nativeButton={false} className="mt-8 min-h-16 rounded-[0.65rem] bg-[var(--aura-ink)] px-8 font-display text-xl text-[var(--aura-ivory)] hover:bg-black">
               Find your scent <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={1.8} />
             </Button>
@@ -218,7 +218,7 @@ export default async function HomePage() {
             <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(16,11,6,.92)_0%,rgba(16,11,6,.5)_52%,rgba(16,11,6,.12)_100%)]" />
             <div className="relative flex min-h-[36rem] max-w-2xl flex-col justify-end p-6 sm:p-10 lg:min-h-[44rem] lg:p-16">
               <p className="font-display text-[clamp(3.5rem,8vw,7rem)] leading-[0.86] text-balance">Made for the moment after you arrive.</p>
-              <p className="mt-5 max-w-lg text-base leading-7 text-[color:rgb(245_228_199_/_76%)]">Explore the house, the scent finder, and the world taking shape before the first approved collection goes live.</p>
+              <p className="mt-5 max-w-lg text-base leading-7 text-[color:rgb(245_228_199_/_76%)]">Explore the house, the scent finder, and the world taking shape before the first collection goes live.</p>
             </div>
           </div>
         )}

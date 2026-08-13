@@ -54,7 +54,7 @@ export function AddToCart({ product }: Readonly<{ product: StorefrontProduct }>)
           >
             {product.variants.map((option) => (
               <NativeSelectOption key={option.id} value={option.id}>
-                {option.sizeMl} ml{option.price ? ` — ${formatMoney(option.price)}` : " — price pending"}
+                {option.sizeMl} ml{option.price ? ` — ${formatMoney(option.price)}` : " — price unavailable"}
               </NativeSelectOption>
             ))}
           </NativeSelect>
@@ -101,13 +101,13 @@ export function AddToCart({ product }: Readonly<{ product: StorefrontProduct }>)
           ? loading
             ? "Updating cart…"
             : `Add to cart · ${variant?.price ? formatMoney(variant.price) : ""}`
-          : "Awaiting price and launch approval"}
+          : "Not available yet"}
       </Button>
-      {error && <p role="alert" className="mt-3 text-sm text-red-800">{error}</p>}
-      <p className="mt-3 text-xs leading-5 text-[color:rgb(245_228_199_/_52%)]">
+      {error && <p role="alert" className="mt-3 text-sm text-red-300">{error}</p>}
+      <p className="mt-3 text-xs leading-5 text-[var(--aura-text-muted-on-ink)]">
         {purchasable
-          ? "Development fixture only. Stock and price are revalidated server-side."
-          : "This Signature scent cannot be purchased until its exact price and release gates are approved."}
+          ? "Price and availability are checked again whenever your cart changes."
+          : "This scent is not available to purchase yet."}
       </p>
     </div>
   );

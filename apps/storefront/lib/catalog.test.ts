@@ -35,8 +35,7 @@ describe("storefront public release boundary", () => {
       subtotal: { currency: "INR", amountMinor: 0 },
       quantity: 0,
       checkoutEnabled: false,
-      checkoutBlockReason:
-        "Checkout is locked until shipping, policy, tax, Cashfree, and production catalog approvals are complete.",
+      checkoutBlockReason: "Online checkout is not available yet.",
     });
   });
 });

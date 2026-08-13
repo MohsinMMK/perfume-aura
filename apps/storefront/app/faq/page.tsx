@@ -10,15 +10,15 @@ import { EditorialPage } from "@/components/editorial-page";
 export const metadata: Metadata = { title: "FAQ", alternates: { canonical: "/faq" } };
 
 const questions = [
-  ["Is the online store open?", "Not yet. The experience is in staging and checkout is locked until the catalog, policies, provider configuration, and legal gates are complete."],
-  ["Which sizes are planned?", "Approved standard scents use 30 ml, 50 ml, and 100 ml. Signature scents use 50 ml and 105 ml. No 10 ml product or discovery set is approved for sale."],
-  ["How will payments work?", "Cashfree prepaid payments and cash on delivery are selected. Cashfree merchant onboarding and live credentials remain required before release."],
-  ["Will delivery be available across India?", "India-wide delivery is planned. The exact fee, threshold, courier process, and delivery wording still require owner approval."],
+  ["Is the online store open?", "Not yet. Online checkout is not available while product, payment, delivery, and policy details are being completed."],
+  ["Which sizes are planned?", "Standard scents are planned in 30 ml, 50 ml, and 100 ml. Signature scents are planned in 50 ml and 105 ml. No 10 ml product or discovery set is available for sale."],
+  ["How will payments work?", "Cashfree prepaid payments and cash on delivery are planned. Payment is not available yet."],
+  ["Will delivery be available across India?", "India-wide delivery is planned. Fees, thresholds, courier details, and delivery estimates are not available yet."],
 ] as const;
 
 export default function FaqPage() {
   return (
-    <EditorialPage eyebrow="Clear answers" title="Frequently asked questions" intro="Only confirmed commerce facts appear here. Policy details remain withheld until they are approved.">
+    <EditorialPage eyebrow="Clear answers" title="Frequently asked questions" intro="Only confirmed shopping details appear here. Policies will be added when they are complete and ready to publish.">
       <Accordion className="rounded-none border-[color:rgb(245_228_199_/_28%)]">
         {questions.map(([question, answer], index) => (
           <AccordionItem key={question} value={`question-${index}`} className="border-[color:rgb(245_228_199_/_22%)] data-open:bg-white/5">

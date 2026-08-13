@@ -48,11 +48,11 @@ export function ScentFinder() {
         <h2 className="mt-3 font-[var(--font-playfair)] text-3xl">{complete ? "Profile captured." : "Choose one from each row."}</h2>
         <p className="mt-4 text-sm leading-6 text-[#5f584f]">
           {complete
-            ? "Recommendations remain empty until products have approved family, intensity, and occasion data."
-            : "The live finder will only rank published products with complete approved scent data."}
+            ? "Recommendations will appear when enough scent profile details are available."
+            : "Choose one answer from each row to complete your scent direction."}
         </p>
         <Button render={<Link href="/shop" />} nativeButton={false} className="mt-6 min-h-12 w-full rounded-none" disabled={!complete}>
-          Explore eligible scents
+          Explore the collection
         </Button>
       </aside>
     </div>
