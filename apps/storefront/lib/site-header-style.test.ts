@@ -18,4 +18,22 @@ describe("storefront header logo", () => {
     assert.match(logoRule[1], /backdrop-filter:\s*none;/u);
     assert.doesNotMatch(wordmark, /<(?:rect|image|foreignObject)\b/iu);
   });
+
+  it("uses the brand cream for both logo assets", async () => {
+    const [icon, wordmark] = await Promise.all([
+      readFile(
+        new URL("../public/brand/perfume-aura-icon.svg", import.meta.url),
+        "utf8",
+      ),
+      readFile(
+        new URL("../public/brand/perfume-aura-wordmark.svg", import.meta.url),
+        "utf8",
+      ),
+    ]);
+
+    for (const asset of [icon, wordmark]) {
+      assert.match(asset, /fill="#f5e4c7"/u);
+      assert.doesNotMatch(asset, /fill="(?:white|#fff(?:fff)?)"/iu);
+    }
+  });
 });
