@@ -84,8 +84,22 @@ in `CURRENT_STATE.md`.
 
 ## Storefront deployment
 
-The storefront uses a verified prebuilt ZIP; the Hostinger monorepo source
-build is not the deployment path.
+Routine deployment uses the verified prebuilt tree through a generated GitHub
+branch; the Hostinger monorepo source build is not the deployment path:
+
+```text
+runtime-affecting main push → CI quality/integration/package
+  → hostinger-storefront-production → Hostinger Node Web App
+  → exact storefront SHA and public-surface verification
+```
+
+Markdown-only changes do not publish either generated branch. For a controlled
+idempotent republish of the exact `main` source, dispatch `ops-pack.yml` with
+`deploy_target=storefront`. Repository variable
+`HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` enables the live verification
+job; it does not weaken the pre-publish gates.
+
+The verified ZIP remains the emergency fallback:
 
 ```bash
 pnpm check
@@ -93,8 +107,9 @@ TEST_DATABASE_URL='<migrated-disposable-loopback-url>' pnpm test:integration
 pnpm storefront:pack
 ```
 
-Hostinger settings: Node 24.x, Framework Other, root `./`, no build command,
-empty output directory, and entry `apps/storefront/server.js`. Set
+Hostinger settings: GitHub branch `hostinger-storefront-production`, Node 24.x,
+Framework Other, root `./`, no build command, empty output directory, and entry
+`apps/storefront/server.js`. Set
 `STOREFRONT_URL` and `CUSTOMER_AUTH_URL` to `https://perfumeaura.com`.
 
 Keep these flags false until their separate gates pass:
@@ -111,13 +126,21 @@ Verify after deployment:
 
 ```bash
 node scripts/verify-production-deploy.mjs <40-character-sha> \
+  --target storefront \
   --public-surface storefront \
   --public-base https://perfumeaura.com \
+  --www-base https://www.perfumeaura.com \
   --timeout-ms 180000
 curl -sSI 'https://www.perfumeaura.com/shop?probe=1'
 ```
 
-The `www` response must be `308` and preserve `/shop?probe=1`.
+The verifier requires the exact no-store storefront version response, the
+matching release marker in ordinary cached HTML, a real Next static asset,
+release locks, and the `www` `308` preserving `/shop?probe=1`.
+
+If exact verification fails, do not automatically roll back, purge HCDN, stop
+plan-wide processes, or republish an older source. Inspect the scoped failure;
+use the known-good ZIP or a scoped HCDN purge only with explicit authorization.
 
 ## Ops deployment
 

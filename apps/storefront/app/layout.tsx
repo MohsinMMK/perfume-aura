@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { cn } from "@perfume-aura/ui/lib/utils";
 import { StorefrontShell } from "@/components/storefront-shell";
+import { getOptionalEmbeddedBuildSourceCommit } from "@/lib/build-version";
 import "./globals.css";
 
 const manrope = localFont({
@@ -36,8 +37,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const releaseCommit = getOptionalEmbeddedBuildSourceCommit();
+
   return (
-    <html lang="en" data-scroll-behavior="smooth">
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      data-perfume-aura-release={releaseCommit}
+    >
       <body
         className={cn(
           "min-h-full antialiased",

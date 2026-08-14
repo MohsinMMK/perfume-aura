@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /**
- * Fail-closed verifier for a Hostinger ops prebuilt deploy tree.
- * Used before publishing the generated hostinger-ops-production branch.
+ * Fail-closed verifier for a Hostinger prebuilt deploy tree.
+ * Used before publishing generated ops and storefront production branches.
  *
  * Critical runtime paths (entry, aliases, sharp) must be real materialized
  * files/dirs. Safe internal relative pnpm store symlinks may remain.
  */
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import {
   existsSync,
   lstatSync,
@@ -31,21 +32,55 @@ const MAX_FILE_BYTES = 40_000_000;
 const MAX_SYMLINK_HOPS = 40;
 
 /** @type {{ path: string, kind: "file" | "directory", nonempty?: boolean }[]} */
-const REQUIRED_ENTRIES = [
+const COMMON_REQUIRED_ENTRIES = [
   { path: "package.json", kind: "file", nonempty: true },
   { path: "artifact-manifest.json", kind: "file", nonempty: true },
   { path: "runtime-package-lock.json", kind: "file", nonempty: true },
-  { path: "apps/ops/server.js", kind: "file", nonempty: true },
-  { path: "apps/ops/.next/static", kind: "directory" },
-  { path: "apps/ops/.next/node_modules", kind: "directory" },
-  { path: "apps/ops/node_modules/next/package.json", kind: "file", nonempty: true },
-  { path: "apps/ops/node_modules/sharp/package.json", kind: "file", nonempty: true },
-  { path: "apps/ops/node_modules/@img/sharp-linux-x64", kind: "directory" },
-  {
-    path: "apps/ops/node_modules/@img/sharp-libvips-linux-x64",
-    kind: "directory",
-  },
 ];
+
+const SURFACE_CONFIG = {
+  ops: {
+    application: "@perfume-aura/ops",
+    appRoot: "apps/ops",
+    entry: "apps/ops/server.js",
+    requiredDirectories: ["apps/ops/.next/node_modules"],
+  },
+  storefront: {
+    application: "@perfume-aura/storefront",
+    appRoot: "apps/storefront",
+    entry: "apps/storefront/server.js",
+    requiredDirectories: ["apps/storefront/public"],
+  },
+};
+
+function normalizeSurface(raw) {
+  const surface = String(raw ?? "ops").trim().toLowerCase();
+  if (!(surface in SURFACE_CONFIG)) {
+    fail(`surface must be ops or storefront: ${surface}`);
+  }
+  return surface;
+}
+
+function requiredEntriesForSurface(surface) {
+  const config = SURFACE_CONFIG[surface];
+  const appRoot = config.appRoot;
+  return [
+    ...COMMON_REQUIRED_ENTRIES,
+    { path: config.entry, kind: "file", nonempty: true },
+    { path: `${appRoot}/.next/static`, kind: "directory" },
+    ...config.requiredDirectories.map((entryPath) => ({
+      path: entryPath,
+      kind: "directory",
+    })),
+    { path: `${appRoot}/node_modules/next/package.json`, kind: "file", nonempty: true },
+    { path: `${appRoot}/node_modules/sharp/package.json`, kind: "file", nonempty: true },
+    { path: `${appRoot}/node_modules/@img/sharp-linux-x64`, kind: "directory" },
+    {
+      path: `${appRoot}/node_modules/@img/sharp-libvips-linux-x64`,
+      kind: "directory",
+    },
+  ];
+}
 
 const ALLOWED_TOP_LEVEL = new Set([
   "apps",
@@ -382,15 +417,22 @@ function resolveContainedPath(root, relPath) {
   return { abs, rel: rel.split(path.sep).join("/"), safe };
 }
 
-export function verifyHostingerOpsDeployTree(treeRoot, expectedCommitRaw) {
+export function verifyHostingerDeployTree(
+  treeRoot,
+  expectedCommitRaw,
+  surfaceRaw = "ops",
+) {
   const root = path.resolve(treeRoot);
   const expectedCommit = normalizeCommit(expectedCommitRaw);
+  const surface = normalizeSurface(surfaceRaw);
+  const config = SURFACE_CONFIG[surface];
+  const requiredEntries = requiredEntriesForSurface(surface);
 
   if (!existsSync(root) || !lstatSync(root).isDirectory()) {
     fail(`deploy tree root missing: ${root}`);
   }
 
-  for (const required of REQUIRED_ENTRIES) {
+  for (const required of requiredEntries) {
     assertEntryType(root, required.path, required.kind, {
       nonempty: required.nonempty === true,
     });
@@ -429,8 +471,17 @@ export function verifyHostingerOpsDeployTree(treeRoot, expectedCommitRaw) {
   ) {
     fail("root package.json postinstall must be no-op or absent");
   }
+  if (scripts.start !== `node ${config.entry}`) {
+    fail(`root package.json start script must be "node ${config.entry}"`);
+  }
 
   const internalManifest = readJson(path.join(root, "artifact-manifest.json"));
+  if (internalManifest?.schemaVersion !== 2) {
+    fail("artifact-manifest schemaVersion must be 2");
+  }
+  if (internalManifest?.application !== config.application) {
+    fail(`artifact-manifest application must be ${config.application}`);
+  }
   if (internalManifest?.source?.commit !== expectedCommit) {
     fail(
       `artifact-manifest source.commit mismatch: expected ${expectedCommit}`,
@@ -439,8 +490,22 @@ export function verifyHostingerOpsDeployTree(treeRoot, expectedCommitRaw) {
   if (internalManifest?.source?.dirty !== false) {
     fail("artifact-manifest source.dirty must be false");
   }
-  if (internalManifest?.entry !== "apps/ops/server.js") {
-    fail("artifact-manifest entry must be apps/ops/server.js");
+  if (internalManifest?.entry !== config.entry) {
+    fail(`artifact-manifest entry must be ${config.entry}`);
+  }
+  const runtimeLock = internalManifest?.runtimeDependencyLock;
+  if (
+    runtimeLock?.source !== "scripts/ops-runtime-deps/package-lock.json" ||
+    runtimeLock?.artifact !== "runtime-package-lock.json" ||
+    !/^[0-9a-f]{64}$/.test(String(runtimeLock?.sha256 ?? ""))
+  ) {
+    fail("artifact-manifest runtime dependency lock contract is invalid");
+  }
+  const runtimeLockSha256 = createHash("sha256")
+    .update(readFileSync(path.join(root, "runtime-package-lock.json")))
+    .digest("hex");
+  if (runtimeLockSha256 !== runtimeLock.sha256) {
+    fail("runtime-package-lock.json checksum mismatch");
   }
   if (!Array.isArray(internalManifest?.requiredPaths)) {
     fail("artifact-manifest requiredPaths missing");
@@ -454,7 +519,7 @@ export function verifyHostingerOpsDeployTree(treeRoot, expectedCommitRaw) {
     if (stat.isSymbolicLink()) {
       fail(`manifest-required path must not be a symlink: ${safe}`);
     }
-    const known = REQUIRED_ENTRIES.find((entry) => entry.path === safe);
+    const known = requiredEntries.find((entry) => entry.path === safe);
     if (known) {
       assertEntryType(root, safe, known.kind, {
         nonempty: known.nonempty === true,
@@ -504,19 +569,24 @@ export function verifyHostingerOpsDeployTree(treeRoot, expectedCommitRaw) {
   }
 
   // Static assets must exist for Hostinger SSR (real files, not via link descent).
-  const staticRoot = path.join(root, "apps/ops/.next/static");
+  const staticRoot = path.join(root, config.appRoot, ".next/static");
   const staticEntries = walkTree(staticRoot).filter((e) => e.stat.isFile());
   if (staticEntries.length < 1) {
-    fail("apps/ops/.next/static contains no files");
+    fail(`${config.appRoot}/.next/static contains no files`);
   }
 
   return {
     ok: true,
+    surface,
     commit: expectedCommit,
     files: entries.filter((e) => e.stat.isFile()).length,
     symlinks: symlinkCount,
     bytes: totalBytes,
   };
+}
+
+export function verifyHostingerOpsDeployTree(treeRoot, expectedCommitRaw) {
+  return verifyHostingerDeployTree(treeRoot, expectedCommitRaw, "ops");
 }
 
 function lstatExists(abs) {
@@ -528,43 +598,49 @@ function lstatExists(abs) {
   }
 }
 
-function writeMinimalValidTree(root, commit) {
+function writeMinimalValidTree(root, commit, surface = "ops") {
+  const config = SURFACE_CONFIG[normalizeSurface(surface)];
+  const appRoot = config.appRoot;
   const requiredDirs = [
-    "apps/ops/.next/static/chunks",
-    "apps/ops/.next/node_modules",
-    "apps/ops/node_modules/next",
-    "apps/ops/node_modules/sharp",
-    "apps/ops/node_modules/@img/sharp-linux-x64",
-    "apps/ops/node_modules/@img/sharp-libvips-linux-x64",
+    `${appRoot}/.next/static/chunks`,
+    ...config.requiredDirectories,
+    `${appRoot}/node_modules/next`,
+    `${appRoot}/node_modules/sharp`,
+    `${appRoot}/node_modules/@img/sharp-linux-x64`,
+    `${appRoot}/node_modules/@img/sharp-libvips-linux-x64`,
   ];
   for (const dir of requiredDirs) {
     mkdirSync(path.join(root, dir), { recursive: true });
   }
-  writeFileSync(path.join(root, "apps/ops/server.js"), "console.log('ok')\n");
+  writeFileSync(path.join(root, config.entry), "console.log('ok')\n");
   writeFileSync(
-    path.join(root, "apps/ops/.next/static/chunks/main.js"),
+    path.join(root, `${appRoot}/.next/static/chunks/main.js`),
     "export default 1\n",
   );
   writeFileSync(
-    path.join(root, "apps/ops/node_modules/next/package.json"),
+    path.join(root, `${appRoot}/node_modules/next/package.json`),
     JSON.stringify({ name: "next", version: "16.2.11" }),
   );
   writeFileSync(
-    path.join(root, "apps/ops/node_modules/sharp/package.json"),
+    path.join(root, `${appRoot}/node_modules/sharp/package.json`),
     JSON.stringify({ name: "sharp", version: "0.35.3" }),
   );
   writeFileSync(
-    path.join(root, "apps/ops/node_modules/@img/sharp-linux-x64/index.js"),
+    path.join(root, `${appRoot}/node_modules/@img/sharp-linux-x64/index.js`),
     "module.exports = {}\n",
   );
   writeFileSync(
     path.join(
       root,
-      "apps/ops/node_modules/@img/sharp-libvips-linux-x64/index.js",
+      `${appRoot}/node_modules/@img/sharp-libvips-linux-x64/index.js`,
     ),
     "module.exports = {}\n",
   );
-  writeFileSync(path.join(root, "runtime-package-lock.json"), "{}\n");
+  const runtimeLockContents = "{}\n";
+  writeFileSync(
+    path.join(root, "runtime-package-lock.json"),
+    runtimeLockContents,
+  );
   writeFileSync(
     path.join(root, "README.hostinger.txt"),
     "Hostinger prebuilt deploy tree\n",
@@ -580,6 +656,7 @@ function writeMinimalValidTree(root, commit) {
         scripts: {
           build: "echo prebuilt-standalone",
           postinstall: "echo skip-postinstall",
+          start: `node ${config.entry}`,
         },
       },
       null,
@@ -591,18 +668,26 @@ function writeMinimalValidTree(root, commit) {
     `${JSON.stringify(
       {
         schemaVersion: 2,
+        application: config.application,
         source: { commit, dirty: false },
-        entry: "apps/ops/server.js",
+        runtimeDependencyLock: {
+          source: "scripts/ops-runtime-deps/package-lock.json",
+          artifact: "runtime-package-lock.json",
+          sha256: createHash("sha256")
+            .update(runtimeLockContents)
+            .digest("hex"),
+        },
+        entry: config.entry,
         requiredPaths: [
           "package.json",
           "runtime-package-lock.json",
-          "apps/ops/server.js",
-          "apps/ops/.next/static",
-          "apps/ops/.next/node_modules",
-          "apps/ops/node_modules/next/package.json",
-          "apps/ops/node_modules/sharp/package.json",
-          "apps/ops/node_modules/@img/sharp-linux-x64",
-          "apps/ops/node_modules/@img/sharp-libvips-linux-x64",
+          config.entry,
+          `${appRoot}/.next/static`,
+          ...config.requiredDirectories,
+          `${appRoot}/node_modules/next/package.json`,
+          `${appRoot}/node_modules/sharp/package.json`,
+          `${appRoot}/node_modules/@img/sharp-linux-x64`,
+          `${appRoot}/node_modules/@img/sharp-libvips-linux-x64`,
         ],
       },
       null,
@@ -638,6 +723,33 @@ function selfTest() {
     const ok = verifyHostingerOpsDeployTree(valid, commit);
     assert.equal(ok.commit, commit);
     assert.ok(ok.files > 0);
+
+    const storefront = path.join(base, "storefront");
+    writeMinimalValidTree(storefront, commit, "storefront");
+    const storefrontOk = verifyHostingerDeployTree(
+      storefront,
+      commit,
+      "storefront",
+    );
+    assert.equal(storefrontOk.surface, "storefront");
+    assert.equal(storefrontOk.commit, commit);
+
+    const wrongApplication = path.join(base, "wrong-application");
+    writeMinimalValidTree(wrongApplication, commit, "storefront");
+    const wrongApplicationManifestPath = path.join(
+      wrongApplication,
+      "artifact-manifest.json",
+    );
+    const wrongApplicationManifest = readJson(wrongApplicationManifestPath);
+    wrongApplicationManifest.application = "@perfume-aura/ops";
+    writeFileSync(
+      wrongApplicationManifestPath,
+      `${JSON.stringify(wrongApplicationManifest)}\n`,
+    );
+    assert.throws(
+      () => verifyHostingerDeployTree(wrongApplication, commit, "storefront"),
+      /application must be @perfume-aura\/storefront/,
+    );
     assert.ok(ok.symlinks >= 1);
 
     const mismatch = path.join(base, "mismatch");
@@ -834,13 +946,22 @@ function main(argv) {
   }
   if (argv.length < 2) {
     fail(
-      "usage: node scripts/verify-hostinger-ops-deploy-tree.mjs <tree-root> <expected-commit>\n" +
+      "usage: node scripts/verify-hostinger-ops-deploy-tree.mjs <tree-root> <expected-commit> [--surface ops|storefront]\n" +
         "   or: node scripts/verify-hostinger-ops-deploy-tree.mjs self-test",
     );
   }
-  const result = verifyHostingerOpsDeployTree(argv[0], argv[1]);
+  let surface = "ops";
+  for (let index = 2; index < argv.length; index += 1) {
+    if (argv[index] === "--surface") {
+      surface = argv[index + 1];
+      index += 1;
+    } else {
+      fail(`unknown argument: ${argv[index]}`);
+    }
+  }
+  const result = verifyHostingerDeployTree(argv[0], argv[1], surface);
   console.log(
-    `deploy-tree ok commit=${result.commit} files=${result.files} symlinks=${result.symlinks} bytes=${result.bytes}`,
+    `deploy-tree ok surface=${result.surface} commit=${result.commit} files=${result.files} symlinks=${result.symlinks} bytes=${result.bytes}`,
   );
 }
 

@@ -180,6 +180,14 @@ release passed exact-SHA verification, but the unresolved Hostinger process
 incident remains an infrastructure risk: the green deployment does not supply
 the missing scoped process attribution, restart cause, or durable-repair proof.
 
+Storefront Git auto-deployment is being prepared as a release-gated generated
+branch (`hostinger-storefront-production`) containing only the verified
+standalone tree. The live storefront remains archive-sourced until a fresh
+provider check, explicit cutover authorization, and the unresolved process
+incident gate permit changing its deployment source. The automation does not
+authorize a redeploy, cache purge, process action, database change, or release
+flag change by itself.
+
 ## Repository
 
 - One primary worktree.
