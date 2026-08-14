@@ -92,7 +92,7 @@ jobs:
               echo "should_publish=true" >> "$GITHUB_OUTPUT"
               echo "publish_ops=true" >> "$GITHUB_OUTPUT"
               echo "publish_storefront=true" >> "$GITHUB_OUTPUT"
-              echo "ops_migration_blocked=false" >> "$GITHUB_OUTPUT"
+              echo "ops_migration_blocked=true" >> "$GITHUB_OUTPUT"
             else
               git diff --name-only -z "$BEFORE_SHA" "$GITHUB_SHA" |
                 node scripts/classify-deployment-impact.mjs --stdin0 >> "$GITHUB_OUTPUT"
@@ -430,10 +430,10 @@ jobs:
   publish-and-deploy-vps-ops:
     name: publish-and-deploy-vps-ops
     if: >-
+      github.ref == 'refs/heads/main' &&
       needs.deployment-impact.outputs.publish_ops == 'true' &&
       needs.deployment-impact.outputs.ops_migration_blocked != 'true' &&
-      ((github.ref == 'refs/heads/main' && github.event_name == 'push') ||
-       github.event_name == 'workflow_dispatch')
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs:
       - deployment-impact
       - package
@@ -505,9 +505,11 @@ jobs:
           cache-to: type=gha,mode=max,scope=perfume-aura-ops
 
       - name: Verify immutable image digest
+        env:
+          IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
         run: |
           set -euo pipefail
-          [[ "${{ steps.image.outputs.digest }}" =~ ^sha256:[0-9a-f]{64}$ ]]
+          [[ "$IMAGE_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
 
       - name: Deploy through Hostinger VPS API
         if: vars.VPS_OPS_AUTO_DEPLOY_ENABLED == 'true'
@@ -536,9 +538,10 @@ jobs:
   block-runtime-deploy-on-database-migration:
     name: block-runtime-deploy-on-database-migration
     if: >-
+      github.ref == 'refs/heads/main' &&
+      needs.deployment-impact.outputs.should_publish == 'true' &&
       needs.deployment-impact.outputs.ops_migration_blocked == 'true' &&
-      ((github.ref == 'refs/heads/main' && github.event_name == 'push') ||
-       github.event_name == 'workflow_dispatch')
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs:
       - deployment-impact
       - package

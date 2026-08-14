@@ -25,7 +25,7 @@ export function classifyDeploymentImpact(changedPaths) {
       shouldPublish: true,
       publishOps: true,
       publishStorefront: true,
-      opsMigrationBlocked: false,
+      opsMigrationBlocked: true,
     };
   }
 
@@ -37,6 +37,7 @@ export function classifyDeploymentImpact(changedPaths) {
     if (typeof changedPath !== "string" || changedPath.length === 0) {
       publishOps = true;
       publishStorefront = true;
+      opsMigrationBlocked = true;
       continue;
     }
     if (isMarkdown(changedPath)) {
@@ -110,7 +111,19 @@ function runSelfTests() {
     shouldPublish: true,
     publishOps: true,
     publishStorefront: true,
-    opsMigrationBlocked: false,
+    opsMigrationBlocked: true,
+  });
+  assert.deepEqual(classifyDeploymentImpact([""]), {
+    shouldPublish: true,
+    publishOps: true,
+    publishStorefront: true,
+    opsMigrationBlocked: true,
+  });
+  assert.deepEqual(classifyDeploymentImpact([null]), {
+    shouldPublish: true,
+    publishOps: true,
+    publishStorefront: true,
+    opsMigrationBlocked: true,
   });
   assert.deepEqual(classifyDeploymentImpact(["docs/CURRENT_STATE.md"]), {
     shouldPublish: false,
