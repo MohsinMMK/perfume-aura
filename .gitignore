@@ -30,6 +30,8 @@ yarn-error.log*
 .pi/
 .pi-subagents/
 graphify-out/
+.playwright-cli/
+/output/
 perfume-aura-standalone_*.zip
 *.standalone.zip
 
