@@ -13,33 +13,32 @@ Read `CURRENT_STATE.md` before any provider or database action.
 `www.app.perfumeaura.com` and `shop.perfumeaura.com` must remain absent. The
 previous static storefront exists only in an external backup and Git history.
 
-## Managed Hostinger topology
+## Production topology
 
-The existing managed deployment remains the production topology:
+The storefront remains managed while private operations runs on the isolated
+VPS service:
 
 | Platform | Production responsibility |
 |---|---|
 | Hostinger managed Node.js Web App | `perfumeaura.com` storefront and the `www` redirect |
-| Hostinger managed Node.js Web App | `app.perfumeaura.com` private operations |
+| VPS Caddy and hardened container | `app.perfumeaura.com` private operations |
 | Neon | Shared PostgreSQL, with separate restricted runtime connections and manual owner migrations |
 | GitHub Actions | Build, scan, package, publish, and identify the exact source commit for both deployments |
 
-The public URLs and DNS topology do not change. GoDaddy remains
-registration-only while Hostinger nameservers are authoritative. Neon remains
-independent of the web deployments and must never be copied into, deleted by,
-or recreated during a deployment.
+GoDaddy remains registration-only while Hostinger nameservers are
+authoritative. `app.perfumeaura.com` is an `A` record to `194.164.149.3` with
+no `AAAA`; Caddy proxies it to `127.0.0.1:3020`. Neon remains independent of
+the web deployments and must never be copied into, deleted by, or recreated
+during a deployment.
 
-Both applications select Hostinger Node `24.x`. Live deployment logs currently
-show the provider-managed baseline Node `24.6.0` and pnpm `10.32.1`. Repository
-compatibility must be tested against that baseline; do not require an exact
-patch that hPanel cannot select. Reinspect the logs whenever Hostinger changes
-the managed runtime.
+The storefront selects Hostinger Node `24.x`; live deployment logs established
+Node `24.6.0` and pnpm `10.32.1` as its current managed baseline. Ops uses the
+repository-pinned Node image in its immutable VPS artifact. Reinspect the
+managed logs whenever Hostinger changes the storefront runtime.
 
-The unresolved managed-hosting process incident must still be durably repaired
-before prepared application work is published. Require scoped process
-attribution, restart and routing causes, a case ID, and fresh smoke evidence for
-both applications. Do not use a plan-wide process stop or modify unrelated sites
-to work around the provider issue.
+The unresolved managed-hosting process incident remains a storefront/shared-plan
+risk but is no longer on the public ops path. Do not use a plan-wide process
+stop or modify unrelated sites to work around it.
 
 ## Safety boundaries
 
@@ -48,7 +47,8 @@ to work around the provider issue.
   work.
 - Do not modify unrelated Hostinger sites, mail, DNS, databases, or processes.
 - Secrets belong only in ignored env files or Hostinger settings.
-- Do not set `PORT`; Hostinger supplies it.
+- Do not set a fixed storefront `PORT`; Hostinger supplies it. The VPS Compose
+  contract sets the internal ops port and publishes it only on loopback.
 - Select Hostinger Node `24.x`; treat the exact Node patch and pnpm version from
   fresh deployment logs as the production compatibility baseline.
 - Do not publish until CI, packers, lockfiles, and extracted-artifact smoke pass
@@ -84,20 +84,22 @@ in `CURRENT_STATE.md`.
 
 ## Storefront deployment
 
-Routine deployment uses the verified prebuilt tree through a generated GitHub
-branch; the Hostinger monorepo source build is not the deployment path:
+The verified generated GitHub branch is the intended routine deployment path,
+but the live upload-sourced Hostinger app is not connected to it yet:
 
 ```text
 runtime-affecting main push → CI quality/integration/package
-  → hostinger-storefront-production → Hostinger Node Web App
+  → hostinger-storefront-production → [provider Git connection required]
+  → Hostinger Node Web App
   → exact storefront SHA and public-surface verification
 ```
 
 Markdown-only changes do not publish either generated branch. For a controlled
 idempotent republish of the exact `main` source, dispatch `ops-pack.yml` with
-`deploy_target=storefront`. Repository variable
-`HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` enables the live verification
-job; it does not weaken the pre-publish gates.
+`deploy_target=storefront`. Set repository variable
+`HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` only after Hostinger is
+actually connected. It enables the live verification job; it does not weaken
+the pre-publish gates.
 
 The verified ZIP remains the emergency fallback:
 
@@ -107,10 +109,18 @@ TEST_DATABASE_URL='<migrated-disposable-loopback-url>' pnpm test:integration
 pnpm storefront:pack
 ```
 
-Hostinger settings: GitHub branch `hostinger-storefront-production`, Node 24.x,
-Framework Other, root `./`, no build command, empty output directory, and entry
-`apps/storefront/server.js`. Set
+Target Hostinger settings: GitHub branch `hostinger-storefront-production`,
+Node 24.x, Framework Other, root `./`, no build command, empty output directory,
+and entry `apps/storefront/server.js`. Set
 `STOREFRONT_URL` and `CUSTOMER_AUTH_URL` to `https://perfumeaura.com`.
+
+Hostinger's current upload-sourced storefront UI does not expose an in-place
+`Connect to GitHub` control. Do not delete/recreate the apex Web App without a
+fresh backup, a tested replacement, captured DNS/HCDN/runtime settings, and
+explicit authorization. Until then the verified ZIP is the live routine and
+emergency path, and the generated branch is prepared state only. The current
+live archive and generated branch manifest both identify source
+`917499d7dae04aa04697a7af7fd3d062c029c7f6`.
 
 Keep these flags false until their separate gates pass:
 
@@ -148,17 +158,34 @@ use the known-good ZIP or a scoped HCDN purge only with explicit authorization.
 Routine deployment is:
 
 ```text
-main push → CI quality/integration/package → hostinger-ops-production
-  → Hostinger Node Web App → exact-SHA verification
+runtime-affecting main push → CI quality/integration/package
+  → verified standalone ZIP → immutable GHCR image
+  → Tailscale forced SSH → hardened VPS container
+  → exact-SHA public verification
 ```
 
 A change set containing only Markdown files still runs CI but does not publish
-the generated branch. Empty, invalid, or mixed change evidence publishes
-normally so the guard cannot silently suppress a runtime deployment.
+or deploy. Empty, invalid, or mixed change evidence publishes normally so the
+guard cannot silently suppress a runtime deployment.
 
-Use `pnpm ops:pack` only for emergency fallback. Hostinger settings are Node
-24.x, Framework Other, root `./`, no build command, empty output directory, and
-entry `apps/ops/server.js`.
+The workflow deploys only when `VPS_OPS_AUTO_DEPLOY_ENABLED=true`, joins the
+tailnet with the dedicated OAuth credentials, and authenticates through the
+`perfume-deploy` forced command. It must pass an exact 40-character source SHA
+and immutable `sha256:` image digest; the server validates both the OCI
+revision label and embedded artifact manifest before replacing the loopback
+service. `VPS_OPS_PUBLIC_VERIFICATION_ENABLED=true` adds the external verifier
+after the candidate is healthy.
+
+The Compose contract uses UID/GID `10001`, read-only root, `cap_drop: ALL`,
+`no-new-privileges`, no Docker socket, `127.0.0.1:3020:3000`, 1 CPU, 768 MiB,
+256 PIDs, tmpfs runtime caches, and `/api/health/ready`. Runtime secrets live in
+root-owned `/etc/khanect/perfume-aura-ops.env`; deploy automation never sends
+them. Use `pnpm ops:pack` only for artifact recovery.
+
+The old Hostinger ops Web App is off public DNS and frozen as a 24-48 hour
+rollback target. Its rotated database credential was applied and its exact Git
+branch redeployed on 2026-08-14. A rollback restores the captured DNS records
+and verifies the old exact SHA; do not republish or delete it casually.
 
 Production migrations remain manual direct-owner operations. Reapply restricted
 runtime grants after every schema change.
@@ -169,7 +196,7 @@ Migration `0010_curved_puma`, Admin/2FA, staff invitations, and mandatory 2FA
 are one ordered release. Follow
 [`STAFF_OPERATIONS_RELEASE_SMOKE.md`](STAFF_OPERATIONS_RELEASE_SMOKE.md).
 
-1. Prove the Hostinger incident is durably repaired.
+1. Prove the active VPS ops release and database-migration gate are healthy.
 2. Test the migration on an isolated Neon branch.
 3. Apply it to production through the direct owner connection.
 4. Reapply and verify runtime grants.
@@ -246,21 +273,22 @@ requirements.
 ## Observability activation
 
 Provider projects exist but production telemetry is not active until the
-Hostinger variables and an observability-enabled artifact are deployed. Follow
+platform-specific runtime values and an observability-enabled artifact are
+deployed. Follow
 `docs/OBSERVABILITY.md` for provider names, environment mapping, privacy,
 source-map CI settings, and acceptance evidence.
 
-Activation is a normal deployment and remains blocked by the unresolved NPROC
-incident. After authorization and activation, re-smoke both applications and
-verify actual privacy-filtered PostHog and Sentry events; a successful build is
-not runtime proof.
+Activation is a normal deployment. After authorization and activation,
+re-smoke both applications and verify actual privacy-filtered PostHog and
+Sentry events; a successful build is not runtime proof.
 
 ## NPROC incident control
 
 The shared plan has a 120-process ceiling. Its process-stop control affects the
-whole plan. Capture resources and endpoint evidence before provider action;
-prefer a scoped repair. Use plan-wide stop only with explicit authorization,
-then re-smoke every affected site and update `CURRENT_STATE.md`.
+whole plan, not the VPS ops service. Capture resources and storefront endpoint
+evidence before provider action; prefer a scoped repair. Use plan-wide stop only
+with explicit authorization, then re-smoke every affected managed site and
+update `CURRENT_STATE.md`.
 
 ## Official Hostinger references
 
