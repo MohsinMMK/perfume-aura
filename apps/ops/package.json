@@ -1,0 +1,10 @@
+{
+  "name": "perfume-aura-ops-standalone-app",
+  "private": true,
+  "engines": {
+    "node": ">=24.6.0 <25"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}

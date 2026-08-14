@@ -1,0 +1,221 @@
+{
+  "node": {
+    "00501e0d6ead0e6aa1c4a0731169adbac0c0197682": {
+      "workers": {
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 143285,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "getLowStockCount",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "00a51a0d322616b1a438f6f6c83b4fdd7e2b09a0ed": {
+      "workers": {
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 143285,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "getDashboardStats",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "00efa3a070b5d67a9aaac4fd9a2810ea7ff92e9c45": {
+      "workers": {
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 143285,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "listLowStock",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40307a38026a51da55a71362884968937a2fdda2b9": {
+      "workers": {
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 143285,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "listRecentMovements",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40317b53d49376b6cd9e85b6925ccde5204755cdce": {
+      "workers": {
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 143285,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "receiveStockAction",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "406bb1969dd51a7113da6d0348221a6278bd46c252": {
+      "workers": {
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 143285,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "adjustStockAction",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "006caaa4e880422173fc01944ed022d482cd3bde7e": {
+      "workers": {
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 143285,
+          "async": true,
+          "exportedName": "listActiveVariantsForStockSelect",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "listActiveVariantsForStockSelect",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "00da9b2f8091fca8b804e728aa3c4ea2c51fe8e0ec": {
+      "workers": {
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 143285,
+          "async": true,
+          "exportedName": "listActiveVariantsForSelect",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "listActiveVariantsForSelect",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "401311db73fe7935f9bd9275ec19d08fd914c59386": {
+      "workers": {
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 143285,
+          "async": true,
+          "exportedName": "reactivateProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "reactivateProductAction",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "401afc923d796f07cfaf5d825b5270c14bacae2e22": {
+      "workers": {
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 143285,
+          "async": true,
+          "exportedName": "updateVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "updateVariantAction",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "40371011cd2caeab27cb1156a184d740eb0dae5e89": {
+      "workers": {
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 143285,
+          "async": true,
+          "exportedName": "createVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "createVariantAction",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "405051b41be3c2d88795b4ab2fcc2f94ef22fd28a8": {
+      "workers": {
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 143285,
+          "async": true,
+          "exportedName": "updateProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "updateProductAction",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "408ef4b8114881d1bc13575ab7df237f0d11df4f3f": {
+      "workers": {
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 143285,
+          "async": true,
+          "exportedName": "archiveProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "archiveProductAction",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "4097b17d7a734ac8f2392d2bee1af0784b3d872927": {
+      "workers": {
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 143285,
+          "async": true,
+          "exportedName": "reactivateVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "reactivateVariantAction",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "40ac28d776fd5ce6e482e5061d657c6bb465e8efcb": {
+      "workers": {
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 143285,
+          "async": true,
+          "exportedName": "getProduct",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "getProduct",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "40c988ef61308591e0177e782411b16cc0df8ae7b3": {
+      "workers": {
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 143285,
+          "async": true,
+          "exportedName": "createProductAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "createProductAction",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "40d68f7918933ad48f6586ea36fbfdcd56e7098f95": {
+      "workers": {
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 143285,
+          "async": true,
+          "exportedName": "archiveVariantAction",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "archiveVariantAction",
+      "filename": "apps/ops/lib/products.ts"
+    },
+    "40ed7a3c760348f586b8a1524dfbbe71654fec102d": {
+      "workers": {
+        "app/(dashboard)/products/[id]/page": {
+          "moduleId": 143285,
+          "async": true,
+          "exportedName": "listProducts",
+          "filename": "apps/ops/lib/products.ts"
+        }
+      },
+      "exportedName": "listProducts",
+      "filename": "apps/ops/lib/products.ts"
+    }
+  },
+  "edge": {}
+}

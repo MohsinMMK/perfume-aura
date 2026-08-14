@@ -1,0 +1,113 @@
+{
+  "node": {
+    "00501e0d6ead0e6aa1c4a0731169adbac0c0197682": {
+      "workers": {
+        "app/(dashboard)/settings/staff/page": {
+          "moduleId": 250976,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "getLowStockCount",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "00a51a0d322616b1a438f6f6c83b4fdd7e2b09a0ed": {
+      "workers": {
+        "app/(dashboard)/settings/staff/page": {
+          "moduleId": 250976,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "getDashboardStats",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "00efa3a070b5d67a9aaac4fd9a2810ea7ff92e9c45": {
+      "workers": {
+        "app/(dashboard)/settings/staff/page": {
+          "moduleId": 250976,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "listLowStock",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40307a38026a51da55a71362884968937a2fdda2b9": {
+      "workers": {
+        "app/(dashboard)/settings/staff/page": {
+          "moduleId": 250976,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "listRecentMovements",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40317b53d49376b6cd9e85b6925ccde5204755cdce": {
+      "workers": {
+        "app/(dashboard)/settings/staff/page": {
+          "moduleId": 250976,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "receiveStockAction",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "406bb1969dd51a7113da6d0348221a6278bd46c252": {
+      "workers": {
+        "app/(dashboard)/settings/staff/page": {
+          "moduleId": 250976,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "adjustStockAction",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "409628d07f426a71648e627937282d5f9e8f506e00": {
+      "workers": {
+        "app/(dashboard)/settings/staff/page": {
+          "moduleId": 250976,
+          "async": true,
+          "exportedName": "deactivateStaffAction",
+          "filename": "apps/ops/lib/staff-operations.ts"
+        }
+      },
+      "exportedName": "deactivateStaffAction",
+      "filename": "apps/ops/lib/staff-operations.ts"
+    },
+    "40d737360b2fa997c3a111fe6239686297c75fa53b": {
+      "workers": {
+        "app/(dashboard)/settings/staff/page": {
+          "moduleId": 250976,
+          "async": true,
+          "exportedName": "inviteStaffAction",
+          "filename": "apps/ops/lib/staff-operations.ts"
+        }
+      },
+      "exportedName": "inviteStaffAction",
+      "filename": "apps/ops/lib/staff-operations.ts"
+    },
+    "00fbbae14bfaa7bcf917fb9a9a3132a7178a3fc88b": {
+      "workers": {
+        "app/(dashboard)/settings/staff/page": {
+          "moduleId": 250976,
+          "async": true,
+          "exportedName": "listStaffAccounts",
+          "filename": "apps/ops/lib/staff-operations.ts"
+        }
+      },
+      "exportedName": "listStaffAccounts",
+      "filename": "apps/ops/lib/staff-operations.ts"
+    }
+  },
+  "edge": {}
+}

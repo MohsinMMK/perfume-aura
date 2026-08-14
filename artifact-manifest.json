@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 2,
+  "source": {
+    "commit": "63804f3a29ca333304fc4998f948ebeae478bdd6",
+    "dirty": false
+  },
+  "runtime": {
+    "node": "24.6.0",
+    "npm": "11.5.1",
+    "pnpm": "10.32.1",
+    "next": "16.2.11",
+    "sharp": "0.35.3",
+    "postcss": "8.5.23",
+    "target": {
+      "os": "linux",
+      "cpu": "x64",
+      "libc": "glibc"
+    }
+  },
+  "runtimeDependencyLock": {
+    "source": "scripts/ops-runtime-deps/package-lock.json",
+    "artifact": "runtime-package-lock.json",
+    "sha256": "88798b73541796100cf31222537500186f6be496630a02a5b55310b43ec94a2c"
+  },
+  "entry": "apps/ops/server.js",
+  "requiredPaths": [
+    "package.json",
+    "runtime-package-lock.json",
+    "apps/ops/server.js",
+    "apps/ops/.next/static",
+    "apps/ops/.next/node_modules",
+    "apps/ops/node_modules/next/package.json",
+    "apps/ops/node_modules/sharp/package.json",
+    "apps/ops/node_modules/@img/sharp-linux-x64",
+    "apps/ops/node_modules/@img/sharp-libvips-linux-x64"
+  ],
+  "forbiddenContent": [
+    ".env and credential files",
+    "source maps",
+    "absolute build-machine home paths",
+    "local-agent workspaces",
+    "flat entry.cjs experiments"
+  ]
+}

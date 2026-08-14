@@ -1,0 +1,5 @@
+;!function(){try { var e="undefined"!=typeof globalThis?globalThis:"undefined"!=typeof global?global:"undefined"!=typeof window?window:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&((e._debugIds|| (e._debugIds={}))[n]="05bfc675-6752-f815-8c4d-b09f6e6193db")}catch(e){}}();
+module.exports=[744346,a=>a.a(async(b,c)=>{try{var d=a.i(597109),e=b([d]);[d]=e.then?(await e)():e,a.s([]),c()}catch(a){c(a)}},!1),504679,a=>a.a(async(b,c)=>{try{var d=a.i(744346),e=a.i(597109),f=b([d,e]);[d,e]=f.then?(await f)():f,a.s(["00501e0d6ead0e6aa1c4a0731169adbac0c0197682",()=>e.getLowStockCount,"00a51a0d322616b1a438f6f6c83b4fdd7e2b09a0ed",()=>e.getDashboardStats,"00efa3a070b5d67a9aaac4fd9a2810ea7ff92e9c45",()=>e.listLowStock,"40307a38026a51da55a71362884968937a2fdda2b9",()=>e.listRecentMovements,"40317b53d49376b6cd9e85b6925ccde5204755cdce",()=>e.receiveStockAction,"406bb1969dd51a7113da6d0348221a6278bd46c252",()=>e.adjustStockAction]),c()}catch(a){c(a)}},!1)];
+
+//# debugId=05bfc675-6752-f815-8c4d-b09f6e6193db
+//# sourceMappingURL=apps_ops__next-internal_server_app_%28dashboard%29_stock_low_page_actions_1zcuswr.js.map

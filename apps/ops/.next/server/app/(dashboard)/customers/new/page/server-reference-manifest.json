@@ -1,0 +1,101 @@
+{
+  "node": {
+    "00501e0d6ead0e6aa1c4a0731169adbac0c0197682": {
+      "workers": {
+        "app/(dashboard)/customers/new/page": {
+          "moduleId": 284967,
+          "async": true,
+          "exportedName": "getLowStockCount",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "getLowStockCount",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "00a51a0d322616b1a438f6f6c83b4fdd7e2b09a0ed": {
+      "workers": {
+        "app/(dashboard)/customers/new/page": {
+          "moduleId": 284967,
+          "async": true,
+          "exportedName": "getDashboardStats",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "getDashboardStats",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "00efa3a070b5d67a9aaac4fd9a2810ea7ff92e9c45": {
+      "workers": {
+        "app/(dashboard)/customers/new/page": {
+          "moduleId": 284967,
+          "async": true,
+          "exportedName": "listLowStock",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "listLowStock",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40307a38026a51da55a71362884968937a2fdda2b9": {
+      "workers": {
+        "app/(dashboard)/customers/new/page": {
+          "moduleId": 284967,
+          "async": true,
+          "exportedName": "listRecentMovements",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "listRecentMovements",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40317b53d49376b6cd9e85b6925ccde5204755cdce": {
+      "workers": {
+        "app/(dashboard)/customers/new/page": {
+          "moduleId": 284967,
+          "async": true,
+          "exportedName": "receiveStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "receiveStockAction",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "406bb1969dd51a7113da6d0348221a6278bd46c252": {
+      "workers": {
+        "app/(dashboard)/customers/new/page": {
+          "moduleId": 284967,
+          "async": true,
+          "exportedName": "adjustStockAction",
+          "filename": "apps/ops/lib/stock.ts"
+        }
+      },
+      "exportedName": "adjustStockAction",
+      "filename": "apps/ops/lib/stock.ts"
+    },
+    "40d99827b7f800272b85691f91fd4b21be1ab79ab8": {
+      "workers": {
+        "app/(dashboard)/customers/new/page": {
+          "moduleId": 284967,
+          "async": true,
+          "exportedName": "createCustomerAction",
+          "filename": "apps/ops/lib/customers.ts"
+        }
+      },
+      "exportedName": "createCustomerAction",
+      "filename": "apps/ops/lib/customers.ts"
+    },
+    "40c63f072a10b75efcdab111cd7d603cdb59b1f50b": {
+      "workers": {
+        "app/(dashboard)/customers/new/page": {
+          "moduleId": 284967,
+          "async": true,
+          "exportedName": "updateCustomerAction",
+          "filename": "apps/ops/lib/customers.ts"
+        }
+      },
+      "exportedName": "updateCustomerAction",
+      "filename": "apps/ops/lib/customers.ts"
+    }
+  },
+  "edge": {}
+}
