@@ -19,7 +19,10 @@ RUNTIME_DEPS_DIR="$ROOT/scripts/ops-runtime-deps"
 
 RESOLVED_NEXT_VERSION="$(node -p "require('./apps/storefront/node_modules/next/package.json').version")"
 RESOLVED_SHARP_VERSION="$(node -p "require('./scripts/ops-runtime-deps/package-lock.json').packages['node_modules/sharp'].version")"
-RESOLVED_POSTCSS_VERSION="$(node -p "require('./scripts/ops-runtime-deps/package-lock.json').packages['node_modules/postcss'].version")"
+RESOLVED_POSTCSS_VERSION="$(
+  cd "$ROOT/apps/storefront"
+  node -e "const { createRequire } = require('node:module'); const fromNext = createRequire(require.resolve('next/package.json')); process.stdout.write(fromNext('postcss/package.json').version)"
+)"
 RUNTIME_DEPS_LOCK_SHA256="$(node -e "const c=require('node:crypto');const f=require('node:fs');process.stdout.write(c.createHash('sha256').update(f.readFileSync(process.argv[1])).digest('hex'))" "$RUNTIME_DEPS_DIR/package-lock.json")"
 
 SOURCE_COMMIT="${STANDALONE_SOURCE_COMMIT:-$(git rev-parse HEAD)}"
