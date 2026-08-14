@@ -65,8 +65,10 @@ block application startup.
 Use the same PostHog project token for both applications, with distinct
 variable names so an accidental cross-app package cannot silently inherit it.
 The token and Sentry DSNs are write-only/public client identifiers, but they
-still belong in GitHub variables, Hostinger settings, or ignored local
-environment files rather than committed source. Repository variables
+still belong in GitHub variables, platform runtime settings, or ignored local
+environment files rather than committed source. Storefront server runtime
+values live in Hostinger; ops server runtime values live in root-owned
+`/etc/khanect/perfume-aura-ops.env` on the VPS. Repository variables
 `POSTHOG_PROJECT_TOKEN`, `POSTHOG_HOST`, `STOREFRONT_SENTRY_DSN`, and
 `OPS_SENTRY_DSN` currently supply the prebuilt browser bundles.
 
@@ -117,13 +119,15 @@ or a source-map verification against a deployed release.
 
 ## Activation and verification
 
-Do not add the Hostinger variables or deploy this change while the active
-duplicate-process/NPROC incident is awaiting scoped provider repair. After that
-repair:
+Treat observability activation as an explicit deployment on each platform. The
+historical Hostinger duplicate-process/NPROC incident still gates storefront
+provider changes, but it no longer blocks an independently authorized VPS ops
+deployment:
 
-1. Add the server-only Sentry DSN and sample-rate variables to each Hostinger
-   Node Web App. The `NEXT_PUBLIC_*` values must be present during the prebuilt
-   CI/package build and cannot be added after the artifact is built.
+1. Add the storefront server-only Sentry values in Hostinger and the ops
+   server-only Sentry values in `/etc/khanect/perfume-aura-ops.env`. The
+   `NEXT_PUBLIC_*` values must be present during the prebuilt CI/package build
+   and cannot be added after the artifact is built.
 2. Confirm the existing build-only `SENTRY_AUTH_TOKEN` secret is available to
    the trusted main-branch build; never expose it to pull requests from forks
    or through `NEXT_PUBLIC_`.
