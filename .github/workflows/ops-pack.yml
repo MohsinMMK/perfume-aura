@@ -406,7 +406,7 @@ jobs:
             --file deploy/ops-vps/Dockerfile \
             --tag perfume-aura-ops:ci \
             "$TREE"
-          test "$(docker image inspect --format '{{ index .Config.Labels \"org.opencontainers.image.revision\" }}' perfume-aura-ops:ci)" = "$GITHUB_SHA"
+          test "$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' perfume-aura-ops:ci)" = "$GITHUB_SHA"
           test "$(docker run --rm --entrypoint node perfume-aura-ops:ci -e \"const m=require('/app/artifact-manifest.json');process.stdout.write(m.source.commit)\")" = "$GITHUB_SHA"
 
       - name: Upload inspected artifact
