@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-14 15:31:18 UTC**
+Last refreshed: **2026-08-14 17:00:13 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -33,9 +33,9 @@ and ignored local environment files.
 ## Exact releases and automation
 
 The public operations surface runs source
-`917499d7dae04aa04697a7af7fd3d062c029c7f6` from immutable image digest
-`sha256:cbbd231052de6edfe2265e6bbcf02a77a3886a0aedb86ba8a20bc075efcdaf6`.
-Workflow run [`31810808329`](https://github.com/MohsinMMK/perfume-aura/actions/runs/31810808329)
+`fec2c0c623640e6cda8c92038a5a2d6a7c69f412` from immutable image digest
+`sha256:acef29d89695840844bd7a6ff002c3efb76cfde11fcb93c830195575af2bbbf5`.
+Workflow run [`31820775714`](https://github.com/MohsinMMK/perfume-aura/actions/runs/31820775714)
 passed quality, all disposable-PostgreSQL integration tests, verified
 packaging, image build/push, Tailscale deployment through the restricted SSH
 identity, and exact public verification.
@@ -67,8 +67,8 @@ commit; the cached-HTML marker, real static asset, locks, `/shop`, `/search`,
 and path/query-preserving `www` redirect passed the production verifier.
 
 The generated branch `hostinger-storefront-production` exists at generated
-commit `d64297dc10beca6033604f484e9d43f028f49b8a`; its manifest identifies exact
-source `917499d7dae04aa04697a7af7fd3d062c029c7f6` and entry
+commit `2a6c7f0d1a03c774a2f90397cf9e11a0d06a9c3e`; its manifest identifies exact
+source `fec2c0c623640e6cda8c92038a5a2d6a7c69f412` and entry
 `apps/storefront/server.js`. The live app is not connected to that branch.
 Hostinger's current dashboard for this upload-sourced app exposes only archive
 redeployment, and its website action menu does not expose `Connect to GitHub`.
@@ -119,7 +119,7 @@ Fresh desktop and mobile browser sessions after the split showed no horizontal
 overflow or console errors. The storefront retained the cream `#f5e4c7`
 full-mark-to-wordmark animation, transparent compact background, no backdrop
 blur, and hidden bottle after scrolling. Fresh ops sessions rendered the login
-surface from exact VPS source `917499d7dae04aa04697a7af7fd3d062c029c7f6`
+surface from exact VPS source `fec2c0c623640e6cda8c92038a5a2d6a7c69f412`
 without stale chunks or console errors.
 
 The historical Hostinger shared-process incident is no longer on the public
@@ -133,6 +133,11 @@ durable repair. Do not use plan-wide process controls as a workaround.
 - PR #21 introduced the generated storefront branch and was merged.
 - PR #22 introduced the immutable VPS ops deployment and was merged as source
   `917499d7dae04aa04697a7af7fd3d062c029c7f6`.
+- PR #24 added browser-artifact ignore rules and deployed exact ops source
+  `fec2c0c623640e6cda8c92038a5a2d6a7c69f412`; it also refreshed the prepared
+  storefront branch without changing the live upload-sourced storefront.
+- PR #25 reconciled the documentation and publication-authorization contract;
+  its Markdown-only merge did not publish or deploy either surface.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
   deployment path.
