@@ -800,7 +800,10 @@ async function selfTest() {
         timeoutMs: 50,
         pollIntervalMs: 10,
         fetchImpl: async (url) => {
-          if (String(url).startsWith("https://ops.invalid.example")) {
+          if (
+            String(url) ===
+            "https://ops.invalid.example/api/health/version"
+          ) {
             opsVersionAttempts += 1;
             return new Response(
               JSON.stringify({
