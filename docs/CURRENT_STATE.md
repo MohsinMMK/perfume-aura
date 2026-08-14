@@ -19,14 +19,14 @@ Storefront and ops share Neon PostgreSQL. Their auth tables, secrets, cookies,
 origins, and recovery flows remain separate.
 
 Fresh public verification on 2026-08-14 passed for merged source commit
-`a61fadacbc3f6db6685b7a12727d76991578750b`. Main workflow run
-`31735868669` built and checksum-verified both standalone artifacts, published
+`63804f3a29ca333304fc4998f948ebeae478bdd6`. Main workflow run
+`31787732671` built and checksum-verified both standalone artifacts, published
 the generated ops branch, verified the exact ops SHA live, and supplied the
-storefront archive `perfume-aura-storefront_a61fadacbc3f.zip`. The storefront
+storefront archive `perfume-aura-storefront_63804f3a29ca.zip`. The storefront
 archive SHA-256 is
-`13b755867be5bbecb85f1bc1f3c7959c6d089b57c0f80d048d6035f3faa21c35`.
+`e6f5661f6b9178d7c03487aea3a4cabc0ade248b61cecbd93fa7b479514d5fd5`.
 It was deployed through the existing Hostinger Web App as deployment
-`019ffca2-7304-726f-a53e-c70e43639a89` and completed with Node `24`, no build
+`019fff9d-ed90-71e7-b9e7-8d71a0deea92` and completed with Node `24`, no build
 command or output directory, and entry `apps/storefront/server.js`. The
 production verifier passed ops live, ready, version, unauthenticated session,
 login, and static-asset checks together with the storefront release locks and a
@@ -46,13 +46,13 @@ All storefront release flags remain closed:
 `robots.txt` disallows indexing. Green runtime health does not authorize opening
 any release flag.
 
-PR #17 was squash-merged to `main` as
-`a61fadacbc3f6db6685b7a12727d76991578750b`. Main workflow run `31735868669`
+PR #19 was squash-merged to `main` as
+`63804f3a29ca333304fc4998f948ebeae478bdd6`. Main workflow run `31787732671`
 passed quality, all 62 integration tests, verified packaging, generated-branch
 ops publication, and exact-SHA live verification. Separate CodeQL run
-`31735868666` also passed. The compact scroll-reactive storefront wordmark now
-has no painted background or backdrop blur, so page content remains visible
-behind its white letterforms; no release flag changed.
+`31787732688` also passed. The expanded bottle mark and compact scroll-reactive
+wordmark now use the approved brand cream `#f5e4c7`. The compact wordmark keeps
+its transparent background and no backdrop blur; no release flag changed.
 `OPS_TWO_FACTOR_REQUIRED` and `OPS_STAFF_INVITES_ENABLED` stay false until the
 complete staff release checklist passes. Observability remains fail-closed
 without its environment values.
@@ -70,13 +70,13 @@ packers are now aligned to the observed Hostinger baseline of Node `24.6.0`, npm
 `11.5.1`, and pnpm `10.32.1`, with application engines accepting compatible
 Node `24.x` patches from `24.6.0` onward. The current alignment and browser
 hardening changes passed the consolidated local gate again on 2026-08-14, and
-the exact release source is merged PR #17.
+the exact release source is merged PR #19.
 The evidence includes the frozen install, deployment self-tests, commerce
-verification, lint, type checks, 143 unit tests, both builds and client budgets,
+verification, lint, type checks, 144 unit tests, both builds and client budgets,
 zero-vulnerability pnpm/npm audits, all 62 disposable-PostgreSQL integration
 tests, and both checksum-verified packages with extracted-server smoke. Remote
 `main`, live ops, and the public storefront now run source commit
-`a61fadacbc3f6db6685b7a12727d76991578750b`.
+`63804f3a29ca333304fc4998f948ebeae478bdd6`.
 
 Superseded drafts #7/#8 are not release sources. Merged PR #9 passed fresh CI,
 CodeQL, dependency, package, and review-status automation. `main` remains
@@ -140,7 +140,7 @@ The deployed storefront now provides a responsive full brand mark at the top of
 the page. Scrolling fades and lifts the bottle icon while retaining the compact
 wordmark, with separate mobile and desktop thresholds and reduced-motion
 behavior. The compact wordmark container is transparent and applies no backdrop
-blur, allowing the page imagery and copy to remain visible behind the white
+blur, allowing the page imagery and copy to remain visible behind the cream
 letterforms. The prior audit remediation still provides pathname-aware top
 navigation and history restoration, corrected cart hierarchy, WCAG AA tokens,
 focus behavior, and current Next Image loading hints. Preview fixtures remain
@@ -162,11 +162,20 @@ sessions had zero console errors, no horizontal overflow, a transparent compact
 wordmark with `backdrop-filter: none`, and bottle opacity `0` after scrolling.
 The browser reported one non-blocking unused CSS-preload warning.
 
+The 2026-08-14 cream-logo release initially reproduced the stale-edge failure:
+the clean browser received stale HTML that referenced a removed CSS chunk, and
+the chunk returned `text/plain`. One scoped `perfumeaura.com` cache purge
+restored the current document and assets. Fresh 1440x900 and 390x844 sessions
+then showed the cream `#f5e4c7` bottle mark at the top and cream compact
+wordmark after scrolling, with a transparent background, no backdrop blur, no
+horizontal overflow, and zero console errors. Desktop had zero warnings;
+mobile reported one non-blocking unused image-preload warning.
+
 ### Managed Hostinger deployment boundary
 
 Both production applications remain on their existing Hostinger managed
 Node.js Web Apps. Neon remains independent and shared. No alternate hosting
-implementation or DNS topology change is planned. The authorized PR #17
+implementation or DNS topology change is planned. The authorized PR #19
 release passed exact-SHA verification, but the unresolved Hostinger process
 incident remains an infrastructure risk: the green deployment does not supply
 the missing scoped process attribution, restart cause, or durable-repair proof.
@@ -174,7 +183,7 @@ the missing scoped process attribution, restart cause, or durable-repair proof.
 ## Repository
 
 - One primary worktree.
-- PR #17 is merged and its remote source branch is deleted.
+- PR #19 is merged and its remote source branch is deleted.
 - `main` includes this documentation-only state record after the deployed source
   commit above; the live applications remain at that deployed source commit.
 - `hostinger-ops-production` remains generated deployment state and must not be
