@@ -11,7 +11,7 @@ const sourceCommit = (
   process.env.STANDALONE_SOURCE_COMMIT ?? process.env.GITHUB_SHA
 )?.trim();
 const releaseName = sourceCommit && /^[a-f0-9]{40}$/i.test(sourceCommit)
-  ? sourceCommit
+  ? sourceCommit.toLowerCase()
   : undefined;
 const uploadSentrySourceMaps = Boolean(
   sentryOrg && sentryProject && sentryAuthToken,
@@ -21,6 +21,11 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   output: "standalone",
   outputFileTracingRoot: monorepoRoot,
+  env: releaseName
+    ? {
+        PERFUME_AURA_BUILD_COMMIT: releaseName,
+      }
+    : {},
   transpilePackages: [
     "@perfume-aura/ui",
     "@perfume-aura/db",

@@ -10,6 +10,7 @@ import path from "node:path";
 
 const FULL_SHA = /^[0-9a-f]{40}$/;
 const PUBLIC_SURFACES = new Set(["storefront"]);
+const DEPLOY_TARGETS = new Set(["ops", "storefront", "both"]);
 
 function normalizeCommit(raw) {
   const value = String(raw ?? "")
@@ -25,6 +26,14 @@ export function normalizePublicSurface(raw) {
   const value = String(raw ?? "storefront").trim().toLowerCase();
   if (!PUBLIC_SURFACES.has(value)) {
     throw new Error("public surface must be storefront");
+  }
+  return value;
+}
+
+export function normalizeDeployTarget(raw) {
+  const value = String(raw ?? "ops").trim().toLowerCase();
+  if (!DEPLOY_TARGETS.has(value)) {
+    throw new Error("deploy target must be ops, storefront, or both");
   }
   return value;
 }
@@ -70,6 +79,13 @@ export async function fetchStatus(url, options = {}) {
 function findStaticAssetPath(html) {
   const match = html.match(/\/_next\/static\/[^"')\s]+/);
   return match?.[0] ?? null;
+}
+
+export function findStorefrontReleaseCommit(html) {
+  const match = String(html).match(
+    /\bdata-perfume-aura-release=["']([0-9a-f]{40})["']/i,
+  );
+  return match?.[1]?.toLowerCase() ?? null;
 }
 
 /**
@@ -166,6 +182,8 @@ export function assertReleaseLockedCart(response) {
  *   opsBaseUrl?: string,
  *   publicSurface?: "storefront",
  *   publicBaseUrl?: string,
+ *   wwwBaseUrl?: string,
+ *   target?: "ops" | "storefront" | "both",
  *   timeoutMs?: number,
  *   pollIntervalMs?: number,
  *   fetchImpl?: typeof fetch,
@@ -176,6 +194,7 @@ export function assertReleaseLockedCart(response) {
 export async function verifyProductionDeploy(options) {
   const expectedCommit = normalizeCommit(options.expectedCommit);
   const publicSurface = normalizePublicSurface(options.publicSurface);
+  const target = normalizeDeployTarget(options.target);
   const opsBase = (options.opsBaseUrl ?? "https://app.perfumeaura.com").replace(
     /\/$/,
     "",
@@ -184,6 +203,9 @@ export async function verifyProductionDeploy(options) {
     /\/$/,
     "",
   );
+  const wwwBase = (
+    options.wwwBaseUrl ?? "https://www.perfumeaura.com"
+  ).replace(/\/$/, "");
   const timeoutMs = options.timeoutMs ?? 15 * 60_000;
   const pollIntervalMs = options.pollIntervalMs ?? 10_000;
   if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1) {
@@ -195,93 +217,103 @@ export async function verifyProductionDeploy(options) {
   const fetchImpl = options.fetchImpl;
   const now = options.now ?? Date.now;
   const sleepImpl = options.sleepImpl ?? sleep;
-  const started = now();
   const maxAttempts = Math.ceil(timeoutMs / pollIntervalMs) + 1;
   if (!Number.isSafeInteger(maxAttempts)) {
     throw new Error("invalid deploy verification polling bounds");
   }
 
-  let versionMatched = false;
-  let attempts = 0;
-  while (attempts < maxAttempts) {
-    const elapsedMs = now() - started;
-    if (elapsedMs >= timeoutMs) {
-      break;
-    }
-    attempts += 1;
-    let version = null;
-    try {
-      version = await fetchStatus(`${opsBase}/api/health/version`, {
-        fetchImpl,
-        timeoutMs: Math.max(1, Math.min(15_000, timeoutMs - elapsedMs)),
-      });
-    } catch {
-      // DNS, TLS, connection, and request-timeout failures can be transient while
-      // Hostinger rolls the branch. Keep polling without exposing provider details.
-    }
-    if (version?.status === 200) {
-      let body;
+  const verificationStartedAt = now();
+  async function waitForExpectedVersion(baseUrl, label) {
+    const started = verificationStartedAt;
+    let attempts = 0;
+    while (attempts < maxAttempts) {
+      const elapsedMs = now() - started;
+      if (elapsedMs >= timeoutMs) break;
+      attempts += 1;
+      let version = null;
       try {
-        body = JSON.parse(version.text);
+        version = await fetchStatus(`${baseUrl}/api/health/version`, {
+          fetchImpl,
+          timeoutMs: Math.max(1, Math.min(15_000, timeoutMs - elapsedMs)),
+        });
       } catch {
-        body = null;
+        // Provider rollout failures may be transient; never expose response data.
       }
-      if (
-        body &&
-        body.status === "ok" &&
-        typeof body.commit === "string" &&
-        body.commit.toLowerCase() === expectedCommit
-      ) {
-        versionMatched = true;
-        break;
+      if (version?.status === 200) {
+        let body;
+        try {
+          body = JSON.parse(version.text);
+        } catch {
+          body = null;
+        }
+        if (
+          body?.status === "ok" &&
+          typeof body.commit === "string" &&
+          body.commit.toLowerCase() === expectedCommit
+        ) {
+          return;
+        }
       }
+      if (now() - started + pollIntervalMs > timeoutMs) break;
+      await sleepImpl(pollIntervalMs);
     }
-    if (now() - started + pollIntervalMs > timeoutMs) {
-      break;
-    }
-    await sleepImpl(pollIntervalMs);
-  }
-
-  if (!versionMatched) {
-    throw new Error("deploy version did not match expected commit before timeout");
-  }
-
-  const login = await fetchStatus(`${opsBase}/login`, { fetchImpl });
-  if (login.status !== 200) {
-    throw new Error(`ops /login expected 200, got ${login.status}`);
-  }
-
-  const live = await fetchStatus(`${opsBase}/api/health/live`, { fetchImpl });
-  if (live.status !== 200) {
-    throw new Error(`ops /api/health/live expected 200, got ${live.status}`);
-  }
-
-  const ready = await fetchStatus(`${opsBase}/api/health/ready`, { fetchImpl });
-  if (ready.status !== 200) {
-    throw new Error(`ops /api/health/ready expected 200, got ${ready.status}`);
-  }
-
-  const session = await fetchStatus(`${opsBase}/api/auth/get-session`, {
-    fetchImpl,
-  });
-  assertAuthSessionOk(session);
-
-  const staticPath = findStaticAssetPath(login.text);
-  if (!staticPath) {
-    throw new Error("ops login HTML missing /_next/static asset path");
-  }
-  const staticAsset = await fetchStatus(`${opsBase}${staticPath}`, {
-    fetchImpl,
-  });
-  if (staticAsset.status !== 200) {
     throw new Error(
-      `ops static asset expected 200, got ${staticAsset.status}`,
+      `${label} deploy version did not match expected commit before timeout`,
     );
+  }
+
+  if (target === "ops" || target === "both") {
+    await waitForExpectedVersion(opsBase, "ops");
+  }
+  if (target === "storefront" || target === "both") {
+    await waitForExpectedVersion(publicBase, "storefront");
+  }
+
+  let staticPath = null;
+  if (target === "ops" || target === "both") {
+    const login = await fetchStatus(`${opsBase}/login`, { fetchImpl });
+    if (login.status !== 200) {
+      throw new Error(`ops /login expected 200, got ${login.status}`);
+    }
+
+    const live = await fetchStatus(`${opsBase}/api/health/live`, { fetchImpl });
+    if (live.status !== 200) {
+      throw new Error(`ops /api/health/live expected 200, got ${live.status}`);
+    }
+
+    const ready = await fetchStatus(`${opsBase}/api/health/ready`, { fetchImpl });
+    if (ready.status !== 200) {
+      throw new Error(`ops /api/health/ready expected 200, got ${ready.status}`);
+    }
+
+    const session = await fetchStatus(`${opsBase}/api/auth/get-session`, {
+      fetchImpl,
+    });
+    assertAuthSessionOk(session);
+
+    staticPath = findStaticAssetPath(login.text);
+    if (!staticPath) {
+      throw new Error("ops login HTML missing /_next/static asset path");
+    }
+    const staticAsset = await fetchStatus(`${opsBase}${staticPath}`, {
+      fetchImpl,
+    });
+    if (staticAsset.status !== 200) {
+      throw new Error(
+        `ops static asset expected 200, got ${staticAsset.status}`,
+      );
+    }
   }
 
   const publicRoot = await fetchStatus(`${publicBase}/`, { fetchImpl });
   if (publicRoot.status !== 200) {
     throw new Error(`${publicSurface} / expected 200, got ${publicRoot.status}`);
+  }
+  if (target === "storefront" || target === "both") {
+    const storefrontRelease = findStorefrontReleaseCommit(publicRoot.text);
+    if (storefrontRelease !== expectedCommit) {
+      throw new Error("storefront HTML release marker does not match expected commit");
+    }
   }
 
   const storefrontStaticPath = findStaticAssetPath(publicRoot.text);
@@ -327,10 +359,24 @@ export async function verifyProductionDeploy(options) {
   const cart = await fetchStatus(`${publicBase}/api/cart`, { fetchImpl });
   assertReleaseLockedCart(cart);
 
+  if (target === "storefront" || target === "both") {
+    const wwwRedirect = await fetchStatus(`${wwwBase}/shop?probe=1`, {
+      fetchImpl,
+    });
+    const expectedLocation = `${publicBase}/shop?probe=1`;
+    if (
+      wwwRedirect.status !== 308 ||
+      wwwRedirect.headers.get("location") !== expectedLocation
+    ) {
+      throw new Error("storefront www redirect must preserve path and query");
+    }
+  }
+
   return {
     ok: true,
     commit: expectedCommit,
-    staticPath,
+    staticPath: target === "storefront" ? storefrontStaticPath : staticPath,
+    target,
     publicSurface,
   };
 }
@@ -390,7 +436,7 @@ function successRoutes(commit, staticPath, publicBase = "pending") {
     [staticPath]: { status: 200, body: "js" },
     "/": {
       status: 200,
-      body: `<html><script src="${staticPath}"></script></html>`,
+      body: `<html data-perfume-aura-release="${commit}"><script src="${staticPath}"></script></html>`,
     },
     "/shop": { status: 200, body: "shop" },
     "/search": { status: 200, body: "search" },
@@ -482,6 +528,23 @@ async function selfTest() {
     () => normalizePublicSurface("legacy"),
     /must be storefront/,
   );
+  assert.equal(normalizeDeployTarget(undefined), "ops");
+  assert.equal(normalizeDeployTarget("storefront"), "storefront");
+  assert.equal(normalizeDeployTarget("both"), "both");
+  assert.throws(
+    () => normalizeDeployTarget("invalid"),
+    /must be ops, storefront, or both/,
+  );
+  await assert.rejects(
+    () => main([commit, "--target"]),
+    /--target requires a value/,
+  );
+  assert.equal(
+    findStorefrontReleaseCommit(
+      `<html data-perfume-aura-release="${commit}">`,
+    ),
+    commit,
+  );
   assertReleaseLockedCart({
     status: 200,
     text: JSON.stringify({
@@ -559,6 +622,90 @@ async function selfTest() {
     assert.equal(result.publicSurface, "storefront");
   } finally {
     storefront.server.close();
+  }
+
+  const exactStorefrontRoutes = successRoutes(commit, staticPath, "pending");
+  const exactStorefront = await createFixtureServer(exactStorefrontRoutes);
+  exactStorefrontRoutes["/robots.txt"].body =
+    `User-Agent: *\nDisallow: /\nSitemap: ${exactStorefront.baseUrl}/sitemap.xml\n`;
+  const www = await createFixtureServer({
+    "/shop": {
+      status: 308,
+      headers: { location: `${exactStorefront.baseUrl}/shop?probe=1` },
+    },
+  });
+  try {
+    const result = await verifyProductionDeploy({
+      expectedCommit: commit,
+      target: "storefront",
+      publicBaseUrl: exactStorefront.baseUrl,
+      wwwBaseUrl: www.baseUrl,
+      timeoutMs: 1_000,
+      pollIntervalMs: 10,
+    });
+    assert.equal(result.target, "storefront");
+    assert.equal(result.staticPath, staticPath);
+  } finally {
+    exactStorefront.server.close();
+    www.server.close();
+  }
+
+  const staleStorefrontRoutes = successRoutes(commit, staticPath, "pending");
+  staleStorefrontRoutes["/"].body =
+    `<html data-perfume-aura-release="${"b".repeat(40)}"><script src="${staticPath}"></script></html>`;
+  const staleStorefront = await createFixtureServer(staleStorefrontRoutes);
+  staleStorefrontRoutes["/robots.txt"].body =
+    `User-Agent: *\nDisallow: /\nSitemap: ${staleStorefront.baseUrl}/sitemap.xml\n`;
+  const staleWww = await createFixtureServer({
+    "/shop": {
+      status: 308,
+      headers: { location: `${staleStorefront.baseUrl}/shop?probe=1` },
+    },
+  });
+  try {
+    await assert.rejects(
+      () =>
+        verifyProductionDeploy({
+          expectedCommit: commit,
+          target: "storefront",
+          publicBaseUrl: staleStorefront.baseUrl,
+          wwwBaseUrl: staleWww.baseUrl,
+          timeoutMs: 1_000,
+          pollIntervalMs: 10,
+        }),
+      /HTML release marker does not match/,
+    );
+  } finally {
+    staleStorefront.server.close();
+    staleWww.server.close();
+  }
+
+  const redirectStorefrontRoutes = successRoutes(commit, staticPath, "pending");
+  const redirectStorefront = await createFixtureServer(redirectStorefrontRoutes);
+  redirectStorefrontRoutes["/robots.txt"].body =
+    `User-Agent: *\nDisallow: /\nSitemap: ${redirectStorefront.baseUrl}/sitemap.xml\n`;
+  const badWww = await createFixtureServer({
+    "/shop": {
+      status: 302,
+      headers: { location: `${redirectStorefront.baseUrl}/` },
+    },
+  });
+  try {
+    await assert.rejects(
+      () =>
+        verifyProductionDeploy({
+          expectedCommit: commit,
+          target: "storefront",
+          publicBaseUrl: redirectStorefront.baseUrl,
+          wwwBaseUrl: badWww.baseUrl,
+          timeoutMs: 1_000,
+          pollIntervalMs: 10,
+        }),
+      /www redirect must preserve path and query/,
+    );
+  } finally {
+    redirectStorefront.server.close();
+    badWww.server.close();
   }
 
   const stale = await createFixtureServer({
@@ -640,6 +787,46 @@ async function selfTest() {
     },
   );
   assert.equal(persistentAttempts, 5);
+
+  let sharedDeadlineNow = 0;
+  let opsVersionAttempts = 0;
+  await assert.rejects(
+    () =>
+      verifyProductionDeploy({
+        expectedCommit: commit,
+        target: "both",
+        opsBaseUrl: "https://ops.invalid.example",
+        publicBaseUrl: "https://storefront.invalid.example",
+        timeoutMs: 50,
+        pollIntervalMs: 10,
+        fetchImpl: async (url) => {
+          if (
+            String(url) ===
+            "https://ops.invalid.example/api/health/version"
+          ) {
+            opsVersionAttempts += 1;
+            return new Response(
+              JSON.stringify({
+                status: "ok",
+                commit: opsVersionAttempts > 1 ? commit : "b".repeat(40),
+              }),
+              { status: 200 },
+            );
+          }
+          return new Response(
+            JSON.stringify({ status: "ok", commit: "b".repeat(40) }),
+            { status: 200 },
+          );
+        },
+        now: () => sharedDeadlineNow,
+        sleepImpl: async (ms) => {
+          sharedDeadlineNow += ms;
+        },
+      }),
+    /storefront deploy version did not match expected commit before timeout/,
+  );
+  assert.equal(sharedDeadlineNow, 50);
+  assert.equal(opsVersionAttempts, 2);
 
   let frozenClockAttempts = 0;
   await assert.rejects(
@@ -776,25 +963,44 @@ async function main(argv) {
   }
   if (argv.length < 1) {
     throw new Error(
-      "usage: node scripts/verify-production-deploy.mjs <expected-commit> [--ops-base URL] [--public-base URL] [--public-surface storefront] [--timeout-ms N]",
+      "usage: node scripts/verify-production-deploy.mjs <expected-commit> [--target ops|storefront|both] [--ops-base URL] [--public-base URL] [--www-base URL] [--public-surface storefront] [--timeout-ms N]",
     );
   }
 
   let expectedCommit = argv[0];
   let opsBaseUrl;
   let publicBaseUrl;
+  let wwwBaseUrl;
   let publicSurface;
+  let target;
   let timeoutMs;
+  function readOptionValue(index, option) {
+    const value = argv[index + 1];
+    if (value === undefined || value.startsWith("--")) {
+      throw new Error(`${option} requires a value`);
+    }
+    return value;
+  }
   for (let i = 1; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--ops-base") {
-      opsBaseUrl = argv[++i];
+      opsBaseUrl = readOptionValue(i, arg);
+      i += 1;
     } else if (arg === "--public-base") {
-      publicBaseUrl = argv[++i];
+      publicBaseUrl = readOptionValue(i, arg);
+      i += 1;
+    } else if (arg === "--www-base") {
+      wwwBaseUrl = readOptionValue(i, arg);
+      i += 1;
+    } else if (arg === "--target") {
+      target = readOptionValue(i, arg);
+      i += 1;
     } else if (arg === "--public-surface") {
-      publicSurface = argv[++i];
+      publicSurface = readOptionValue(i, arg);
+      i += 1;
     } else if (arg === "--timeout-ms") {
-      timeoutMs = Number(argv[++i]);
+      timeoutMs = Number(readOptionValue(i, arg));
+      i += 1;
     } else {
       throw new Error(`unknown argument: ${arg}`);
     }
@@ -804,11 +1010,13 @@ async function main(argv) {
     expectedCommit,
     opsBaseUrl,
     publicBaseUrl,
+    wwwBaseUrl,
     publicSurface,
+    target,
     timeoutMs,
   });
   console.log(
-    `production-deploy ok commit=${result.commit} surface=${result.publicSurface} static=${result.staticPath}`,
+    `production-deploy ok target=${result.target} commit=${result.commit} surface=${result.publicSurface} static=${result.staticPath}`,
   );
 }
 

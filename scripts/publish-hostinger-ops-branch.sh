@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Publish a verified Hostinger ops deploy tree to a generated orphan branch.
+# Publish a verified Hostinger deploy tree to a generated orphan branch.
 #
 # Release semantics:
 # - Deploy branch is replaced as a single orphan commit with force-with-lease.
@@ -26,6 +26,7 @@ usage:
   bash scripts/publish-hostinger-ops-branch.sh \
     --tree <verified-deploy-tree> \
     --commit <40-char-source-sha> \
+    [--surface ops|storefront] \
     [--branch hostinger-ops-production] \
     [--remote origin] \
     [--repository-url <git-url>]
@@ -160,6 +161,7 @@ publish_tree() {
   local branch="$3"
   local remote="$4"
   local repository_url="${5:-}"
+  local surface="${6:-ops}"
   local observed_sha work_root tree_copy publish_dir tree_sha commit_sha
   local previous_source
 
@@ -172,10 +174,15 @@ publish_tree() {
     echo "ERROR: source commit must be a 40-character lowercase SHA" >&2
     return 1
   fi
+  if [[ "$surface" != "ops" && "$surface" != "storefront" ]]; then
+    echo "ERROR: surface must be ops or storefront" >&2
+    return 1
+  fi
 
   # Explicit status checks: callers may invoke this function inside conditionals
   # where bash disables set -e inside the function body.
-  if ! node "$ROOT/scripts/verify-hostinger-ops-deploy-tree.mjs" "$tree_root" "$source_commit"; then
+  if ! node "$ROOT/scripts/verify-hostinger-ops-deploy-tree.mjs" \
+    "$tree_root" "$source_commit" --surface "$surface"; then
     return 1
   fi
 
@@ -233,7 +240,7 @@ publish_tree() {
     tree_sha="$(git -C "$publish_dir" write-tree)"
     commit_sha="$(
       git -C "$publish_dir" commit-tree "$tree_sha" \
-        -m "deploy(ops): hostinger prebuilt ${source_commit}"
+        -m "deploy(${surface}): hostinger prebuilt ${source_commit}"
     )"
     git -C "$publish_dir" update-ref "refs/heads/$branch" "$commit_sha"
     git -C "$publish_dir" remote add publish "$repository_url"
@@ -254,7 +261,7 @@ publish_tree() {
       fi
     fi
 
-    echo "published ${branch} source=${source_commit} commit=${commit_sha}"
+    echo "published ${branch} surface=${surface} source=${source_commit} commit=${commit_sha}"
   ); then
     cleanup_publish
     return 1
@@ -269,6 +276,7 @@ write_fixture_tree() {
   local commit="$2"
   node - "$root" "$commit" <<'NODE'
 const fs = require("node:fs");
+const crypto = require("node:crypto");
 const path = require("node:path");
 const root = process.argv[2];
 const commit = process.argv[3];
@@ -296,7 +304,11 @@ fs.writeFileSync(
   path.join(root, "apps/ops/node_modules/@img/sharp-libvips-linux-x64/index.js"),
   "module.exports={}\n",
 );
-fs.writeFileSync(path.join(root, "runtime-package-lock.json"), "{}\n");
+const runtimeLockContents = "{}\n";
+fs.writeFileSync(
+  path.join(root, "runtime-package-lock.json"),
+  runtimeLockContents,
+);
 fs.writeFileSync(
   path.join(root, "README.hostinger.txt"),
   "Hostinger prebuilt deploy tree\n",
@@ -312,6 +324,7 @@ fs.writeFileSync(
       scripts: {
         build: "echo prebuilt-standalone",
         postinstall: "echo skip-postinstall",
+        start: "node apps/ops/server.js",
       },
     },
     null,
@@ -323,7 +336,16 @@ fs.writeFileSync(
   `${JSON.stringify(
     {
       schemaVersion: 2,
+      application: "@perfume-aura/ops",
       source: { commit, dirty: false },
+      runtimeDependencyLock: {
+        source: "scripts/ops-runtime-deps/package-lock.json",
+        artifact: "runtime-package-lock.json",
+        sha256: crypto
+          .createHash("sha256")
+          .update(runtimeLockContents)
+          .digest("hex"),
+      },
       entry: "apps/ops/server.js",
       requiredPaths: [
         "package.json",
@@ -541,7 +563,7 @@ main() {
   fi
 
   local tree="" commit="" branch="$DEFAULT_BRANCH" remote="$DEFAULT_REMOTE"
-  local repository_url=""
+  local repository_url="" surface="ops"
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --tree)
@@ -550,6 +572,10 @@ main() {
         ;;
       --commit)
         commit="${2:-}"
+        shift 2
+        ;;
+      --surface)
+        surface="${2:-}"
         shift 2
         ;;
       --branch)
@@ -581,7 +607,7 @@ main() {
     return 1
   fi
 
-  publish_tree "$tree" "$commit" "$branch" "$remote" "$repository_url"
+  publish_tree "$tree" "$commit" "$branch" "$remote" "$repository_url" "$surface"
 }
 
 main "$@"

@@ -17,6 +17,14 @@ RUNTIME_DEPS_DIR="$ROOT/scripts/ops-runtime-deps"
 [[ "$(pnpm --version)" == "$EXPECTED_PNPM" ]] || { echo "ERROR: storefront archive requires pnpm $EXPECTED_PNPM" >&2; exit 1; }
 [[ -f "$RUNTIME_DEPS_DIR/package-lock.json" && -f "$RUNTIME_DEPS_DIR/package.json" ]] || { echo "ERROR: locked Linux sharp runtime inputs are missing" >&2; exit 1; }
 
+RESOLVED_NEXT_VERSION="$(node -p "require('./apps/storefront/node_modules/next/package.json').version")"
+RESOLVED_SHARP_VERSION="$(node -p "require('./scripts/ops-runtime-deps/package-lock.json').packages['node_modules/sharp'].version")"
+RESOLVED_POSTCSS_VERSION="$(
+  cd "$ROOT/apps/storefront"
+  node -e "const { createRequire } = require('node:module'); const fromNext = createRequire(require.resolve('next/package.json')); process.stdout.write(fromNext('postcss/package.json').version)"
+)"
+RUNTIME_DEPS_LOCK_SHA256="$(node -e "const c=require('node:crypto');const f=require('node:fs');process.stdout.write(c.createHash('sha256').update(f.readFileSync(process.argv[1])).digest('hex'))" "$RUNTIME_DEPS_DIR/package-lock.json")"
+
 SOURCE_COMMIT="${STANDALONE_SOURCE_COMMIT:-$(git rev-parse HEAD)}"
 [[ "$SOURCE_COMMIT" =~ ^[0-9a-f]{40,64}$ ]] || { echo "ERROR: invalid source commit" >&2; exit 1; }
 if [[ -n "$(git status --porcelain)" ]]; then
@@ -140,29 +148,66 @@ LOCK
 cat > "$STAGE/README.hostinger.txt" <<'TXT'
 Perfume Aura Storefront — Hostinger prebuilt standalone
 
-Source: upload this ZIP to the Node.js Web App for perfumeaura.com
+Routine source: generated branch hostinger-storefront-production
+Emergency source: upload the verified ZIP to the Node.js Web App
 Node: 24.x
 Framework: Other
 Root directory: ./
-Build command: echo prebuilt-standalone
+Build command: leave empty
 Output directory: leave empty
 Entry file: apps/storefront/server.js
 
 Keep the extracted node_modules tree. Configure database, customer auth,
 Cashfree, OAuth, and SMTP values only in Hostinger's environment store.
-Do not connect this app to the blocked monorepo source-build route.
+Do not connect this app to the blocked monorepo source-build route or main.
 TXT
 
-node - "$STAGE/artifact-manifest.json" "$SOURCE_COMMIT" "$SOURCE_DIRTY" <<'NODE'
+node - \
+  "$STAGE/artifact-manifest.json" \
+  "$SOURCE_COMMIT" \
+  "$SOURCE_DIRTY" \
+  "$EXPECTED_NODE" \
+  "$EXPECTED_NPM" \
+  "$EXPECTED_PNPM" \
+  "$RESOLVED_NEXT_VERSION" \
+  "$RESOLVED_SHARP_VERSION" \
+  "$RESOLVED_POSTCSS_VERSION" \
+  "$RUNTIME_DEPS_LOCK_SHA256" <<'NODE'
 const fs = require("node:fs");
-const [output, commit, dirty] = process.argv.slice(2);
+const [
+  output,
+  commit,
+  dirty,
+  nodeVersion,
+  npmVersion,
+  pnpmVersion,
+  nextVersion,
+  sharpVersion,
+  postcssVersion,
+  runtimeLockSha256,
+] = process.argv.slice(2);
 const manifest = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   application: "@perfume-aura/storefront",
   source: { commit, dirty: dirty === "true" },
-  runtime: { node: process.versions.node, target: { os: "linux", cpu: "x64", libc: "glibc" } },
+  runtime: {
+    node: nodeVersion,
+    npm: npmVersion,
+    pnpm: pnpmVersion,
+    next: nextVersion,
+    sharp: sharpVersion,
+    postcss: postcssVersion,
+    target: { os: "linux", cpu: "x64", libc: "glibc" },
+  },
+  runtimeDependencyLock: {
+    source: "scripts/ops-runtime-deps/package-lock.json",
+    artifact: "runtime-package-lock.json",
+    sha256: runtimeLockSha256,
+  },
   entry: "apps/storefront/server.js",
   requiredPaths: [
+    "package.json",
+    "runtime-package-lock.json",
     "apps/storefront/server.js",
     "apps/storefront/.next/static",
     "apps/storefront/public",
@@ -218,6 +263,31 @@ for _ in {1..40}; do
   sleep 0.25
 done
 curl -fsS --max-time 5 "http://127.0.0.1:$PORT/" >/dev/null || { cat "$WORK_DIR/server.log" >&2; exit 1; }
+node - "http://127.0.0.1:$PORT" "$SOURCE_COMMIT" <<'NODE'
+const assert = require("node:assert/strict");
+const [baseUrl, expectedCommit] = process.argv.slice(2);
+async function verifyBuildIdentity() {
+  const [versionResponse, rootResponse] = await Promise.all([
+    fetch(`${baseUrl}/api/health/version`),
+    fetch(`${baseUrl}/`),
+  ]);
+  assert.equal(versionResponse.status, 200);
+  assert.equal(versionResponse.headers.get("cache-control"), "no-store");
+  assert.deepEqual(await versionResponse.json(), {
+    status: "ok",
+    commit: expectedCommit,
+  });
+  assert.equal(rootResponse.status, 200);
+  assert.match(
+    await rootResponse.text(),
+    new RegExp(`data-perfume-aura-release=["']${expectedCommit}["']`),
+  );
+}
+verifyBuildIdentity().catch((error) => {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exitCode = 1;
+});
+NODE
 STATIC_ASSET="$(find "$EXTRACTED/apps/storefront/.next/static" -type f -print -quit)"
 [[ -n "$STATIC_ASSET" ]] || { echo "ERROR: no static asset found" >&2; exit 1; }
 STATIC_PATH="${STATIC_ASSET#"$EXTRACTED/apps/storefront/.next/static"/}"
@@ -228,10 +298,21 @@ SERVER_PID=""
 
 if command -v sha256sum >/dev/null 2>&1; then SHA256="$(sha256sum "$ZIP_PATH" | awk '{print $1}')"; else SHA256="$(shasum -a 256 "$ZIP_PATH" | awk '{print $1}')"; fi
 printf '%s  %s\n' "$SHA256" "$(basename "$ZIP_PATH")" > "$CHECKSUM_PATH"
-node - "$MANIFEST_PATH" "$SOURCE_COMMIT" "$SOURCE_DIRTY" "$ZIP_PATH" "$SHA256" "$ARCHIVE_BYTES" <<'NODE'
+node - "$EXTRACTED/artifact-manifest.json" "$MANIFEST_PATH" "$SOURCE_COMMIT" "$SOURCE_DIRTY" "$ZIP_PATH" "$SHA256" "$ARCHIVE_BYTES" <<'NODE'
 const fs = require("node:fs");
-const [output, commit, dirty, archive, sha256, bytes] = process.argv.slice(2);
-fs.writeFileSync(output, `${JSON.stringify({ schemaVersion: 1, application: "@perfume-aura/storefront", source: { commit, dirty: dirty === "true" }, archive: { file: archive.split("/").pop(), bytes: Number(bytes), sha256 }, entry: "apps/storefront/server.js", extractedSmoke: "passed" }, null, 2)}\n`);
+const [internalPath, output, commit, dirty, archive, sha256, bytes] = process.argv.slice(2);
+const internal = JSON.parse(fs.readFileSync(internalPath, "utf8"));
+if (internal.source.commit !== commit || internal.source.dirty !== (dirty === "true")) {
+  throw new Error("storefront internal manifest source mismatch");
+}
+internal.archive = {
+  file: archive.split("/").pop(),
+  bytes: Number(bytes),
+  sha256,
+  checksumFile: `${archive.split("/").pop()}.sha256`,
+};
+internal.extractedSmoke = "passed";
+fs.writeFileSync(output, `${JSON.stringify(internal, null, 2)}\n`);
 NODE
 echo "storefront-artifact: passed"
 echo "$ZIP_PATH"

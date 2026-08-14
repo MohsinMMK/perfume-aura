@@ -915,6 +915,7 @@ const [
 
 const manifest = {
   schemaVersion: 2,
+  application: "@perfume-aura/ops",
   source: {
     commit: sourceCommit,
     dirty: sourceDirty === "true",

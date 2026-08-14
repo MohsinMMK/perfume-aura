@@ -1,0 +1,50 @@
+name: perfume-aura-ops
+
+services:
+  app:
+    image: ${PERFUME_AURA_OPS_IMAGE:?immutable image digest is required}
+    restart: unless-stopped
+    init: true
+    env_file:
+      - /etc/khanect/perfume-aura-ops.env
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      PERFUME_AURA_BUILD_COMMIT: ${PERFUME_AURA_OPS_SOURCE_SHA:?exact source SHA is required}
+    ports:
+      - 127.0.0.1:3020:3000
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m
+      - /app/apps/ops/.next/cache:rw,noexec,nosuid,nodev,size=128m,uid=10001,gid=10001,mode=0770
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    cpus: 1.0
+    mem_limit: 768m
+    mem_reservation: 512m
+    pids_limit: 256
+    stop_grace_period: 30s
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3000/api/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    labels:
+      com.khanect.stack: perfume-aura-ops
+      com.khanect.service: app
+      com.khanect.owner: Perfume-Aura
+      com.khanect.backup: configuration-only
+      com.khanect.exposure: public-via-caddy
+      com.perfumeaura.source-sha: ${PERFUME_AURA_OPS_SOURCE_SHA}
+
+networks:
+  default:
+    name: perfume-aura-ops-internal
