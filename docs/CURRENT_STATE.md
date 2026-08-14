@@ -4,7 +4,8 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-14 IST**.
+Last refreshed: **2026-08-14 15:31:18 UTC**
+(`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
 
@@ -59,7 +60,8 @@ The storefront runs the completed, checksum-verified manual archive
 `perfume-aura-storefront_917499d7dae0.zip`, exact source
 `917499d7dae04aa04697a7af7fd3d062c029c7f6`, with Node `24.x`, Framework Other,
 root `./`, no build command or output directory, and entry
-`apps/storefront/server.js`. Deployment completed at 21:01:18 IST. Its
+`apps/storefront/server.js`. Deployment completed at 2026-08-14 15:31:18 UTC
+(`Asia/Kolkata`, UTC+05:30). Its
 `/api/health/version` response is public, `no-store`, and reports the same exact
 commit; the cached-HTML marker, real static asset, locks, `/shop`, `/search`,
 and path/query-preserving `www` redirect passed the production verifier.
@@ -79,9 +81,13 @@ conversion is completed.
 The old Hostinger managed ops Web App is off the public DNS path and retained
 only as a short rollback target. Its restricted `DATABASE_URL` was updated to
 the rotated credential and a `hostinger-ops-production` redeployment completed
-at 20:41:17 IST on 2026-08-14. Keep it frozen for at least 24-48 hours after
-the DNS cutover. Do not publish new ops releases to it, change public DNS back,
-or delete it without explicit authorization and fresh acceptance evidence.
+at 2026-08-14 15:11:17 UTC (`Asia/Kolkata`, UTC+05:30). The successful exact
+public verification in workflow run `31810808329` at
+2026-08-14 14:47:58 UTC is the DNS-cutover acceptance anchor. Retain the old
+app for exactly 48 hours after that anchor; it is eligible for removal no
+earlier than 2026-08-16 14:47:58 UTC, and only with explicit authorization and
+fresh exact-SHA acceptance evidence. Do not publish new ops releases to it or
+change public DNS back outside an authorized rollback.
 
 The verified storefront ZIP remains the emergency storefront recovery path.
 The generated storefront branch is prepared but does not prove Hostinger Git
@@ -133,8 +139,9 @@ durable repair. Do not use plan-wide process controls as a workaround.
 
 Next actions:
 
-1. Preserve and monitor the frozen Hostinger ops rollback for 24-48 hours;
-   remove it only with explicit authorization after the VPS acceptance window.
+1. Preserve and monitor the frozen Hostinger ops rollback until
+   2026-08-16 14:47:58 UTC; remove it only with explicit authorization and
+   fresh exact-SHA acceptance evidence after that deadline.
 2. Ask Hostinger to enable an in-place Git source conversion for the existing
    upload-sourced storefront, or approve a separately backed-up/recoverable
    recreation plan. Do not delete the live apex app merely to expose the Git

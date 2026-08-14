@@ -84,8 +84,9 @@ in `CURRENT_STATE.md`.
 
 ## Storefront deployment
 
-The verified generated GitHub branch is the intended routine deployment path,
-but the live upload-sourced Hostinger app is not connected to it yet:
+The verified ZIP is the current routine and emergency storefront deployment
+path until Hostinger GitHub connectivity is enabled. The generated branch is
+the future routine path:
 
 ```text
 runtime-affecting main push → CI quality/integration/package
@@ -101,7 +102,7 @@ idempotent republish of the exact `main` source, dispatch `ops-pack.yml` with
 actually connected. It enables the live verification job; it does not weaken
 the pre-publish gates.
 
-The verified ZIP remains the emergency fallback:
+Build the verified ZIP for either a routine deployment or emergency recovery:
 
 ```bash
 pnpm check
@@ -117,8 +118,8 @@ and entry `apps/storefront/server.js`. Set
 Hostinger's current upload-sourced storefront UI does not expose an in-place
 `Connect to GitHub` control. Do not delete/recreate the apex Web App without a
 fresh backup, a tested replacement, captured DNS/HCDN/runtime settings, and
-explicit authorization. Until then the verified ZIP is the live routine and
-emergency path, and the generated branch is prepared state only. The current
+explicit authorization. Until then the generated branch is prepared state
+only. The current
 live archive and generated branch manifest both identify source
 `917499d7dae04aa04697a7af7fd3d062c029c7f6`.
 
@@ -173,8 +174,18 @@ tailnet with the dedicated OAuth credentials, and authenticates through the
 `perfume-deploy` forced command. It must pass an exact 40-character source SHA
 and immutable `sha256:` image digest; the server validates both the OCI
 revision label and embedded artifact manifest before replacing the loopback
-service. `VPS_OPS_PUBLIC_VERIFICATION_ENABLED=true` adds the external verifier
-after the candidate is healthy.
+service. Routine releases also require
+`VPS_OPS_PUBLIC_VERIFICATION_ENABLED=true`; this runs the external verifier
+after the candidate is healthy. Verify a production release reproducibly with
+its exact source SHA:
+
+```bash
+node scripts/verify-production-deploy.mjs <40-character-sha> \
+  --target ops \
+  --public-surface storefront \
+  --public-base https://perfumeaura.com \
+  --timeout-ms 1200000
+```
 
 The Compose contract uses UID/GID `10001`, read-only root, `cap_drop: ALL`,
 `no-new-privileges`, no Docker socket, `127.0.0.1:3020:3000`, 1 CPU, 768 MiB,
@@ -182,10 +193,13 @@ The Compose contract uses UID/GID `10001`, read-only root, `cap_drop: ALL`,
 root-owned `/etc/khanect/perfume-aura-ops.env`; deploy automation never sends
 them. Use `pnpm ops:pack` only for artifact recovery.
 
-The old Hostinger ops Web App is off public DNS and frozen as a 24-48 hour
-rollback target. Its rotated database credential was applied and its exact Git
-branch redeployed on 2026-08-14. A rollback restores the captured DNS records
-and verifies the old exact SHA; do not republish or delete it casually.
+The old Hostinger ops Web App is off public DNS and frozen for exactly 48 hours
+after the DNS-cutover acceptance anchor at 2026-08-14 14:47:58 UTC. It becomes
+eligible for removal no earlier than 2026-08-16 14:47:58 UTC, and only with
+explicit authorization and fresh exact-SHA acceptance evidence. Its rotated
+database credential was applied and its exact Git branch redeployed on
+2026-08-14. A rollback restores the captured DNS records and verifies the old
+exact SHA; do not republish or delete it casually.
 
 Production migrations remain manual direct-owner operations. Reapply restricted
 runtime grants after every schema change.
