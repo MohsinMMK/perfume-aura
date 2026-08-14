@@ -134,6 +134,17 @@ request for the missing provider evidence and durable scoped repair. No provider
 reply has arrived yet, and no customer-side process or configuration action was
 authorized or performed during that investigation.
 
+Fresh authenticated hPanel evidence on 2026-08-14 keeps this gate red. Live
+plan usage was 0% CPU, 464 MB memory, and 51 of 120 maximum processes. The
+latest ops deployment's monthly runtime log shows paired Next.js starts at
+14:56:57.003/.007 followed by another pair at 14:57:10.841/.845, with no
+application error explaining the launches. The reopened support conversation
+still has no reply after the 2026-08-11 escalation and provides no case ID,
+process/PID attribution, supervisor cause, HCDN routing result, or durable
+scoped repair. PR #21 is green and prepared, but merging it would trigger
+another ops deployment; keep it unmerged and do not connect the storefront Git
+source until the owning gate is satisfied.
+
 ### Storefront browser hardening
 
 The deployed storefront now provides a responsive full brand mark at the top of
