@@ -72,8 +72,15 @@ Solo-maintainer review approval is not required, while strict checks,
 conversation resolution, linear history, administrator enforcement, and
 force-push/deletion denial remain protected.
 
-Do not redeploy/restart, stop plan-wide processes, write DNS, migrate production,
-merge, or change release flags without explicit authorization and owning-gate
+Publication language is outcome-oriented: when the user asks to `commit and
+push`, complete the normal protected flow through commit, push, required checks,
+conversation resolution, and merge. For a production-facing runtime change,
+continue through its owning deployment automation and exact live acceptance;
+Markdown-only changes must remain deployment-free.
+
+Do not infer authority for unrelated recovery or provider actions. Stopping
+plan-wide processes, writing DNS, migrating production, changing secrets, or
+opening release flags still requires explicit authorization and owning-gate
 evidence. Keep storefront commerce and staff security flags closed.
 
 ## Finish
