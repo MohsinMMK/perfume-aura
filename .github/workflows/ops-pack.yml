@@ -450,6 +450,8 @@ jobs:
     steps:
       - name: Checkout deploy assets
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup exact Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -511,17 +513,49 @@ jobs:
           set -euo pipefail
           [[ "$IMAGE_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
 
-      - name: Deploy through Hostinger VPS API
+      - name: Connect deployment runner to Tailscale
         if: vars.VPS_OPS_AUTO_DEPLOY_ENABLED == 'true'
-        uses: hostinger/deploy-on-vps@b0868cec74bfa63af6bfa7bdb0dfee2f9bef13ea # v2
+        uses: tailscale/github-action@306e68a486fd2350f2bfc3b19fcd143891a4a2d8 # v4
         with:
-          api-key: ${{ secrets.HOSTINGER_API_KEY }}
-          virtual-machine: ${{ vars.HOSTINGER_VM_ID }}
-          project-name: perfume-aura-ops
-          docker-compose-path: deploy/ops-vps/compose.yaml
-          environment-variables: |
-            PERFUME_AURA_OPS_IMAGE=ghcr.io/mohsinmmk/perfume-aura-ops@${{ steps.image.outputs.digest }}
-            PERFUME_AURA_OPS_SOURCE_SHA=${{ github.sha }}
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          ping: ${{ vars.VPS_OPS_TAILSCALE_IP }}
+
+      - name: Prepare restricted VPS SSH identity
+        if: vars.VPS_OPS_AUTO_DEPLOY_ENABLED == 'true'
+        env:
+          VPS_OPS_KNOWN_HOSTS: ${{ secrets.VPS_OPS_KNOWN_HOSTS }}
+          VPS_OPS_SSH_KEY: ${{ secrets.VPS_OPS_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          SSH_ROOT="$RUNNER_TEMP/perfume-aura-ops-ssh"
+          install -d -m 0700 "$SSH_ROOT"
+          printf '%s\n' "$VPS_OPS_SSH_KEY" > "$SSH_ROOT/id_ed25519"
+          printf '%s\n' "$VPS_OPS_KNOWN_HOSTS" > "$SSH_ROOT/known_hosts"
+          chmod 0600 "$SSH_ROOT/id_ed25519" "$SSH_ROOT/known_hosts"
+          ssh-keygen -y -f "$SSH_ROOT/id_ed25519" >/dev/null
+
+      - name: Deploy exact image through restricted VPS command
+        if: vars.VPS_OPS_AUTO_DEPLOY_ENABLED == 'true'
+        env:
+          IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
+          SOURCE_SHA: ${{ github.sha }}
+          VPS_OPS_TAILSCALE_IP: ${{ vars.VPS_OPS_TAILSCALE_IP }}
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$IMAGE_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          [[ "$VPS_OPS_TAILSCALE_IP" =~ ^100\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]
+          SSH_ROOT="$RUNNER_TEMP/perfume-aura-ops-ssh"
+          ssh \
+            -i "$SSH_ROOT/id_ed25519" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$SSH_ROOT/known_hosts" \
+            "perfume-deploy@$VPS_OPS_TAILSCALE_IP" \
+            "deploy $SOURCE_SHA $IMAGE_DIGEST"
 
       - name: Verify exact production release
         if: >-
