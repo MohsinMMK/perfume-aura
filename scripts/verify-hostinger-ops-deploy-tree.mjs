@@ -55,7 +55,7 @@ const SURFACE_CONFIG = {
 
 function normalizeSurface(raw) {
   const surface = String(raw ?? "ops").trim().toLowerCase();
-  if (!(surface in SURFACE_CONFIG)) {
+  if (!Object.hasOwn(SURFACE_CONFIG, surface)) {
     fail(`surface must be ops or storefront: ${surface}`);
   }
   return surface;
@@ -698,6 +698,13 @@ function writeMinimalValidTree(root, commit, surface = "ops") {
 
 function selfTest() {
   const commit = "a".repeat(40);
+  assert.equal(normalizeSurface("ops"), "ops");
+  assert.equal(normalizeSurface("storefront"), "storefront");
+  assert.throws(() => normalizeSurface("constructor"), /surface must be/);
+  assert.throws(
+    () => main(["/tmp/missing", commit, "--surface"]),
+    /--surface requires a value/,
+  );
   const base = mkdtempSync(path.join(tmpdir(), "perfume-aura-deploy-tree-"));
   try {
     const valid = path.join(base, "valid");
@@ -953,7 +960,11 @@ function main(argv) {
   let surface = "ops";
   for (let index = 2; index < argv.length; index += 1) {
     if (argv[index] === "--surface") {
-      surface = argv[index + 1];
+      const value = argv[index + 1];
+      if (value === undefined || value.startsWith("--")) {
+        fail("--surface requires a value");
+      }
+      surface = value;
       index += 1;
     } else {
       fail(`unknown argument: ${argv[index]}`);

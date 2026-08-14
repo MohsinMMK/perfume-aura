@@ -134,9 +134,10 @@ node scripts/verify-production-deploy.mjs <40-character-sha> \
 curl -sSI 'https://www.perfumeaura.com/shop?probe=1'
 ```
 
-The verifier requires the exact no-store storefront version response, the
-matching release marker in ordinary cached HTML, a real Next static asset,
-release locks, and the `www` `308` preserving `/shop?probe=1`.
+The verifier requires the exact storefront version response, the matching
+release marker in ordinary cached HTML, a real Next static asset, release locks,
+and the `www` `308` preserving `/shop?probe=1`. The packaged smoke test
+separately asserts that the version response uses `cache-control: no-store`.
 
 If exact verification fails, do not automatically roll back, purge HCDN, stop
 plan-wide processes, or republish an older source. Inspect the scoped failure;

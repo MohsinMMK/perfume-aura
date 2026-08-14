@@ -222,8 +222,9 @@ export async function verifyProductionDeploy(options) {
     throw new Error("invalid deploy verification polling bounds");
   }
 
+  const verificationStartedAt = now();
   async function waitForExpectedVersion(baseUrl, label) {
-    const started = now();
+    const started = verificationStartedAt;
     let attempts = 0;
     while (attempts < maxAttempts) {
       const elapsedMs = now() - started;
@@ -534,6 +535,10 @@ async function selfTest() {
     () => normalizeDeployTarget("invalid"),
     /must be ops, storefront, or both/,
   );
+  await assert.rejects(
+    () => main([commit, "--target"]),
+    /--target requires a value/,
+  );
   assert.equal(
     findStorefrontReleaseCommit(
       `<html data-perfume-aura-release="${commit}">`,
@@ -783,6 +788,43 @@ async function selfTest() {
   );
   assert.equal(persistentAttempts, 5);
 
+  let sharedDeadlineNow = 0;
+  let opsVersionAttempts = 0;
+  await assert.rejects(
+    () =>
+      verifyProductionDeploy({
+        expectedCommit: commit,
+        target: "both",
+        opsBaseUrl: "https://ops.invalid.example",
+        publicBaseUrl: "https://storefront.invalid.example",
+        timeoutMs: 50,
+        pollIntervalMs: 10,
+        fetchImpl: async (url) => {
+          if (String(url).startsWith("https://ops.invalid.example")) {
+            opsVersionAttempts += 1;
+            return new Response(
+              JSON.stringify({
+                status: "ok",
+                commit: opsVersionAttempts > 1 ? commit : "b".repeat(40),
+              }),
+              { status: 200 },
+            );
+          }
+          return new Response(
+            JSON.stringify({ status: "ok", commit: "b".repeat(40) }),
+            { status: 200 },
+          );
+        },
+        now: () => sharedDeadlineNow,
+        sleepImpl: async (ms) => {
+          sharedDeadlineNow += ms;
+        },
+      }),
+    /storefront deploy version did not match expected commit before timeout/,
+  );
+  assert.equal(sharedDeadlineNow, 50);
+  assert.equal(opsVersionAttempts, 2);
+
   let frozenClockAttempts = 0;
   await assert.rejects(
     () =>
@@ -929,20 +971,33 @@ async function main(argv) {
   let publicSurface;
   let target;
   let timeoutMs;
+  function readOptionValue(index, option) {
+    const value = argv[index + 1];
+    if (value === undefined || value.startsWith("--")) {
+      throw new Error(`${option} requires a value`);
+    }
+    return value;
+  }
   for (let i = 1; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--ops-base") {
-      opsBaseUrl = argv[++i];
+      opsBaseUrl = readOptionValue(i, arg);
+      i += 1;
     } else if (arg === "--public-base") {
-      publicBaseUrl = argv[++i];
+      publicBaseUrl = readOptionValue(i, arg);
+      i += 1;
     } else if (arg === "--www-base") {
-      wwwBaseUrl = argv[++i];
+      wwwBaseUrl = readOptionValue(i, arg);
+      i += 1;
     } else if (arg === "--target") {
-      target = argv[++i];
+      target = readOptionValue(i, arg);
+      i += 1;
     } else if (arg === "--public-surface") {
-      publicSurface = argv[++i];
+      publicSurface = readOptionValue(i, arg);
+      i += 1;
     } else if (arg === "--timeout-ms") {
-      timeoutMs = Number(argv[++i]);
+      timeoutMs = Number(readOptionValue(i, arg));
+      i += 1;
     } else {
       throw new Error(`unknown argument: ${arg}`);
     }
