@@ -1,6 +1,6 @@
-# CI gate, verified standalone packs, and generated Hostinger branch publishing.
+# CI gate, verified standalone packs, VPS ops deployment, and storefront branch publishing.
 # Pure Hostinger monorepo source build (Path G) remains blocked by esbuild EACCES.
-# Hostinger watches exact prebuilt ops/storefront branches; ZIP is emergency fallback.
+# Hostinger watches the exact prebuilt storefront branch; ZIP remains an emergency fallback.
 name: ci-and-ops-artifact
 
 on:
@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       deploy_target:
-        description: Optional generated branch to republish from main
+        description: Runtime surface to redeploy from the selected ref
         required: true
         default: none
         type: choice
@@ -36,21 +36,21 @@ env:
   EXACT_NODE_VERSION: 24.6.0
   EXACT_NPM_VERSION: 11.5.1
   EXACT_PNPM_VERSION: 10.32.1
-  HOSTINGER_OPS_BRANCH: hostinger-ops-production
   HOSTINGER_STOREFRONT_BRANCH: hostinger-storefront-production
 
 jobs:
   deployment-impact:
     name: deployment-impact
     if: >-
-      github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
       should_publish: ${{ steps.impact.outputs.should_publish }}
       publish_ops: ${{ steps.impact.outputs.publish_ops }}
       publish_storefront: ${{ steps.impact.outputs.publish_storefront }}
+      ops_migration_blocked: ${{ steps.impact.outputs.ops_migration_blocked }}
     steps:
       - name: Checkout deployment classifier
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -70,26 +70,34 @@ jobs:
             [[ "$DEPLOY_TARGET" != "none" ]] && SHOULD_PUBLISH=true || SHOULD_PUBLISH=false
             [[ "$DEPLOY_TARGET" == "ops" || "$DEPLOY_TARGET" == "both" ]] && PUBLISH_OPS=true || PUBLISH_OPS=false
             [[ "$DEPLOY_TARGET" == "storefront" || "$DEPLOY_TARGET" == "both" ]] && PUBLISH_STOREFRONT=true || PUBLISH_STOREFRONT=false
+            if git cat-file -e "${GITHUB_SHA}^1^{commit}"; then
+              OPS_MIGRATION_BLOCKED="$(
+                git diff --name-only -z "${GITHUB_SHA}^1" "$GITHUB_SHA" |
+                  node scripts/classify-deployment-impact.mjs --stdin0 |
+                  sed -n 's/^ops_migration_blocked=//p'
+              )"
+            else
+              # A root commit cannot prove a safe migration baseline.
+              OPS_MIGRATION_BLOCKED=true
+            fi
+            [[ "$OPS_MIGRATION_BLOCKED" == "true" || "$OPS_MIGRATION_BLOCKED" == "false" ]]
+            echo "should_publish=$SHOULD_PUBLISH" >> "$GITHUB_OUTPUT"
+            echo "publish_ops=$PUBLISH_OPS" >> "$GITHUB_OUTPUT"
+            echo "publish_storefront=$PUBLISH_STOREFRONT" >> "$GITHUB_OUTPUT"
+            echo "ops_migration_blocked=$OPS_MIGRATION_BLOCKED" >> "$GITHUB_OUTPUT"
           else
             if [[ ! "$BEFORE_SHA" =~ ^[0-9a-f]{40}$ ]] ||
                [[ "$BEFORE_SHA" == "0000000000000000000000000000000000000000" ]] ||
                ! git cat-file -e "${BEFORE_SHA}^{commit}"; then
-              SHOULD_PUBLISH=true
+              echo "should_publish=true" >> "$GITHUB_OUTPUT"
+              echo "publish_ops=true" >> "$GITHUB_OUTPUT"
+              echo "publish_storefront=true" >> "$GITHUB_OUTPUT"
+              echo "ops_migration_blocked=false" >> "$GITHUB_OUTPUT"
             else
-              SHOULD_PUBLISH="$(
-                git diff --name-only -z "$BEFORE_SHA" "$GITHUB_SHA" |
-                  node scripts/classify-deployment-impact.mjs --stdin0
-              )"
+              git diff --name-only -z "$BEFORE_SHA" "$GITHUB_SHA" |
+                node scripts/classify-deployment-impact.mjs --stdin0 >> "$GITHUB_OUTPUT"
             fi
-            PUBLISH_OPS="$SHOULD_PUBLISH"
-            PUBLISH_STOREFRONT="$SHOULD_PUBLISH"
           fi
-          [[ "$SHOULD_PUBLISH" == "true" || "$SHOULD_PUBLISH" == "false" ]]
-          [[ "$PUBLISH_OPS" == "true" || "$PUBLISH_OPS" == "false" ]]
-          [[ "$PUBLISH_STOREFRONT" == "true" || "$PUBLISH_STOREFRONT" == "false" ]]
-          echo "should_publish=$SHOULD_PUBLISH" >> "$GITHUB_OUTPUT"
-          echo "publish_ops=$PUBLISH_OPS" >> "$GITHUB_OUTPUT"
-          echo "publish_storefront=$PUBLISH_STOREFRONT" >> "$GITHUB_OUTPUT"
 
   quality:
     name: quality
@@ -381,10 +389,30 @@ jobs:
           echo "storefront_manifest=$STOREFRONT_MANIFEST" >> "$GITHUB_OUTPUT"
           echo "artifact_name=hostinger-standalone-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
 
+      - name: Validate hardened ops container image
+        run: |
+          set -euo pipefail
+          SHORT_SHA="${GITHUB_SHA:0:12}"
+          ZIP="dist/perfume-aura-standalone_${SHORT_SHA}.zip"
+          TREE="$(mktemp -d "${RUNNER_TEMP}/ops-image-tree.XXXXXX")"
+          cleanup() {
+            rm -rf -- "$TREE"
+          }
+          trap cleanup EXIT
+          python3 scripts/extract-hostinger-ops-zip.py "$ZIP" "$TREE"
+          node scripts/verify-hostinger-ops-deploy-tree.mjs "$TREE" "$GITHUB_SHA"
+          docker build \
+            --build-arg "SOURCE_COMMIT=$GITHUB_SHA" \
+            --file deploy/ops-vps/Dockerfile \
+            --tag perfume-aura-ops:ci \
+            "$TREE"
+          test "$(docker image inspect --format '{{ index .Config.Labels \"org.opencontainers.image.revision\" }}' perfume-aura-ops:ci)" = "$GITHUB_SHA"
+          test "$(docker run --rm --entrypoint node perfume-aura-ops:ci -e \"const m=require('/app/artifact-manifest.json');process.stdout.write(m.source.commit)\")" = "$GITHUB_SHA"
+
       - name: Upload inspected artifact
         if: >-
-          github.ref == 'refs/heads/main' &&
-          (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+          (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+          github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: hostinger-standalone-${{ steps.artifact.outputs.short_sha }}
@@ -399,28 +427,29 @@ jobs:
           compression-level: 0
           retention-days: 14
 
-  publish-hostinger-ops:
-    name: publish-hostinger-ops-branch
+  publish-and-deploy-vps-ops:
+    name: publish-and-deploy-vps-ops
     if: >-
-      github.ref == 'refs/heads/main' &&
-      needs.deployment-impact.outputs.publish_ops == 'true'
+      needs.deployment-impact.outputs.publish_ops == 'true' &&
+      needs.deployment-impact.outputs.ops_migration_blocked != 'true' &&
+      ((github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+       github.event_name == 'workflow_dispatch')
     needs:
       - deployment-impact
       - package
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    # Serialize deploy-branch updates. Started publish finishes; ancestry guard
-    # prevents deploying an older source over a newer already-published source.
+    timeout-minutes: 30
     concurrency:
-      group: publish-hostinger-ops-production
+      group: perfume-aura-ops-vps-production
       cancel-in-progress: false
     permissions:
-      contents: write
+      contents: read
+      packages: write
+    outputs:
+      image_digest: ${{ steps.image.outputs.digest }}
     steps:
-      - name: Checkout scripts only
+      - name: Checkout deploy assets
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: true
 
       - name: Setup exact Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -429,9 +458,7 @@ jobs:
 
       - name: Resolve artifact name
         id: meta
-        run: |
-          set -euo pipefail
-          echo "short_sha=${GITHUB_SHA:0:12}" >> "$GITHUB_OUTPUT"
+        run: echo "short_sha=${GITHUB_SHA:0:12}" >> "$GITHUB_OUTPUT"
 
       - name: Download exact package artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
@@ -439,9 +466,7 @@ jobs:
           name: hostinger-standalone-${{ steps.meta.outputs.short_sha }}
           path: dist-publish
 
-      - name: Re-verify artifact and publish generated branch
-        env:
-          GIT_TERMINAL_PROMPT: "0"
+      - name: Re-verify and extract exact ops artifact
         run: |
           set -euo pipefail
           SHORT_SHA="${GITHUB_SHA:0:12}"
@@ -451,41 +476,85 @@ jobs:
           test -f "$ZIP"
           test -f "$CHECKSUM"
           test -f "$MANIFEST"
-          (
-            cd dist-publish
-            sha256sum --check "$(basename "$CHECKSUM")"
-          )
-          node - "$MANIFEST" "$GITHUB_SHA" <<'NODE'
-          const assert = require("node:assert/strict");
-          const fs = require("node:fs");
-          const [manifestPath, sourceCommit] = process.argv.slice(2);
-          const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-          assert.equal(manifest.source.commit, sourceCommit);
-          assert.equal(manifest.source.dirty, false);
-          assert.equal(manifest.entry, "apps/ops/server.js");
-          assert.ok(manifest.archive && manifest.archive.sha256);
-          NODE
+          (cd dist-publish && sha256sum --check "$(basename "$CHECKSUM")")
+          mkdir "$RUNNER_TEMP/ops-image-tree"
+          python3 scripts/extract-hostinger-ops-zip.py "$ZIP" "$RUNNER_TEMP/ops-image-tree"
+          node scripts/verify-hostinger-ops-deploy-tree.mjs "$RUNNER_TEMP/ops-image-tree" "$GITHUB_SHA"
 
-          TREE="$(mktemp -d "${RUNNER_TEMP}/hostinger-ops-tree.XXXXXX")"
-          cleanup() {
-            rm -rf -- "$TREE"
-          }
-          trap cleanup EXIT
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
 
-          # Fail-closed ZIP preflight + extract (allows safe relative pnpm symlinks).
-          python3 scripts/extract-hostinger-ops-zip.py "$ZIP" "$TREE"
-          node scripts/verify-hostinger-ops-deploy-tree.mjs "$TREE" "$GITHUB_SHA"
-          bash scripts/publish-hostinger-ops-branch.sh \
-            --tree "$TREE" \
-            --commit "$GITHUB_SHA" \
-            --branch "$HOSTINGER_OPS_BRANCH" \
-            --remote origin
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Build and push immutable ops image
+        id: image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: ${{ runner.temp }}/ops-image-tree
+          file: ${{ github.workspace }}/deploy/ops-vps/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/mohsinmmk/perfume-aura-ops:${{ github.sha }}
+          build-args: SOURCE_COMMIT=${{ github.sha }}
+          cache-from: type=gha,scope=perfume-aura-ops
+          cache-to: type=gha,mode=max,scope=perfume-aura-ops
+
+      - name: Verify immutable image digest
+        run: |
+          set -euo pipefail
+          [[ "${{ steps.image.outputs.digest }}" =~ ^sha256:[0-9a-f]{64}$ ]]
+
+      - name: Deploy through Hostinger VPS API
+        if: vars.VPS_OPS_AUTO_DEPLOY_ENABLED == 'true'
+        uses: hostinger/deploy-on-vps@b0868cec74bfa63af6bfa7bdb0dfee2f9bef13ea # v2
+        with:
+          api-key: ${{ secrets.HOSTINGER_API_KEY }}
+          virtual-machine: ${{ vars.HOSTINGER_VM_ID }}
+          project-name: perfume-aura-ops
+          docker-compose-path: deploy/ops-vps/compose.yaml
+          environment-variables: |
+            PERFUME_AURA_OPS_IMAGE=ghcr.io/mohsinmmk/perfume-aura-ops@${{ steps.image.outputs.digest }}
+            PERFUME_AURA_OPS_SOURCE_SHA=${{ github.sha }}
+
+      - name: Verify exact production release
+        if: >-
+          vars.VPS_OPS_AUTO_DEPLOY_ENABLED == 'true' &&
+          vars.VPS_OPS_PUBLIC_VERIFICATION_ENABLED == 'true'
+        run: |
+          set -euo pipefail
+          node scripts/verify-production-deploy.mjs "$GITHUB_SHA" \
+            --target ops \
+            --public-surface storefront \
+            --public-base https://perfumeaura.com \
+            --timeout-ms 1200000
+
+  block-runtime-deploy-on-database-migration:
+    name: block-runtime-deploy-on-database-migration
+    if: >-
+      needs.deployment-impact.outputs.ops_migration_blocked == 'true' &&
+      ((github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+       github.event_name == 'workflow_dispatch')
+    needs:
+      - deployment-impact
+      - package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require the production database owner gate
+        run: |
+          echo "Database migration files changed. Apply and verify the migration and restricted runtime grants through the documented owner gate before redeploying either runtime." >&2
+          exit 1
 
   publish-hostinger-storefront:
     name: publish-hostinger-storefront-branch
     if: >-
       github.ref == 'refs/heads/main' &&
-      needs.deployment-impact.outputs.publish_storefront == 'true'
+      needs.deployment-impact.outputs.publish_storefront == 'true' &&
+      needs.deployment-impact.outputs.ops_migration_blocked != 'true'
     needs:
       - deployment-impact
       - package
@@ -564,35 +633,6 @@ jobs:
             --surface storefront \
             --branch "$HOSTINGER_STOREFRONT_BRANCH" \
             --remote origin
-
-  verify-hostinger-ops:
-    name: verify-hostinger-ops-live
-    if: >-
-      github.ref == 'refs/heads/main' &&
-      needs.deployment-impact.outputs.publish_ops == 'true' &&
-      vars.HOSTINGER_OPS_AUTO_DEPLOY_ENABLED == 'true'
-    needs:
-      - deployment-impact
-      - publish-hostinger-ops
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - name: Checkout scripts
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Setup exact Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version-file: .nvmrc
-
-      - name: Poll live version and smoke surfaces
-        run: |
-          set -euo pipefail
-          node scripts/verify-production-deploy.mjs "$GITHUB_SHA" \
-            --target ops \
-            --public-surface storefront \
-            --public-base https://perfumeaura.com \
-            --timeout-ms 1200000
 
   verify-hostinger-storefront:
     name: verify-hostinger-storefront-live
