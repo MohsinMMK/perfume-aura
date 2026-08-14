@@ -33,7 +33,9 @@ not touch unrelated sites, mail, DNS, databases, or processes.
 - Use official App Router, shadcn, Better Auth, Drizzle, Neon, Hostinger, pnpm,
   PostHog, and Sentry paths. Shared UI belongs in `packages/ui`; preset
   `b23PPibQOI` must resolve.
-- Keep secrets only in ignored local env files or Hostinger settings.
+- Keep secrets only in ignored local env files or the owning platform's secret
+  store: Hostinger settings for storefront and root-owned VPS configuration for
+  ops.
 - Runtime writes use pooled `pg` and Drizzle transactions. Direct Neon owner
   connections own migrations/grants; test first on an isolated Neon branch and
   reapply restricted runtime grants after schema changes.
@@ -41,14 +43,18 @@ not touch unrelated sites, mail, DNS, databases, or processes.
 
 ## Release gates
 
-Storefront uses a verified prebuilt ZIP at `apps/storefront/server.js`. Routine
-ops flow is `main -> CI -> hostinger-ops-production -> Hostinger Node Web App`;
-the ops ZIP is emergency fallback only. Never set a fixed `PORT`.
+Storefront currently uses a verified prebuilt ZIP at
+`apps/storefront/server.js`; `hostinger-storefront-production` is prepared but
+is not connected to the live Hostinger app. Routine ops flow is
+`main -> CI -> immutable GHCR image -> Tailscale forced SSH -> VPS Caddy`.
+The ops ZIP is a recovery artifact and `hostinger-ops-production` is frozen
+rollback state, not an active deployment target. Never set a fixed Hostinger
+`PORT`; the VPS container owns its internal port through Compose.
 
 ```bash
 node scripts/verify-production-deploy.mjs <40-character-sha> \
-  --public-surface storefront --public-base https://perfumeaura.com \
-  --timeout-ms 180000
+  --target ops --public-surface storefront \
+  --public-base https://perfumeaura.com --timeout-ms 1200000
 ```
 
 Also verify the exact `www` redirect, storefront locks, ops live/ready/version,
@@ -56,18 +62,25 @@ unauthenticated session, and a real static asset; `/login` alone is insufficient
 
 Current blockers:
 
-- **Hostinger:** `app.perfumeaura.com` previously reached the shared 120-process
-  limit and still shows paired Next.js starts. Hostinger has not supplied scoped
-  process attribution, supervisor/HCDN root cause, a case ID, or durable-repair
-  proof. Current health is not incident closure.
+- **Hostinger:** the shared plan previously reached its 120-process limit and
+  still lacks scoped attribution, supervisor/HCDN root cause, a case ID, or
+  durable-repair proof. Public ops no longer uses that plan; the unresolved
+  incident remains relevant to the managed storefront and any frozen rollback
+  app only. Current health is not incident closure.
 
-PR #9 is merged and its feature branch is deleted. Solo-maintainer review
-approval is not required, while strict checks, conversation resolution, linear
-history, administrator enforcement, and force-push/deletion denial remain
-protected.
+Solo-maintainer review approval is not required, while strict checks,
+conversation resolution, linear history, administrator enforcement, and
+force-push/deletion denial remain protected.
 
-Do not redeploy/restart, stop plan-wide processes, write DNS, migrate production,
-merge, or change release flags without explicit authorization and owning-gate
+Publication language is outcome-oriented: when the user asks to `commit and
+push`, complete the normal protected flow through commit, push, required checks,
+conversation resolution, and merge. For a production-facing runtime change,
+continue through its owning deployment automation and exact live acceptance;
+Markdown-only changes must remain deployment-free.
+
+Do not infer authority for unrelated recovery or provider actions. Stopping
+plan-wide processes, writing DNS, migrating production, changing secrets, or
+opening release flags still requires explicit authorization and owning-gate
 evidence. Keep storefront commerce and staff security flags closed.
 
 ## Finish

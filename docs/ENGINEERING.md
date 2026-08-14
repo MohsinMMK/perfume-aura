@@ -82,23 +82,30 @@ integration tests separately with explicitly supplied disposable database URLs.
 ## CI and packages
 
 `.github/workflows/ops-pack.yml` validates both production builds and both
-clean standalone artifacts. It uploads an inspected artifact set on `main`;
-only the ops package is published automatically to
-`hostinger-ops-production`. The storefront artifact remains a deliberate
-Hostinger ZIP deployment with exact checksum verification.
+clean standalone artifacts. Runtime-affecting `main` changes publish only the
+surfaces selected by the fail-closed impact classifier. Ops is built as an
+immutable GHCR image from the verified package and deployed through Tailscale
+forced SSH to the VPS. Storefront publication creates the verified
+`hostinger-storefront-production` branch, but live verification remains gated
+off until the existing Hostinger app is connected; the verified ZIP is the
+current live deployment path.
 
-Markdown-only main changes still run CI and packaging but do not update the
-generated production branch. Missing or unclassifiable change evidence fails
-closed to publication. CodeQL scans JavaScript and TypeScript on pull requests,
-main pushes, and the weekly schedule.
+Markdown-only main changes still run CI and packaging but do not publish or
+deploy either surface. Database migration or runtime-grant changes block the
+automatic ops deployment until the manual migration gate is satisfied. Missing
+or unclassifiable change evidence rebuilds both surfaces so uncertainty cannot
+silently suppress verification. CodeQL scans JavaScript and TypeScript on pull
+requests, main pushes, and the weekly schedule.
 
 The production verifier always checks the apex storefront plus ops exact SHA,
 health, auth-session response, and static assets:
 
 ```bash
 node scripts/verify-production-deploy.mjs <40-character-sha> \
+  --target ops \
   --public-surface storefront \
-  --public-base https://perfumeaura.com
+  --public-base https://perfumeaura.com \
+  --timeout-ms 1200000
 ```
 
 ## Observability boundary

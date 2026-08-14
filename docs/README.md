@@ -17,3 +17,25 @@ that owns the task:
 
 `CURRENT_STATE.md` owns the live handoff. Do not duplicate its incident status
 or deployed SHA in other documents.
+
+## Production at a glance
+
+```mermaid
+flowchart LR
+  customer["Customers"] --> hcdn["Hostinger HCDN"]
+  hcdn --> storefront["Storefront Web App<br/>Hostinger managed Node.js"]
+  staff["Owner and staff"] --> caddy["Caddy TLS proxy"]
+  caddy --> ops["Ops container<br/>Hostinger VPS"]
+  storefront --> neon["Neon PostgreSQL"]
+  ops --> neon
+
+  actions["GitHub Actions"] --> image["Verified immutable GHCR image"]
+  image -->|"Tailscale forced SSH"| ops
+  actions --> branch["hostinger-storefront-production"]
+  branch -. "provider Git connection pending" .-> storefront
+  zip["Verified storefront ZIP"] -->|"current deployment path"| storefront
+```
+
+Storefront and ops share data infrastructure but retain separate authentication,
+secret, cookie, origin, release, and recovery boundaries. See `OPERATIONS.md`
+for mutations and `ENGINEERING.md` for code and CI ownership.
