@@ -1,18 +1,25 @@
 # Perfume Aura agent instructions
 
-## Read and scope
+## Read order and owners
 
-Read `docs/CURRENT_STATE.md`, then use `docs/README.md` to open only the task
-owner. Core owners are `docs/PRODUCT.md` (behavior/locks),
-`docs/ENGINEERING.md` (code/data/tests/CI), `docs/OPERATIONS.md`
-(Hostinger/VPS/DNS/Neon/recovery), `docs/ROADMAP.md` (pending work), and the
-relevant `docs/STACK.md`, `docs/OPTIMIZATION.md`, or
-`docs/OBSERVABILITY.md`. Commerce starts at `docs/commerce/README.md`; design
-work uses `docs/commerce/STOREFRONT-REFERENCE.md`; staff activation uses
-`docs/runbooks/STAFF_OPERATIONS_RELEASE.md`; dated files under `docs/evidence/`
-are historical only. Fresh live evidence outranks docs. Update
-`CURRENT_STATE.md` when production, routing, risk, or next action changes. Never
-record secrets, credentials, connection strings, or customer data there.
+Read `docs/CURRENT_STATE.md` first. Fresh repository, provider, database, DNS,
+endpoint, and browser evidence outranks documentation. Open only the owner
+needed for the task:
+
+| Need | Owner |
+|---|---|
+| Live topology, exact releases, blockers, next actions | `docs/CURRENT_STATE.md` |
+| Users, routes, behavior, release locks | `docs/PRODUCT.md` |
+| Code, stack, data, tests, CI, performance, telemetry privacy | `docs/ENGINEERING.md` |
+| Hostinger, VPS, DNS, Neon, deployment, recovery, staff release | `docs/OPERATIONS.md` |
+| Commerce requirements, ADRs, verification, checklist | `docs/COMMERCE.md` |
+| Catalog mappings, legal research, design/QA evidence | `docs/REFERENCE.md` |
+
+Update `CURRENT_STATE.md` when production, routing, risk, or next action
+changes. Never record secrets, credentials, connection strings, or customer
+data there.
+
+## Surface boundaries
 
 | Domain | Role | Entry |
 |---|---|---|
@@ -50,15 +57,11 @@ not touch unrelated sites, mail, DNS, databases, or processes.
   state, provider branches, and agent/session state unless explicit cleanup
   authority and owning evidence permit removal.
 
-## Release gates
+## Authorization and release
 
-Storefront currently uses a verified prebuilt ZIP at
-`apps/storefront/server.js`; `hostinger-storefront-production` is prepared but
-is not connected to the live Hostinger app. Routine ops flow is
-`main -> CI -> immutable GHCR image -> Tailscale forced SSH -> VPS Caddy`.
-The ops ZIP is a recovery artifact and `hostinger-ops-production` is frozen
-rollback state, not an active deployment target. Never set a fixed Hostinger
-`PORT`; the VPS container owns its internal port through Compose.
+Read `docs/CURRENT_STATE.md` and `docs/OPERATIONS.md` before any provider,
+database, DNS, secret, or release-flag work. Never infer live SHAs, rollback
+deadlines, or incident status from this file.
 
 ```bash
 node scripts/verify-production-deploy.mjs <40-character-sha> \
@@ -68,14 +71,6 @@ node scripts/verify-production-deploy.mjs <40-character-sha> \
 
 Also verify the exact `www` redirect, storefront locks, ops live/ready/version,
 unauthenticated session, and a real static asset; `/login` alone is insufficient.
-
-Current blockers:
-
-- **Hostinger:** the shared plan previously reached its 120-process limit and
-  still lacks scoped attribution, supervisor/HCDN root cause, a case ID, or
-  durable-repair proof. Public ops no longer uses that plan; the unresolved
-  incident remains relevant to the managed storefront and any frozen rollback
-  app only. Current health is not incident closure.
 
 Solo-maintainer review approval is not required, while strict checks,
 conversation resolution, linear history, administrator enforcement, and

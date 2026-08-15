@@ -157,3 +157,7 @@ Next actions:
    deployment, and prove the exact generated source plus clean HCDN/browser
    acceptance.
 4. Keep storefront commerce and staff security flags closed.
+5. After the rollback window and storefront Git path are settled, follow the
+   staff-release, observability-activation, and measurement procedures in
+   [`OPERATIONS.md`](OPERATIONS.md) and [`ENGINEERING.md`](ENGINEERING.md);
+   do not start those releases from this file.

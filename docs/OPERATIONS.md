@@ -1,8 +1,20 @@
 # Operations
 
-Read `CURRENT_STATE.md` before any provider or database action.
+Read [`CURRENT_STATE.md`](CURRENT_STATE.md) before any provider or database
+action.
 
-## Topology
+- [Authority and topology](#authority-topology-and-safety-boundaries)
+- [Storefront deployment and recovery](#storefront-deployment-and-recovery)
+- [Ops deployment and recovery](#ops-deployment-and-recovery)
+- [Migrations and runtime grants](#migrations-and-runtime-grants)
+- [Production acceptance](#production-acceptance)
+- [Staff release procedure](#staff-operations-release-procedure)
+- [Owner recovery and break glass](#owner-recovery-and-break-glass)
+- [Observability activation](#observability-configuration-and-activation)
+- [Incident control](#nproc-incident-control)
+- [Pending outcome](#pending-outcome)
+
+## Authority, topology, and safety boundaries
 
 | Domain | Purpose | Entry |
 |---|---|---|
@@ -13,11 +25,6 @@ Read `CURRENT_STATE.md` before any provider or database action.
 `www.app.perfumeaura.com` and `shop.perfumeaura.com` must remain absent. The
 previous static storefront exists only in an external backup and Git history.
 
-## Production topology
-
-The storefront remains managed while private operations runs on the isolated
-VPS service:
-
 | Platform | Production responsibility |
 |---|---|
 | Hostinger managed Node.js Web App | `perfumeaura.com` storefront and the `www` redirect |
@@ -26,8 +33,8 @@ VPS service:
 | GitHub Actions | Build, scan, package, publish, and identify the exact source commit for both deployments |
 
 GoDaddy remains registration-only while Hostinger nameservers are
-authoritative. `app.perfumeaura.com` is an `A` record to `194.164.149.3` with
-no `AAAA`; Caddy proxies it to `127.0.0.1:3020`. Neon remains independent of
+authoritative. Exact live DNS, IP, SHA, digest, and rollback-window values
+belong in [`CURRENT_STATE.md`](CURRENT_STATE.md). Neon remains independent of
 the web deployments and must never be copied into, deleted by, or recreated
 during a deployment.
 
@@ -39,8 +46,6 @@ managed logs whenever Hostinger changes the storefront runtime.
 The unresolved managed-hosting process incident remains a storefront/shared-plan
 risk but is no longer on the public ops path. Do not use a plan-wide process
 stop or modify unrelated sites to work around it.
-
-## Safety boundaries
 
 - GoDaddy owns registration; Hostinger nameservers own DNS.
 - Neon is shared by storefront and ops. Never delete or recreate it during web
@@ -84,7 +89,7 @@ For an authorized provider mutation, enable only its exact MCP tool, execute it
 once, verify the result, then disable it. Record privacy-safe production changes
 in `CURRENT_STATE.md`.
 
-## Storefront deployment
+## Storefront deployment and recovery
 
 The verified ZIP is the current routine and emergency storefront deployment
 path until Hostinger GitHub connectivity is enabled. The generated branch is
@@ -156,7 +161,18 @@ If exact verification fails, do not automatically roll back, purge HCDN, stop
 plan-wide processes, or republish an older source. Inspect the scoped failure;
 use the known-good ZIP or a scoped HCDN purge only with explicit authorization.
 
-## Ops deployment
+## Pending outcome
+
+Obtain a recoverable in-place Git source conversion for the existing upload-sourced Hostinger storefront, or approve a
+separately backed-up and tested recreation plan. Connect only
+`hostinger-storefront-production`; preserve Node 24.x, Framework Other, root
+`./`, empty build/output settings, existing environment values, and entry
+`apps/storefront/server.js`. Enable
+`HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` only after that connection
+exists, then prove one exact generated-source deployment through HCDN and
+clean desktop/mobile browsers.
+
+## Ops deployment and recovery
 
 Routine deployment is:
 
@@ -205,23 +221,7 @@ casually.
 Production migrations remain manual direct-owner operations. Reapply restricted
 runtime grants after every schema change.
 
-## Staff release order
-
-Migration `0010_curved_puma`, Admin/2FA, staff invitations, and mandatory 2FA
-are one ordered release. Follow
-[`runbooks/STAFF_OPERATIONS_RELEASE.md`](runbooks/STAFF_OPERATIONS_RELEASE.md).
-
-1. Prove the active VPS ops release and database-migration gate are healthy.
-2. Test the migration on an isolated Neon branch.
-3. Apply it to production through the direct owner connection.
-4. Reapply and verify runtime grants.
-5. Deploy with both `OPS_*` flags false and verify owner login and health.
-6. Prove SMTP, owner TOTP, and one recovery-code journey.
-7. Enable mandatory 2FA, then invitations, then prove staff denials.
-
-Never open storefront commerce flags as part of this release.
-
-## Runtime grant contract
+## Migrations and runtime grants
 
 Apply `packages/db/sql/ops-runtime-grants.sql` with the reviewed role name. The
 effective matrix is deliberately explicit:
@@ -285,17 +285,249 @@ Also verify a real static asset, the authenticated owner journey when
 authorized, storefront locks, robots, canonical metadata, and both DNS
 requirements.
 
-## Observability activation
+## Staff operations release procedure
+
+Prior path: `docs/runbooks/STAFF_OPERATIONS_RELEASE.md`. Run only after the
+active VPS ops release passes fresh exact-SHA acceptance. The unresolved
+Hostinger shared-plan incident still gates managed-storefront provider changes,
+but does not gate an independently authorized VPS ops release. Stop at the first
+failure and record privacy-safe production results in `CURRENT_STATE.md`.
+
+### Preconditions
+
+- Active VPS ops exact-SHA acceptance passes, and storefront locks plus the
+  path-preserving `www` redirect pass a fresh re-smoke.
+- The staff commit and deployment artifact are CI-verified.
+- `OPS_TWO_FACTOR_REQUIRED` and `OPS_STAFF_INVITES_ENABLED` are not `true`.
+- Every `STOREFRONT_*` release flag remains false.
+- Integration tests use only `TEST_DATABASE_URL` on loopback PostgreSQL with a
+  name matching `perfume_aura_phaseNN_<purpose>`.
+
+Never use production or Neon as an integration-test database.
+
+### Phase A — schema and flags-off deploy
+
+1. Create an isolated Neon branch and apply `0010_curved_puma`.
+2. Validate the migration and restricted grant contract on that Neon branch;
+   do not run the integration suite there.
+3. Apply the same migration to a disposable loopback PostgreSQL database and run
+   authenticated integration tests through `TEST_DATABASE_URL`.
+4. Apply the reviewed migration to production using `DATABASE_URL_DIRECT`.
+5. Reapply `packages/db/sql/ops-runtime-grants.sql` with the reviewed runtime
+   role; reject any unexpected effective privilege.
+6. Deploy ops with both security flags false.
+7. Verify exact SHA, live, ready, version, unauthenticated session, a real static
+   asset, and existing owner login.
+8. Re-smoke storefront, its release locks, and the path-preserving `www` `308`.
+
+```bash
+node scripts/verify-production-deploy.mjs <40-character-sha> \
+  --target ops \
+  --public-surface storefront \
+  --public-base https://perfumeaura.com \
+  --timeout-ms 1200000
+```
+
+### Phase B — owner security
+
+1. Prove one real Hostinger SMTP delivery to the owner mailbox.
+2. Enroll the owner in TOTP.
+3. Complete one authorized recovery-code sign-in.
+4. Set `OPS_TWO_FACTOR_REQUIRED=true`.
+5. Prove pending-2FA sessions cannot access protected data and raw 2FA-disable
+   requests are rejected.
+
+Do not enable invitations yet. The break-glass TOTP reset is not part of normal
+release testing; it revokes every owner session.
+
+### Owner recovery and break glass
+
+Use `/forgot-password` for normal owner recovery. Owner seeding never replaces
+an existing password. Only an explicitly authorized break-glass event may run:
+
+```bash
+CONFIRM_OWNER_RECOVERY=REVOKE_ALL_OWNER_SESSIONS \
+  pnpm --filter @perfume-aura/ops recover:owner
+```
+
+This atomically replaces the password and revokes every owner session. Lost
+owner authenticator recovery is separate:
+
+```bash
+CONFIRM_OWNER_TWO_FACTOR_RESET=RESET_OWNER_TWO_FACTOR_AND_REVOKE_SESSIONS \
+  pnpm --filter @perfume-aura/ops reset:owner-two-factor
+```
+
+It removes the TOTP/recovery-code record and revokes all owner sessions. Never
+print or commit passwords, setup links, TOTP secrets, recovery codes, raw
+request bodies, or sensitive audit metadata.
+
+### Phase C — staff
+
+Set `OPS_STAFF_INVITES_ENABLED=true` only after Phase B passes. Complete one
+owner-created invitation, password setup, staff sign-in, and append-only
+invitation/audit record check.
+
+The capability matrix must remain:
+
+| Capability | Owner | Staff |
+|---|---:|---:|
+| Staff management and security audit | Yes | No |
+| Cost and commercial fields | Yes | No |
+| Finance and payment recording | Yes | No |
+| COD reconciliation and refunds | Yes | No |
+| Promotions and release gates | Yes | No |
+| Approved shipment update | Yes | Yes |
+
+Prove staff denial through direct server actions, not only hidden navigation:
+
+- invite, deactivate, and list staff;
+- view cost or change commercial fields;
+- adjust stock where owner-only;
+- record payments or view finance;
+- reconcile COD or manage refunds;
+- manage promotions or release gates;
+- void invoices;
+- settle COD while updating a shipment.
+
+Unknown, missing, stale, comma-separated, or non-staff roles must fail closed.
+
+### Phase D — checkout lock
+
+Staff release does not authorize commerce. Effective checkout requires both:
+
+```text
+commerceSettings.checkoutEnabled === true
+&& STOREFRONT_CHECKOUT_RELEASE_APPROVED === "true"
+```
+
+Prove checkout stays locked with either plane false, public catalog stays empty
+while public release is false, unpublished products return `404`, and the
+zero-value cart contract remains intact.
+
+### Final acceptance
+
+- Owner login requires TOTP.
+- One authorized staff account is active.
+- Every owner-only server action denies staff.
+- Invitation and audit rows are append-only.
+- Ops and storefront pass a final full smoke.
+- All storefront commerce flags remain closed.
+- `CURRENT_STATE.md` records deploy SHA, flag state, evidence time, and residual
+  risk without secrets.
+
+Completion order:
+
+```text
+fresh exact-SHA VPS and storefront acceptance
+→ isolated migration/tests
+→ production migration/grants
+→ flags-off deploy and health
+→ SMTP/TOTP/recovery
+→ mandatory 2FA
+→ invitations
+→ staff denial matrix
+→ final re-smoke
+→ stop; commerce remains closed
+```
+
+Never open storefront commerce flags as part of this release.
+
+## Observability configuration and activation
 
 Provider projects exist but production telemetry is not active until the
 platform-specific runtime values and an observability-enabled artifact are
-deployed. Follow
-`docs/OBSERVABILITY.md` for provider names, environment mapping, privacy,
-source-map CI settings, and acceptance evidence.
+deployed.
 
-Activation is a normal deployment. After authorization and activation,
-re-smoke both applications and verify actual privacy-filtered PostHog and
-Sentry events; a successful build is not runtime proof.
+| Service | Cloud object | Application separation | Current provider state |
+|---|---|---|---|
+| PostHog US Cloud | Project `Perfume Aura Web` (ID `541869`) | Required event property `application=storefront` or `application=operations` | Free project exists; client IP storage is disabled |
+| Sentry | Project `perfume-aura-storefront` in organization `khanect` | Dedicated storefront project | Free project exists; high-priority email alerts enabled |
+| Sentry | Project `perfume-aura-ops` in organization `khanect` | Dedicated private-ops project | Free project exists; high-priority email alerts enabled |
+
+The active PostHog free plan permits one project. Both web applications use
+that project and must be filtered by the mandatory `application` property.
+Sentry remains split because operational errors and public-storefront errors
+have different access, urgency, and privacy boundaries.
+
+Use the same PostHog project token for both applications, with distinct
+variable names so an accidental cross-app package cannot silently inherit it.
+The token and Sentry DSNs are write-only/public client identifiers, but they
+still belong in GitHub variables, platform runtime settings, or ignored local
+environment files rather than committed source. Storefront server runtime
+values live in Hostinger; ops server runtime values live in root-owned
+`/etc/khanect/perfume-aura-ops.env` on the VPS. Repository variables
+`POSTHOG_PROJECT_TOKEN`, `POSTHOG_HOST`, `STOREFRONT_SENTRY_DSN`, and
+`OPS_SENTRY_DSN` currently supply the prebuilt browser bundles.
+
+| Application | Runtime variables |
+|---|---|
+| Storefront | `NEXT_PUBLIC_STOREFRONT_POSTHOG_TOKEN`, `NEXT_PUBLIC_STOREFRONT_POSTHOG_HOST`, `NEXT_PUBLIC_STOREFRONT_SENTRY_DSN`, `STOREFRONT_SENTRY_DSN`, `NEXT_PUBLIC_STOREFRONT_SENTRY_TRACES_SAMPLE_RATE`, `STOREFRONT_SENTRY_TRACES_SAMPLE_RATE` |
+| Operations | `NEXT_PUBLIC_OPS_POSTHOG_TOKEN`, `NEXT_PUBLIC_OPS_POSTHOG_HOST`, `NEXT_PUBLIC_OPS_SENTRY_DSN`, `OPS_SENTRY_DSN`, `NEXT_PUBLIC_OPS_SENTRY_TRACES_SAMPLE_RATE`, `OPS_SENTRY_TRACES_SAMPLE_RATE` |
+
+Use `https://us.i.posthog.com` for both PostHog host variables. Start both
+trace sample rates at `0.1`; adjust only from measured volume and incident
+needs.
+
+Authenticated CI builds additionally require:
+
+```text
+SENTRY_ORG=khanect
+STOREFRONT_SENTRY_PROJECT=perfume-aura-storefront
+OPS_SENTRY_PROJECT=perfume-aura-ops
+SENTRY_AUTH_TOKEN=<CI secret only>
+```
+
+GitHub Actions currently has `SENTRY_AUTH_TOKEN` as a repository secret created
+with Sentry's limited `org:ci` scope. Never copy it into Hostinger or a
+`NEXT_PUBLIC_*` variable.
+
+The build uploads source maps only when the organization, application project,
+and auth token are all present. Otherwise builds remain valid and source-map
+upload is disabled. Uploaded browser source maps are deleted from the build
+output afterward. The credential is exposed only to the verified package job on
+`main`; pull-request and ordinary quality builds do not receive it.
+
+On 2026-08-04, controlled non-production connection events reached both
+Sentry projects and the shared PostHog project. PostHog showed one event with
+`application=storefront` and one with `application=operations`; Sentry showed
+one event in each matching application project. The temporary Sentry issues
+were resolved after verification, leaving both unresolved issue feeds clean.
+Both applications also passed production builds with the provider identifiers
+enabled. Route client-JavaScript measurements were compared with a clean
+`origin/main` build and did not increase on any guarded storefront or ops
+route. That comparison is wiring and ingestion proof, not production
+activation or source-map verification against a deployed release.
+
+Treat observability activation as an explicit deployment on each platform. The
+historical Hostinger duplicate-process/NPROC incident still gates storefront
+provider changes, but it no longer blocks an independently authorized VPS ops
+deployment:
+
+1. Add the storefront server-only Sentry values in Hostinger and the ops
+   server-only Sentry values in `/etc/khanect/perfume-aura-ops.env`. The
+   `NEXT_PUBLIC_*` values must be present during the prebuilt CI/package build
+   and cannot be added after the artifact is built.
+2. Confirm the existing build-only `SENTRY_AUTH_TOKEN` secret is available to
+   the trusted main-branch build; never expose it to pull requests from forks
+   or through `NEXT_PUBLIC_`.
+3. Run `pnpm check`,
+   `TEST_DATABASE_URL='<migrated-disposable-loopback-url>' pnpm test:integration`,
+   both package commands, and `git diff --check`.
+4. Deploy through the existing verified paths and run the exact-SHA production
+   verifier plus the full storefront and ops smoke tests.
+5. In a controlled, non-sensitive test route, produce one handled test error
+   per application. Confirm the issue, structured log, release, readable stack,
+   and `application` tag in the correct Sentry project.
+6. Confirm a page view from each application in PostHog and filter by
+   `application`. Verify that the event URL has no query string and the person
+   contains no email or name.
+7. Reconfirm PostHog IP discard remains enabled and that no session recordings
+   are created.
+
+No production readiness claim is valid until the provider event and source-map
+checks pass. Monitoring must not open a storefront commerce flag or the staff
+security flags.
 
 ## NPROC incident control
 
@@ -305,7 +537,7 @@ evidence before provider action; prefer a scoped repair. Use plan-wide stop only
 with explicit authorization, then re-smoke every affected managed site and
 update `CURRENT_STATE.md`.
 
-## Official Hostinger references
+## Official references
 
 - [Node.js hosting options](https://www.hostinger.com/support/node-js-hosting-options-at-hostinger/)
 - [Select the Node.js version](https://www.hostinger.com/support/how-to-select-the-node-js-version-for-your-application/)

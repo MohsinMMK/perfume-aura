@@ -4,7 +4,7 @@ Perfume Aura is an India-first perfume operations and future ecommerce system.
 Persisted money is integer INR paise; public money uses
 `{ currency: "INR", amountMinor: number }` and is always server-authoritative.
 
-## Applications and users
+## Users and applications
 
 - `perfumeaura.com` is the animated public storefront.
 - `app.perfumeaura.com` is the internal operations application.
@@ -12,7 +12,7 @@ Persisted money is integer INR paise; public money uses
   storefront boundary and is currently disabled.
 - Owner and staff operations remain separate from customer accounts and orders.
 
-## Routes
+## Route contract
 
 | Area | Routes |
 |---|---|
@@ -22,7 +22,7 @@ Persisted money is integer INR paise; public money uses
 | Store content | `/about`, `/faq`, `/contact`, `/wholesale`, `/shipping`, `/returns`, `/privacy`, `/terms` |
 | Customer boundary | `/account/*`, `/api/customer-auth/*` |
 
-## Release state
+## Commerce release locks
 
 The storefront is public as a visual brand and product-discovery surface, but
 commerce is fail-closed:
@@ -39,7 +39,27 @@ commerce is fail-closed:
   without DOM autocapture or session replay; Sentry excludes direct PII and
   sensitive request material. Monitoring never changes a commerce release lock.
 
-## Core operations invariants
+Active flag values and next production actions belong in
+[`CURRENT_STATE.md`](CURRENT_STATE.md). Commerce requirement IDs and ADRs belong
+in [`COMMERCE.md`](COMMERCE.md).
+
+## Pending outcome
+
+Keep catalog, checkout, customer authentication,
+inquiries, and every commerce flag disabled until business, catalog, policy,
+media, pricing, stock, shipping, tax, support, Cashfree, SMTP, and lifecycle
+gates pass. Use a separate authorized release decision for each public
+capability.
+
+## Catalog and money policy
+
+- Standard scents: 30 ml ₹600, 50 ml ₹800, 100 ml ₹1,400.
+- Signature scents: 50 ml and 105 ml only, with explicit owner-approved INR
+  prices required per product.
+- 10 ml and discovery sets are excluded from public commerce until a separate
+  sample format is approved.
+
+## Operations and financial invariants
 
 - Product/variant updates use transaction and version guards.
 - Stock receive, adjustment, and fulfillment append immutable movements and
@@ -53,15 +73,7 @@ commerce is fail-closed:
 - Cashfree success requires raw webhook verification and server-side status
   verification. COD is settled only by fulfillment and confirmed collection.
 
-## Catalog policy
-
-- Standard scents: 30 ml ₹600, 50 ml ₹800, 100 ml ₹1,400.
-- Signature scents: 50 ml and 105 ml only, with explicit owner-approved INR
-  prices required per product.
-- 10 ml and discovery sets are excluded from public commerce until a separate
-  sample format is approved.
-
-## Staff operations release gate
+## Staff capability contract
 
 Ops implements Better Auth Admin and 2FA plugins, strict `owner`/`staff`/`user`
 roles, server-side capabilities, immutable staff invitation/audit records,
@@ -74,4 +86,11 @@ server action.
 the migration and restricted grants are applied, SMTP delivery is proven, the
 owner completes TOTP and recovery-code proof, and an authorized staff journey
 proves direct action denials. The function-mapped production smoke order is
-[staff operations release runbook](./runbooks/STAFF_OPERATIONS_RELEASE.md).
+the [staff operations release procedure](OPERATIONS.md#staff-operations-release-procedure).
+
+## Customer privacy limits
+
+Monitoring cannot change a commerce release lock or become a source of truth
+for commerce, authentication, inventory, or finance. Capture, filtering, and
+PII restrictions are owned by
+[`ENGINEERING.md`](ENGINEERING.md#observability-code-and-privacy).

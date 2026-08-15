@@ -12,11 +12,32 @@ Storefront customer auth and operations auth are separate. Public catalog,
 checkout, customer auth, inquiries, and indexing remain disabled until their
 release gates pass.
 
+```mermaid
+flowchart LR
+  customer["Customers"] --> hcdn["Hostinger HCDN"]
+  hcdn --> storefront["Storefront Web App<br/>Hostinger managed Node.js"]
+  staff["Owner and staff"] --> caddy["Caddy TLS proxy"]
+  caddy --> ops["Ops container<br/>Hostinger VPS"]
+  storefront --> neon["Neon PostgreSQL"]
+  ops --> neon
+```
+
 ## Start here
 
 1. Read [the current state](docs/CURRENT_STATE.md).
-2. Use [the documentation index](docs/README.md) for the task-owning runbook.
+2. Open only the owning document for the task.
 3. Follow [the repository rules](AGENTS.md) before changing code or production.
+
+| Need | Owner |
+|---|---|
+| Live releases, blockers, rollback, next actions | [CURRENT_STATE.md](docs/CURRENT_STATE.md) |
+| Users, routes, behavior, release locks | [PRODUCT.md](docs/PRODUCT.md) |
+| Code, stack, data, tests, CI, performance | [ENGINEERING.md](docs/ENGINEERING.md) |
+| Hostinger, VPS, DNS, Neon, deploy, recovery | [OPERATIONS.md](docs/OPERATIONS.md) |
+| Commerce requirements, ADRs, release checklist | [COMMERCE.md](docs/COMMERCE.md) |
+| Catalog mappings, legal research, design evidence | [REFERENCE.md](docs/REFERENCE.md) |
+| Pending domain outcomes | [Product](docs/PRODUCT.md#pending-outcome), [Engineering](docs/ENGINEERING.md#pending-outcome), [Operations](docs/OPERATIONS.md#pending-outcome) |
+| Agent invariants and finish gates | [AGENTS.md](AGENTS.md) |
 
 ## Local setup
 
@@ -40,7 +61,7 @@ connection strings.
 pnpm dev:storefront
 pnpm dev:ops
 pnpm check
-pnpm test:integration
+TEST_DATABASE_URL='<migrated-disposable-loopback-url>' pnpm test:integration
 pnpm storefront:pack
 pnpm ops:pack
 node scripts/verify-production-deploy.mjs <40-character-sha> \
@@ -52,4 +73,5 @@ node scripts/verify-production-deploy.mjs <40-character-sha> \
 
 See [engineering](docs/ENGINEERING.md) for repository structure and tests,
 [operations](docs/OPERATIONS.md) for deployment and recovery, and
-[design QA](design-qa.md) for the historical storefront acceptance record.
+[historical evidence](docs/REFERENCE.md#historical-evidence) for dated
+storefront and performance attestations.

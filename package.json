@@ -26,6 +26,7 @@
     "ops:verify-production-deploy": "node scripts/verify-production-deploy.mjs",
     "deploy:self-test": "node scripts/verify-hostinger-ops-deploy-tree.mjs self-test && node scripts/verify-production-deploy.mjs self-test && node scripts/classify-deployment-impact.mjs self-test && python3 scripts/extract-hostinger-ops-zip.py self-test && bash -n scripts/publish-hostinger-ops-branch.sh && bash scripts/publish-hostinger-ops-branch.sh self-test && bash -n scripts/pack-ops-standalone.sh && bash scripts/pack-ops-standalone.sh self-test && bash -n scripts/pack-storefront-standalone.sh",
     "commerce:verify": "node scripts/verify-commerce-foundation.mjs",
+    "commerce:verify:self-test": "node scripts/verify-commerce-foundation.mjs --self-test",
     "currency:audit": "pnpm --filter @perfume-aura/db audit:inr",
     "db:generate": "pnpm --filter @perfume-aura/db generate",
     "db:migrate": "pnpm --filter @perfume-aura/db migrate",
