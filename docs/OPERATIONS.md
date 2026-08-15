@@ -46,7 +46,9 @@ stop or modify unrelated sites to work around it.
 - Neon is shared by storefront and ops. Never delete or recreate it during web
   work.
 - Do not modify unrelated Hostinger sites, mail, DNS, databases, or processes.
-- Secrets belong only in ignored env files or Hostinger settings.
+- Secrets belong only in ignored local env files or the owning platform's
+  secret store: Hostinger settings for storefront and root-owned VPS
+  configuration for ops.
 - Do not set a fixed storefront `PORT`; Hostinger supplies it. The VPS Compose
   contract sets the internal ops port and publishes it only on loopback.
 - Select Hostinger Node `24.x`; treat the exact Node patch and pnpm version from
@@ -119,9 +121,9 @@ Hostinger's current upload-sourced storefront UI does not expose an in-place
 `Connect to GitHub` control. Do not delete/recreate the apex Web App without a
 fresh backup, a tested replacement, captured DNS/HCDN/runtime settings, and
 explicit authorization. Until then the generated branch is prepared state
-only. The current
-live archive and generated branch manifest both identify source
-`917499d7dae04aa04697a7af7fd3d062c029c7f6`.
+only. Read [`CURRENT_STATE.md`](CURRENT_STATE.md) for current live-archive and
+generated-branch source identities. Confirm each artifact manifest before use;
+do not copy mutable source identifiers into this runbook.
 
 Keep these flags false until their separate gates pass:
 
@@ -193,13 +195,12 @@ The Compose contract uses UID/GID `10001`, read-only root, `cap_drop: ALL`,
 root-owned `/etc/khanect/perfume-aura-ops.env`; deploy automation never sends
 them. Use `pnpm ops:pack` only for artifact recovery.
 
-The old Hostinger ops Web App is off public DNS and frozen for exactly 48 hours
-after the DNS-cutover acceptance anchor at 2026-08-14 14:47:58 UTC. It becomes
-eligible for removal no earlier than 2026-08-16 14:47:58 UTC, and only with
-explicit authorization and fresh exact-SHA acceptance evidence. Its rotated
-database credential was applied and its exact Git branch redeployed on
-2026-08-14. A rollback restores the captured DNS records and verifies the old
-exact SHA; do not republish or delete it casually.
+The old Hostinger ops Web App is off public DNS and retained only as frozen
+rollback state. [`CURRENT_STATE.md`](CURRENT_STATE.md) owns its current
+retention deadline and eligibility. Removal requires explicit authorization and
+fresh exact-SHA VPS acceptance evidence. A rollback restores the captured DNS
+records and verifies the frozen exact source; do not republish or delete it
+casually.
 
 Production migrations remain manual direct-owner operations. Reapply restricted
 runtime grants after every schema change.
@@ -208,7 +209,7 @@ runtime grants after every schema change.
 
 Migration `0010_curved_puma`, Admin/2FA, staff invitations, and mandatory 2FA
 are one ordered release. Follow
-[`STAFF_OPERATIONS_RELEASE_SMOKE.md`](STAFF_OPERATIONS_RELEASE_SMOKE.md).
+[`runbooks/STAFF_OPERATIONS_RELEASE.md`](runbooks/STAFF_OPERATIONS_RELEASE.md).
 
 1. Prove the active VPS ops release and database-migration gate are healthy.
 2. Test the migration on an isolated Neon branch.

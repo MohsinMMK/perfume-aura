@@ -39,7 +39,7 @@ Status: **implementation prepared; migration and activation gated**.
 - Test migration `0010_curved_puma` on an isolated Neon branch.
 - With separate authorization, apply the production migration through the
   direct owner connection and reapply restricted runtime grants.
-- Follow [STAFF_OPERATIONS_RELEASE_SMOKE.md](STAFF_OPERATIONS_RELEASE_SMOKE.md)
+- Follow the [staff operations release runbook](runbooks/STAFF_OPERATIONS_RELEASE.md)
   with both staff flags initially false.
 - Prove SMTP, owner TOTP, recovery-code login, invitations, append-only audit,
   and the owner/staff denial matrix before enabling mandatory 2FA and then

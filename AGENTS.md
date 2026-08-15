@@ -2,12 +2,17 @@
 
 ## Read and scope
 
-Read `docs/CURRENT_STATE.md`, then only the task owner: `PRODUCT.md` (behavior
-and locks), `ENGINEERING.md` (code/data/tests), `OPERATIONS.md` (Hostinger/DNS/
-Neon/recovery), `ROADMAP.md` (pending work), or the relevant `STACK.md`,
-`OPTIMIZATION.md`, or `OBSERVABILITY.md`. Fresh live evidence outranks docs;
-update `CURRENT_STATE.md` when production, routing, risk, or next action changes.
-Never record secrets, credentials, connection strings, or customer data there.
+Read `docs/CURRENT_STATE.md`, then use `docs/README.md` to open only the task
+owner. Core owners are `docs/PRODUCT.md` (behavior/locks),
+`docs/ENGINEERING.md` (code/data/tests/CI), `docs/OPERATIONS.md`
+(Hostinger/VPS/DNS/Neon/recovery), `docs/ROADMAP.md` (pending work), and the
+relevant `docs/STACK.md`, `docs/OPTIMIZATION.md`, or
+`docs/OBSERVABILITY.md`. Commerce starts at `docs/commerce/README.md`; design
+work uses `docs/commerce/STOREFRONT-REFERENCE.md`; staff activation uses
+`docs/runbooks/STAFF_OPERATIONS_RELEASE.md`; dated files under `docs/evidence/`
+are historical only. Fresh live evidence outranks docs. Update
+`CURRENT_STATE.md` when production, routing, risk, or next action changes. Never
+record secrets, credentials, connection strings, or customer data there.
 
 | Domain | Role | Entry |
 |---|---|---|
@@ -40,6 +45,10 @@ not touch unrelated sites, mail, DNS, databases, or processes.
   connections own migrations/grants; test first on an isolated Neon branch and
   reapply restricted runtime grants after schema changes.
 - Integration tests use disposable loopback PostgreSQL only.
+- Remove files only after proving they are generated, duplicated, retired, or
+  unreachable. Preserve `dist/` recovery artifacts, migrations, ignored secret
+  state, provider branches, and agent/session state unless explicit cleanup
+  authority and owning evidence permit removal.
 
 ## Release gates
 
