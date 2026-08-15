@@ -15,9 +15,11 @@ Do not deploy while `CURRENT_STATE.md` contains an active deployment blocker.
 - Both applications make reduced-motion transitions effectively immediate.
 - Client JavaScript budgets run after each production build.
 
-These optimizations are implemented on the pending staff branch, not on
-production `main`. Do not repeat broad optimization without a measured
-regression or representative new release data.
+These optimizations and route client-JavaScript budgets are present on `main`;
+`pnpm check` enforces both budget scripts after production builds. This is a
+repository baseline, not a claim about current field performance. Do not repeat
+broad optimization without a measured regression or representative new release
+data.
 
 ## Measure first
 
@@ -55,8 +57,15 @@ and CLS ≤ 0.1. Lab TBT is only a proxy for INP.
 5. Change fonts, icons, dependencies, or experimental Next.js options only
    through the reviewed stack process.
 
-Generated analyzers, traces, screenshots, and local evidence stay untracked.
-Record only durable current conclusions in this document.
+Generated analyzers, traces, and screenshots stay untracked. Short committed
+attestations may preserve historical reproducibility under
+[`evidence/optimization/`](evidence/optimization/), but they never override this
+policy or `CURRENT_STATE.md`.
+
+Historical attestations:
+
+- [Storefront local E2E — 2026-08-03](evidence/optimization/STOREFRONT_LOCAL_E2E_2026-08-03.md)
+- [Ops local E2E — 2026-08-03](evidence/optimization/OPS_LOCAL_E2E_2026-08-03.md)
 
 ## Acceptance record
 

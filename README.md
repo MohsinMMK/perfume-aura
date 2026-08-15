@@ -1,10 +1,12 @@
 # Perfume Aura
 
-Perfume Aura is a pnpm monorepo with two Hostinger applications backed by one
-Neon PostgreSQL database:
+Perfume Aura is a pnpm monorepo with two web applications backed by one Neon
+PostgreSQL database:
 
-- `perfumeaura.com` — public, release-gated storefront.
-- `app.perfumeaura.com` — private owner and staff operations.
+- `perfumeaura.com` — public, release-gated storefront on a Hostinger-managed
+  Node.js Web App.
+- `app.perfumeaura.com` — private owner/staff operations in a hardened container
+  on a Hostinger VPS behind Caddy.
 
 Storefront customer auth and operations auth are separate. Public catalog,
 checkout, customer auth, inquiries, and indexing remain disabled until their
@@ -18,10 +20,9 @@ release gates pass.
 
 ## Local setup
 
-Production targets Hostinger-managed Node `24.x`; live deployments currently
-use Node `24.6.0` and pnpm `10.32.1`. Repository tooling, CI, and both packers
-use that observed compatibility baseline. Use disposable loopback PostgreSQL
-for integration tests.
+Storefront production selects Hostinger-managed Node `24.x`; repository tooling,
+CI, ops image, and both packers use the pinned Node 24 compatibility baseline.
+Use disposable loopback PostgreSQL for integration tests.
 
 ```bash
 nvm use
@@ -43,9 +44,12 @@ pnpm test:integration
 pnpm storefront:pack
 pnpm ops:pack
 node scripts/verify-production-deploy.mjs <40-character-sha> \
+  --target ops \
   --public-surface storefront \
-  --public-base https://perfumeaura.com
+  --public-base https://perfumeaura.com \
+  --timeout-ms 1200000
 ```
 
-See [engineering](docs/ENGINEERING.md) for repository structure and tests and
-[operations](docs/OPERATIONS.md) for deployment and recovery.
+See [engineering](docs/ENGINEERING.md) for repository structure and tests,
+[operations](docs/OPERATIONS.md) for deployment and recovery, and
+[design QA](design-qa.md) for the historical storefront acceptance record.

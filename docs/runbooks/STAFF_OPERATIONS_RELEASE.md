@@ -1,12 +1,15 @@
 # Staff operations release checklist
 
-Run only after `CURRENT_STATE.md` shows a durable Hostinger repair. Stop at the
-first failure. Record privacy-safe production results in `CURRENT_STATE.md`.
+Read [`../CURRENT_STATE.md`](../CURRENT_STATE.md) first. Run only after the
+active VPS ops release passes fresh exact-SHA acceptance. The unresolved
+Hostinger shared-plan incident still gates managed-storefront provider changes,
+but does not gate an independently authorized VPS ops release. Stop at the first
+failure and record privacy-safe production results in `CURRENT_STATE.md`.
 
 ## Preconditions
 
-- Hostinger has supplied scoped process/restart/HCDN evidence and both apps pass
-  a fresh re-smoke.
+- Active VPS ops exact-SHA acceptance passes, and storefront locks plus the
+  path-preserving `www` redirect pass a fresh re-smoke.
 - The staff commit and deployment artifact are CI-verified.
 - `OPS_TWO_FACTOR_REQUIRED` and `OPS_STAFF_INVITES_ENABLED` are not `true`.
 - Every `STOREFRONT_*` release flag remains false.
@@ -18,20 +21,24 @@ Never use production or Neon as an integration-test database.
 ## Phase A — schema and flags-off deploy
 
 1. Create an isolated Neon branch and apply `0010_curved_puma`.
-2. Run migration and authenticated integration tests on that branch.
-3. Apply the reviewed migration to production using `DATABASE_URL_DIRECT`.
-4. Reapply `packages/db/sql/ops-runtime-grants.sql` with the reviewed runtime
+2. Validate the migration and restricted grant contract on that Neon branch;
+   do not run the integration suite there.
+3. Apply the same migration to a disposable loopback PostgreSQL database and run
+   authenticated integration tests through `TEST_DATABASE_URL`.
+4. Apply the reviewed migration to production using `DATABASE_URL_DIRECT`.
+5. Reapply `packages/db/sql/ops-runtime-grants.sql` with the reviewed runtime
    role; reject any unexpected effective privilege.
-5. Deploy ops with both security flags false.
-6. Verify exact SHA, live, ready, version, unauthenticated session, a real static
+6. Deploy ops with both security flags false.
+7. Verify exact SHA, live, ready, version, unauthenticated session, a real static
    asset, and existing owner login.
-7. Re-smoke storefront, its release locks, and the path-preserving `www` `308`.
+8. Re-smoke storefront, its release locks, and the path-preserving `www` `308`.
 
 ```bash
 node scripts/verify-production-deploy.mjs <40-character-sha> \
+  --target ops \
   --public-surface storefront \
   --public-base https://perfumeaura.com \
-  --timeout-ms 180000
+  --timeout-ms 1200000
 ```
 
 ## Phase B — owner security
@@ -103,7 +110,7 @@ zero-value cart contract remains intact.
 Completion order:
 
 ```text
-Hostinger repair
+fresh exact-SHA VPS and storefront acceptance
 → isolated migration/tests
 → production migration/grants
 → flags-off deploy and health

@@ -159,7 +159,7 @@ Owner-selected planning direction after reviewing that pattern:
 - Exact reference mapping must be resolved before generating a title; ambiguous source text cannot silently become a famous mark.
 - A non-affiliation disclaimer is planned, but its exact text, placement, and surface coverage remain pending official/legal review. The catalog does not encode a disclaimer as clearance.
 - Designer logos, copied bottles/packaging, copied images, and copied descriptions remain forbidden.
-- Designer and inspired-reference names remain disabled on bottle labels and packaging until separate explicit owner approval and India-counsel approval for that surface (COM-ADR-022). That product policy is fail-closed surface control, not legal clearance. Current work authorizes catalog planning only, not storefront implementation or publication.
+- Designer and inspired-reference names remain disabled on bottle labels and packaging until separate explicit owner approval and India-counsel approval are recorded for that surface (COM-ADR-022). That product policy is fail-closed surface control, not legal clearance. This designer-reference research authorizes catalog planning only; it does not authorize reference-name publication.
 
 ## Perfume Aura catalog source
 

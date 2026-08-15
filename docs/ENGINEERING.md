@@ -74,10 +74,11 @@ node scripts/verify-production-deploy.mjs self-test
 git diff --check
 ```
 
-`pnpm check` runs commerce verification, lint, typecheck, unit tests, both
-production builds, and the full workspace dependency audit. The audit fails on
-any known severity and also checks the separate ops runtime lock. Run
-integration tests separately with explicitly supplied disposable database URLs.
+`pnpm check` runs deployment self-tests, commerce verification, lint, typecheck,
+unit tests, both production builds, both route client-JavaScript budget checks,
+and the full workspace dependency audit. The audit fails on any known severity
+and also checks the separate ops runtime lock. Run integration tests separately
+with explicitly supplied disposable database URLs.
 
 ## CI and packages
 
@@ -125,7 +126,9 @@ customer/staff email identification without a separate privacy review.
 ## Quality and security
 
 - Use the official shadcn CLI; shared primitives belong in `packages/ui`.
-- Keep secrets only in local ignored env files or Hostinger settings.
+- Keep secrets only in ignored local env files or the owning platform's secret
+  store: Hostinger settings for storefront and root-owned VPS configuration for
+  ops.
 - Use persistent labels, semantic buttons, 44px minimum targets, inert closed
   drawers, focus restoration, and reduced-motion-safe animation.
 - Every public release flag remains false unless its owning acceptance evidence
