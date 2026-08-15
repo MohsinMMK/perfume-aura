@@ -1,7 +1,9 @@
 # Engineering
 
 - [Repository and boundaries](#repository-layout-and-boundaries)
-- [Runtime, UI, data, and auth](#locked-runtime-and-tooling)
+- [Runtime and tooling](#locked-runtime-and-tooling)
+- [Shared UI](#shared-ui-contract)
+- [Data, database, and auth](#data-database-and-auth-contracts)
 - [Local validation and CI](#local-development-and-validation)
 - [Performance engineering](#performance-engineering)
 - [Observability code and privacy](#observability-code-and-privacy)
@@ -35,7 +37,7 @@ No static marketing application or generated root publish surface remains.
 ## Locked runtime and tooling
 
 Change stack only through an explicit reviewed decision. Production is split
-between Hostinger managed hosting for storefront and a hardened Hostinger VPS
+between Hostinger-managed hosting for storefront and a hardened Hostinger VPS
 container for ops; Neon remains the shared managed database.
 
 | Area | Choice |
@@ -162,8 +164,9 @@ lines. Return movements are not netted into invoice fulfillment, and a draft lin
 ### Database package workflow
 
 `packages/db` owns Drizzle schema, migrations, the pooled `pg` client, and the
-ledger-first inventory API. `drizzle.config.ts` selects
-`DATABASE_URL_DIRECT || DATABASE_URL`; runtime code uses only the pooled URL.
+ledger-first inventory API. `drizzle.config.ts` requires
+`DATABASE_URL_DIRECT` and fails closed when it is absent; runtime code uses only
+`DATABASE_URL` through the pooled client.
 
 | Domain | Main records |
 |---|---|

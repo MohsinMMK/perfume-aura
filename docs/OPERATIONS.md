@@ -1,7 +1,7 @@
 # Operations
 
-Read [`CURRENT_STATE.md`](CURRENT_STATE.md) before any provider or database
-action.
+Read [`CURRENT_STATE.md`](CURRENT_STATE.md) before any provider, database, DNS,
+secret, or release-flag action.
 
 - [Authority and topology](#authority-topology-and-safety-boundaries)
 - [Storefront deployment and recovery](#storefront-deployment-and-recovery)

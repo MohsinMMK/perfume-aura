@@ -211,6 +211,11 @@ Only **Accepted** decisions authorize implementation assumptions. Proposed and P
 | COM-ADR-027 | 2026-08-02 | Accepted | Supersede the temporary staging-domain portion of COM-ADR-023: deploy the verified animated storefront at `perfumeaura.com`, permanently redirect `www` to the apex, retain `app.perfumeaura.com` for internal operations, and delete `shop.perfumeaura.com` after apex acceptance. | The static apex backup and Git history provide rollback material without retaining duplicate public sites. Neon remains shared and is never part of the website deletion scope. |
 | COM-ADR-028 | 2026-08-13 | Accepted | Adapt the reference site's expanded-to-compact header motion using the supplied `perfume-aura-icon.svg` and `perfume-aura-wordmark.svg` assets: the bottle icon lifts and fades on scroll while the wordmark remains as the compact identity. | The owner selected the inverse of the source site's retained-icon treatment. Use the existing GSAP/ScrollTrigger boundary, preserve native scrolling and reduced motion, and do not copy foreign marks or animation code. |
 
+Field-level supersession rule: COM-ADR-027 replaces only COM-ADR-023's temporary
+`shop.perfumeaura.com` staging-domain field. COM-ADR-023's separate storefront
+application, shared Neon source of truth, and private ops boundary remain
+accepted.
+
 ### Outstanding owner/legal inputs
 
 Accepted scope does not make catalog rows sale-ready. These facts remain required:
@@ -265,7 +270,8 @@ The check validates:
 - `docs/COMMERCE.md`, `docs/REFERENCE.md`, and their relative links;
 - the retained source PDF digest and 103-row transcription;
 - requirement and decision IDs;
-- 103 launch products and 288 approved product/size rows;
+- 103 selected launch products and 288 selected product/size rows whose sale
+  data remains fail-closed until SKU, cost, stock, and approval states pass;
 - standard INR prices and blocked Signature prices;
 - reference-mapping counts, evidence provenance, and locked identity digest;
 - fail-closed legal, packaging, content, media, SKU, cost, and stock states.

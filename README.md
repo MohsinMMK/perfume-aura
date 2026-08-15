@@ -30,12 +30,12 @@ flowchart LR
 
 | Need | Owner |
 |---|---|
-| Live releases, blockers, rollback, next actions | [CURRENT_STATE.md](docs/CURRENT_STATE.md) |
+| Live topology, exact releases, blockers, rollback, next actions | [CURRENT_STATE.md](docs/CURRENT_STATE.md) |
 | Users, routes, behavior, release locks | [PRODUCT.md](docs/PRODUCT.md) |
-| Code, stack, data, tests, CI, performance | [ENGINEERING.md](docs/ENGINEERING.md) |
+| Code, stack, data, tests, CI, performance, telemetry privacy | [ENGINEERING.md](docs/ENGINEERING.md) |
 | Hostinger, VPS, DNS, Neon, deploy, recovery | [OPERATIONS.md](docs/OPERATIONS.md) |
 | Commerce requirements, ADRs, release checklist | [COMMERCE.md](docs/COMMERCE.md) |
-| Catalog mappings, legal research, design evidence | [REFERENCE.md](docs/REFERENCE.md) |
+| Catalog mappings, legal research, design and QA evidence | [REFERENCE.md](docs/REFERENCE.md) |
 | Pending domain outcomes | [Product](docs/PRODUCT.md#pending-outcome), [Engineering](docs/ENGINEERING.md#pending-outcome), [Operations](docs/OPERATIONS.md#pending-outcome) |
 | Agent invariants and finish gates | [AGENTS.md](AGENTS.md) |
 

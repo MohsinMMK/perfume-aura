@@ -176,6 +176,8 @@ const expectedComAdr022Decision =
   "Keep designer and inspired-reference names disabled on bottle labels and packaging until separate explicit owner approval and India-counsel approval for that surface.";
 const expectedComAdr022Reason =
   "Owner-selected fail-closed product policy after REQUIREMENTS and RESEARCH conflicted on bottle-label readiness. This is packaging/surface control only. It is not trademark clearance, disclaimer approval, title clearance, or permission to use references on any other surface.";
+const requiredComAdr023FieldSupersession =
+  /Field-level supersession rule: COM-ADR-027 replaces only COM-ADR-023's temporary\s+`shop\.perfumeaura\.com` staging-domain field\. COM-ADR-023's separate storefront\s+application, shared Neon source of truth, and private ops boundary remain\s+accepted\./;
 const forbiddenLegalContradictionPattern =
   /either unfair advantage or conduct contrary|paragraphs are alternatives|grants legal clearance for public titles|permits reference use on PDP copy|permission to use references on every surface|grants trademark clearance/i;
 const requiredReviewFlags = new Set([
@@ -1072,6 +1074,12 @@ async function verifyCommerceFoundation() {
       );
     }
   }
+  assert.match(
+    decisions,
+    requiredComAdr023FieldSupersession,
+    "COM-ADR-027 must explicitly preserve the still-valid fields of COM-ADR-023",
+  );
+
   const comAdr022 = decisionRows.find(([id]) => id === "COM-ADR-022");
   assert.ok(comAdr022, "COM-ADR-022 row must exist");
   assert.equal(
