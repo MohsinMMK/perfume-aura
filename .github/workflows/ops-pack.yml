@@ -133,6 +133,12 @@ jobs:
       - name: Deploy automation self-tests
         run: pnpm deploy:self-test
 
+      - name: Commerce foundation verification
+        run: pnpm commerce:verify
+
+      - name: Commerce foundation self-tests
+        run: pnpm commerce:verify:self-test
+
       - name: Lint
         run: pnpm lint
 

@@ -1,13 +1,10 @@
 import "dotenv/config";
 import { defineConfig } from "drizzle-kit";
 
-const connectionString =
-  process.env.DATABASE_URL_DIRECT || process.env.DATABASE_URL;
+const connectionString = process.env.DATABASE_URL_DIRECT;
 
 if (!connectionString) {
-  throw new Error(
-    "Set DATABASE_URL_DIRECT (preferred for migrations) or DATABASE_URL",
-  );
+  throw new Error("DATABASE_URL_DIRECT is required for migrations");
 }
 
 export default defineConfig({

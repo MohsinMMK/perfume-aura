@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import {
   access,
   cp,
+  mkdir,
   mkdtemp,
   readFile,
   rm,
@@ -21,14 +22,8 @@ const repositoryRoot = process.env.COMMERCE_VERIFY_ROOT
 const selfTestMode = process.argv.includes("--self-test");
 
 const requiredCommerceDocuments = [
-  "docs/commerce/README.md",
-  "docs/commerce/RESEARCH.md",
-  "docs/commerce/REFERENCE-MAPPINGS.md",
-  "docs/commerce/REQUIREMENTS.md",
-  "docs/commerce/ARCHITECTURE.md",
-  "docs/commerce/DECISIONS.md",
-  "docs/commerce/VERIFICATION.md",
-  "docs/commerce/RELEASE-CHECKLIST.md",
+  "docs/COMMERCE.md",
+  "docs/REFERENCE.md",
 ];
 const catalogPath = "data/catalog/perfumes.csv";
 const launchProductPath = "data/catalog/launch-products.csv";
@@ -181,6 +176,8 @@ const expectedComAdr022Decision =
   "Keep designer and inspired-reference names disabled on bottle labels and packaging until separate explicit owner approval and India-counsel approval for that surface.";
 const expectedComAdr022Reason =
   "Owner-selected fail-closed product policy after REQUIREMENTS and RESEARCH conflicted on bottle-label readiness. This is packaging/surface control only. It is not trademark clearance, disclaimer approval, title clearance, or permission to use references on any other surface.";
+const requiredComAdr023FieldSupersession =
+  /Field-level supersession rule: COM-ADR-027 replaces only COM-ADR-023's temporary\s+`shop\.perfumeaura\.com` staging-domain field\. COM-ADR-023's separate storefront\s+application, shared Neon source of truth, and private ops boundary remain\s+accepted\./;
 const forbiddenLegalContradictionPattern =
   /either unfair advantage or conduct contrary|paragraphs are alternatives|grants legal clearance for public titles|permits reference use on PDP copy|permission to use references on every surface|grants trademark clearance/i;
 const requiredReviewFlags = new Set([
@@ -416,6 +413,27 @@ async function assertRelativeMarkdownLinks(markdownPath) {
   }
 }
 
+function assertSectionMarkers(content, documentPath, namespace, sections) {
+  for (const section of sections) {
+    const start = `<!-- ${namespace}:${section}:start -->`;
+    const end = `<!-- ${namespace}:${section}:end -->`;
+    assert.equal(
+      content.split(start).length - 1,
+      1,
+      `${documentPath} must contain exactly one ${start} marker`,
+    );
+    assert.equal(
+      content.split(end).length - 1,
+      1,
+      `${documentPath} must contain exactly one ${end} marker`,
+    );
+    assert.ok(
+      content.indexOf(start) < content.indexOf(end),
+      `${documentPath} has inverted markers for ${section}`,
+    );
+  }
+}
+
 function replaceOnce(content, search, replacement, label) {
   assert.equal(
     content.includes(search),
@@ -428,21 +446,23 @@ function replaceOnce(content, search, replacement, label) {
 async function runSelfTests() {
   const tempRoot = await mkdtemp(path.join(os.tmpdir(), "commerce-verify-"));
   const copyPairs = [
-    ["docs/commerce", "docs/commerce"],
-    ["docs/README.md", "docs/README.md"],
+    ["docs/COMMERCE.md", "docs/COMMERCE.md"],
+    ["docs/REFERENCE.md", "docs/REFERENCE.md"],
+    ["docs/CURRENT_STATE.md", "docs/CURRENT_STATE.md"],
     ["docs/PRODUCT.md", "docs/PRODUCT.md"],
     ["docs/ENGINEERING.md", "docs/ENGINEERING.md"],
     ["docs/OPERATIONS.md", "docs/OPERATIONS.md"],
-    ["docs/ROADMAP.md", "docs/ROADMAP.md"],
-    ["docs/STACK.md", "docs/STACK.md"],
     ["data/catalog", "data/catalog"],
+    ["README.md", "README.md"],
     ["AGENTS.md", "AGENTS.md"],
   ];
 
   const materializeCaseRoot = async () => {
     const caseRoot = await mkdtemp(path.join(tempRoot, "case-"));
     for (const [fromRelative, toRelative] of copyPairs) {
-      await cp(path.join(tempRoot, toRelative), path.join(caseRoot, toRelative), {
+      const destination = path.join(caseRoot, toRelative);
+      await mkdir(path.dirname(destination), { recursive: true });
+      await cp(path.join(tempRoot, toRelative), destination, {
         recursive: true,
       });
     }
@@ -460,7 +480,9 @@ async function runSelfTests() {
 
   try {
     for (const [fromRelative, toRelative] of copyPairs) {
-      await cp(path.join(defaultRepositoryRoot, fromRelative), path.join(tempRoot, toRelative), {
+      const destination = path.join(tempRoot, toRelative);
+      await mkdir(path.dirname(destination), { recursive: true });
+      await cp(path.join(defaultRepositoryRoot, fromRelative), destination, {
         recursive: true,
       });
     }
@@ -499,7 +521,7 @@ async function runSelfTests() {
     await runAgainst(
       "coordinated-identity-rewrite",
       async (root) => {
-        const registerPath = path.join(root, "docs/commerce/REFERENCE-MAPPINGS.md");
+        const registerPath = path.join(root, "docs/REFERENCE.md");
         const launchPath = path.join(root, launchProductPath);
         let register = await readFile(registerPath, "utf8");
         register = replaceOnce(
@@ -524,7 +546,7 @@ async function runSelfTests() {
     await runAgainst(
       "second-retailer-row",
       async (root) => {
-        const registerPath = path.join(root, "docs/commerce/REFERENCE-MAPPINGS.md");
+        const registerPath = path.join(root, "docs/REFERENCE.md");
         let register = await readFile(registerPath, "utf8");
         register = replaceOnce(
           register,
@@ -540,7 +562,7 @@ async function runSelfTests() {
     await runAgainst(
       "retailer-effective-url-on-official",
       async (root) => {
-        const registerPath = path.join(root, "docs/commerce/REFERENCE-MAPPINGS.md");
+        const registerPath = path.join(root, "docs/REFERENCE.md");
         let register = await readFile(registerPath, "utf8");
         register = replaceOnce(
           register,
@@ -556,7 +578,7 @@ async function runSelfTests() {
     await runAgainst(
       "unapproved-official-host",
       async (root) => {
-        const registerPath = path.join(root, "docs/commerce/REFERENCE-MAPPINGS.md");
+        const registerPath = path.join(root, "docs/REFERENCE.md");
         let register = await readFile(registerPath, "utf8");
         register = replaceOnce(
           register,
@@ -572,7 +594,7 @@ async function runSelfTests() {
     await runAgainst(
       "unreviewed-subdomain-host",
       async (root) => {
-        const registerPath = path.join(root, "docs/commerce/REFERENCE-MAPPINGS.md");
+        const registerPath = path.join(root, "docs/REFERENCE.md");
         let register = await readFile(registerPath, "utf8");
         register = replaceOnce(
           register,
@@ -588,7 +610,7 @@ async function runSelfTests() {
     await runAgainst(
       "cross-row-original-url-reuse",
       async (root) => {
-        const registerPath = path.join(root, "docs/commerce/REFERENCE-MAPPINGS.md");
+        const registerPath = path.join(root, "docs/REFERENCE.md");
         let register = await readFile(registerPath, "utf8");
         register = replaceOnce(
           register,
@@ -604,7 +626,7 @@ async function runSelfTests() {
     await runAgainst(
       "invalid-calendar-date",
       async (root) => {
-        const registerPath = path.join(root, "docs/commerce/REFERENCE-MAPPINGS.md");
+        const registerPath = path.join(root, "docs/REFERENCE.md");
         let register = await readFile(registerPath, "utf8");
         register = replaceOnce(
           register,
@@ -620,7 +642,7 @@ async function runSelfTests() {
     await runAgainst(
       "bad-section-30-wording",
       async (root) => {
-        const researchPath = path.join(root, "docs/commerce/RESEARCH.md");
+        const researchPath = path.join(root, "docs/REFERENCE.md");
         let research = await readFile(researchPath, "utf8");
         research = replaceOnce(
           research,
@@ -636,7 +658,7 @@ async function runSelfTests() {
     await runAgainst(
       "bad-section-29-8-wording",
       async (root) => {
-        const researchPath = path.join(root, "docs/commerce/RESEARCH.md");
+        const researchPath = path.join(root, "docs/REFERENCE.md");
         let research = await readFile(researchPath, "utf8");
         research = replaceOnce(
           research,
@@ -652,7 +674,7 @@ async function runSelfTests() {
     await runAgainst(
       "append-section-30-contradiction",
       async (root) => {
-        const researchPath = path.join(root, "docs/commerce/RESEARCH.md");
+        const researchPath = path.join(root, "docs/REFERENCE.md");
         let research = await readFile(researchPath, "utf8");
         research = replaceOnce(
           research,
@@ -670,7 +692,7 @@ Note: paragraphs are alternatives.`,
     await runAgainst(
       "append-section-29-contradiction",
       async (root) => {
-        const researchPath = path.join(root, "docs/commerce/RESEARCH.md");
+        const researchPath = path.join(root, "docs/REFERENCE.md");
         let research = await readFile(researchPath, "utf8");
         research = replaceOnce(
           research,
@@ -688,7 +710,7 @@ Alternatively, either unfair advantage or conduct contrary to honest practices s
     await runAgainst(
       "contradictory-com-adr-022-reason",
       async (root) => {
-        const decisionsPath = path.join(root, "docs/commerce/DECISIONS.md");
+        const decisionsPath = path.join(root, "docs/COMMERCE.md");
         let decisions = await readFile(decisionsPath, "utf8");
         decisions = replaceOnce(
           decisions,
@@ -704,7 +726,7 @@ Alternatively, either unfair advantage or conduct contrary to honest practices s
     await runAgainst(
       "append-com-adr-022-clearance",
       async (root) => {
-        const decisionsPath = path.join(root, "docs/commerce/DECISIONS.md");
+        const decisionsPath = path.join(root, "docs/COMMERCE.md");
         let decisions = await readFile(decisionsPath, "utf8");
         decisions = replaceOnce(
           decisions,
@@ -736,7 +758,7 @@ Alternatively, either unfair advantage or conduct contrary to honest practices s
     await runAgainst(
       "evidence-gap-invented-url",
       async (root) => {
-        const registerPath = path.join(root, "docs/commerce/REFERENCE-MAPPINGS.md");
+        const registerPath = path.join(root, "docs/REFERENCE.md");
         let register = await readFile(registerPath, "utf8");
         register = replaceOnce(
           register,
@@ -768,9 +790,9 @@ Alternatively, either unfair advantage or conduct contrary to honest practices s
     await runAgainst(
       "digest-constant-bypass",
       async (root) => {
-        const registerPath = path.join(root, "docs/commerce/REFERENCE-MAPPINGS.md");
+        const registerPath = path.join(root, "docs/REFERENCE.md");
         const launchPath = path.join(root, launchProductPath);
-        const decisionsPath = path.join(root, "docs/commerce/DECISIONS.md");
+        const decisionsPath = path.join(root, "docs/COMMERCE.md");
         let register = await readFile(registerPath, "utf8");
         register = replaceOnce(
           register,
@@ -880,10 +902,33 @@ async function verifyCommerceFoundation() {
     );
     await assertRelativeMarkdownLinks(documentPath);
   }
-  await assertRelativeMarkdownLinks("docs/README.md");
+  await assertRelativeMarkdownLinks("README.md");
+
+  const commerceDocument = await readFile(
+    path.join(repositoryRoot, "docs/COMMERCE.md"),
+    "utf8",
+  );
+  const referenceDocument = await readFile(
+    path.join(repositoryRoot, "docs/REFERENCE.md"),
+    "utf8",
+  );
+  assertSectionMarkers(commerceDocument, "docs/COMMERCE.md", "commerce", [
+    "contract",
+    "architecture",
+    "requirements",
+    "decisions",
+    "verification",
+    "release-checklist",
+  ]);
+  assertSectionMarkers(referenceDocument, "docs/REFERENCE.md", "reference", [
+    "research",
+    "mapping-register",
+    "storefront-design",
+    "evidence",
+  ]);
 
   const requirements = await readFile(
-    path.join(repositoryRoot, "docs/commerce/REQUIREMENTS.md"),
+    path.join(repositoryRoot, "docs/COMMERCE.md"),
     "utf8",
   );
   const requirementRows = requirements
@@ -917,7 +962,7 @@ async function verifyCommerceFoundation() {
   }
 
   const decisions = await readFile(
-    path.join(repositoryRoot, "docs/commerce/DECISIONS.md"),
+    path.join(repositoryRoot, "docs/COMMERCE.md"),
     "utf8",
   );
   const decisionRows = decisions
@@ -945,6 +990,9 @@ async function verifyCommerceFoundation() {
     decisionRows.map(([id, , status]) => [id, status]),
   );
   for (const [id, expectedStatus] of [
+    ["COM-ADR-004", "Superseded"],
+    ["COM-ADR-005", "Superseded"],
+    ["COM-ADR-006", "Superseded"],
     ["COM-ADR-007", "Superseded"],
     ["COM-ADR-008", "Superseded"],
     ["COM-ADR-009", "Superseded"],
@@ -1009,7 +1057,7 @@ async function verifyCommerceFoundation() {
     ],
     [
       "COM-ADR-021",
-      "Approve the 46 clear brand/reference strings listed in [`REFERENCE-MAPPINGS.md`](./REFERENCE-MAPPINGS.md) as `owner_approved_title_reference` mappings for inspired-title planning.",
+      "Approve the 46 clear brand/reference strings listed in [`REFERENCE.md`](REFERENCE.md) as `owner_approved_title_reference` mappings for inspired-title planning.",
     ],
     [
       "COM-ADR-022",
@@ -1026,6 +1074,12 @@ async function verifyCommerceFoundation() {
       );
     }
   }
+  assert.match(
+    decisions,
+    requiredComAdr023FieldSupersession,
+    "COM-ADR-027 must explicitly preserve the still-valid fields of COM-ADR-023",
+  );
+
   const comAdr022 = decisionRows.find(([id]) => id === "COM-ADR-022");
   assert.ok(comAdr022, "COM-ADR-022 row must exist");
   assert.equal(
@@ -1045,7 +1099,7 @@ async function verifyCommerceFoundation() {
   );
 
   const research = await readFile(
-    path.join(repositoryRoot, "docs/commerce/RESEARCH.md"),
+    path.join(repositoryRoot, "docs/REFERENCE.md"),
     "utf8",
   );
   assert.ok(
@@ -1090,7 +1144,7 @@ async function verifyCommerceFoundation() {
     "TRUST-001 must require counsel approval for every intended surface",
   );
   const releaseChecklist = await readFile(
-    path.join(repositoryRoot, "docs/commerce/RELEASE-CHECKLIST.md"),
+    path.join(repositoryRoot, "docs/COMMERCE.md"),
     "utf8",
   );
   assert.ok(
@@ -1114,7 +1168,7 @@ async function verifyCommerceFoundation() {
   );
 
   const referenceMappingDocument = await readFile(
-    path.join(repositoryRoot, "docs/commerce/REFERENCE-MAPPINGS.md"),
+    path.join(repositoryRoot, "docs/REFERENCE.md"),
     "utf8",
   );
   const normalizeMappingCell = (value) => (value === "—" ? "" : value);
