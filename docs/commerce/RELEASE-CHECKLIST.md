@@ -119,7 +119,7 @@ No item is complete until supported by current evidence in `VERIFICATION.md`. A 
 - [ ] Logs checked for auth, payment, order, inventory, and server errors
 - [ ] Failed requests and third-party errors reviewed
 - [ ] Release evidence completed in `VERIFICATION.md`
-- [ ] Optional local Graphify analysis regenerated if useful; it is not release
-  evidence and is not committed
+> Optional: regenerate local Graphify analysis when useful. It is not release
+> evidence, is not committed, and never blocks checklist completion.
 - [ ] Roadmap and owning current docs updated
 - [ ] Rollback decision window closed explicitly

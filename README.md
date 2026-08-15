@@ -3,7 +3,7 @@
 Perfume Aura is a pnpm monorepo with two web applications backed by one Neon
 PostgreSQL database:
 
-- `perfumeaura.com` — public, release-gated storefront on a Hostinger managed
+- `perfumeaura.com` — public, release-gated storefront on a Hostinger-managed
   Node.js Web App.
 - `app.perfumeaura.com` — private owner/staff operations in a hardened container
   on a Hostinger VPS behind Caddy.
