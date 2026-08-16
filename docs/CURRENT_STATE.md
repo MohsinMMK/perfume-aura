@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-16 12:14:29 UTC**
+Last refreshed: **2026-08-16 12:42:30 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -74,6 +74,14 @@ verification. The generated branch is exact commit
 marker report the exact source, dynamic HTML uses `private, no-cache, no-store`,
 and the `www` redirect preserves path and query.
 
+At 2026-08-16 12:41 UTC, explicit owner authorization opened only
+`STOREFRONT_PREVIEW_CATALOG`. Hostinger saved the environment change and
+automatically redeployed the same generated commit and exact source. The
+deployment completed, `/shop` returned `200`, and a fresh production browser
+session showed exactly the three Signature Series previews (Regent Noir, Azure
+Tides, and Petalia Noir) and three Standard Series previews (Standard scent
+01, 02, and 03). No product source or catalog data changed.
+
 The first live verifier exposed stale HCDN homepage HTML from source
 `917499d7dae04aa04697a7af7fd3d062c029c7f6` because the statically rendered
 root advertised a one-year shared-cache lifetime. A scoped cache clear restored
@@ -119,9 +127,10 @@ remains monitoring infrastructure.
 
 ## Release locks and acceptance
 
-All storefront release flags remain closed: public catalog, preview catalog,
-checkout approval, customer authentication, and inquiries. `robots.txt`
-disallows indexing. `OPS_TWO_FACTOR_REQUIRED` and
+Only the six-product storefront preview catalog is open. The public catalog,
+checkout approval, customer authentication, and inquiries remain closed, as
+confirmed in Hostinger after the redeployment. `robots.txt` disallows indexing.
+`OPS_TWO_FACTOR_REQUIRED` and
 `OPS_STAFF_INVITES_ENABLED` remain false until the complete staff release gate
 passes. Green health never authorizes opening a release flag.
 
