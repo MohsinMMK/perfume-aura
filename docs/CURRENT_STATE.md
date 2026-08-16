@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-16 18:13:18 UTC**
+Last refreshed: **2026-08-16 20:38:59 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -64,20 +64,23 @@ The storefront is a GitHub-connected Hostinger Node.js Web App following
 `./`, no build command or output directory, and entry
 `apps/storefront/server.js`. Repository variable
 `HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` enables exact live verification
-after the generated branch is published. PR #36 merged as exact source
-`13490d8e8c0c704d1e1f10670b26239be6b1c3c2`. Its push automatically started
+after the generated branch is published. PR #38 merged as exact source
+`bb1bd2fe9a14fa1c14b167b354c512e81e96624a`. Its push automatically started
 workflow run
-[`31963658075`](https://github.com/MohsinMMK/perfume-aura/actions/runs/31963658075),
+[`31970873845`](https://github.com/MohsinMMK/perfume-aura/actions/runs/31970873845),
 which passed quality, disposable-PostgreSQL integration, verified packaging,
-generated-branch publication, Hostinger auto-deployment, VPS ops deployment,
-and exact public verification. The generated branch is exact commit
-`40ee1d834c03ef9784a523405eb2c71bcc1f7162`. The apex version and ordinary HTML
-marker report the exact source, dynamic HTML uses `private, no-cache, no-store`,
-and the `www` redirect preserves path and query.
+generated-branch publication, Hostinger auto-deployment, and exact public
+verification at 2026-08-16 20:38:59 UTC. The VPS ops publish job stayed skipped
+because this changeset was storefront-only; ops remains exact source
+`13490d8e8c0c704d1e1f10670b26239be6b1c3c2`. The generated storefront branch is
+exact commit `1e5bced144c14e71e80b101bb5f6fd328f5a6ecc`. The apex version and
+ordinary HTML marker report the exact storefront source, dynamic HTML uses
+`private, no-cache, no-store`, and the `www` redirect preserves `/shop?probe=1`.
 
-A production `/shop` check at 2026-08-16 18:13:18 UTC showed the 69-product
+A production `/shop` check at 2026-08-16 20:38:59 UTC showed the 69-product
 launch listing: 21 Signature names and 48 `Inspired by <approved reference>`
-titles. Incomplete inspired rows such as Heaven Rose remain absent. Add-to-cart
+titles, the shortened shop title and grid, and locked `View scent` actions.
+Incomplete inspired rows such as Heaven Rose remain absent. Add-to-cart
 and Buy now remain closed. Checkout, public release, customer authentication,
 and inquiries stay closed. Inspired-by titles are listing identity only and
 are not India-counsel clearance. Production Neon was not imported or migrated.
@@ -178,6 +181,12 @@ durable repair. Do not use plan-wide process controls as a workaround.
   listing. Its merge automatically deployed and verified exact source
   `13490d8e8c0c704d1e1f10670b26239be6b1c3c2` on both the storefront and VPS ops
   surfaces.
+- PR #37 recorded that launch-listing release. Its Markdown-only merge did not
+  publish or deploy either surface.
+- PR #38 tightened the storefront to the Bucks Sauce visual rhythm. Its merge
+  automatically deployed and independently verified exact storefront source
+  `bb1bd2fe9a14fa1c14b167b354c512e81e96624a` without changing the live VPS ops
+  source or any commerce release lock.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
   deployment path.
