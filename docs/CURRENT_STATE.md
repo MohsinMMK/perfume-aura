@@ -68,8 +68,9 @@ after the generated branch is published. Workflow run
 passed quality, disposable-PostgreSQL integration, packaging, and branch
 publication for exact source
 `484a20897803d923e69f50913bbd27283588e932`. Hostinger automatically deployed
-generated commit `918a7f30` at 2026-08-16 11:48 UTC. The apex version endpoint
-reported the exact source and the `www` redirect preserved path and query.
+generated commit `918a7f30741e0dfc2ab186136754953d4a823155` at 2026-08-16
+11:48 UTC. The apex version endpoint reported the exact source and the `www`
+redirect preserved path and query.
 
 The first live verifier exposed stale HCDN homepage HTML from source
 `917499d7dae04aa04697a7af7fd3d062c029c7f6` because the statically rendered
@@ -91,9 +92,13 @@ earlier than 2026-08-16 14:47:58 UTC, and only with explicit authorization and
 fresh exact-SHA acceptance evidence. Do not publish new ops releases to it or
 change public DNS back outside an authorized rollback.
 
-The verified storefront ZIP remains an emergency storefront recovery path. A
-fresh Hostinger backup completed at 2026-08-16 11:26 UTC. The prior upload app
-is retained as a rollback target at
+The pre-cutover recovery ZIP remains exact source
+`917499d7dae04aa04697a7af7fd3d062c029c7f6`. PR #33 workflow run
+[`31945612686`](https://github.com/MohsinMMK/perfume-aura/actions/runs/31945612686)
+also produced a checksum-verified storefront package from exact source
+`6a87e03331909961c81879a8daab2f155830401a`, after the dynamic-root correction.
+A fresh Hostinger backup completed at 2026-08-16 11:26 UTC. The prior upload
+app is retained as a rollback target at
 `perfumeaura-com-642844.hostingersite.com`; do not reassign the apex to it
 outside an authorized rollback.
 

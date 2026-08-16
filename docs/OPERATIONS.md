@@ -158,7 +158,10 @@ If exact verification fails, do not automatically roll back, stop plan-wide
 processes, or republish an older source. Inspect the scoped failure. The root
 layout must remain dynamically rendered so HCDN does not retain release-marked
 HTML across deployments; immutable Next assets may remain cached. Use the
-known-good ZIP or a scoped HCDN purge only with explicit authorization.
+known-good ZIP only with explicit authorization and the owning release gate
+recorded in `CURRENT_STATE.md`; follow it with exact-SHA and clean-browser
+verification. Use a scoped HCDN purge only with explicit authorization and
+record its result in `CURRENT_STATE.md`.
 
 ## Current outcome
 
