@@ -5,6 +5,8 @@ import { StorefrontShell } from "@/components/storefront-shell";
 import { getOptionalEmbeddedBuildSourceCommit } from "@/lib/build-version";
 import "./globals.css";
 
+export const dynamic = "force-dynamic";
+
 const manrope = localFont({
   src: "./fonts/manrope-latin.woff2",
   variable: "--font-manrope",
