@@ -86,34 +86,36 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
           </div>
         </div>
 
-        <div className="flex items-center px-5 pb-8 pt-4 sm:px-10 sm:py-12 lg:px-12 lg:pb-6 lg:pt-20 xl:px-16">
-          <div className="w-full max-w-2xl">
-            <Link href="/shop" className="inline-flex min-h-8 items-center font-display text-lg text-[color:rgb(245_228_199_/_62%)] underline-offset-8 hover:underline">Shop / {product.collectionSlug === "signature" ? "Signature" : "Collection"}</Link>
-            <h1 className="font-display mt-1 text-[clamp(3.6rem,7vw,7.8rem)] leading-[0.77]">{product.name}</h1>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_62%)] max-sm:line-clamp-2">{product.summary}</p>
-            <p className="font-display mt-4 text-4xl">{firstPrice ? `From ${formatMoney(firstPrice)}` : "Price not available yet"}</p>
+        <div className="flex items-end px-5 pb-8 pt-4 sm:px-10 sm:py-12 lg:min-h-[100svh] lg:px-3 lg:pb-3 lg:pt-24 xl:px-5">
+          <div className="w-full">
+            <div className="lg:text-center">
+              <Link href="/shop" className="inline-flex min-h-8 items-center font-display text-lg text-[color:rgb(245_228_199_/_62%)] underline-offset-8 hover:underline">Shop / {product.collectionSlug === "signature" ? "Signature" : "Collection"}</Link>
+              <h1 className="font-display mt-1 text-[clamp(3.6rem,7vw,7.8rem)] leading-[0.77] lg:mx-auto lg:max-w-[8.5ch]">{product.name}</h1>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_62%)] max-sm:line-clamp-2 lg:mx-auto lg:max-w-[30rem]">{product.summary}</p>
+            </div>
+            <p className="font-display mt-4 text-4xl lg:mt-5 lg:px-2">{firstPrice ? `From ${formatMoney(firstPrice)}` : "Price not available yet"}</p>
 
-            <div className="mt-5 hidden grid-cols-2 gap-2 sm:grid">
-              <div className="rounded-[0.65rem] border border-[color:rgb(245_228_199_/_28%)] p-3">
+            <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:mt-6">
+              <div className="flex min-h-28 flex-col justify-between rounded-[0.65rem] border border-[color:rgb(245_228_199_/_28%)] p-4 lg:min-h-40 lg:p-5">
                 <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-[var(--aura-text-muted-on-ink)]">Scent profile</p>
-                <p className="font-display mt-2 text-2xl">{detailValue(product.family)}</p>
+                <p className="font-display mt-4 text-2xl lg:text-[2rem] lg:leading-none">{detailValue(product.family)}</p>
               </div>
-              <div className="rounded-[0.65rem] border border-[color:rgb(245_228_199_/_28%)] p-3">
+              <div className="flex min-h-28 flex-col justify-between rounded-[0.65rem] border border-[color:rgb(245_228_199_/_28%)] p-4 lg:min-h-40 lg:p-5">
                 <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-[var(--aura-text-muted-on-ink)]">Made for</p>
-                <p className="font-display mt-2 text-2xl">{detailValue(product.occasion)}</p>
+                <p className="font-display mt-4 text-2xl lg:text-[2rem] lg:leading-none">{detailValue(product.occasion)}</p>
               </div>
-            </div>
 
-            <div className="mt-4 hidden grid-cols-3 border-y border-dashed border-[color:rgb(245_228_199_/_25%)] py-3 text-center sm:grid">
-              {productAssurances.map(([icon, label]) => (
-                <div key={label} className="grid min-h-14 place-items-center border-r border-dashed border-[color:rgb(245_228_199_/_22%)] px-2 last:border-r-0">
-                  <HugeiconsIcon icon={icon} strokeWidth={1.5} className="size-5" />
-                  <span className="text-[0.56rem] uppercase tracking-[0.1em] text-[color:rgb(245_228_199_/_55%)]">{label}</span>
-                </div>
-              ))}
-            </div>
+              <div className="grid min-h-40 grid-cols-3 overflow-hidden rounded-[0.65rem] border border-[color:rgb(245_228_199_/_28%)] text-center">
+                {productAssurances.map(([icon, label]) => (
+                  <div key={label} className="grid place-items-center border-r border-[color:rgb(245_228_199_/_22%)] px-2 py-5 last:border-r-0">
+                    <HugeiconsIcon icon={icon} strokeWidth={1.5} className="size-7" />
+                    <span className="text-[0.58rem] uppercase tracking-[0.1em] text-[color:rgb(245_228_199_/_55%)]">{label}</span>
+                  </div>
+                ))}
+              </div>
 
-            <AddToCart product={product} />
+              <AddToCart product={product} />
+            </div>
           </div>
         </div>
       </section>

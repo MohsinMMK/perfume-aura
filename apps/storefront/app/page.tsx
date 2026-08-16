@@ -151,13 +151,32 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section data-motion-journey className="relative overflow-x-clip bg-[var(--aura-ink)] px-3 py-20 text-[var(--aura-ivory)] sm:px-5 lg:min-h-[280svh] lg:py-0">
-        <div className="mx-auto max-w-[94rem] lg:sticky lg:top-0 lg:flex lg:h-[100svh] lg:max-w-none lg:flex-col lg:justify-center lg:overflow-hidden">
+      <section data-motion-journey className="relative overflow-x-clip bg-[var(--aura-ink)] px-3 py-20 text-[var(--aura-ivory)] sm:px-5 lg:py-0">
+        <div data-motion-journey-pin className="mx-auto max-w-[94rem] lg:flex lg:h-[100svh] lg:max-w-none lg:flex-col lg:justify-center lg:overflow-hidden">
           <div className="relative z-10 mb-14 lg:mb-16 lg:px-8">
-            <h2 className="font-display">
-              <span data-motion-horizontal className="block -rotate-2 text-[clamp(5rem,14vw,13rem)] leading-[0.72]">Why Perfume</span>
-              <span data-motion-horizontal className="text-outline ml-[8vw] block rotate-1 text-[clamp(5rem,14vw,13rem)] leading-[0.72]">Aura</span>
-            </h2>
+            <h2 className="sr-only">Why Perfume Aura</h2>
+            <div data-motion-horizontal className="-ml-[25vw] w-[150vw] sm:-ml-[10vw] sm:w-[120vw] lg:ml-0 lg:w-full" aria-hidden="true">
+              <svg viewBox="0 0 1000 360" className="h-auto w-full overflow-visible" focusable="false">
+                <defs>
+                  <path id="why-perfume-aura-arc" d="M 196 216 A 430 430 0 0 1 804 216" />
+                </defs>
+                <text
+                  className="font-display"
+                  fill="var(--aura-ivory)"
+                  fontSize="108"
+                  letterSpacing="-2"
+                >
+                  <textPath
+                    href="#why-perfume-aura-arc"
+                    startOffset="0"
+                    textLength="675"
+                    lengthAdjust="spacingAndGlyphs"
+                  >
+                    WHY PERFUME <tspan fill="transparent" stroke="var(--aura-ivory)" strokeWidth="1.5" paintOrder="stroke">AURA</tspan>
+                  </textPath>
+                </text>
+              </svg>
+            </div>
             <p className="ml-auto mt-10 max-w-xl text-xl leading-8 text-[color:rgb(245_228_199_/_76%)]">A guided way to move from atmosphere to composition—without needing to know every note by name.</p>
           </div>
 

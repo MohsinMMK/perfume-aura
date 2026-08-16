@@ -40,47 +40,47 @@ export function AddToCart({ product }: Readonly<{ product: StorefrontProduct }>)
   }
 
   return (
-    <div className="border-t border-dashed border-[color:rgb(245_228_199_/_28%)] pt-4 text-[var(--aura-ivory)]">
-      <div className="grid grid-cols-[1fr_8.5rem] gap-3">
-        <div>
-          <label htmlFor="product-size" className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em]">
+    <div className="grid gap-2 text-[var(--aura-ivory)] sm:col-start-2 sm:row-start-2">
+      <div className="grid min-h-[4.75rem] grid-cols-[1fr_8.5rem] overflow-hidden rounded-[0.65rem] border border-[color:rgb(245_228_199_/_35%)] lg:grid-cols-[1fr_10rem]">
+        <div className="grid content-center px-2">
+          <label htmlFor="product-size" className="sr-only">
             Size
           </label>
           <NativeSelect
             id="product-size"
             value={variantId}
             onChange={(event) => setVariantId(event.target.value)}
-            className="w-full border-[color:rgb(245_228_199_/_35%)] text-[var(--aura-ivory)]"
+            className="w-full text-[var(--aura-ivory)] [&_select]:h-14 [&_select]:rounded-none [&_select]:border-0 [&_select]:bg-transparent [&_select]:px-3 [&_select]:text-base"
           >
             {product.variants.map((option) => (
               <NativeSelectOption key={option.id} value={option.id}>
-                {option.sizeMl} ml{option.price ? ` — ${formatMoney(option.price)}` : " — price unavailable"}
+                {option.sizeMl} ml{option.price ? ` — ${formatMoney(option.price)}` : ""}
               </NativeSelectOption>
             ))}
           </NativeSelect>
         </div>
-        <div>
-          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em]">Quantity</span>
-          <div className="flex rounded-[0.55rem] border border-[color:rgb(245_228_199_/_35%)]">
+        <div className="grid border-l border-[color:rgb(245_228_199_/_35%)]">
+          <span className="sr-only">Quantity</span>
+          <div className="flex items-center">
             <Button
               type="button"
               variant="ghost"
               size="icon-lg"
-              className="min-h-11 min-w-11 rounded-[0.5rem] text-[var(--aura-ivory)] hover:bg-white/10 hover:text-white"
+              className="min-h-14 min-w-11 rounded-none text-[var(--aura-ivory)] hover:bg-white/10 hover:text-white"
               aria-label="Decrease quantity"
               disabled={quantity === 1}
               onClick={() => setQuantity((value) => Math.max(1, value - 1))}
             >
               <HugeiconsIcon icon={MinusSignIcon} strokeWidth={1.8} />
             </Button>
-            <output className="grid min-h-11 min-w-10 flex-1 place-items-center" aria-live="polite">
+            <output className="grid min-h-14 min-w-10 flex-1 place-items-center text-base" aria-live="polite">
               {quantity}
             </output>
             <Button
               type="button"
               variant="ghost"
               size="icon-lg"
-              className="min-h-11 min-w-11 rounded-[0.5rem] text-[var(--aura-ivory)] hover:bg-white/10 hover:text-white"
+              className="min-h-14 min-w-11 rounded-none text-[var(--aura-ivory)] hover:bg-white/10 hover:text-white"
               aria-label="Increase quantity"
               disabled={quantity === 10}
               onClick={() => setQuantity((value) => Math.min(10, value + 1))}
@@ -93,18 +93,15 @@ export function AddToCart({ product }: Readonly<{ product: StorefrontProduct }>)
       <Button
         type="button"
         size="lg"
-        className="mt-4 min-h-16 w-full rounded-[0.65rem] bg-[var(--aura-brass)] font-display text-xl text-[var(--aura-ink)] hover:bg-[var(--aura-ivory)]"
+        className="min-h-[4.75rem] w-full justify-between rounded-[0.65rem] bg-[var(--aura-brass)] px-6 font-display text-xl text-[var(--aura-ink)] hover:bg-[var(--aura-ivory)] lg:text-2xl"
         disabled={!purchasable || loading}
         onClick={submit}
       >
-        {purchasable
-          ? loading
-            ? "Updating cart…"
-            : `Add to cart · ${variant?.price ? formatMoney(variant.price) : ""}`
-          : "Not available yet"}
+        <span>{purchasable ? loading ? "Updating cart…" : "Add to cart" : "Not available yet"}</span>
+        <span>{variant?.price ? formatMoney(variant.price) : "Preview"}</span>
       </Button>
       {error && <p role="alert" className="mt-3 text-sm text-red-300">{error}</p>}
-      <p className="mt-3 text-xs leading-5 text-[var(--aura-text-muted-on-ink)]">
+      <p className="text-xs leading-5 text-[var(--aura-text-muted-on-ink)] sm:hidden">
         {purchasable
           ? "Price and availability are checked again whenever your cart changes."
           : "This scent is not available to purchase yet."}
