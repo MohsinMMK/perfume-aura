@@ -98,7 +98,7 @@ export function AddToCart({ product }: Readonly<{ product: StorefrontProduct }>)
         onClick={submit}
       >
         <span>{purchasable ? loading ? "Updating cart…" : "Add to cart" : "Not available yet"}</span>
-        <span>{variant?.price ? formatMoney(variant.price) : "Preview"}</span>
+        <span>{variant?.price ? formatMoney(variant.price) : "Unpriced"}</span>
       </Button>
       {error && <p role="alert" className="mt-3 text-sm text-red-300">{error}</p>}
       <p className="text-xs leading-5 text-[var(--aura-text-muted-on-ink)] sm:hidden">

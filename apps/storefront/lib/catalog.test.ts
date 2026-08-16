@@ -4,6 +4,7 @@ import {
   isPreviewCatalogEnabled,
   isPublicCatalogEnabled,
 } from "./catalog-policy";
+import { getFeaturedProducts, getStorefrontCollection, getStorefrontProducts } from "./catalog";
 import { readReleaseLockedCart } from "./cart-store";
 
 describe("storefront public release boundary", () => {
@@ -27,6 +28,26 @@ describe("storefront public release boundary", () => {
       isPreviewCatalogEnabled({ STOREFRONT_PREVIEW_CATALOG: "true" }),
       true,
     );
+  });
+
+  it("serves the 69-product listing workbook without a public-release flag", async () => {
+    const previous = process.env.STOREFRONT_PUBLIC_RELEASE;
+    delete process.env.STOREFRONT_PUBLIC_RELEASE;
+    try {
+      const products = await getStorefrontProducts();
+      const inspired = await getStorefrontCollection("inspired");
+      const featured = await getFeaturedProducts();
+      assert.equal(products.length, 69);
+      assert.equal(inspired?.products.length, 48);
+      assert.equal(featured.length, 3);
+      assert.equal(
+        products.some((product) => product.slug === "standard-preview-1"),
+        false,
+      );
+    } finally {
+      if (previous === undefined) delete process.env.STOREFRONT_PUBLIC_RELEASE;
+      else process.env.STOREFRONT_PUBLIC_RELEASE = previous;
+    }
   });
 
   it("returns an empty disabled cart while commerce is release-locked", () => {

@@ -191,3 +191,7 @@ Next actions:
    rollback window, storefront Git-path decision, and scoped Hostinger incident
    evidence. Follow procedures in [`OPERATIONS.md`](OPERATIONS.md) and
    [`ENGINEERING.md`](ENGINEERING.md); do not start releases from this file.
+5. After this catalog-listing change deploys, `/shop` should show 21 Signature
+   and 48 Inspired-by listings from the launch workbook. Checkout, public
+   release, and production Neon import stay closed. Do not treat Inspired-by
+   titles as India-counsel clearance.
