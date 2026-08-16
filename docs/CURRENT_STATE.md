@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-16 11:50:00 UTC**
+Last refreshed: **2026-08-16 12:14:29 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -63,14 +63,16 @@ The storefront is a GitHub-connected Hostinger Node.js Web App following
 `./`, no build command or output directory, and entry
 `apps/storefront/server.js`. Repository variable
 `HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` enables exact live verification
-after the generated branch is published. Workflow run
-[`31945056868`](https://github.com/MohsinMMK/perfume-aura/actions/runs/31945056868)
-passed quality, disposable-PostgreSQL integration, packaging, and branch
-publication for exact source
-`484a20897803d923e69f50913bbd27283588e932`. Hostinger automatically deployed
-generated commit `918a7f30741e0dfc2ab186136754953d4a823155` at 2026-08-16
-11:48 UTC. The apex version endpoint reported the exact source and the `www`
-redirect preserved path and query.
+after the generated branch is published. PR #33 merged as exact source
+`35f187877290e44eb97c773d8d9dddefb7355ee1`. Its push automatically started
+workflow run
+[`31946168431`](https://github.com/MohsinMMK/perfume-aura/actions/runs/31946168431),
+which passed quality, disposable-PostgreSQL integration, verified packaging,
+generated-branch publication, Hostinger auto-deployment, and exact public
+verification. The generated branch is exact commit
+`faabecb98523c3e28c806d720f7491609779ea08`. The apex version and ordinary HTML
+marker report the exact source, dynamic HTML uses `private, no-cache, no-store`,
+and the `www` redirect preserves path and query.
 
 The first live verifier exposed stale HCDN homepage HTML from source
 `917499d7dae04aa04697a7af7fd3d062c029c7f6` because the statically rendered
@@ -93,10 +95,9 @@ fresh exact-SHA acceptance evidence. Do not publish new ops releases to it or
 change public DNS back outside an authorized rollback.
 
 The pre-cutover recovery ZIP remains exact source
-`917499d7dae04aa04697a7af7fd3d062c029c7f6`. PR #33 workflow run
-[`31945612686`](https://github.com/MohsinMMK/perfume-aura/actions/runs/31945612686)
-also produced a checksum-verified storefront package from exact source
-`6a87e03331909961c81879a8daab2f155830401a`, after the dynamic-root correction.
+`917499d7dae04aa04697a7af7fd3d062c029c7f6`. Workflow run `31946168431` also
+produced a checksum-verified storefront package from exact source
+`35f187877290e44eb97c773d8d9dddefb7355ee1`, after the dynamic-root correction.
 A fresh Hostinger backup completed at 2026-08-16 11:26 UTC. The prior upload
 app is retained as a rollback target at
 `perfumeaura-com-642844.hostingersite.com`; do not reassign the apex to it
@@ -159,9 +160,11 @@ durable repair. Do not use plan-wide process controls as a workaround.
   valid multi-commit push baseline.
 - PR #31 fixed that classifier checkout. Its merge deployed and independently
   verified exact ops source `774ca0bd7fc042a14cf6005cf79b2827082fc205` and
-  refreshed the disconnected storefront branch to the same source; the live
-  upload-sourced storefront remains exact source
-  `917499d7dae04aa04697a7af7fd3d062c029c7f6`.
+  refreshed the then-disconnected storefront branch to the same source.
+- PR #33 connected the protected publication flow to the live Hostinger Web
+  App and made storefront HTML dynamic. Its merge automatically deployed and
+  verified exact storefront source
+  `35f187877290e44eb97c773d8d9dddefb7355ee1` without manual redeployment.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
   deployment path.
@@ -171,14 +174,11 @@ Next actions:
 1. Preserve and monitor the frozen Hostinger ops rollback until
    2026-08-16 14:47:58 UTC; remove it only with explicit authorization and
    fresh exact-SHA acceptance evidence after that deadline.
-2. Complete the dynamic-HTML cache correction through the protected flow and
-   prove one subsequent GitHub-triggered Hostinger deployment with exact
-   HCDN/browser acceptance and no manual redeploy.
-3. Keep storefront commerce and staff security flags closed.
-4. Staff release and VPS ops observability may proceed independently after a
+2. Keep storefront commerce and staff security flags closed.
+3. Staff release and VPS ops observability may proceed independently after a
    fresh exact-SHA VPS acceptance and their owning authorization gates pass;
    the unresolved shared-plan incident does not block that VPS-only work.
-5. Managed-storefront provider or observability changes remain gated by the
+4. Managed-storefront provider or observability changes remain gated by the
    rollback window, storefront Git-path decision, and scoped Hostinger incident
    evidence. Follow procedures in [`OPERATIONS.md`](OPERATIONS.md) and
    [`ENGINEERING.md`](ENGINEERING.md); do not start releases from this file.
