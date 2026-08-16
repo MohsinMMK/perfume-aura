@@ -6,8 +6,8 @@
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
 
 :root {
-  --aura-font-sans: "Inter Tight Variable", Arial, system-ui, sans-serif;
-  --aura-font-display: "Bebas Neue", Arial, system-ui, sans-serif;
+  --aura-font-sans: "Inter Tight Variable", arial, system-ui, sans-serif;
+  --aura-font-display: "Bebas Neue", arial, system-ui, sans-serif;
   --aura-gutter: 0.625rem;
   --aura-gutter-lg: 1.25rem;
   --aura-gap: 0.625rem;

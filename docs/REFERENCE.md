@@ -370,9 +370,9 @@ Rows left `needs_owner_input` include generic names, gender/flanker choices, or 
 <!-- reference:storefront-design:start -->
 ## Storefront design
 
-Source snapshot: **2026-08-16**, with the 2026-08-17 storefront fidelity pass
-applied against that recrawl. Public websites and build assets can change;
-re-capture the reference before a later visual rewrite.
+Source snapshot: **2026-08-16**, with the storefront fidelity pass in this
+release applied against that recrawl. Public websites and build assets can
+change; re-capture the reference before a later visual rewrite.
 
 This record makes COM-ADR-026 repeatable. It documents the Bucks Sauce design
 system and interaction grammar that Perfume Aura may adapt while keeping its

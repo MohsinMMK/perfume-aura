@@ -23,17 +23,27 @@ export function AboutBottleStage() {
 
   useEffect(() => {
     const motion = window.matchMedia("(prefers-reduced-motion: no-preference)");
-    if (!motion.matches) return undefined;
+    let timer: number | undefined;
+    const stop = () => {
+      if (timer !== undefined) {
+        window.clearInterval(timer);
+        timer = undefined;
+      }
+    };
+    const syncMotionPreference = () => {
+      stop();
+      if (motion.matches) {
+        timer = window.setInterval(() => {
+          setActiveIndex((current) => (current + 1) % frames.length);
+        }, 2200);
+      }
+    };
 
-    const timer = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % frames.length);
-    }, 2200);
-
-    const stop = () => window.clearInterval(timer);
-    motion.addEventListener("change", stop);
+    syncMotionPreference();
+    motion.addEventListener("change", syncMotionPreference);
     return () => {
       stop();
-      motion.removeEventListener("change", stop);
+      motion.removeEventListener("change", syncMotionPreference);
     };
   }, []);
 
