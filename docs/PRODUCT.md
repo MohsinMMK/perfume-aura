@@ -56,6 +56,10 @@ capability.
 - Standard scents: 30 ml ₹600, 50 ml ₹800, 100 ml ₹1,400.
 - Signature scents: 50 ml and 105 ml only, with explicit owner-approved INR
   prices required per product.
+- Storefront listing titles for the 48 mapped inspired rows use
+  `Inspired by <brand> <reference>` (COM-ADR-029). That is listing identity,
+  not legal clearance or sale approval. The 34 incomplete inspired rows stay
+  unlistable.
 - 10 ml and discovery sets are excluded from public commerce until a separate
   sample format is approved.
 

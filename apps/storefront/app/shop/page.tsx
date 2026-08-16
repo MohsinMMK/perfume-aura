@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ProductCard } from "@/components/product-card";
-import { getStorefrontProducts } from "@/lib/catalog";
+import { getStorefrontCollectionSlugs, getStorefrontProducts } from "@/lib/catalog";
+import { listingCollections } from "@/lib/listing-catalog";
 
 export const metadata: Metadata = {
   title: "Shop",
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 
 export default async function ShopPage() {
   const products = await getStorefrontProducts();
+  const collectionSlugs = await getStorefrontCollectionSlugs();
 
   return (
     <>
@@ -30,12 +32,32 @@ export default async function ShopPage() {
           <h1 data-motion-copy className="font-display mt-5 text-[clamp(5rem,13vw,13rem)] leading-[0.72]">
             Scent made <span className="text-outline">for presence</span>
           </h1>
-          <p className="mt-8 max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_60%)]">Explore the collection as each scent, size, and price is prepared for online shopping.</p>
+          <p className="mt-8 max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_60%)]">
+            {products.length} scents across Signature and Inspired listings. Prices, notes, and checkout open only when each edition is complete.
+          </p>
         </div>
       </section>
 
       <section className="bg-[var(--aura-ink)] px-3 pb-24 text-[var(--aura-ivory)] sm:px-5 lg:pb-32">
         <div className="mx-auto max-w-[94rem]">
+          {collectionSlugs.length ? (
+            <nav aria-label="Shop collections" className="mb-6 flex flex-wrap gap-2">
+              {collectionSlugs.map((slug) => {
+                const collection = slug in listingCollections
+                  ? listingCollections[slug as keyof typeof listingCollections]
+                  : null;
+                return (
+                  <Link
+                    key={slug}
+                    href={`/collections/${slug}`}
+                    className="inline-flex min-h-12 items-center border border-[color:rgb(245_228_199_/_28%)] px-4 font-display text-lg text-[var(--aura-ivory)] transition hover:border-[var(--aura-ivory)] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[var(--aura-ivory)]"
+                  >
+                    {collection?.title ?? slug}
+                  </Link>
+                );
+              })}
+            </nav>
+          ) : null}
           {products.length ? (
             <div className="aura-product-grid grid gap-2">
               {products.map((product) => <ProductCard key={product.id} product={product} />)}

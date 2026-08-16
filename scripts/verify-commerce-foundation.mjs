@@ -14,6 +14,30 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+function inspiredListingTitle(brand, reference) {
+  const cleanedReference = String(reference)
+    .replace(/\s+family$/i, "")
+    .trim();
+  const cleanedBrand = String(brand).trim();
+  if (!cleanedBrand || !cleanedReference) {
+    throw new Error("Inspired listing titles require a brand and reference");
+  }
+  if (cleanedReference.toLowerCase().startsWith(cleanedBrand.toLowerCase())) {
+    return `Inspired by ${cleanedReference}`;
+  }
+  return `Inspired by ${cleanedBrand} ${cleanedReference}`;
+}
+
+function listingSlug(value) {
+  return String(value)
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 const scriptPath = fileURLToPath(import.meta.url);
 const defaultRepositoryRoot = path.resolve(path.dirname(scriptPath), "..");
 const repositoryRoot = process.env.COMMERCE_VERIFY_ROOT
@@ -534,8 +558,8 @@ async function runSelfTests() {
         let launch = await readFile(launchPath, "utf8");
         launch = replaceOnce(
           launch,
-          "main_list:1,main_list,1,Bvlgari Tygar,,,reference_title_pending_mapping,inspired_collection,inspired_fragrance,not_flagged,Bvlgari,Tygar,owner_approved_title_reference,",
-          "main_list:1,main_list,1,Bvlgari Tygar,,,reference_title_pending_mapping,inspired_collection,inspired_fragrance,not_flagged,Acme,Altered Identity,owner_approved_title_reference,",
+          "main_list:1,main_list,1,Bvlgari Tygar,Inspired by Bvlgari Tygar,inspired-by-bvlgari-tygar,listing_title_recorded,inspired_collection,inspired_fragrance,not_flagged,Bvlgari,Tygar,owner_approved_title_reference,",
+          "main_list:1,main_list,1,Bvlgari Tygar,Inspired by Bvlgari Tygar,inspired-by-bvlgari-tygar,listing_title_recorded,inspired_collection,inspired_fragrance,not_flagged,Acme,Altered Identity,owner_approved_title_reference,",
           "launch identity",
         );
         await writeFile(launchPath, launch);
@@ -746,13 +770,29 @@ Alternatively, either unfair advantage or conduct contrary to honest practices s
         let launch = await readFile(launchPath, "utf8");
         launch = replaceOnce(
           launch,
-          "main_list:1,main_list,1,Bvlgari Tygar,,,reference_title_pending_mapping,",
-          "main_list:1,main_list,1,Bvlgari Tygar,Inspired by Tygar,inspired-by-tygar,reference_title_pending_mapping,",
+          "main_list:1,main_list,1,Bvlgari Tygar,Inspired by Bvlgari Tygar,inspired-by-bvlgari-tygar,listing_title_recorded,",
+          "main_list:1,main_list,1,Bvlgari Tygar,Inspired by Tygar,inspired-by-tygar,listing_title_recorded,",
           "inspired title",
         );
         await writeFile(launchPath, launch);
       },
-      "public title must remain blank",
+      "listing title must match the approved Inspired by form",
+    );
+
+    await runAgainst(
+      "unmapped-inspired-title",
+      async (root) => {
+        const launchPath = path.join(root, launchProductPath);
+        let launch = await readFile(launchPath, "utf8");
+        launch = replaceOnce(
+          launch,
+          "main_list:10,main_list,10,Heaven Rose,,,reference_title_pending_mapping,",
+          "main_list:10,main_list,10,Heaven Rose,Inspired by Heaven Rose,inspired-by-heaven-rose,listing_title_recorded,",
+          "unmapped inspired title",
+        );
+        await writeFile(launchPath, launch);
+      },
+      "public title must remain blank until an approved title reference exists",
     );
 
     await runAgainst(
@@ -778,8 +818,8 @@ Alternatively, either unfair advantage or conduct contrary to honest practices s
         let launch = await readFile(launchPath, "utf8");
         launch = replaceOnce(
           launch,
-          "main_list:1,main_list,1,Bvlgari Tygar,,,reference_title_pending_mapping,inspired_collection,inspired_fragrance,not_flagged,Bvlgari,Tygar,owner_approved_title_reference,planned_public_pending_review,india_counsel_pending,,,,,,,,,,,,,,missing,selected,needs_owner_input,",
-          "main_list:1,main_list,1,Bvlgari Tygar,,,reference_title_pending_mapping,inspired_collection,inspired_fragrance,not_flagged,Bvlgari,Tygar,owner_approved_title_reference,planned_public_pending_review,india_counsel_pending,,,,,,,,,,,,,,missing,selected,approved,",
+          "main_list:1,main_list,1,Bvlgari Tygar,Inspired by Bvlgari Tygar,inspired-by-bvlgari-tygar,listing_title_recorded,inspired_collection,inspired_fragrance,not_flagged,Bvlgari,Tygar,owner_approved_title_reference,planned_public_pending_review,india_counsel_pending,,,,,,,,,,,,,,missing,selected,needs_owner_input,",
+          "main_list:1,main_list,1,Bvlgari Tygar,Inspired by Bvlgari Tygar,inspired-by-bvlgari-tygar,listing_title_recorded,inspired_collection,inspired_fragrance,not_flagged,Bvlgari,Tygar,owner_approved_title_reference,planned_public_pending_review,india_counsel_pending,,,,,,,,,,,,,,missing,selected,approved,",
           "publishable product",
         );
         await writeFile(launchPath, launch);
@@ -804,8 +844,8 @@ Alternatively, either unfair advantage or conduct contrary to honest practices s
         let launch = await readFile(launchPath, "utf8");
         launch = replaceOnce(
           launch,
-          "main_list:1,main_list,1,Bvlgari Tygar,,,reference_title_pending_mapping,inspired_collection,inspired_fragrance,not_flagged,Bvlgari,Tygar,owner_approved_title_reference,",
-          "main_list:1,main_list,1,Bvlgari Tygar,,,reference_title_pending_mapping,inspired_collection,inspired_fragrance,not_flagged,Acme,Altered Identity,owner_approved_title_reference,",
+          "main_list:1,main_list,1,Bvlgari Tygar,Inspired by Bvlgari Tygar,inspired-by-bvlgari-tygar,listing_title_recorded,inspired_collection,inspired_fragrance,not_flagged,Bvlgari,Tygar,owner_approved_title_reference,",
+          "main_list:1,main_list,1,Bvlgari Tygar,Inspired by Bvlgari Tygar,inspired-by-bvlgari-tygar,listing_title_recorded,inspired_collection,inspired_fragrance,not_flagged,Acme,Altered Identity,owner_approved_title_reference,",
           "launch identity bypass",
         );
         await writeFile(launchPath, launch);
@@ -972,10 +1012,10 @@ async function verifyCommerceFoundation() {
   const decisionIds = decisionRows.map(([id]) => id);
   assert.deepEqual(
     decisionIds,
-    Array.from({ length: 28 }, (_, index) =>
+    Array.from({ length: 29 }, (_, index) =>
       `COM-ADR-${String(index + 1).padStart(3, "0")}`,
     ),
-    "commerce decision IDs must be unique and sequential through COM-ADR-028",
+    "commerce decision IDs must be unique and sequential through COM-ADR-029",
   );
   for (const [id, date, status, decision, reason] of decisionRows) {
     assertCalendarDate(date, `${id} decision date`);
@@ -1015,6 +1055,7 @@ async function verifyCommerceFoundation() {
     ["COM-ADR-026", "Accepted"],
     ["COM-ADR-027", "Accepted"],
     ["COM-ADR-028", "Accepted"],
+    ["COM-ADR-029", "Accepted"],
   ]) {
     assert.equal(
       decisionStatuses.get(id),
@@ -1062,6 +1103,10 @@ async function verifyCommerceFoundation() {
     [
       "COM-ADR-022",
       "Keep designer and inspired-reference names disabled on bottle labels and packaging until separate explicit owner approval and India-counsel approval for that surface.",
+    ],
+    [
+      "COM-ADR-029",
+      "Use `Inspired by <brand> <reference>` as the storefront listing title for every `owner_approved_title_reference` inspired row; omit the word `family` from the customer title; if the cleaned reference already begins with the brand, do not repeat the brand; keep the 34 incomplete inspired rows unlistable; keep Signature names unchanged. This records listing identity only and is not India-counsel clearance, disclaimer approval, publication approval, or permission to use references on bottle labels or packaging.",
     ],
   ]);
   for (const [id, , , decision] of decisionRows) {
@@ -1666,21 +1711,44 @@ async function verifyCommerceFoundation() {
     }
 
     if (source.source_section === "main_list") {
-      assert.equal(
-        product.public_name,
-        "",
-        `${key} public title must remain blank until mapping and review gates pass`,
-      );
-      assert.equal(
-        product.public_name_slug,
-        "",
-        `${key} slug needs owner approval`,
-      );
-      assert.equal(
-        product.name_approval_status,
-        "reference_title_pending_mapping",
-        `${key} reference-title state changed without exact mapping approval`,
-      );
+      if (product.reference_mapping_status === "owner_approved_title_reference") {
+        const expectedTitle = inspiredListingTitle(
+          product.reference_brand,
+          product.reference_fragrance,
+        );
+        const expectedListingSlug = listingSlug(expectedTitle);
+        assert.equal(
+          product.public_name,
+          expectedTitle,
+          `${key} listing title must match the approved Inspired by form`,
+        );
+        assert.equal(
+          product.public_name_slug,
+          expectedListingSlug,
+          `${key} listing slug must match the approved Inspired by title`,
+        );
+        assert.equal(
+          product.name_approval_status,
+          "listing_title_recorded",
+          `${key} mapped listing title state changed`,
+        );
+      } else {
+        assert.equal(
+          product.public_name,
+          "",
+          `${key} public title must remain blank until an approved title reference exists`,
+        );
+        assert.equal(
+          product.public_name_slug,
+          "",
+          `${key} slug stays blank until an approved title reference exists`,
+        );
+        assert.equal(
+          product.name_approval_status,
+          "reference_title_pending_mapping",
+          `${key} reference-title state changed without exact mapping approval`,
+        );
+      }
       assert.equal(
         product.collection,
         "inspired_collection",
@@ -1825,6 +1893,9 @@ async function verifyCommerceFoundation() {
         "trademark_clearance_pending",
         `${key} Signature name clearance must remain pending`,
       );
+    }
+
+    if (product.public_name) {
       assert.ok(
         !approvedPublicNames.has(product.public_name.toLowerCase()),
         `${key} public name must be unique`,
@@ -1839,8 +1910,8 @@ async function verifyCommerceFoundation() {
   }
   assert.equal(
     approvedPublicNames.size,
-    21,
-    "all Signature names need owner approval",
+    69,
+    "21 Signature names and 48 mapped Inspired by listing titles must be unique",
   );
 
   const launchVariantParsed = parseCsv(
