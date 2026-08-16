@@ -4,10 +4,6 @@ import { useMemo, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Add01Icon, MinusSignIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@perfume-aura/ui/components/button";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@perfume-aura/ui/components/native-select";
 import type { StorefrontProduct } from "@/lib/catalog";
 import { formatMoney } from "@/lib/money";
 import { useCart } from "./cart-provider";
@@ -40,26 +36,35 @@ export function AddToCart({ product }: Readonly<{ product: StorefrontProduct }>)
   }
 
   return (
-    <div className="grid gap-2 text-[var(--aura-ivory)] sm:col-start-2 sm:row-start-2">
-      <div className="grid min-h-[4.75rem] grid-cols-[1fr_8.5rem] overflow-hidden rounded-[0.65rem] border border-[color:rgb(245_228_199_/_35%)] lg:grid-cols-[1fr_10rem]">
-        <div className="grid content-center px-2">
-          <label htmlFor="product-size" className="sr-only">
-            Size
-          </label>
-          <NativeSelect
-            id="product-size"
-            value={variantId}
-            onChange={(event) => setVariantId(event.target.value)}
-            className="w-full text-[var(--aura-ivory)] [&_select]:h-14 [&_select]:rounded-none [&_select]:border-0 [&_select]:bg-transparent [&_select]:px-3 [&_select]:text-base"
-          >
-            {product.variants.map((option) => (
-              <NativeSelectOption key={option.id} value={option.id}>
-                {option.sizeMl} ml{option.price ? ` — ${formatMoney(option.price)}` : ""}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
+    <div className="grid gap-[var(--aura-gap)] text-[var(--aura-ivory)] sm:col-start-2 sm:row-start-2">
+      <fieldset>
+        <legend className="sr-only">Size</legend>
+        <div className="flex flex-wrap gap-[var(--aura-gap)]">
+          {product.variants.map((option) => {
+            const selected = option.id === variantId;
+            return (
+              <button
+                key={option.id}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => setVariantId(option.id)}
+                className={`min-h-12 min-w-[5.5rem] flex-1 rounded-[var(--aura-radius)] border px-3 font-display text-base tracking-[0.03em] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)] ${
+                  selected
+                    ? "border-[var(--aura-ivory)] bg-[var(--aura-ivory)] text-[var(--aura-ink)]"
+                    : "border-[color:var(--aura-rule)] bg-transparent text-[var(--aura-ivory)] hover:border-[var(--aura-ivory)]"
+                }`}
+              >
+                {option.sizeMl} ml
+              </button>
+            );
+          })}
         </div>
-        <div className="grid border-l border-[color:rgb(245_228_199_/_35%)]">
+      </fieldset>
+      <div className="grid min-h-[4.75rem] grid-cols-[1fr_8.5rem] overflow-hidden rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] lg:grid-cols-[1fr_10rem]">
+        <p className="grid content-center px-4 font-display text-xl">
+          {variant?.price ? formatMoney(variant.price) : "Price pending"}
+        </p>
+        <div className="grid border-l border-[color:var(--aura-rule)]">
           <span className="sr-only">Quantity</span>
           <div className="flex items-center">
             <Button
@@ -93,7 +98,7 @@ export function AddToCart({ product }: Readonly<{ product: StorefrontProduct }>)
       <Button
         type="button"
         size="lg"
-        className="min-h-[4.75rem] w-full justify-between rounded-[0.65rem] bg-[var(--aura-brass)] px-6 font-display text-xl text-[var(--aura-ink)] hover:bg-[var(--aura-ivory)] lg:text-2xl"
+        className="min-h-[4.75rem] w-full justify-between rounded-[var(--aura-radius)] bg-[var(--aura-brass)] px-6 font-display text-xl text-[var(--aura-ink)] hover:bg-[var(--aura-ivory)] lg:text-2xl"
         disabled={!purchasable || loading}
         onClick={submit}
       >

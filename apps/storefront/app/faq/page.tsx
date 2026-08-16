@@ -19,9 +19,9 @@ const questions = [
 export default function FaqPage() {
   return (
     <EditorialPage eyebrow="Clear answers" title="Frequently asked questions" intro="Only confirmed shopping details appear here. Policies will be added when they are complete and ready to publish.">
-      <Accordion className="rounded-none border-[color:rgb(245_228_199_/_28%)]">
+      <Accordion className="rounded-none border-[color:var(--aura-rule)]">
         {questions.map(([question, answer], index) => (
-          <AccordionItem key={question} value={`question-${index}`} className="border-[color:rgb(245_228_199_/_22%)] data-open:bg-white/5">
+          <AccordionItem key={question} value={`question-${index}`} className="border-[color:var(--aura-rule)] data-open:bg-white/5">
             <AccordionTrigger className="min-h-20 px-5 font-display text-2xl text-[var(--aura-ivory)] hover:no-underline">{question}</AccordionTrigger>
             <AccordionContent className="px-5 text-[color:rgb(245_228_199_/_58%)]">{answer}</AccordionContent>
           </AccordionItem>

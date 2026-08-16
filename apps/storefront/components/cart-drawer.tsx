@@ -24,7 +24,7 @@ export function CartDrawer() {
 
   return (
     <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-      <SheetContent showCloseButton={false} className="right-[5px]! top-[5px]! bottom-auto! h-auto! max-h-[calc(100svh-10px)]! w-[calc(100%-10px)]! overflow-hidden rounded-[0.65rem] border-0 bg-[var(--aura-ivory)] text-[var(--aura-ink)] sm:max-w-[44rem]!">
+      <SheetContent showCloseButton={false} className="right-[5px]! top-[5px]! bottom-auto! h-auto! max-h-[calc(100svh-10px)]! w-[calc(100%-10px)]! overflow-hidden rounded-[var(--aura-radius)] border-0 bg-[var(--aura-ivory)] text-[var(--aura-ink)] sm:max-w-[44rem]!">
         <SheetClose
           render={
             <Button
@@ -57,7 +57,7 @@ export function CartDrawer() {
                 <Button
                   render={<Link href="/shop" />}
                   nativeButton={false}
-                  className="mt-6 min-h-12 rounded-[0.6rem] bg-[var(--aura-ink)] px-6 text-[var(--aura-ivory)] hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[var(--aura-ink)] focus-visible:ring-0"
+                  className="mt-6 min-h-12 rounded-[var(--aura-radius)] bg-[var(--aura-ink)] px-6 text-[var(--aura-ivory)] hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[var(--aura-ink)] focus-visible:ring-0"
                   onClick={() => setDrawerOpen(false)}
                 >
                   Shop the collection
@@ -133,7 +133,7 @@ export function CartDrawer() {
             <Button
               render={<Link href="/cart" />}
               nativeButton={false}
-              className="min-h-16 rounded-[0.6rem] bg-[var(--aura-ink)] font-display text-xl text-[var(--aura-ivory)] hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)] focus-visible:ring-0"
+              className="min-h-16 rounded-[var(--aura-radius)] bg-[var(--aura-ink)] font-display text-xl text-[var(--aura-ivory)] hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)] focus-visible:ring-0"
               onClick={() => setDrawerOpen(false)}
             >
               Review cart

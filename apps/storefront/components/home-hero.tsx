@@ -135,11 +135,9 @@ export function HomeHero({
           { y: 12 },
           { y: 0, duration: 0.38, ease: "power4.out" },
         );
-        if (activeProduct.floating) return;
-
         const pulse = gsap.to(image, {
           y: -10,
-          duration: 2.8,
+          duration: 2,
           delay: 0.72,
           repeat: -1,
           yoyo: true,
@@ -169,7 +167,7 @@ export function HomeHero({
         className="pointer-events-none absolute left-1/2 top-[46%] h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-[var(--aura-brass)] opacity-[0.08] blur-[90px]"
         aria-hidden="true"
       />
-      <div className="relative mx-auto grid min-h-[100svh] max-w-[100rem] grid-rows-[auto_1fr] px-3 pb-3 pt-28 sm:px-5 sm:pt-24 lg:px-6 lg:pb-8 lg:pt-20">
+      <div className="relative mx-auto grid min-h-[100svh] max-w-[100rem] grid-rows-[auto_1fr] px-[var(--aura-gutter)] pb-[var(--aura-gutter)] pt-28 lg:px-[var(--aura-gutter-lg)] lg:pb-8 lg:pt-20">
         <div className="relative z-20 mx-auto max-w-[72rem] text-center">
           <h1 ref={headingRef} className="font-display mx-auto max-w-[12ch] text-[clamp(3.25rem,6.9444vw,8.3333rem)] leading-[0.88] tracking-[-0.02em] text-balance lg:leading-[0.84]">
             The scent <span className="text-outline">that leaves an aura</span>
@@ -196,7 +194,7 @@ export function HomeHero({
               fill
               preload
               sizes="(max-width: 768px) 100vw, 46rem"
-              className={`z-10 object-contain object-center ${activeProduct.floating ? "aura-hero-bottle-float scale-[1.08] drop-shadow-[0_2rem_2rem_rgba(0,0,0,.48)] sm:scale-[1.14]" : ""}`}
+              className={`z-10 object-contain object-center ${activeProduct.floating ? "scale-[1.08] drop-shadow-[0_2rem_2rem_rgba(0,0,0,.48)] sm:scale-[1.14]" : ""}`}
             />
             {activeProduct.floating ? null : (
               <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(16,11,6,.1)_0%,transparent_18%,transparent_70%,rgba(16,11,6,.78)_100%)]" />
@@ -231,7 +229,7 @@ export function HomeHero({
             nativeButton={false}
             size="lg"
             aria-label={activeProduct.slug ? `Shop now: ${activeProduct.name}` : "Shop the collection"}
-            className="min-h-16 w-full max-w-xs rounded-[0.65rem] bg-[var(--aura-ivory)] px-8 font-display text-xl tracking-[0.02em] text-[var(--aura-ink)] hover:bg-white"
+            className="min-h-16 w-full max-w-xs rounded-[var(--aura-radius)] bg-[var(--aura-ivory)] px-8 font-display text-xl tracking-[0.02em] text-[var(--aura-ink)] hover:bg-white"
           >
             Shop now
           </Button>

@@ -19,7 +19,7 @@ export function ScentFinder() {
       <div className="space-y-8">
         {questions.map((question, questionIndex) => (
           <fieldset key={question.key} className="border-t border-black/20 pt-5">
-            <legend className="font-[var(--font-playfair)] text-2xl">
+            <legend className="font-display text-2xl">
               <span className="mr-3 text-sm text-[#79633e]">0{questionIndex + 1}</span>
               {question.prompt}
             </legend>
@@ -45,7 +45,7 @@ export function ScentFinder() {
       </div>
       <aside className="border border-black/20 bg-[#fbf8f2] p-6 lg:sticky lg:top-28 lg:self-start">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#79633e]">Your result</p>
-        <h2 className="mt-3 font-[var(--font-playfair)] text-3xl">{complete ? "Profile captured." : "Choose one from each row."}</h2>
+        <h2 className="mt-3 font-display text-3xl">{complete ? "Profile captured." : "Choose one from each row."}</h2>
         <p className="mt-4 text-sm leading-6 text-[#5f584f]">
           {complete
             ? "Recommendations will appear when enough scent profile details are available."

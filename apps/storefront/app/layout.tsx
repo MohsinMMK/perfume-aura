@@ -1,25 +1,9 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
-import { cn } from "@perfume-aura/ui/lib/utils";
 import { StorefrontShell } from "@/components/storefront-shell";
 import { getOptionalEmbeddedBuildSourceCommit } from "@/lib/build-version";
 import "./globals.css";
 
 export const dynamic = "force-dynamic";
-
-const manrope = localFont({
-  src: "./fonts/manrope-latin.woff2",
-  variable: "--font-manrope",
-  display: "swap",
-  weight: "200 800",
-});
-
-const playfairDisplay = localFont({
-  src: "./fonts/playfair-display-latin.woff2",
-  variable: "--font-playfair",
-  display: "swap",
-  weight: "400 900",
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -47,13 +31,7 @@ export default function RootLayout({
       data-scroll-behavior="auto"
       data-perfume-aura-release={releaseCommit}
     >
-      <body
-        className={cn(
-          "min-h-full antialiased",
-          manrope.variable,
-          playfairDisplay.variable,
-        )}
-      >
+      <body className="min-h-full antialiased">
         <StorefrontShell>{children}</StorefrontShell>
       </body>
     </html>
