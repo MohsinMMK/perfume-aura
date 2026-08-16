@@ -95,19 +95,19 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
             </div>
             <p className="font-display mt-4 text-4xl lg:mt-5 lg:px-2">{firstPrice ? `From ${formatMoney(firstPrice)}` : "Price not available yet"}</p>
 
-            <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:mt-6">
-              <div className="flex min-h-28 flex-col justify-between rounded-[0.65rem] border border-[color:rgb(245_228_199_/_28%)] p-4 lg:min-h-40 lg:p-5">
+            <div className="mt-5 grid gap-[var(--aura-gap)] sm:grid-cols-2 lg:mt-6">
+              <div className="flex min-h-28 flex-col justify-between rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] p-4 lg:min-h-40 lg:p-5">
                 <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-[var(--aura-text-muted-on-ink)]">Scent profile</p>
                 <p className="font-display mt-4 text-2xl lg:text-[2rem] lg:leading-none">{detailValue(product.family)}</p>
               </div>
-              <div className="flex min-h-28 flex-col justify-between rounded-[0.65rem] border border-[color:rgb(245_228_199_/_28%)] p-4 lg:min-h-40 lg:p-5">
+              <div className="flex min-h-28 flex-col justify-between rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] p-4 lg:min-h-40 lg:p-5">
                 <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-[var(--aura-text-muted-on-ink)]">Made for</p>
                 <p className="font-display mt-4 text-2xl lg:text-[2rem] lg:leading-none">{detailValue(product.occasion)}</p>
               </div>
 
-              <div className="grid min-h-40 grid-cols-3 overflow-hidden rounded-[0.65rem] border border-[color:rgb(245_228_199_/_28%)] text-center">
+              <div className="grid min-h-40 grid-cols-3 overflow-hidden rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] text-center">
                 {productAssurances.map(([icon, label]) => (
-                  <div key={label} className="grid place-items-center border-r border-[color:rgb(245_228_199_/_22%)] px-2 py-5 last:border-r-0">
+                  <div key={label} className="grid place-items-center border-r border-[color:var(--aura-rule)] px-2 py-5 last:border-r-0">
                     <HugeiconsIcon icon={icon} strokeWidth={1.5} className="size-7" />
                     <span className="text-[0.58rem] uppercase tracking-[0.1em] text-[color:rgb(245_228_199_/_55%)]">{label}</span>
                   </div>
@@ -120,7 +120,7 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
         </div>
       </section>
 
-      <section className="relative min-h-[92svh] overflow-hidden border-y border-dashed border-[color:rgb(245_228_199_/_22%)] bg-[var(--aura-ink)] px-5 py-24 text-[var(--aura-ivory)] sm:px-8 lg:py-36">
+      <section className="relative min-h-[92svh] overflow-hidden border-y border-dashed border-[color:var(--aura-rule)] bg-[var(--aura-ink)] px-[var(--aura-gutter)] py-24 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:py-36">
         <div className="pointer-events-none absolute -right-12 top-[22%] h-[28rem] w-[22rem] rotate-6 overflow-hidden rounded-[1.25rem] opacity-55 lg:right-[8%]" aria-hidden="true">
           <Image data-motion-parallax src="/images/bottle-detail.webp" alt="" fill sizes="22rem" className="object-cover" />
         </div>
@@ -131,7 +131,7 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
         </div>
       </section>
 
-      <section className="bg-[var(--aura-ivory)] px-5 py-20 text-[var(--aura-ink)] sm:px-8 lg:py-32">
+      <section className="bg-[var(--aura-ivory)] px-[var(--aura-gutter)] py-20 text-[var(--aura-ink)] lg:px-[var(--aura-gutter-lg)] lg:py-32">
         <div className="mx-auto max-w-[82rem]">
           <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-[var(--aura-text-muted-on-ivory)]">The composition record</p>
           <h2 className="font-display mx-auto mt-4 max-w-[11ch] text-center text-[clamp(5rem,11vw,11rem)] leading-[0.75]">Built from the detail up</h2>
@@ -153,10 +153,10 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
       </section>
 
       {relatedProducts.length > 0 ? (
-        <section className="bg-[var(--aura-ink)] px-3 py-20 text-[var(--aura-ivory)] sm:px-5 lg:py-28">
+        <section className="bg-[var(--aura-ink)] px-[var(--aura-gutter)] py-20 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:py-28">
           <div className="mx-auto max-w-[94rem]">
             <h2 className="font-display text-[clamp(5rem,11vw,11rem)] leading-[0.74]">Choose another aura</h2>
-            <div className="aura-product-grid mt-12 grid gap-2">{relatedProducts.map((relatedProduct) => <ProductCard key={relatedProduct.id} product={relatedProduct} />)}</div>
+            <div className="aura-product-grid mt-12 grid gap-[var(--aura-gap)] lg:gap-[var(--aura-gap-lg)]">{relatedProducts.map((relatedProduct) => <ProductCard key={relatedProduct.id} product={relatedProduct} />)}</div>
           </div>
         </section>
       ) : null}
@@ -166,7 +166,7 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
           <div className="mx-auto max-w-[94rem]">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--aura-text-muted-on-ink)]">Verified purchases</p>
             <h2 className="font-display mt-3 text-7xl sm:text-9xl">Reviews</h2>
-            <div className="mt-9 grid gap-2 md:grid-cols-3">{approvedReviews.map((review) => <article key={review.id} className="rounded-[0.65rem] border border-[color:rgb(245_228_199_/_28%)] p-6"><p className="font-display text-2xl">{review.rating}/5</p><h3 className="mt-5 font-[var(--font-playfair)] text-2xl">{review.title ?? "Verified review"}</h3><p className="mt-3 text-sm leading-6 text-[color:rgb(245_228_199_/_60%)]">{review.body}</p></article>)}</div>
+            <div className="mt-9 grid gap-[var(--aura-gap)] md:grid-cols-3 lg:gap-[var(--aura-gap-lg)]">{approvedReviews.map((review) => <article key={review.id} className="rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] p-6"><p className="font-display text-2xl">{review.rating}/5</p><h3 className="mt-5 font-display text-2xl">{review.title ?? "Verified review"}</h3><p className="mt-3 text-sm leading-6 text-[color:rgb(245_228_199_/_60%)]">{review.body}</p></article>)}</div>
           </div>
         </section>
       ) : null}

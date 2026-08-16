@@ -76,31 +76,12 @@ export default async function HomePage() {
     <>
       <HomeHero products={featuredProducts} />
 
-      <section className="relative min-h-[86svh] overflow-hidden border-y border-dashed border-[color:rgb(245_228_199_/_22%)] bg-[var(--aura-ink)] px-5 py-24 text-[var(--aura-ivory)] sm:px-8 lg:py-36">
-        <div className="pointer-events-none absolute inset-0 opacity-55" aria-hidden="true">
-          <div data-motion-float className="absolute -left-10 top-14 h-44 w-36 rotate-[-12deg] overflow-hidden rounded-[1.25rem] border border-white/20 sm:left-[8%] lg:h-64 lg:w-52">
-            <Image src="/images/regent-noir-50ml.webp" alt="" fill sizes="13rem" className="object-cover" />
-          </div>
-          <div data-motion-float className="absolute -right-10 top-[38%] h-44 w-36 rotate-[10deg] overflow-hidden rounded-[1.25rem] border border-white/20 sm:right-[8%] lg:h-64 lg:w-52">
-            <Image src="/images/azure-tides-50ml.webp" alt="" fill sizes="13rem" className="object-cover" />
-          </div>
-          <div data-motion-float className="absolute bottom-6 left-[42%] hidden h-48 w-40 rotate-[6deg] overflow-hidden rounded-[1.25rem] border border-white/20 lg:block">
-            <Image src="/images/petalia-noir-50ml.webp" alt="" fill sizes="10rem" className="object-cover" />
-          </div>
-        </div>
-        <div className="relative z-10 mx-auto flex min-h-[62svh] max-w-[66rem] items-center justify-center text-center">
-          <h2 data-motion-copy className="max-w-[17ch] text-[clamp(2.7rem,6vw,6.5rem)] leading-[0.98] tracking-[-0.04em] text-balance">
-            Perfume lives between <span className="font-[var(--font-playfair)] italic text-[var(--aura-brass)]">arrival</span> and memory. Find the composition that feels unmistakably yours.
-          </h2>
-        </div>
-      </section>
-
-      <section className="bg-[var(--aura-ink)] px-3 py-16 text-[var(--aura-ivory)] sm:px-5 lg:py-24">
+      <section className="bg-[var(--aura-ink)] px-[var(--aura-gutter)] py-16 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:py-24">
         <div className="mx-auto max-w-[78rem]">
           <p className="mb-8 text-center text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-[color:rgb(245_228_199_/_65%)]">Four ways into the collection</p>
-          <div className="border-y border-dashed border-[color:rgb(245_228_199_/_28%)]">
+          <div className="border-y border-dashed border-[color:var(--aura-rule)]">
             {proofRows.map(([title, description], index) => (
-              <article data-motion-stack key={title} className="grid min-h-28 items-center border-b border-dashed border-[color:rgb(245_228_199_/_22%)] px-3 py-6 last:border-b-0 sm:grid-cols-[4rem_15rem_1fr] sm:px-6">
+              <article data-motion-stack key={title} className="grid min-h-28 items-center border-b border-dashed border-[color:var(--aura-rule)] px-[var(--aura-gutter)] py-6 last:border-b-0 sm:grid-cols-[4rem_15rem_1fr] lg:px-6">
                 <span className="font-display text-2xl text-[var(--aura-brass)]">0{index + 1}</span>
                 <h3 className="font-display text-4xl">{title}</h3>
                 <p className="mt-2 max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_72%)] sm:mt-0">{description}</p>
@@ -110,23 +91,23 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="overflow-hidden bg-[var(--aura-ink)] px-3 pb-24 pt-10 text-[var(--aura-ivory)] sm:px-5 lg:pb-36">
+      <section className="overflow-hidden bg-[var(--aura-ink)] px-[var(--aura-gutter)] pb-24 pt-10 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:pb-36">
         <div className="mx-auto max-w-[94rem]">
           <h2 className="mb-10 text-center font-display lg:mb-16">
             <span className="block text-[clamp(4.8rem,13vw,12rem)] leading-[0.68]">Choose your</span>
             <span className="text-outline block text-[clamp(5.2rem,15vw,14rem)] leading-[0.78]">Aura</span>
           </h2>
           {featuredProducts.length ? (
-            <div className="aura-product-grid grid gap-2">
+            <div className="aura-product-grid grid gap-[var(--aura-gap)] lg:gap-[var(--aura-gap-lg)]">
               {featuredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
           ) : (
             <div>
-              <div className="aura-snap-row -mx-3 flex snap-x snap-mandatory gap-2 overflow-x-auto px-3 pb-3 sm:-mx-5 sm:px-5 lg:mx-0 lg:grid lg:grid-cols-3 lg:overflow-visible lg:px-0 lg:pb-0">
+              <div className="aura-snap-row -mx-[var(--aura-gutter)] flex snap-x snap-mandatory gap-[var(--aura-gap)] overflow-x-auto px-[var(--aura-gutter)] pb-3 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-[var(--aura-gap-lg)] lg:overflow-visible lg:px-0 lg:pb-0">
                 {editorialPreviews.map((preview, index) => (
-                  <figure key={preview.title} data-motion-product-card className={`relative min-h-[32rem] w-[88vw] shrink-0 snap-center overflow-hidden rounded-[0.65rem] sm:w-[70vw] lg:w-auto lg:min-w-0 ${preview.color}`}>
+                  <figure key={preview.title} data-motion-product-card className={`relative min-h-[32rem] w-[88vw] shrink-0 snap-center overflow-hidden rounded-[var(--aura-radius)] sm:w-[70vw] lg:w-auto lg:min-w-0 ${preview.color}`}>
                     <Image
                       src={preview.image}
                       alt={preview.imageAlt}
@@ -142,7 +123,7 @@ export default async function HomePage() {
                   </figure>
                 ))}
               </div>
-              <div className="mt-5 flex flex-col items-center justify-between gap-3 border-y border-dashed border-[color:rgb(245_228_199_/_28%)] px-2 py-5 text-center sm:flex-row sm:text-left">
+              <div className="mt-5 flex flex-col items-center justify-between gap-3 border-y border-dashed border-[color:var(--aura-rule)] px-2 py-5 text-center sm:flex-row sm:text-left">
                 <p className="font-display text-2xl">A preview of the visual world</p>
                 <p className="max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_68%)]">The public collection opens when every product detail is complete and ready to share.</p>
               </div>
@@ -151,7 +132,26 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section data-motion-journey className="relative overflow-x-clip bg-[var(--aura-ink)] px-3 py-20 text-[var(--aura-ivory)] sm:px-5 lg:py-0">
+      <section className="relative min-h-[86svh] overflow-hidden border-y border-dashed border-[color:var(--aura-rule)] bg-[var(--aura-ink)] px-[var(--aura-gutter)] py-24 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:py-36">
+        <div className="pointer-events-none absolute inset-0 opacity-55" aria-hidden="true">
+          <div data-motion-float className="absolute -left-10 top-14 h-44 w-36 rotate-[-12deg] overflow-hidden rounded-[var(--aura-radius)] border border-white/20 sm:left-[8%] lg:h-64 lg:w-52">
+            <Image src="/images/regent-noir-50ml.webp" alt="" fill sizes="13rem" className="object-cover" />
+          </div>
+          <div data-motion-float className="absolute -right-10 top-[38%] h-44 w-36 rotate-[10deg] overflow-hidden rounded-[var(--aura-radius)] border border-white/20 sm:right-[8%] lg:h-64 lg:w-52">
+            <Image src="/images/azure-tides-50ml.webp" alt="" fill sizes="13rem" className="object-cover" />
+          </div>
+          <div data-motion-float className="absolute bottom-6 left-[42%] hidden h-48 w-40 rotate-[6deg] overflow-hidden rounded-[var(--aura-radius)] border border-white/20 lg:block">
+            <Image src="/images/petalia-noir-50ml.webp" alt="" fill sizes="10rem" className="object-cover" />
+          </div>
+        </div>
+        <div className="relative z-10 mx-auto flex min-h-[62svh] max-w-[66rem] items-center justify-center text-center">
+          <h2 data-motion-copy className="font-display max-w-[14ch] text-[clamp(3.25rem,6.9444vw,8.3333rem)] leading-[0.88] tracking-[-0.02em] text-balance">
+            Perfume lives between arrival and memory
+          </h2>
+        </div>
+      </section>
+
+      <section data-motion-journey className="relative overflow-x-clip bg-[var(--aura-ink)] px-[var(--aura-gutter)] py-20 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:py-0">
         <div data-motion-journey-pin className="mx-auto max-w-[94rem] lg:flex lg:h-[100svh] lg:max-w-none lg:flex-col lg:justify-center lg:overflow-hidden">
           <div className="relative z-10 mb-14 lg:mb-16 lg:px-8">
             <h2 className="sr-only">Why Perfume Aura</h2>
@@ -180,9 +180,9 @@ export default async function HomePage() {
             <p className="ml-auto mt-10 max-w-xl text-xl leading-8 text-[color:rgb(245_228_199_/_76%)]">A guided way to move from atmosphere to composition—without needing to know every note by name.</p>
           </div>
 
-          <div data-motion-journey-track className="aura-snap-row relative -mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-3 sm:-mx-5 sm:px-5 lg:mx-0 lg:w-max lg:overflow-visible lg:px-8 lg:pb-0">
+          <div data-motion-journey-track className="aura-snap-row relative -mx-[var(--aura-gutter)] flex snap-x snap-mandatory gap-[var(--aura-gap)] overflow-x-auto px-[var(--aura-gutter)] pb-3 lg:mx-0 lg:w-max lg:gap-[var(--aura-gap-lg)] lg:overflow-visible lg:px-8 lg:pb-0">
             {processSteps.map((step, index) => (
-              <article data-motion-stage key={step.number} className={`relative min-h-[30rem] w-[88vw] shrink-0 snap-center overflow-hidden rounded-[0.75rem] border border-[color:rgb(245_228_199_/_28%)] p-6 sm:w-[70vw] lg:w-[48vw] ${index === 0 ? "bg-[var(--aura-brass)] text-[var(--aura-ink)]" : index === 1 ? "bg-[var(--aura-orange)] text-[var(--aura-ink)]" : "bg-[var(--aura-red)] text-white"}`}>
+              <article data-motion-stage key={step.number} className={`relative min-h-[30rem] w-[88vw] shrink-0 snap-center overflow-hidden rounded-[var(--aura-radius)] p-6 sm:w-[70vw] lg:w-[48vw] ${index === 0 ? "bg-[var(--aura-brass)] text-[var(--aura-ink)]" : index === 1 ? "bg-[var(--aura-orange)] text-[var(--aura-ink)]" : "bg-[var(--aura-red)] text-white"}`}>
                 <div className="flex items-start justify-between">
                   <span className="font-display text-5xl">{step.number}</span>
                   <HugeiconsIcon icon={step.icon} strokeWidth={1.4} className="size-10" />
@@ -206,7 +206,7 @@ export default async function HomePage() {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-black/65">Find the right direction</p>
             <h2 data-motion-copy className="font-display mt-4 text-[clamp(4.5rem,8vw,8rem)] leading-[0.8]">Start with the feeling</h2>
             <p className="mt-7 text-base leading-7 text-black/70">Choose mood, intensity, and occasion. The finder stays quiet until there is enough complete scent data to make a recommendation worth trusting.</p>
-            <Button render={<Link href="/find-your-scent" />} nativeButton={false} className="mt-8 min-h-16 rounded-[0.65rem] bg-[var(--aura-ink)] px-8 font-display text-xl text-[var(--aura-ivory)] hover:bg-black">
+            <Button render={<Link href="/find-your-scent" />} nativeButton={false} className="mt-8 min-h-16 rounded-[var(--aura-radius)] bg-[var(--aura-ink)] px-8 font-display text-xl text-[var(--aura-ivory)] hover:bg-black">
               Find your scent <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={1.8} />
             </Button>
           </div>
@@ -214,33 +214,15 @@ export default async function HomePage() {
       </section>
 
       <section className="overflow-hidden bg-[var(--aura-ink)] py-20 text-[var(--aura-ivory)] lg:py-28">
-        <h2 className="font-display text-outline whitespace-nowrap px-3 text-[clamp(6rem,17vw,16rem)] leading-[0.72] sm:px-5">The opening edit</h2>
-        {featuredProducts.length ? (
-          <div data-motion-marquee className="mt-12 flex w-max gap-2 px-3 sm:px-5">
-            {[...featuredProducts, ...featuredProducts].map((product, index) => {
-              const isDuplicate = index >= featuredProducts.length;
-              return (
-                <article aria-hidden={isDuplicate || undefined} key={`${product.id}-${index}`} className="w-[82vw] max-w-[34rem] shrink-0 rounded-[0.7rem] border border-[color:rgb(245_228_199_/_28%)] p-6 sm:p-8">
-                  <div className="flex items-start justify-between border-b border-dashed border-[color:rgb(245_228_199_/_25%)] pb-4">
-                    <h3 className="font-display text-3xl">{product.name}</h3>
-                    <span className="text-xs text-[color:rgb(245_228_199_/_58%)]">0{(index % featuredProducts.length) + 1}</span>
-                  </div>
-                  <p className="mt-8 font-[var(--font-playfair)] text-2xl leading-snug">{product.summary}</p>
-                  <Link tabIndex={isDuplicate ? -1 : undefined} href={`/products/${product.slug}`} className="mt-8 inline-flex min-h-11 items-center gap-2 font-display text-xl underline underline-offset-8">View product <span aria-hidden="true">→</span></Link>
-                </article>
-              );
-            })}
+        <h2 className="font-display text-outline whitespace-nowrap px-[var(--aura-gutter)] text-[clamp(6rem,17vw,16rem)] leading-[0.72] lg:px-[var(--aura-gutter-lg)]">The opening edit</h2>
+        <div className="relative mx-[var(--aura-gutter)] mt-10 min-h-[36rem] overflow-hidden border-y border-dashed border-[color:var(--aura-rule)] lg:mx-[var(--aura-gutter-lg)] lg:min-h-[44rem]">
+          <Image src="/images/hero-bottle-still-life.webp" alt="Three Perfume Aura bottles arranged on a dark stone plinth" fill sizes="100vw" className="object-cover opacity-75" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(16,11,6,.92)_0%,rgba(16,11,6,.5)_52%,rgba(16,11,6,.12)_100%)]" />
+          <div className="relative flex min-h-[36rem] max-w-2xl flex-col justify-end p-6 sm:p-10 lg:min-h-[44rem] lg:p-16">
+            <p className="font-display text-[clamp(3.5rem,8vw,7rem)] leading-[0.86] text-balance">Made for the moment after you arrive.</p>
+            <p className="mt-5 max-w-lg text-base leading-7 text-[color:rgb(245_228_199_/_76%)]">Explore the house, the scent finder, and the world taking shape before the first collection goes live.</p>
           </div>
-        ) : (
-          <div className="relative mx-3 mt-10 min-h-[36rem] overflow-hidden border-y border-dashed border-[color:rgb(245_228_199_/_28%)] sm:mx-5 lg:min-h-[44rem]">
-            <Image src="/images/hero-bottle-still-life.webp" alt="Three Perfume Aura bottles arranged on a dark stone plinth" fill sizes="100vw" className="object-cover opacity-75" />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(16,11,6,.92)_0%,rgba(16,11,6,.5)_52%,rgba(16,11,6,.12)_100%)]" />
-            <div className="relative flex min-h-[36rem] max-w-2xl flex-col justify-end p-6 sm:p-10 lg:min-h-[44rem] lg:p-16">
-              <p className="font-display text-[clamp(3.5rem,8vw,7rem)] leading-[0.86] text-balance">Made for the moment after you arrive.</p>
-              <p className="mt-5 max-w-lg text-base leading-7 text-[color:rgb(245_228_199_/_76%)]">Explore the house, the scent finder, and the world taking shape before the first collection goes live.</p>
-            </div>
-          </div>
-        )}
+        </div>
         <div className="mt-14 text-center">
           <Link href="/shop" className="inline-flex min-h-12 items-center gap-2 font-display text-2xl underline underline-offset-8">Shop the collection <span aria-hidden="true">→</span></Link>
         </div>

@@ -52,7 +52,7 @@ export default async function OrderStatusPage({
     <section className="min-h-[75svh] bg-[var(--aura-ivory)] px-5 pb-20 pt-28 text-[var(--aura-ink)] sm:px-8 lg:px-10 lg:pt-32">
       <div className="mx-auto max-w-3xl">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#79633e]">Private order status</p>
-        <h1 className="mt-3 font-[var(--font-playfair)] text-5xl sm:text-7xl">Thank you.</h1>
+        <h1 className="mt-3 font-display text-5xl sm:text-7xl">Thank you.</h1>
         <p className="mt-5 text-sm leading-6 text-[#5f584f]">Order {order.orderNumber} · placed {order.placedAt.toLocaleString("en-IN")}</p>
         <div className="mt-8 grid gap-4 border-y border-black/20 py-6 sm:grid-cols-3">
           <div><span className="text-xs uppercase tracking-[0.15em] text-[#6b6259]">Order</span><strong className="mt-1 block capitalize">{order.status}</strong></div>

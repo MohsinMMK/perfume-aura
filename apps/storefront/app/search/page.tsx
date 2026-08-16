@@ -19,7 +19,7 @@ export default async function SearchPage({
   );
 
   return (
-    <section className="min-h-[80svh] bg-[var(--aura-ink)] px-5 pb-24 pt-28 text-[var(--aura-ivory)] sm:px-8 lg:px-10 lg:pt-32">
+    <section className="min-h-[80svh] bg-[var(--aura-ink)] px-[var(--aura-gutter)] pb-24 pt-28 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:pt-32">
       <div className="mx-auto max-w-[94rem]">
         <div className="max-w-4xl">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--aura-text-muted-on-ink)]">Search</p>
@@ -27,16 +27,16 @@ export default async function SearchPage({
           <form action="/search" className="mt-8 flex flex-col gap-3 sm:flex-row">
             <div className="flex-1">
               <label htmlFor="catalog-search" className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em]">Search the catalog</label>
-              <Input id="catalog-search" name="q" defaultValue={query} className="min-h-14 rounded-[0.55rem] border-[color:rgb(245_228_199_/_30%)] bg-transparent px-4 text-[var(--aura-ivory)]" />
+              <Input id="catalog-search" name="q" defaultValue={query} className="min-h-14 rounded-[var(--aura-radius)] border-[color:var(--aura-rule)] bg-transparent px-4 text-[var(--aura-ivory)]" />
             </div>
-            <Button type="submit" className="min-h-14 rounded-[0.55rem] bg-[var(--aura-ivory)] px-8 font-display text-xl text-[var(--aura-ink)] sm:self-end">Search</Button>
+            <Button type="submit" className="min-h-14 rounded-[var(--aura-radius)] bg-[var(--aura-ivory)] px-8 font-display text-xl text-[var(--aura-ink)] sm:self-end">Search</Button>
           </form>
         </div>
 
         {query && (
           <div className="mt-12">
             <p className="mb-7 text-sm text-[color:rgb(245_228_199_/_55%)]">{products.length} result{products.length === 1 ? "" : "s"} for “{query}”</p>
-            <div className="aura-product-grid grid gap-2">
+            <div className="aura-product-grid grid gap-[var(--aura-gap)] lg:gap-[var(--aura-gap-lg)]">
               {products.map((product) => <ProductCard key={product.id} product={product} />)}
             </div>
           </div>

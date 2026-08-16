@@ -57,7 +57,7 @@ export function SiteHeader() {
       data-compact={compact ? "true" : "false"}
       className="pointer-events-none fixed inset-x-0 top-0 z-50 text-[var(--aura-ivory)]"
     >
-      <div className="flex h-[5.5rem] items-start justify-between px-3 pt-3 sm:px-5 lg:px-6">
+      <div className="flex h-[5.5rem] items-start justify-between px-[var(--aura-gutter)] pt-[var(--aura-gutter)] lg:px-[var(--aura-gutter-lg)]">
         <Link
           href="/"
           aria-label="Perfume Aura home"
@@ -115,7 +115,7 @@ export function SiteHeader() {
           <Button
             render={<Link href="/shop" />}
             nativeButton={false}
-            className={`min-h-12 rounded-[0.6rem] bg-[var(--aura-ivory)] px-5 font-display text-base text-[var(--aura-ink)] hover:bg-white max-[359px]:hidden sm:px-7 ${compact ? "inline-flex" : "inline-flex lg:hidden"}`}
+            className={`min-h-12 rounded-[var(--aura-radius)] bg-[var(--aura-ivory)] px-5 font-display text-base text-[var(--aura-ink)] hover:bg-white max-[359px]:hidden sm:px-7 ${compact ? "inline-flex" : "inline-flex lg:hidden"}`}
           >
             Get scent
           </Button>
@@ -124,7 +124,7 @@ export function SiteHeader() {
             type="button"
             variant="outline"
             size="icon-lg"
-            className={`relative min-h-12 min-w-12 rounded-[0.6rem] border-[color:rgb(245_228_199_/_55%)] bg-[var(--aura-ink)]/90 text-[var(--aura-ivory)] hover:bg-[var(--aura-ivory)] hover:text-[var(--aura-ink)] ${compact ? "inline-flex" : "flex lg:hidden"}`}
+            className={`relative min-h-12 min-w-12 rounded-[var(--aura-radius)] border-[color:rgb(245_228_199_/_55%)] bg-[var(--aura-ink)]/90 text-[var(--aura-ivory)] hover:bg-[var(--aura-ivory)] hover:text-[var(--aura-ink)] ${compact ? "inline-flex" : "flex lg:hidden"}`}
             aria-label={`Open cart with ${cart?.quantity ?? 0} items`}
             onClick={() => setDrawerOpen(true)}
           >
@@ -142,14 +142,14 @@ export function SiteHeader() {
                 <Button
                   variant="outline"
                   size="icon-lg"
-                  className={`min-h-12 min-w-12 rounded-[0.6rem] border-[color:rgb(245_228_199_/_55%)] bg-[var(--aura-ink)]/90 text-[var(--aura-ivory)] hover:bg-[var(--aura-ivory)] hover:text-[var(--aura-ink)] ${compact ? "inline-flex" : "flex lg:hidden"}`}
+                  className={`min-h-12 min-w-12 rounded-[var(--aura-radius)] border-[color:rgb(245_228_199_/_55%)] bg-[var(--aura-ink)]/90 text-[var(--aura-ivory)] hover:bg-[var(--aura-ivory)] hover:text-[var(--aura-ink)] ${compact ? "inline-flex" : "flex lg:hidden"}`}
                   aria-label="Open navigation menu"
                 />
               }
             >
               <HugeiconsIcon icon={Menu01Icon} strokeWidth={1.7} />
             </SheetTrigger>
-            <SheetContent side="right" showCloseButton={false} className="data-[side=right]:inset-y-[5px] data-[side=right]:h-auto data-[side=right]:w-[calc(100%_-_10px)] rounded-[0.65rem] border-0 bg-[var(--aura-ivory)] text-[var(--aura-ink)] data-[side=right]:sm:max-w-[38.75rem]">
+            <SheetContent side="right" showCloseButton={false} className="data-[side=right]:inset-y-[5px] data-[side=right]:h-auto data-[side=right]:w-[calc(100%_-_10px)] rounded-[var(--aura-radius)] border-0 bg-[var(--aura-ivory)] text-[var(--aura-ink)] data-[side=right]:sm:max-w-[38.75rem]">
               <SheetClose
                 render={
                   <Button
@@ -181,10 +181,10 @@ export function SiteHeader() {
                   </Link>
                 ))}
                 <div className="mt-8 grid grid-cols-2 gap-2">
-                  <Button render={<Link href="/search" prefetch={false} onClick={() => setMenuOpen(false)} />} nativeButton={false} variant="outline" className="min-h-12 rounded-[0.55rem] border-[color:rgb(16_11_6_/_35%)] bg-transparent text-[var(--aura-ink)] hover:bg-[var(--aura-ink)] hover:text-[var(--aura-ivory)]">
+                  <Button render={<Link href="/search" prefetch={false} onClick={() => setMenuOpen(false)} />} nativeButton={false} variant="outline" className="min-h-12 rounded-[var(--aura-radius)] border-[color:rgb(16_11_6_/_35%)] bg-transparent text-[var(--aura-ink)] hover:bg-[var(--aura-ink)] hover:text-[var(--aura-ivory)]">
                     <HugeiconsIcon icon={Search01Icon} strokeWidth={1.7} /> Search
                   </Button>
-                  <Button render={<Link href="/account" prefetch={false} onClick={() => setMenuOpen(false)} />} nativeButton={false} variant="outline" className="min-h-12 rounded-[0.55rem] border-[color:rgb(16_11_6_/_35%)] bg-transparent text-[var(--aura-ink)] hover:bg-[var(--aura-ink)] hover:text-[var(--aura-ivory)]">
+                  <Button render={<Link href="/account" prefetch={false} onClick={() => setMenuOpen(false)} />} nativeButton={false} variant="outline" className="min-h-12 rounded-[var(--aura-radius)] border-[color:rgb(16_11_6_/_35%)] bg-transparent text-[var(--aura-ink)] hover:bg-[var(--aura-ink)] hover:text-[var(--aura-ivory)]">
                     <HugeiconsIcon icon={UserCircleIcon} strokeWidth={1.7} /> Account
                   </Button>
                 </div>

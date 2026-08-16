@@ -82,7 +82,7 @@ export function CheckoutForm() {
     <form onSubmit={onSubmit} className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1fr_24rem]">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#79633e]">Secure checkout</p>
-        <h1 className="mt-3 font-[var(--font-playfair)] text-6xl sm:text-8xl">Almost yours.</h1>
+        <h1 className="mt-3 font-display text-6xl sm:text-8xl">Almost yours.</h1>
         {!enabled ? (
           <div id="checkout-gate" role="status" className="mt-7 border border-[var(--aura-brass)] bg-[var(--aura-ivory)] p-4 text-sm leading-6">
             {cart?.checkoutBlockReason ?? "Checkout is loading or the cart is empty."}
@@ -98,7 +98,7 @@ export function CheckoutForm() {
         </div>
       </div>
       <aside className="border border-black/20 bg-[#fbf8f2] p-6 lg:sticky lg:top-28 lg:self-start">
-        <h2 className="font-[var(--font-playfair)] text-3xl">Payment</h2>
+        <h2 className="font-display text-3xl">Payment</h2>
         <fieldset className="mt-5 grid gap-3" disabled={!enabled || pending}>
           <legend className="sr-only">Payment method</legend>
           <label className="flex min-h-12 items-center gap-3 border border-black/20 px-3 text-sm"><input type="radio" name="paymentMethod" value="cashfree" defaultChecked />Cashfree prepaid</label>

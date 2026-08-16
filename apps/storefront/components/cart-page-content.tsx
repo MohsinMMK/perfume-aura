@@ -14,7 +14,7 @@ export function CartPageContent() {
   if (!cart?.lines.length) {
     return (
       <div className="border border-dashed border-black/30 px-6 py-20 text-center">
-        <h2 className="font-[var(--font-playfair)] text-4xl">Your cart is quiet.</h2>
+        <h2 className="font-display text-4xl">Your cart is quiet.</h2>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[var(--aura-text-muted-on-ivory)]">Explore the collection and choose a scent to add here.</p>
         <Button render={<Link href="/shop" />} nativeButton={false} className="mt-7 min-h-12 rounded-none bg-[var(--aura-ink)] px-8 text-[var(--aura-ivory)] hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[var(--aura-ink)] focus-visible:ring-0">Explore the collection</Button>
       </div>
@@ -31,7 +31,7 @@ export function CartPageContent() {
             </div>
             <div className="flex min-w-0 flex-col justify-between py-1 sm:flex-row sm:items-center">
               <div>
-                <Link href={`/products/${line.productSlug}`} className="font-[var(--font-playfair)] text-2xl hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)]">{line.productName}</Link>
+                <Link href={`/products/${line.productSlug}`} className="font-display text-2xl hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)]">{line.productName}</Link>
                 <p className="mt-1 text-xs uppercase tracking-[0.16em] text-[#655f57]">{line.sizeMl} ml</p>
                 <p className="mt-2 text-sm">{formatMoney(line.unitPrice)}</p>
               </div>
@@ -49,7 +49,7 @@ export function CartPageContent() {
         ))}
       </ul>
       <aside className="border border-black/20 bg-[#fbf8f2] p-6 lg:sticky lg:top-28 lg:self-start">
-        <h2 className="font-[var(--font-playfair)] text-3xl">Summary</h2>
+        <h2 className="font-display text-3xl">Summary</h2>
         <div className="mt-6 flex justify-between border-t border-black/20 pt-4 text-sm">
           <span>Subtotal</span>
           <strong>{formatMoney(cart.subtotal)}</strong>

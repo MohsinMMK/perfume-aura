@@ -6,9 +6,14 @@
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
 
 :root {
-  --aura-font-sans: "Inter Tight Variable", var(--font-manrope, system-ui), sans-serif;
-  --aura-font-heading: var(--font-playfair, serif), serif;
-  --aura-font-display: "Bebas Neue", var(--font-manrope, system-ui), sans-serif;
+  --aura-font-sans: "Inter Tight Variable", arial, system-ui, sans-serif;
+  --aura-font-display: "Bebas Neue", arial, system-ui, sans-serif;
+  --aura-gutter: 0.625rem;
+  --aura-gutter-lg: 1.25rem;
+  --aura-gap: 0.625rem;
+  --aura-gap-lg: 1.25rem;
+  --aura-radius: 0.625rem;
+  --aura-rule: rgb(245 228 199 / 30%);
   --aura-ink: #100b06;
   --aura-graphite: #100b06;
   --aura-brass: #be8d3f;
@@ -62,7 +67,7 @@ body {
 .font-display {
   font-family: var(--aura-font-display);
   font-weight: 400;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
   text-transform: uppercase;
 }
 
@@ -72,7 +77,7 @@ body {
 }
 
 .aura-dotted-rule {
-  border-color: rgb(245 228 199 / 24%);
+  border-color: var(--aura-rule);
   border-style: dashed;
 }
 
@@ -94,9 +99,6 @@ body {
 .aura-header-logo__icon,
 .aura-header-logo__wordmark {
   transform-origin: left top;
-  transition:
-    opacity 420ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .aura-header-logo__icon {
@@ -118,13 +120,6 @@ body {
 [data-site-header][data-compact="true"] .aura-header-logo__wordmark {
   opacity: 1;
   transform: translate3d(0, var(--aura-logo-wordmark-compact-y), 0) scale(1);
-}
-
-.aura-corner-grid {
-  background-image:
-    linear-gradient(rgb(245 228 199 / 10%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(245 228 199 / 10%) 1px, transparent 1px);
-  background-size: 5rem 5rem;
 }
 
 .product-card-flat,
@@ -157,21 +152,6 @@ body {
 
 .aura-snap-row::-webkit-scrollbar {
   display: none;
-}
-
-.aura-hero-bottle-float {
-  transform-origin: 50% 55%;
-  animation: aura-hero-bottle-float 4.7s ease-in-out infinite alternate;
-  will-change: translate;
-}
-
-@keyframes aura-hero-bottle-float {
-  from {
-    translate: 0 0;
-  }
-  to {
-    translate: 0 -1.5rem;
-  }
 }
 
 @media (hover: hover) and (pointer: fine) {

@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: "Contact", alternates: { canonical: "
 
 export default function ContactPage() {
   return (
-    <section className="min-h-[92svh] bg-[var(--aura-ink)] px-5 pb-24 pt-28 text-[var(--aura-ivory)] sm:px-8 lg:px-10 lg:pt-32">
+    <section className="min-h-[92svh] bg-[var(--aura-ink)] px-[var(--aura-gutter)] pb-24 pt-28 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:pt-32">
       <div className="mx-auto max-w-[82rem] text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--aura-text-muted-on-ink)]">We are listening</p>
         <h1 data-motion-copy className="font-display mt-5 text-[clamp(7rem,19vw,18rem)] leading-[0.68]">Contact</h1>
