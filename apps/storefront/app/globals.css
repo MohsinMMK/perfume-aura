@@ -48,7 +48,7 @@
 
 html {
   background: var(--aura-ink);
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 
 body {
@@ -159,6 +159,21 @@ body {
   display: none;
 }
 
+.aura-hero-bottle-float {
+  transform-origin: 50% 55%;
+  animation: aura-hero-bottle-float 4.7s ease-in-out infinite alternate;
+  will-change: translate;
+}
+
+@keyframes aura-hero-bottle-float {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 -1.5rem;
+  }
+}
+
 @media (hover: hover) and (pointer: fine) {
   .product-card-actions {
     opacity: 0;
@@ -227,27 +242,6 @@ textarea {
   color: inherit;
 }
 
-.opening-intro {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
-  background: var(--aura-ink);
-  color: var(--aura-ivory);
-  animation: aura-intro 1.15s cubic-bezier(0.65, 0, 0.35, 1) forwards;
-}
-
-.opening-intro p {
-  margin: 0;
-  font-family: var(--font-playfair), serif;
-  font-size: clamp(2.2rem, 8vw, 6rem);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  animation: aura-intro-word 0.85s ease-out forwards;
-}
-
 @media (min-width: 1024px) {
   .aura-header-logo {
     --aura-logo-wordmark-start-scale: 0.755;
@@ -268,28 +262,6 @@ textarea {
   }
 }
 
-@keyframes aura-intro {
-  0%,
-  64% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    visibility: hidden;
-  }
-}
-
-@keyframes aura-intro-word {
-  from {
-    opacity: 0;
-    transform: translateY(0.7rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -304,19 +276,33 @@ textarea {
     transition-duration: 0.01ms !important;
   }
 
-  [data-motion-journey] {
+  [data-motion-journey],
+  [data-motion-journey] .pin-spacer {
     min-height: auto !important;
+    height: auto !important;
   }
 
-  [data-motion-journey] > div {
+  [data-motion-journey] > div,
+  [data-motion-journey-pin] {
     position: static !important;
     height: auto !important;
     overflow: visible !important;
+    transform: none !important;
+  }
+
+  [data-motion-journey-track],
+  [data-motion-stage],
+  [data-motion-copy],
+  [data-motion-horizontal],
+  [data-motion-float],
+  [data-motion-parallax],
+  [data-motion-product-card],
+  [data-motion-stack] {
+    transform: none !important;
   }
 
   [data-motion-journey-track] {
     display: grid !important;
     width: 100% !important;
-    transform: none !important;
   }
 }

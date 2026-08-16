@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { attachContinuousMotionGuard } from "@/lib/continuous-motion";
 
 const historyScrollStateKey = "__perfumeAuraScroll";
 
@@ -99,8 +100,6 @@ export function StorefrontMotion() {
   }, [pathname, popstateRevision]);
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
     let active = true;
     let cleanup = () => {};
     let refreshFrame: number | null = null;
@@ -109,284 +108,295 @@ export function StorefrontMotion() {
       ([{ default: gsap }, { ScrollTrigger }]) => {
         if (!active) return;
         gsap.registerPlugin(ScrollTrigger);
-        const listenerCleanups: Array<() => void> = [];
         const motionMedia = gsap.matchMedia();
 
-        const context = gsap.context(() => {
-          const headerLogo = document.querySelector<HTMLElement>("[data-header-logo]");
-          const headerLogoIcon = headerLogo?.querySelector<HTMLElement>(
-            "[data-header-logo-icon]",
-          );
-          const headerLogoWordmark = headerLogo?.querySelector<HTMLElement>(
-            "[data-header-logo-wordmark]",
-          );
+        motionMedia.add(
+          {
+            allowMotion: "(prefers-reduced-motion: no-preference)",
+            reduceMotion: "(prefers-reduced-motion: reduce)",
+            isDesktop: "(min-width: 1024px)",
+          },
+          (context) => {
+            if (!context.conditions?.allowMotion) return;
 
-          if (headerLogo && headerLogoIcon && headerLogoWordmark) {
-            const readLogoValue = (name: string) =>
-              Number.parseFloat(
-                window.getComputedStyle(headerLogo).getPropertyValue(name),
-              );
-            const logoTimeline = gsap.timeline({
-              scrollTrigger: {
-                trigger: document.documentElement,
-                start: "top top",
-                end: () => `+=${window.innerWidth < 640 ? 96 : 144}`,
-                scrub: 0.35,
-                invalidateOnRefresh: true,
-              },
-            });
+            const contentRoot = document.getElementById("main-content") ?? document;
+            const headerLogo = document.querySelector<HTMLElement>("[data-header-logo]");
+            const headerLogoIcon = headerLogo?.querySelector<HTMLElement>(
+              "[data-header-logo-icon]",
+            );
+            const headerLogoWordmark = headerLogo?.querySelector<HTMLElement>(
+              "[data-header-logo-wordmark]",
+            );
 
-            logoTimeline
-              .fromTo(
-                headerLogoIcon,
-                { opacity: 1, scale: 1, y: 0 },
-                {
-                  opacity: 0,
-                  scale: 0.8,
-                  y: () => readLogoValue("--aura-logo-icon-exit-y"),
-                  duration: 0.58,
-                  ease: "none",
-                },
-                0,
-              )
-              .fromTo(
-                headerLogoWordmark,
-                {
-                  opacity: 1,
-                  scale: () =>
-                    readLogoValue("--aura-logo-wordmark-start-scale"),
-                  y: () => readLogoValue("--aura-logo-wordmark-start-y"),
-                },
-                {
-                  opacity: 1,
-                  scale: 1,
-                  y: () => readLogoValue("--aura-logo-wordmark-compact-y"),
-                  duration: 0.82,
-                  ease: "none",
-                },
-                0.18,
-              );
-          }
-
-          if (progressRef.current) {
-            gsap.fromTo(
-              progressRef.current,
-              { scaleX: 0 },
-              {
-                scaleX: 1,
-                ease: "none",
+            if (headerLogo && headerLogoIcon && headerLogoWordmark) {
+              const readLogoValue = (name: string) =>
+                Number.parseFloat(
+                  window.getComputedStyle(headerLogo).getPropertyValue(name),
+                );
+              const logoTimeline = gsap.timeline({
                 scrollTrigger: {
                   trigger: document.documentElement,
                   start: "top top",
-                  end: "max",
-                  scrub: 0.25,
-                },
-              },
-            );
-          }
-
-          gsap.utils.toArray<HTMLElement>("[data-motion-copy]").forEach((element) => {
-            gsap.from(element, {
-              y: 44,
-              clipPath: "inset(0 0 100% 0)",
-              duration: 0.78,
-              ease: "power4.out",
-              scrollTrigger: {
-                trigger: element,
-                start: "top 88%",
-                once: true,
-              },
-            });
-          });
-
-          gsap.utils
-            .toArray<HTMLElement>("[data-motion-product-card]")
-            .forEach((element, index) => {
-              gsap.from(element, {
-                y: 72,
-                rotate: index % 2 === 0 ? -0.8 : 0.8,
-                duration: 0.82,
-                delay: Math.min(index, 4) * 0.055,
-                ease: "power4.out",
-                scrollTrigger: {
-                  trigger: element,
-                  start: "top 91%",
-                  once: true,
-                },
-              });
-            });
-
-          gsap.utils.toArray<HTMLElement>("[data-motion-parallax]").forEach((element) => {
-            gsap.fromTo(
-              element,
-              { yPercent: -4, scale: 1.04 },
-              {
-                yPercent: 5,
-                ease: "none",
-                scrollTrigger: {
-                  trigger: element.parentElement ?? element,
-                  start: "top bottom",
-                  end: "bottom top",
-                  scrub: 0.7,
-                },
-              },
-            );
-          });
-
-          const trustItems = gsap.utils.toArray<HTMLElement>("[data-motion-trust]");
-          if (trustItems.length > 0) {
-            gsap.from(trustItems, {
-              y: 28,
-              stagger: 0.08,
-              duration: 0.55,
-              ease: "power4.out",
-              scrollTrigger: {
-                trigger: trustItems[0]?.parentElement ?? trustItems[0],
-                start: "top 88%",
-                once: true,
-              },
-            });
-          }
-
-          gsap.utils.toArray<HTMLElement>("[data-motion-rule]").forEach((element) => {
-            gsap.from(element, {
-              scaleX: 0,
-              transformOrigin: "left center",
-              duration: 0.9,
-              ease: "power4.out",
-              scrollTrigger: {
-                trigger: element,
-                start: "top 92%",
-                once: true,
-              },
-            });
-          });
-
-          const stackedPanels = gsap.utils.toArray<HTMLElement>("[data-motion-stack]");
-          if (stackedPanels.length > 0) {
-            gsap.from(stackedPanels, {
-              y: 70,
-              rotate: (index) => index % 2 === 0 ? -1.4 : 1.4,
-              stagger: 0.09,
-              duration: 0.82,
-              ease: "power4.out",
-              scrollTrigger: {
-                trigger: stackedPanels[0]?.parentElement ?? stackedPanels[0],
-                start: "top 84%",
-                once: true,
-              },
-            });
-          }
-
-          gsap.utils.toArray<HTMLElement>("[data-motion-float]").forEach((element, index) => {
-            gsap.fromTo(
-              element,
-              { yPercent: index % 2 === 0 ? -12 : 10, rotate: index % 2 === 0 ? -14 : 12 },
-              {
-                yPercent: index % 2 === 0 ? 18 : -16,
-                rotate: index % 2 === 0 ? -7 : 5,
-                ease: "none",
-                scrollTrigger: {
-                  trigger: element.parentElement ?? element,
-                  start: "top bottom",
-                  end: "bottom top",
-                  scrub: 0.8,
-                },
-              },
-            );
-          });
-
-          gsap.utils.toArray<HTMLElement>("[data-motion-horizontal]").forEach((element, index) => {
-            gsap.from(element, {
-              xPercent: index % 2 === 0 ? -18 : 18,
-              ease: "none",
-              scrollTrigger: {
-                trigger: element.parentElement ?? element,
-                start: "top bottom",
-                end: "bottom 35%",
-                scrub: 0.65,
-              },
-            });
-          });
-
-          gsap.utils.toArray<HTMLElement>("[data-motion-stage]").forEach((element, index) => {
-            gsap.from(element, {
-              y: 90 + index * 24,
-              rotate: index === 1 ? 1.8 : index === 2 ? -1.8 : 0,
-              duration: 0.9,
-              ease: "power4.out",
-              scrollTrigger: { trigger: element, start: "top 90%", once: true },
-            });
-          });
-
-          gsap.utils.toArray<HTMLElement>("[data-motion-marquee]").forEach((element) => {
-            const marquee = gsap.to(element, {
-              xPercent: -28,
-              duration: 24,
-              repeat: -1,
-              ease: "none",
-            });
-
-            const pause = () => marquee.pause();
-            const resumeWhenIdle = () => {
-              if (
-                !document.hidden &&
-                !element.matches(":hover") &&
-                !element.matches(":focus-within")
-              ) {
-                marquee.resume();
-              }
-            };
-            const handleFocusOut = (event: FocusEvent) => {
-              const nextTarget = event.relatedTarget;
-              if (!(nextTarget instanceof Node) || !element.contains(nextTarget)) {
-                resumeWhenIdle();
-              }
-            };
-            const handleVisibilityChange = () => {
-              if (document.hidden) pause();
-              else resumeWhenIdle();
-            };
-
-            element.addEventListener("mouseenter", pause);
-            element.addEventListener("mouseleave", resumeWhenIdle);
-            element.addEventListener("focusin", pause);
-            element.addEventListener("focusout", handleFocusOut);
-            document.addEventListener("visibilitychange", handleVisibilityChange);
-
-            listenerCleanups.push(() => {
-              element.removeEventListener("mouseenter", pause);
-              element.removeEventListener("mouseleave", resumeWhenIdle);
-              element.removeEventListener("focusin", pause);
-              element.removeEventListener("focusout", handleFocusOut);
-              document.removeEventListener("visibilitychange", handleVisibilityChange);
-            });
-          });
-
-          motionMedia.add("(min-width: 1024px)", () => {
-            gsap.utils.toArray<HTMLElement>("[data-motion-journey]").forEach((section) => {
-              const track = section.querySelector<HTMLElement>("[data-motion-journey-track]");
-              if (!track) return;
-              gsap.to(track, {
-                x: () => -Math.max(0, track.scrollWidth - window.innerWidth + 32),
-                ease: "none",
-                scrollTrigger: {
-                  trigger: section,
-                  start: "top top",
-                  end: "bottom bottom",
-                  scrub: 0.75,
+                  end: () => `+=${window.innerWidth < 640 ? 96 : 144}`,
+                  scrub: 0.35,
                   invalidateOnRefresh: true,
                 },
               });
-            });
-          });
-        });
+
+              logoTimeline
+                .fromTo(
+                  headerLogoIcon,
+                  { opacity: 1, scale: 1, y: 0 },
+                  {
+                    opacity: 0,
+                    scale: 0.8,
+                    y: () => readLogoValue("--aura-logo-icon-exit-y"),
+                    duration: 0.58,
+                    ease: "none",
+                  },
+                  0,
+                )
+                .fromTo(
+                  headerLogoWordmark,
+                  {
+                    opacity: 1,
+                    scale: () =>
+                      readLogoValue("--aura-logo-wordmark-start-scale"),
+                    y: () => readLogoValue("--aura-logo-wordmark-start-y"),
+                  },
+                  {
+                    opacity: 1,
+                    scale: 1,
+                    y: () => readLogoValue("--aura-logo-wordmark-compact-y"),
+                    duration: 0.82,
+                    ease: "none",
+                  },
+                  0.18,
+                );
+            }
+
+            if (progressRef.current) {
+              gsap.fromTo(
+                progressRef.current,
+                { scaleX: 0 },
+                {
+                  scaleX: 1,
+                  ease: "none",
+                  scrollTrigger: {
+                    trigger: document.documentElement,
+                    start: "top top",
+                    end: "max",
+                    scrub: 0.25,
+                  },
+                },
+              );
+            }
+
+            gsap.utils
+              .toArray<HTMLElement>("[data-motion-copy]", contentRoot)
+              .forEach((element) => {
+                gsap.from(element, {
+                  y: 36,
+                  opacity: 0.18,
+                  duration: 0.78,
+                  ease: "power4.out",
+                  scrollTrigger: {
+                    trigger: element,
+                    start: "top 88%",
+                    once: true,
+                  },
+                });
+              });
+
+            gsap.utils
+              .toArray<HTMLElement>("[data-motion-product-card]", contentRoot)
+              .forEach((element, index) => {
+                gsap.from(element, {
+                  y: 56,
+                  opacity: 0.2,
+                  duration: 0.82,
+                  delay: Math.min(index, 4) * 0.055,
+                  ease: "power4.out",
+                  scrollTrigger: {
+                    trigger: element,
+                    start: "top 91%",
+                    once: true,
+                  },
+                });
+              });
+
+            gsap.utils
+              .toArray<HTMLElement>("[data-motion-parallax]", contentRoot)
+              .forEach((element) => {
+                gsap.fromTo(
+                  element,
+                  { yPercent: -4, scale: 1.04 },
+                  {
+                    yPercent: 5,
+                    ease: "none",
+                    scrollTrigger: {
+                      trigger: element.parentElement ?? element,
+                      start: "top bottom",
+                      end: "bottom top",
+                      scrub: 0.7,
+                    },
+                  },
+                );
+              });
+
+            const stackedPanels = gsap.utils.toArray<HTMLElement>(
+              "[data-motion-stack]",
+              contentRoot,
+            );
+            if (stackedPanels.length > 0) {
+              gsap.from(stackedPanels, {
+                y: 36,
+                opacity: 0.2,
+                stagger: 0.08,
+                duration: 0.7,
+                ease: "power4.out",
+                scrollTrigger: {
+                  trigger: stackedPanels[0]?.parentElement ?? stackedPanels[0],
+                  start: "top 84%",
+                  once: true,
+                },
+              });
+            }
+
+            gsap.utils
+              .toArray<HTMLElement>("[data-motion-float]", contentRoot)
+              .forEach((element, index) => {
+                gsap.fromTo(
+                  element,
+                  {
+                    yPercent: index % 2 === 0 ? -12 : 10,
+                    rotate: index % 2 === 0 ? -14 : 12,
+                  },
+                  {
+                    yPercent: index % 2 === 0 ? 18 : -16,
+                    rotate: index % 2 === 0 ? -7 : 5,
+                    ease: "none",
+                    scrollTrigger: {
+                      trigger: element.parentElement ?? element,
+                      start: "top bottom",
+                      end: "bottom top",
+                      scrub: 0.8,
+                    },
+                  },
+                );
+              });
+
+            gsap.utils
+              .toArray<HTMLElement>("[data-motion-horizontal]", contentRoot)
+              .forEach((element, index) => {
+                gsap.from(element, {
+                  xPercent: index % 2 === 0 ? -12 : 12,
+                  ease: "none",
+                  scrollTrigger: {
+                    trigger: element.parentElement ?? element,
+                    start: "top bottom",
+                    end: "bottom 35%",
+                    scrub: 0.65,
+                  },
+                });
+              });
+
+            gsap.utils
+              .toArray<HTMLElement>("[data-motion-stage]", contentRoot)
+              .filter((element) => !element.closest("[data-motion-journey]"))
+              .forEach((element, index) => {
+                gsap.from(element, {
+                  y: 48,
+                  opacity: 0.2,
+                  duration: 0.82,
+                  delay: Math.min(index, 3) * 0.06,
+                  ease: "power4.out",
+                  scrollTrigger: {
+                    trigger: element,
+                    start: "top 90%",
+                    once: true,
+                  },
+                });
+              });
+
+            const guardCleanups: Array<() => void> = [];
+
+            gsap.utils
+              .toArray<HTMLElement>("[data-motion-marquee]", contentRoot)
+              .forEach((element) => {
+                const marquee = gsap.to(element, {
+                  xPercent: -28,
+                  duration: 24,
+                  repeat: -1,
+                  ease: "none",
+                });
+                guardCleanups.push(attachContinuousMotionGuard(element, marquee));
+              });
+
+            if (context.conditions?.isDesktop) {
+              gsap.utils
+                .toArray<HTMLElement>("[data-motion-journey]", contentRoot)
+                .forEach((section) => {
+                  const pin =
+                    section.querySelector<HTMLElement>("[data-motion-journey-pin]") ??
+                    section;
+                  const track = section.querySelector<HTMLElement>(
+                    "[data-motion-journey-track]",
+                  );
+                  if (!track) return;
+
+                  const horizontalTween = gsap.to(track, {
+                    x: () =>
+                      -Math.max(0, track.scrollWidth - pin.clientWidth),
+                    ease: "none",
+                    scrollTrigger: {
+                      trigger: pin,
+                      pin: true,
+                      pinSpacing: true,
+                      anticipatePin: 1,
+                      start: "top top",
+                      end: () =>
+                        `+=${Math.max(
+                          window.innerHeight,
+                          track.scrollWidth - pin.clientWidth,
+                        )}`,
+                      scrub: 0.75,
+                      invalidateOnRefresh: true,
+                    },
+                  });
+
+                  gsap.utils
+                    .toArray<HTMLElement>("[data-motion-stage]", section)
+                    .forEach((stage) => {
+                      gsap.fromTo(
+                        stage,
+                        { y: 28, opacity: 0.72 },
+                        {
+                          y: 0,
+                          opacity: 1,
+                          ease: "none",
+                          scrollTrigger: {
+                            trigger: stage,
+                            containerAnimation: horizontalTween,
+                            start: "left 88%",
+                            end: "left 58%",
+                            scrub: true,
+                          },
+                        },
+                      );
+                    });
+                });
+            }
+
+            return () => {
+              guardCleanups.forEach((removeGuard) => removeGuard());
+            };
+          },
+        );
 
         cleanup = () => {
           if (refreshFrame !== null) cancelAnimationFrame(refreshFrame);
-          listenerCleanups.forEach((removeListeners) => removeListeners());
           motionMedia.revert();
-          context.revert();
         };
 
         refreshFrame = requestAnimationFrame(() => ScrollTrigger.refresh());

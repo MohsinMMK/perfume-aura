@@ -89,7 +89,7 @@ export function SiteHeader() {
         <div className="pointer-events-auto flex items-center gap-1.5">
           <nav
             aria-label="Primary navigation"
-            className={`hidden items-center gap-7 border-b border-dashed border-[color:rgb(245_228_199_/_24%)] bg-[var(--aura-ink)]/82 px-4 py-3 backdrop-blur-sm lg:flex ${compact ? "lg:hidden" : ""}`}
+            className={`hidden items-center gap-7 bg-[var(--aura-ink)]/82 px-4 py-3 backdrop-blur-sm lg:flex ${compact ? "lg:hidden" : ""}`}
           >
             {navigation.map((item) => (
               <Link

@@ -42,7 +42,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-scroll-behavior="smooth"
+      data-scroll-behavior="auto"
       data-perfume-aura-release={releaseCommit}
     >
       <body
