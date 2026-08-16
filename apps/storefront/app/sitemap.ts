@@ -4,9 +4,12 @@ import { getStorefrontCollectionSlugs, getStorefrontProducts } from "@/lib/catal
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.STOREFRONT_URL ?? "https://perfumeaura.com";
   const paths = ["", "/shop", "/search", "/find-your-scent", "/about", "/faq", "/contact", "/wholesale", "/shipping", "/returns", "/privacy", "/terms"];
-  const collectionPaths = (await getStorefrontCollectionSlugs()).map((slug) => `/collections/${slug}`);
-  const productPaths = (await getStorefrontProducts())
-    .filter((product) => product.publicationState === "published")
-    .map((product) => `/products/${product.slug}`);
+  const publishedProducts = (await getStorefrontProducts()).filter(
+    (product) => product.publicationState === "published",
+  );
+  const collectionPaths = publishedProducts.length
+    ? (await getStorefrontCollectionSlugs()).map((slug) => `/collections/${slug}`)
+    : [];
+  const productPaths = publishedProducts.map((product) => `/products/${product.slug}`);
   return [...paths, ...collectionPaths, ...productPaths].map((path) => ({ url: `${baseUrl}${path}`, lastModified: new Date(), changeFrequency: path === "" ? "weekly" : "monthly" }));
 }
