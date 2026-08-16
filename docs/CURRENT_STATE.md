@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-15 19:29:24 UTC**
+Last refreshed: **2026-08-16 07:27:18 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -33,12 +33,14 @@ and ignored local environment files.
 ## Exact releases and automation
 
 The public operations surface runs source
-`9c9d7b44b3daeb45edf7d8e0900c43c0cede6874` from immutable image digest
-`sha256:703986767e1e004c64d6c3eef50507b858854aa92ea36541556f658cd3145cf7`.
-Workflow run [`31903780577`](https://github.com/MohsinMMK/perfume-aura/actions/runs/31903780577)
+`774ca0bd7fc042a14cf6005cf79b2827082fc205` from immutable image digest
+`sha256:402f6b498845e87f850fb621802dc6755bf9580044bbe4628d70243c229751b3`.
+Workflow run [`31933591119`](https://github.com/MohsinMMK/perfume-aura/actions/runs/31933591119)
 passed quality, all disposable-PostgreSQL integration tests, verified
 packaging, image build/push, Tailscale deployment through the restricted SSH
-identity, and exact public verification at 2026-08-15 19:29:24 UTC.
+identity, and exact public verification at 2026-08-16 07:25:04 UTC. An
+independent exact-SHA verification and the path/query-preserving `www` redirect
+passed again at 2026-08-16 07:27:18 UTC.
 
 Routine ops deployment is now:
 
@@ -67,8 +69,8 @@ commit; the cached-HTML marker, real static asset, locks, `/shop`, `/search`,
 and path/query-preserving `www` redirect passed the production verifier.
 
 The generated branch `hostinger-storefront-production` exists at generated
-commit `016822ec80b415d9526e86799fd745a41d033739`; its deployment commit identifies
-exact source `9c9d7b44b3daeb45edf7d8e0900c43c0cede6874` and entry
+commit `1637dbd0adb4a59de1e3c9313ba4e8aa0b469c59`; its deployment commit identifies
+exact source `774ca0bd7fc042a14cf6005cf79b2827082fc205` and entry
 `apps/storefront/server.js`. The live app is not connected to that branch.
 Hostinger's current dashboard for this upload-sourced app exposes only archive
 redeployment, and its website action menu does not expose `Connect to GitHub`.
@@ -144,6 +146,15 @@ durable repair. Do not use plan-wide process controls as a workaround.
   exact ops source `9c9d7b44b3daeb45edf7d8e0900c43c0cede6874`, refreshed the disconnected
   generated storefront branch, and passed exact live acceptance; the live
   upload-sourced storefront remained unchanged.
+- PR #30 introduced the storefront visual and product-detail refinement. Its
+  first post-merge release built the exact verified artifacts but failed closed
+  because the shallow deployment-classifier checkout could not resolve the
+  valid multi-commit push baseline.
+- PR #31 fixed that classifier checkout. Its merge deployed and independently
+  verified exact ops source `774ca0bd7fc042a14cf6005cf79b2827082fc205` and
+  refreshed the disconnected storefront branch to the same source; the live
+  upload-sourced storefront remains exact source
+  `917499d7dae04aa04697a7af7fd3d062c029c7f6`.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
   deployment path.
