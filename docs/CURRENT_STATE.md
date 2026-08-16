@@ -4,14 +4,14 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-16 07:27:18 UTC**
+Last refreshed: **2026-08-16 11:50:00 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
 
 | Surface | Production state |
 |---|---|
-| `perfumeaura.com` | Hostinger managed Node.js Web App and HCDN; verified ZIP deployment |
+| `perfumeaura.com` | GitHub-connected Hostinger Node.js Web App and HCDN |
 | `www.perfumeaura.com` | Path- and query-preserving `308` to the apex |
 | `app.perfumeaura.com` | VPS container behind Caddy on `194.164.149.3` |
 | `www.app.perfumeaura.com` | Absent from Hostinger DNS and public DNS |
@@ -58,25 +58,25 @@ runs as UID/GID `10001`, has a read-only root filesystem, no Docker socket, all
 capabilities dropped, `no-new-privileges`, and limits of 1 CPU, 768 MiB memory,
 and 256 PIDs.
 
-The storefront runs the completed, checksum-verified manual archive
-`perfume-aura-storefront_917499d7dae0.zip`, exact source
-`917499d7dae04aa04697a7af7fd3d062c029c7f6`, with Node `24.x`, Framework Other,
-root `./`, no build command or output directory, and entry
-`apps/storefront/server.js`. Deployment completed at 2026-08-14 15:31:18 UTC
-(`Asia/Kolkata`, UTC+05:30). Its
-`/api/health/version` response is public, `no-store`, and reports the same exact
-commit; the cached-HTML marker, real static asset, locks, `/shop`, `/search`,
-and path/query-preserving `www` redirect passed the production verifier.
+The storefront is a GitHub-connected Hostinger Node.js Web App following
+`hostinger-storefront-production`, with Node `24.x`, Framework Other, root
+`./`, no build command or output directory, and entry
+`apps/storefront/server.js`. Repository variable
+`HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` enables exact live verification
+after the generated branch is published. Workflow run
+[`31945056868`](https://github.com/MohsinMMK/perfume-aura/actions/runs/31945056868)
+passed quality, disposable-PostgreSQL integration, packaging, and branch
+publication for exact source
+`484a20897803d923e69f50913bbd27283588e932`. Hostinger automatically deployed
+generated commit `918a7f30` at 2026-08-16 11:48 UTC. The apex version endpoint
+reported the exact source and the `www` redirect preserved path and query.
 
-The generated branch `hostinger-storefront-production` exists at generated
-commit `1637dbd0adb4a59de1e3c9313ba4e8aa0b469c59`; its deployment commit identifies
-exact source `774ca0bd7fc042a14cf6005cf79b2827082fc205` and entry
-`apps/storefront/server.js`. The live app is not connected to that branch.
-Hostinger's current dashboard for this upload-sourced app exposes only archive
-redeployment, and its website action menu does not expose `Connect to GitHub`.
-No destructive delete/recreate conversion was attempted. Keep
-`HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED` unset until a recoverable provider
-conversion is completed.
+The first live verifier exposed stale HCDN homepage HTML from source
+`917499d7dae04aa04697a7af7fd3d062c029c7f6` because the statically rendered
+root advertised a one-year shared-cache lifetime. A scoped cache clear restored
+the current HTML. The root layout is now dynamic so subsequent releases do not
+leave versioned HTML behind the CDN while immutable Next assets remain
+cacheable.
 
 ## Rollback state
 
@@ -91,9 +91,11 @@ earlier than 2026-08-16 14:47:58 UTC, and only with explicit authorization and
 fresh exact-SHA acceptance evidence. Do not publish new ops releases to it or
 change public DNS back outside an authorized rollback.
 
-The verified storefront ZIP remains the emergency storefront recovery path.
-The generated storefront branch is prepared but does not prove Hostinger Git
-auto-deployment until the provider source is actually connected.
+The verified storefront ZIP remains an emergency storefront recovery path. A
+fresh Hostinger backup completed at 2026-08-16 11:26 UTC. The prior upload app
+is retained as a rollback target at
+`perfumeaura-com-642844.hostingersite.com`; do not reassign the apex to it
+outside an authorized rollback.
 
 ## Capacity and VPS ownership
 
@@ -164,20 +166,14 @@ Next actions:
 1. Preserve and monitor the frozen Hostinger ops rollback until
    2026-08-16 14:47:58 UTC; remove it only with explicit authorization and
    fresh exact-SHA acceptance evidence after that deadline.
-2. Ask Hostinger to enable an in-place Git source conversion for the existing
-   upload-sourced storefront, or approve a separately backed-up/recoverable
-   recreation plan. Do not delete the live apex app merely to expose the Git
-   onboarding flow.
-3. After Git is connected, select `hostinger-storefront-production`, preserve
-   the existing runtime settings, enable
-   `HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true`, dispatch one storefront-only
-   deployment, and prove the exact generated source plus clean HCDN/browser
-   acceptance.
-4. Keep storefront commerce and staff security flags closed.
-5. Staff release and VPS ops observability may proceed independently after a
+2. Complete the dynamic-HTML cache correction through the protected flow and
+   prove one subsequent GitHub-triggered Hostinger deployment with exact
+   HCDN/browser acceptance and no manual redeploy.
+3. Keep storefront commerce and staff security flags closed.
+4. Staff release and VPS ops observability may proceed independently after a
    fresh exact-SHA VPS acceptance and their owning authorization gates pass;
    the unresolved shared-plan incident does not block that VPS-only work.
-6. Managed-storefront provider or observability changes remain gated by the
+5. Managed-storefront provider or observability changes remain gated by the
    rollback window, storefront Git-path decision, and scoped Hostinger incident
    evidence. Follow procedures in [`OPERATIONS.md`](OPERATIONS.md) and
    [`ENGINEERING.md`](ENGINEERING.md); do not start releases from this file.

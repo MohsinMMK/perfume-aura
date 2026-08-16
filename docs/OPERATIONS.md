@@ -91,13 +91,12 @@ in `CURRENT_STATE.md`.
 
 ## Storefront deployment and recovery
 
-The verified ZIP is the current routine and emergency storefront deployment
-path until Hostinger GitHub connectivity is enabled. The generated branch is
-the future routine path:
+The GitHub-connected generated branch is the routine storefront deployment
+path. The verified ZIP remains an emergency recovery artifact:
 
 ```text
 runtime-affecting main push → CI quality/integration/package
-  → hostinger-storefront-production → [provider Git connection required]
+  → hostinger-storefront-production
   → Hostinger Node Web App
   → exact storefront SHA and public-surface verification
 ```
@@ -105,9 +104,9 @@ runtime-affecting main push → CI quality/integration/package
 Markdown-only changes do not publish either generated branch. For a controlled
 idempotent republish of the exact `main` source, dispatch `ops-pack.yml` with
 `deploy_target=storefront`. Set repository variable
-`HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` only after Hostinger is
-actually connected. It enables the live verification job; it does not weaken
-the pre-publish gates.
+`HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` enables the live verification
+job after Hostinger deploys the generated branch; it does not weaken the
+pre-publish gates.
 
 Build the verified ZIP for either a routine deployment or emergency recovery:
 
@@ -122,13 +121,11 @@ Node 24.x, Framework Other, root `./`, no build command, empty output directory,
 and entry `apps/storefront/server.js`. Set
 `STOREFRONT_URL` and `CUSTOMER_AUTH_URL` to `https://perfumeaura.com`.
 
-Hostinger's current upload-sourced storefront UI does not expose an in-place
-`Connect to GitHub` control. Do not delete/recreate the apex Web App without a
-fresh backup, a tested replacement, captured DNS/HCDN/runtime settings, and
-explicit authorization. Until then the generated branch is prepared state
-only. Read [`CURRENT_STATE.md`](CURRENT_STATE.md) for current live-archive and
-generated-branch source identities. Confirm each artifact manifest before use;
-do not copy mutable source identifiers into this runbook.
+The live Web App is connected only to `hostinger-storefront-production`.
+Preserve its runtime and environment settings. The previous upload-sourced app
+and fresh pre-cutover backup are rollback state; do not reassign the apex,
+delete either recovery path, or copy mutable source identifiers into this
+runbook. Read [`CURRENT_STATE.md`](CURRENT_STATE.md) for current identities.
 
 Keep these flags false until their separate gates pass:
 
@@ -157,20 +154,19 @@ release marker in ordinary cached HTML, a real Next static asset, release locks,
 and the `www` `308` preserving `/shop?probe=1`. The packaged smoke test
 separately asserts that the version response uses `cache-control: no-store`.
 
-If exact verification fails, do not automatically roll back, purge HCDN, stop
-plan-wide processes, or republish an older source. Inspect the scoped failure;
-use the known-good ZIP or a scoped HCDN purge only with explicit authorization.
+If exact verification fails, do not automatically roll back, stop plan-wide
+processes, or republish an older source. Inspect the scoped failure. The root
+layout must remain dynamically rendered so HCDN does not retain release-marked
+HTML across deployments; immutable Next assets may remain cached. Use the
+known-good ZIP or a scoped HCDN purge only with explicit authorization.
 
-## Pending outcome
+## Current outcome
 
-Obtain a recoverable in-place Git source conversion for the existing upload-sourced Hostinger storefront, or approve a
-separately backed-up and tested recreation plan. Connect only
-`hostinger-storefront-production`; preserve Node 24.x, Framework Other, root
-`./`, empty build/output settings, existing environment values, and entry
-`apps/storefront/server.js`. Enable
-`HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` only after that connection
-exists, then prove one exact generated-source deployment through HCDN and
-clean desktop/mobile browsers.
+The live app follows only `hostinger-storefront-production` and preserves Node
+24.x, Framework Other, root `./`, empty build/output settings, existing
+environment values, and entry `apps/storefront/server.js`. Each
+runtime-affecting main merge must publish the generated branch, rely on
+Hostinger auto-deployment, and pass exact HCDN and clean-browser verification.
 
 ## Ops deployment and recovery
 
