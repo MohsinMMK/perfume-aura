@@ -55,7 +55,9 @@ jobs:
       - name: Checkout deployment classifier
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 2
+          # Push events can contain multiple rebased commits, so the event's
+          # before SHA is not guaranteed to be within a two-commit checkout.
+          fetch-depth: 0
 
       - name: Classify the main changeset
         id: impact
