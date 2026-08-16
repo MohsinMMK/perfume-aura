@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-16 12:42:30 UTC**
+Last refreshed: **2026-08-16 18:13:18 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -33,14 +33,15 @@ and ignored local environment files.
 ## Exact releases and automation
 
 The public operations surface runs source
-`774ca0bd7fc042a14cf6005cf79b2827082fc205` from immutable image digest
-`sha256:402f6b498845e87f850fb621802dc6755bf9580044bbe4628d70243c229751b3`.
-Workflow run [`31933591119`](https://github.com/MohsinMMK/perfume-aura/actions/runs/31933591119)
+`13490d8e8c0c704d1e1f10670b26239be6b1c3c2` from immutable image digest
+`sha256:b59418264aa28ca27890e9163f5b5f7ad101eb124ee331de0da22d87283ab53b`.
+Workflow run [`31963658075`](https://github.com/MohsinMMK/perfume-aura/actions/runs/31963658075)
 passed quality, all disposable-PostgreSQL integration tests, verified
 packaging, image build/push, Tailscale deployment through the restricted SSH
-identity, and exact public verification at 2026-08-16 07:25:04 UTC. An
-independent exact-SHA verification and the path/query-preserving `www` redirect
-passed again at 2026-08-16 07:27:18 UTC.
+identity, generated-branch publication, Hostinger auto-deployment, and exact
+public verification at 2026-08-16 18:13:18 UTC. The apex version and an
+independent `/shop` check report that exact source. The `www` redirect
+preserves `/shop?probe=1`.
 
 Routine ops deployment is now:
 
@@ -63,24 +64,23 @@ The storefront is a GitHub-connected Hostinger Node.js Web App following
 `./`, no build command or output directory, and entry
 `apps/storefront/server.js`. Repository variable
 `HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` enables exact live verification
-after the generated branch is published. PR #33 merged as exact source
-`35f187877290e44eb97c773d8d9dddefb7355ee1`. Its push automatically started
+after the generated branch is published. PR #36 merged as exact source
+`13490d8e8c0c704d1e1f10670b26239be6b1c3c2`. Its push automatically started
 workflow run
-[`31946168431`](https://github.com/MohsinMMK/perfume-aura/actions/runs/31946168431),
+[`31963658075`](https://github.com/MohsinMMK/perfume-aura/actions/runs/31963658075),
 which passed quality, disposable-PostgreSQL integration, verified packaging,
-generated-branch publication, Hostinger auto-deployment, and exact public
-verification. The generated branch is exact commit
-`faabecb98523c3e28c806d720f7491609779ea08`. The apex version and ordinary HTML
+generated-branch publication, Hostinger auto-deployment, VPS ops deployment,
+and exact public verification. The generated branch is exact commit
+`40ee1d834c03ef9784a523405eb2c71bcc1f7162`. The apex version and ordinary HTML
 marker report the exact source, dynamic HTML uses `private, no-cache, no-store`,
 and the `www` redirect preserves path and query.
 
-At 2026-08-16 12:41 UTC, explicit owner authorization opened only
-`STOREFRONT_PREVIEW_CATALOG`. Hostinger saved the environment change and
-automatically redeployed the same generated commit and exact source. The
-deployment completed, `/shop` returned `200`, and a fresh production browser
-session showed exactly the three Signature Series previews (Regent Noir, Azure
-Tides, and Petalia Noir) and three Standard Series previews (Standard scent
-01, 02, and 03). No product source or catalog data changed.
+A production `/shop` check at 2026-08-16 18:13:18 UTC showed the 69-product
+launch listing: 21 Signature names and 48 `Inspired by <approved reference>`
+titles. Incomplete inspired rows such as Heaven Rose remain absent. Add-to-cart
+and Buy now remain closed. Checkout, public release, customer authentication,
+and inquiries stay closed. Inspired-by titles are listing identity only and
+are not India-counsel clearance. Production Neon was not imported or migrated.
 
 The first live verifier exposed stale HCDN homepage HTML from source
 `917499d7dae04aa04697a7af7fd3d062c029c7f6` because the statically rendered
@@ -127,9 +127,9 @@ remains monitoring infrastructure.
 
 ## Release locks and acceptance
 
-Only the six-product storefront preview catalog is open. The public catalog,
-checkout approval, customer authentication, and inquiries remain closed, as
-confirmed in Hostinger after the redeployment. `robots.txt` disallows indexing.
+The 69-product launch listing is live. Sellable public catalog publication,
+checkout approval, customer authentication, and inquiries remain closed.
+`robots.txt` disallows indexing.
 `OPS_TWO_FACTOR_REQUIRED` and
 `OPS_STAFF_INVITES_ENABLED` remain false until the complete staff release gate
 passes. Green health never authorizes opening a release flag.
@@ -174,6 +174,10 @@ durable repair. Do not use plan-wide process controls as a workaround.
   App and made storefront HTML dynamic. Its merge automatically deployed and
   verified exact storefront source
   `35f187877290e44eb97c773d8d9dddefb7355ee1` without manual redeployment.
+- PR #36 replaced the six-product preview fixtures with the 69-product launch
+  listing. Its merge automatically deployed and verified exact source
+  `13490d8e8c0c704d1e1f10670b26239be6b1c3c2` on both the storefront and VPS ops
+  surfaces.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
   deployment path.
@@ -191,7 +195,6 @@ Next actions:
    rollback window, storefront Git-path decision, and scoped Hostinger incident
    evidence. Follow procedures in [`OPERATIONS.md`](OPERATIONS.md) and
    [`ENGINEERING.md`](ENGINEERING.md); do not start releases from this file.
-5. After this catalog-listing change deploys, `/shop` should show 21 Signature
-   and 48 Inspired-by listings from the launch workbook. Checkout, public
-   release, and production Neon import stay closed. Do not treat Inspired-by
-   titles as India-counsel clearance.
+5. Keep Inspired-by listing titles fail-closed for legal clearance, sale data,
+   and Neon import. Do not apply a production catalog migration or open
+   checkout without a separate owner-authorized gate.
