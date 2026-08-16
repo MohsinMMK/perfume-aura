@@ -303,7 +303,11 @@ export function StorefrontMotion() {
 
             gsap.utils
               .toArray<HTMLElement>("[data-motion-stage]", contentRoot)
-              .filter((element) => !element.closest("[data-motion-journey]"))
+              .filter(
+                (element) =>
+                  !context.conditions?.isDesktop ||
+                  !element.closest("[data-motion-journey]"),
+              )
               .forEach((element, index) => {
                 gsap.from(element, {
                   y: 48,
