@@ -17,6 +17,8 @@ export function attachContinuousMotionGuard(
     resume: () => void;
   }>,
 ): () => void {
+  let pendingFocusOutFrame: number | null = null;
+
   const readState = (): ContinuousMotionIdleState => ({
     hidden: document.hidden,
     hovered: element.matches(":hover"),
@@ -25,6 +27,14 @@ export function attachContinuousMotionGuard(
 
   const pause = () => {
     animation.pause();
+  };
+
+  const handleFocusIn = () => {
+    if (pendingFocusOutFrame !== null) {
+      window.cancelAnimationFrame(pendingFocusOutFrame);
+      pendingFocusOutFrame = null;
+    }
+    pause();
   };
 
   const resumeWhenIdle = () => {
@@ -36,7 +46,10 @@ export function attachContinuousMotionGuard(
   const handleFocusOut = (event: FocusEvent) => {
     const nextTarget = event.relatedTarget;
     if (!(nextTarget instanceof Node) || !element.contains(nextTarget)) {
-      resumeWhenIdle();
+      pendingFocusOutFrame = window.requestAnimationFrame(() => {
+        pendingFocusOutFrame = null;
+        resumeWhenIdle();
+      });
     }
   };
 
@@ -47,7 +60,7 @@ export function attachContinuousMotionGuard(
 
   element.addEventListener("mouseenter", pause);
   element.addEventListener("mouseleave", resumeWhenIdle);
-  element.addEventListener("focusin", pause);
+  element.addEventListener("focusin", handleFocusIn);
   element.addEventListener("focusout", handleFocusOut);
   document.addEventListener("visibilitychange", handleVisibilityChange);
 
@@ -58,8 +71,11 @@ export function attachContinuousMotionGuard(
   return () => {
     element.removeEventListener("mouseenter", pause);
     element.removeEventListener("mouseleave", resumeWhenIdle);
-    element.removeEventListener("focusin", pause);
+    element.removeEventListener("focusin", handleFocusIn);
     element.removeEventListener("focusout", handleFocusOut);
     document.removeEventListener("visibilitychange", handleVisibilityChange);
+    if (pendingFocusOutFrame !== null) {
+      window.cancelAnimationFrame(pendingFocusOutFrame);
+    }
   };
 }

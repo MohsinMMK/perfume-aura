@@ -230,6 +230,7 @@ export function HomeHero({
             render={<Link href={activeProduct.slug ? `/products/${activeProduct.slug}` : "/shop"} />}
             nativeButton={false}
             size="lg"
+            aria-label={activeProduct.slug ? `Shop now: ${activeProduct.name}` : "Shop the collection"}
             className="min-h-16 w-full max-w-xs rounded-[0.65rem] bg-[var(--aura-ivory)] px-8 font-display text-xl tracking-[0.02em] text-[var(--aura-ink)] hover:bg-white"
           >
             Shop now
