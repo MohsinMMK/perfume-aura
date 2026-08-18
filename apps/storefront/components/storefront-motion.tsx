@@ -287,6 +287,40 @@ export function StorefrontMotion() {
               });
 
             gsap.utils
+              .toArray<HTMLElement>("[data-motion-ingredient-drift]", contentRoot)
+              .forEach((element, index) => {
+                const driftX = Number.parseFloat(element.dataset.driftX ?? "0");
+                const driftY = Number.parseFloat(element.dataset.driftY ?? "0");
+                const driftRotate = Number.parseFloat(
+                  element.dataset.driftRotate ?? "0",
+                );
+                const baseRotate = Number.parseFloat(
+                  element.dataset.baseRotate ?? "0",
+                );
+
+                gsap.fromTo(
+                  element,
+                  {
+                    xPercent: -driftX,
+                    yPercent: -driftY,
+                    rotate: baseRotate - driftRotate,
+                  },
+                  {
+                    xPercent: driftX,
+                    yPercent: driftY,
+                    rotate: baseRotate + driftRotate,
+                    ease: "none",
+                    scrollTrigger: {
+                      trigger: element.parentElement ?? element,
+                      start: "top bottom",
+                      end: "bottom top",
+                      scrub: 0.75 + index * 0.08,
+                    },
+                  },
+                );
+              });
+
+            gsap.utils
               .toArray<HTMLElement>("[data-motion-horizontal]", contentRoot)
               .forEach((element, index) => {
                 gsap.from(element, {

@@ -10,6 +10,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { Button } from "@perfume-aura/ui/components/button";
 import { HomeHero } from "@/components/home-hero";
+import { IngredientAtmosphere } from "@/components/ingredient-atmosphere";
 import { ProductCard } from "@/components/product-card";
 import { getFeaturedProducts } from "@/lib/catalog";
 
@@ -76,6 +77,18 @@ export default async function HomePage() {
     <>
       <HomeHero products={featuredProducts} />
 
+      <section className="relative min-h-[86svh] overflow-hidden border-y border-dashed border-[color:rgb(245_228_199_/_22%)] bg-[var(--aura-ink)] px-5 py-24 text-[var(--aura-ivory)] sm:px-8 lg:py-36">
+        <IngredientAtmosphere />
+        <div className="relative z-10 mx-auto flex min-h-[62svh] max-w-[66rem] flex-col items-center justify-center text-center">
+          <h2 data-motion-copy className="max-w-[17ch] text-[clamp(2.7rem,6vw,6.5rem)] leading-[0.98] tracking-[-0.04em] text-balance">
+            Perfume lives between <span className="font-[var(--font-playfair)] italic text-[var(--aura-brass)]">arrival</span> and memory. Find the composition that feels unmistakably yours.
+          </h2>
+          <p data-motion-copy className="mt-8 max-w-[34rem] text-sm leading-6 text-[color:rgb(245_228_199_/_68%)] sm:text-base">
+            Bergamot lifts. Jasmine blooms. Oud and vanilla linger.
+          </p>
+        </div>
+      </section>
+
       <section className="bg-[var(--aura-ink)] px-[var(--aura-gutter)] py-16 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:py-24">
         <div className="mx-auto max-w-[78rem]">
           <p className="mb-8 text-center text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-[color:rgb(245_228_199_/_65%)]">Four ways into the collection</p>
@@ -129,25 +142,6 @@ export default async function HomePage() {
               </div>
             </div>
           )}
-        </div>
-      </section>
-
-      <section className="relative min-h-[86svh] overflow-hidden border-y border-dashed border-[color:var(--aura-rule)] bg-[var(--aura-ink)] px-[var(--aura-gutter)] py-24 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:py-36">
-        <div className="pointer-events-none absolute inset-0 opacity-55" aria-hidden="true">
-          <div data-motion-float className="absolute -left-10 top-14 h-44 w-36 rotate-[-12deg] overflow-hidden rounded-[var(--aura-radius)] border border-white/20 sm:left-[8%] lg:h-64 lg:w-52">
-            <Image src="/images/regent-noir-50ml.webp" alt="" fill sizes="13rem" className="object-cover" />
-          </div>
-          <div data-motion-float className="absolute -right-10 top-[38%] h-44 w-36 rotate-[10deg] overflow-hidden rounded-[var(--aura-radius)] border border-white/20 sm:right-[8%] lg:h-64 lg:w-52">
-            <Image src="/images/azure-tides-50ml.webp" alt="" fill sizes="13rem" className="object-cover" />
-          </div>
-          <div data-motion-float className="absolute bottom-6 left-[42%] hidden h-48 w-40 rotate-[6deg] overflow-hidden rounded-[var(--aura-radius)] border border-white/20 lg:block">
-            <Image src="/images/petalia-noir-50ml.webp" alt="" fill sizes="10rem" className="object-cover" />
-          </div>
-        </div>
-        <div className="relative z-10 mx-auto flex min-h-[62svh] max-w-[66rem] items-center justify-center text-center">
-          <h2 data-motion-copy className="font-display max-w-[14ch] text-[clamp(3.25rem,6.9444vw,8.3333rem)] leading-[0.88] tracking-[-0.02em] text-balance">
-            Perfume lives between arrival and memory
-          </h2>
         </div>
       </section>
 

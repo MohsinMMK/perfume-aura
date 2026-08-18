@@ -22,7 +22,7 @@ type HeroProduct = Readonly<{
 const fallbackProduct: HeroProduct = {
   slug: "",
   name: "Perfume Aura Elixir",
-  image: "/images/perfume-aura-100ml-floating.png",
+  image: "/images/perfume-aura-100ml-floating-clean.webp",
   imageAlt: "Perfume Aura matte black 100 ml bottle with gold details",
   floating: true,
 };
@@ -135,6 +135,8 @@ export function HomeHero({
           { y: 12 },
           { y: 0, duration: 0.38, ease: "power4.out" },
         );
+        if (activeProduct.floating) return;
+
         const pulse = gsap.to(image, {
           y: -10,
           duration: 2,
@@ -194,7 +196,7 @@ export function HomeHero({
               fill
               preload
               sizes="(max-width: 768px) 100vw, 46rem"
-              className={`z-10 object-contain object-center ${activeProduct.floating ? "scale-[1.08] drop-shadow-[0_2rem_2rem_rgba(0,0,0,.48)] sm:scale-[1.14]" : ""}`}
+              className={`z-10 object-contain object-center ${activeProduct.floating ? "aura-hero-bottle-float scale-[.88] drop-shadow-[0_1.4rem_1.2rem_rgba(0,0,0,.34)] sm:scale-[.92]" : ""}`}
             />
             {activeProduct.floating ? null : (
               <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(16,11,6,.1)_0%,transparent_18%,transparent_70%,rgba(16,11,6,.78)_100%)]" />
