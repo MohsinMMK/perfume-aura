@@ -33,6 +33,9 @@ describe("storefront motion contract", () => {
     assert.match(motion, /reduceMotion:\s*"\(prefers-reduced-motion: reduce\)"/);
     assert.match(motion, /isDesktop:\s*"\(min-width: 1024px\)"/);
     assert.match(motion, /motionMedia\.revert\(/);
+    assert.match(motion, /data-motion-ingredient-drift/);
+    assert.match(motion, /element\.dataset\.driftX/);
+    assert.match(motion, /element\.dataset\.driftY/);
     assert.match(motion, /pin:\s*true/);
     assert.match(motion, /containerAnimation:\s*horizontalTween/);
     assert.match(motion, /anticipatePin:\s*1/);
@@ -44,6 +47,8 @@ describe("storefront motion contract", () => {
     assert.match(hero, /gsap\.matchMedia\(/);
     assert.match(hero, /prefers-reduced-motion: no-preference/);
     assert.match(hero, /attachContinuousMotionGuard\(section, pulse\)/);
+    assert.match(hero, /perfume-aura-100ml-floating-clean\.webp/);
+    assert.doesNotMatch(hero, /perfume-aura-100ml-floating\.png/);
     assert.match(hero, /Show previous featured scent/);
     assert.match(hero, /Show next featured scent/);
     assert.doesNotMatch(hero, /filter:\s*"blur/);
