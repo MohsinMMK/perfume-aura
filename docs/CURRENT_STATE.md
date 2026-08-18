@@ -201,9 +201,9 @@ durable repair. Do not use plan-wide process controls as a workaround.
 
 Next actions:
 
-1. Preserve and monitor the frozen Hostinger ops rollback until
-   2026-08-16 14:47:58 UTC; remove it only with explicit authorization and
-   fresh exact-SHA acceptance evidence after that deadline.
+1. The frozen Hostinger ops rollback window expired on
+   2026-08-16 14:47:58 UTC. Remove it only with explicit authorization and
+   fresh exact-SHA acceptance evidence.
 2. Keep storefront commerce and staff security flags closed.
 3. Staff release and VPS ops observability may proceed independently after a
    fresh exact-SHA VPS acceptance and their owning authorization gates pass;
