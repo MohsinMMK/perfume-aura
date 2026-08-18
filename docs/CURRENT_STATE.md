@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-16 20:38:59 UTC**
+Last refreshed: **2026-08-18 18:15:40 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -64,18 +64,22 @@ The storefront is a GitHub-connected Hostinger Node.js Web App following
 `./`, no build command or output directory, and entry
 `apps/storefront/server.js`. Repository variable
 `HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` enables exact live verification
-after the generated branch is published. PR #38 merged as exact source
-`bb1bd2fe9a14fa1c14b167b354c512e81e96624a`. Its push automatically started
+after the generated branch is published. PR #40 merged as exact source
+`36b30444695458c5a7c99b38dfde6c22cb8b3b02`. Its push automatically started
 workflow run
-[`31970873845`](https://github.com/MohsinMMK/perfume-aura/actions/runs/31970873845),
+[`32131014036`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32131014036),
 which passed quality, disposable-PostgreSQL integration, verified packaging,
 generated-branch publication, Hostinger auto-deployment, and exact public
-verification at 2026-08-16 20:38:59 UTC. The VPS ops publish job stayed skipped
+verification at 2026-08-18 11:23:52 UTC. The VPS ops publish job stayed skipped
 because this changeset was storefront-only; ops remains exact source
 `13490d8e8c0c704d1e1f10670b26239be6b1c3c2`. The generated storefront branch is
-exact commit `1e5bced144c14e71e80b101bb5f6fd328f5a6ecc`. The apex version and
+exact commit `1956fb2788e049657cb4055a1e294b59edcbb7a6`. The apex version and
 ordinary HTML marker report the exact storefront source, dynamic HTML uses
 `private, no-cache, no-store`, and the `www` redirect preserves `/shop?probe=1`.
+An independent verifier at 2026-08-18 18:14:34 UTC passed the exact source,
+storefront locks, path- and query-preserving `www` redirect, and a real static
+asset. A fresh production browser rendered the cleaned hero bottle and all four
+ingredient cutouts with no console logs or errors.
 
 A production `/shop` check at 2026-08-16 20:38:59 UTC showed the 69-product
 launch listing: 21 Signature names and 48 `Inspired by <approved reference>`
@@ -187,15 +191,19 @@ durable repair. Do not use plan-wide process controls as a workaround.
   automatically deployed and independently verified exact storefront source
   `bb1bd2fe9a14fa1c14b167b354c512e81e96624a` without changing the live VPS ops
   source or any commerce release lock.
+- PR #40 added the interactive perfumery ingredient atmosphere and cleaned hero
+  bottle. Its merge automatically deployed and independently verified exact
+  storefront source `36b30444695458c5a7c99b38dfde6c22cb8b3b02`
+  without changing the live VPS ops source or any commerce release lock.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
   deployment path.
 
 Next actions:
 
-1. Preserve and monitor the frozen Hostinger ops rollback until
-   2026-08-16 14:47:58 UTC; remove it only with explicit authorization and
-   fresh exact-SHA acceptance evidence after that deadline.
+1. The frozen Hostinger ops rollback window expired on
+   2026-08-16 14:47:58 UTC. Remove it only with explicit authorization and
+   fresh exact-SHA acceptance evidence.
 2. Keep storefront commerce and staff security flags closed.
 3. Staff release and VPS ops observability may proceed independently after a
    fresh exact-SHA VPS acceptance and their owning authorization gates pass;
