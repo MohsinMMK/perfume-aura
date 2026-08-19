@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-18 18:15:40 UTC**
+Last refreshed: **2026-08-19 08:36:39 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -64,30 +64,28 @@ The storefront is a GitHub-connected Hostinger Node.js Web App following
 `./`, no build command or output directory, and entry
 `apps/storefront/server.js`. Repository variable
 `HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` enables exact live verification
-after the generated branch is published. PR #40 merged as exact source
-`36b30444695458c5a7c99b38dfde6c22cb8b3b02`. Its push automatically started
+after the generated branch is published. PR #42 merged as exact source
+`273c04935b94884c2da90ebf52de3d9917dbc8c1`. Its push automatically started
 workflow run
-[`32131014036`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32131014036),
+[`32232887790`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32232887790),
 which passed quality, disposable-PostgreSQL integration, verified packaging,
 generated-branch publication, Hostinger auto-deployment, and exact public
-verification at 2026-08-18 11:23:52 UTC. The VPS ops publish job stayed skipped
+verification at 2026-08-19 08:36:39 UTC. The VPS ops publish job stayed skipped
 because this changeset was storefront-only; ops remains exact source
 `13490d8e8c0c704d1e1f10670b26239be6b1c3c2`. The generated storefront branch is
-exact commit `1956fb2788e049657cb4055a1e294b59edcbb7a6`. The apex version and
-ordinary HTML marker report the exact storefront source, dynamic HTML uses
+exact commit `ef3580280975353c1fb754fee8e177ab5f51911a`. The apex HTML marker
+reports the exact storefront source, dynamic HTML uses
 `private, no-cache, no-store`, and the `www` redirect preserves `/shop?probe=1`.
-An independent verifier at 2026-08-18 18:14:34 UTC passed the exact source,
-storefront locks, path- and query-preserving `www` redirect, and a real static
-asset. A fresh production browser rendered the cleaned hero bottle and all four
-ingredient cutouts with no console logs or errors.
 
-A production `/shop` check at 2026-08-16 20:38:59 UTC showed the 69-product
-launch listing: 21 Signature names and 48 `Inspired by <approved reference>`
-titles, the shortened shop title and grid, and locked `View scent` actions.
-Incomplete inspired rows such as Heaven Rose remain absent. Add-to-cart
-and Buy now remain closed. Checkout, public release, customer authentication,
-and inquiries stay closed. Inspired-by titles are listing identity only and
-are not India-counsel clearance. Production Neon was not imported or migrated.
+A production `/shop` check after that release shows the 69-product launch
+listing with URL-driven search, Signature / Inspired / Featured segments, size
+filters, and name sort. Incomplete inspired rows such as Heaven Rose remain
+absent. Card hover shows a disabled Add to cart control and a View product
+action; purchase still cannot complete. Checkout, public release, customer
+authentication, and inquiries stay closed. Inspired-by titles are listing
+identity only and are not India-counsel clearance. Production Neon was not
+imported or migrated. Inner pages use the wordmark SVG only; the home portal
+keeps the bottle animation.
 
 The first live verifier exposed stale HCDN homepage HTML from source
 `917499d7dae04aa04697a7af7fd3d062c029c7f6` because the statically rendered
@@ -195,6 +193,12 @@ durable repair. Do not use plan-wide process controls as a workaround.
   bottle. Its merge automatically deployed and independently verified exact
   storefront source `36b30444695458c5a7c99b38dfde6c22cb8b3b02`
   without changing the live VPS ops source or any commerce release lock.
+- PR #41 recorded that ingredient-atmosphere release. Its Markdown-only merge
+  did not publish or deploy either surface.
+- PR #42 added shop search, segments, size filters, and name sort. Its merge
+  automatically deployed and independently verified exact storefront source
+  `273c04935b94884c2da90ebf52de3d9917dbc8c1` without changing the live VPS ops
+  source or any commerce release lock.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
   deployment path.
