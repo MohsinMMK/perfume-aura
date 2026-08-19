@@ -6,7 +6,6 @@ import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
 import type { StorefrontProduct } from "@/lib/catalog";
-import { formatMoney } from "@/lib/money";
 import { useCart } from "./cart-provider";
 
 export function ProductCard({
@@ -15,14 +14,10 @@ export function ProductCard({
   const { addItem, loading } = useCart();
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const firstPrice = product.variants.find((variant) => variant.price)?.price;
   const purchasableVariant = product.variants.find(
     (variant) => variant.purchasable && variant.price,
   );
   const canPurchase = Boolean(purchasableVariant);
-  const priceLabel = firstPrice
-    ? `From ${formatMoney(firstPrice)}`
-    : "Price not available yet";
 
   async function handleAddToCart() {
     if (!purchasableVariant) return;
@@ -39,9 +34,13 @@ export function ProductCard({
   return (
     <article
       data-motion-product-card
-      className="group min-w-0 border-t border-dashed border-[color:var(--aura-rule)] pt-2 text-[var(--aura-ivory)]"
+      className="group min-w-0 text-[var(--aura-ivory)]"
     >
       <div className="product-card-stage relative aspect-[5/8] overflow-hidden rounded-[var(--aura-radius)] bg-[var(--aura-brass)]">
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-[4px] z-30 rounded-[calc(var(--aura-radius)-4px)] border border-dashed border-[color:var(--aura-rule)]"
+        />
         <Image
           src={product.cardImage ?? product.image}
           alt={product.imageAlt}
@@ -73,43 +72,26 @@ export function ProductCard({
         />
 
         <div className="product-card-actions pointer-events-none absolute inset-x-0 bottom-0 z-20 p-3 sm:p-4">
-          <div className="mb-3 flex items-end justify-between gap-3 text-[var(--aura-ivory)]">
-            <span className="font-display text-lg tracking-[0.03em]">
-              {priceLabel}
-            </span>
-            <span
-              className="grid min-h-11 min-w-11 place-items-center rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] bg-[var(--aura-ink)]/40"
-              aria-hidden="true"
+          <div className="grid grid-cols-2 gap-[var(--aura-gap)]">
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              disabled={!canPurchase || loading}
+              aria-label={
+                canPurchase ? "Add to cart" : "Add to cart is not available yet"
+              }
+              className="pointer-events-auto min-h-12 rounded-[var(--aura-radius)] border border-[var(--aura-ivory)] bg-[var(--aura-ivory)] px-2 font-display text-sm tracking-[0.03em] text-[var(--aura-ink)] transition enabled:hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)] disabled:cursor-not-allowed sm:px-3 sm:text-base"
             >
+              Add to cart
+            </button>
+            <Link
+              href={`/products/${product.slug}`}
+              className="pointer-events-auto inline-flex min-h-12 items-center justify-between gap-1 rounded-[var(--aura-radius)] border border-[var(--aura-ivory)] bg-transparent px-2 font-display text-sm tracking-[0.03em] text-[var(--aura-ivory)] transition hover:bg-[var(--aura-ivory)] hover:text-[var(--aura-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)] sm:gap-2 sm:px-4 sm:text-base"
+            >
+              View product
               <HugeiconsIcon icon={ArrowUpRight01Icon} strokeWidth={1.7} />
-            </span>
+            </Link>
           </div>
-          {canPurchase ? (
-            <div className="grid grid-cols-2 gap-[var(--aura-gap)]">
-              <Link
-                href={`/products/${product.slug}`}
-                className="pointer-events-auto grid min-h-12 place-items-center rounded-[var(--aura-radius)] border border-[var(--aura-ivory)] bg-[var(--aura-ivory)] px-3 font-display text-base tracking-[0.03em] text-[var(--aura-ink)] transition hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)]"
-              >
-                View product
-              </Link>
-              <button
-                type="button"
-                onClick={handleAddToCart}
-                disabled={loading}
-                className="pointer-events-auto min-h-12 rounded-[var(--aura-radius)] border border-[color:rgb(245_228_199_/_60%)] bg-[var(--aura-ink)]/45 px-3 font-display text-base tracking-[0.03em] text-white transition enabled:hover:bg-white enabled:hover:text-[var(--aura-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)] disabled:cursor-not-allowed disabled:opacity-55"
-              >
-                Add to cart
-              </button>
-            </div>
-          ) : (
-            <div
-              className="flex min-h-12 w-full items-center justify-between rounded-[var(--aura-radius)] border border-[var(--aura-ivory)] bg-[var(--aura-ivory)] px-4 font-display text-base tracking-[0.03em] text-[var(--aura-ink)]"
-              aria-hidden="true"
-            >
-              View scent
-              <HugeiconsIcon icon={ArrowUpRight01Icon} strokeWidth={1.7} />
-            </div>
-          )}
         </div>
       </div>
 

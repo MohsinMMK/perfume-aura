@@ -222,6 +222,40 @@ textarea {
   color: inherit;
 }
 
+.shop-listing-rail {
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(245 228 199 / 28%) transparent;
+}
+
+.shop-chip-icon {
+  display: inline-flex;
+  width: 0;
+  margin-inline-end: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition:
+    width 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    margin 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shop-chip:hover .shop-chip-icon,
+.shop-chip:focus-visible .shop-chip-icon,
+.shop-chip[aria-current] .shop-chip-icon,
+.shop-chip[aria-pressed="true"] .shop-chip-icon {
+  width: 1rem;
+  margin-inline-end: 0.4rem;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shop-chip-icon {
+    transition: none;
+  }
+}
+
 @media (min-width: 1024px) {
   .aura-header-logo {
     --aura-logo-wordmark-start-scale: 0.755;

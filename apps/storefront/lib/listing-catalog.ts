@@ -16,7 +16,7 @@ export const listingCollections = {
 
 export type ListingCollectionSlug = keyof typeof listingCollections;
 
-const featuredListingSlugs = [
+export const featuredListingSlugs = [
   "regent-noir",
   "azure-tides",
   "petalia-noir",

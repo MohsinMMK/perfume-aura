@@ -1,8 +1,12 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { ProductCard } from "@/components/product-card";
-import { getStorefrontCollectionSlugs, getStorefrontProducts } from "@/lib/catalog";
-import { listingCollections } from "@/lib/listing-catalog";
+import { ShopListingControls } from "@/components/shop-listing-controls";
+import { getStorefrontProducts } from "@/lib/catalog";
+import {
+  applyShopListingQuery,
+  isShopListingQueryActive,
+  parseShopListingQuery,
+} from "@/lib/shop-listing-query";
 
 export const metadata: Metadata = {
   title: "Shop",
@@ -10,9 +14,21 @@ export const metadata: Metadata = {
   alternates: { canonical: "/shop" },
 };
 
-export default async function ShopPage() {
+export default async function ShopPage({
+  searchParams,
+}: Readonly<{
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}>) {
   const products = await getStorefrontProducts();
-  const collectionSlugs = await getStorefrontCollectionSlugs();
+  const query = parseShopListingQuery(await searchParams);
+  const visible = applyShopListingQuery(products, query);
+  const facetProducts = products.map((product) => ({
+    slug: product.slug,
+    name: product.name,
+    eyebrow: product.eyebrow,
+    collectionSlug: product.collectionSlug,
+    variants: product.variants.map((variant) => ({ sizeMl: variant.sizeMl })),
+  }));
 
   return (
     <section className="bg-[var(--aura-ink)] px-[var(--aura-gutter)] pb-24 pt-28 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:pb-32 lg:pt-32">
@@ -25,33 +41,29 @@ export default async function ShopPage() {
           {products.length} scents across Signature and Inspired listings. Prices, notes, and checkout open only when each edition is complete.
         </p>
 
-        {collectionSlugs.length ? (
-          <nav aria-label="Shop collections" className="mt-10 mb-6 flex flex-wrap gap-[var(--aura-gap)]">
-            {collectionSlugs.map((slug) => {
-              const collection = slug in listingCollections
-                ? listingCollections[slug as keyof typeof listingCollections]
-                : null;
-              return (
-                <Link
-                  key={slug}
-                  href={`/collections/${slug}`}
-                  className="inline-flex min-h-12 items-center border border-[color:var(--aura-rule)] px-4 font-display text-lg text-[var(--aura-ivory)] transition hover:border-[var(--aura-ivory)] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[var(--aura-ivory)]"
-                >
-                  {collection?.title ?? slug}
-                </Link>
-              );
-            })}
-          </nav>
-        ) : null}
+        <ShopListingControls
+          query={query}
+          resultCount={visible.length}
+          products={facetProducts}
+        />
 
-        {products.length ? (
-          <div className="aura-product-grid grid gap-[var(--aura-gap)] lg:gap-[var(--aura-gap-lg)]">
-            {products.map((product) => <ProductCard key={product.id} product={product} />)}
-          </div>
-        ) : (
+        {products.length === 0 ? (
           <div className="mt-10 border border-dashed border-[color:var(--aura-rule)] p-12 text-center">
             <h2 className="font-display text-4xl">The collection is being prepared.</h2>
             <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_58%)]">Product details will appear here when each scent is complete and ready to share.</p>
+          </div>
+        ) : visible.length ? (
+          <div className="aura-product-grid grid gap-[var(--aura-gap)] lg:gap-[var(--aura-gap-lg)]">
+            {visible.map((product) => <ProductCard key={product.id} product={product} />)}
+          </div>
+        ) : (
+          <div className="mt-4 border border-dashed border-[color:var(--aura-rule)] p-12 text-center">
+            <h2 className="font-display text-4xl">No matches{query.q ? ` for “${query.q}”` : ""}.</h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_58%)]">
+              {isShopListingQueryActive(query)
+                ? "Check the spelling or clear filters to see the full listing."
+                : "Product details will appear here when each scent is complete and ready to share."}
+            </p>
           </div>
         )}
       </div>
