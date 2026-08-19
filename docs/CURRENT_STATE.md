@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-19 08:36:39 UTC**
+Last refreshed: **2026-08-19 11:42:57 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -64,16 +64,16 @@ The storefront is a GitHub-connected Hostinger Node.js Web App following
 `./`, no build command or output directory, and entry
 `apps/storefront/server.js`. Repository variable
 `HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` enables exact live verification
-after the generated branch is published. PR #42 merged as exact source
-`273c04935b94884c2da90ebf52de3d9917dbc8c1`. Its push automatically started
+after the generated branch is published. PR #44 merged as exact source
+`14568a1a670ea2050c05273d556a1b1551e4dc49`. Its push automatically started
 workflow run
-[`32232887790`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32232887790),
+[`32248338456`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32248338456),
 which passed quality, disposable-PostgreSQL integration, verified packaging,
 generated-branch publication, Hostinger auto-deployment, and exact public
-verification at 2026-08-19 08:36:39 UTC. The VPS ops publish job stayed skipped
+verification at 2026-08-19 11:41:11 UTC. The VPS ops publish job stayed skipped
 because this changeset was storefront-only; ops remains exact source
 `13490d8e8c0c704d1e1f10670b26239be6b1c3c2`. The generated storefront branch is
-exact commit `ef3580280975353c1fb754fee8e177ab5f51911a`. The apex HTML marker
+exact commit `d929ccb715bae05ce3b9c80bd02d2908ca9decf0`. The apex HTML marker
 reports the exact storefront source, dynamic HTML uses
 `private, no-cache, no-store`, and the `www` redirect preserves `/shop?probe=1`.
 
@@ -139,10 +139,11 @@ checkout approval, customer authentication, and inquiries remain closed.
 `OPS_STAFF_INVITES_ENABLED` remain false until the complete staff release gate
 passes. Green health never authorizes opening a release flag.
 
-Fresh desktop and mobile browser sessions after the split showed no horizontal
-overflow or console errors. The storefront retained the cream `#f5e4c7`
-full-mark-to-wordmark animation, transparent compact background, no backdrop
-blur, and hidden bottle after scrolling. Fresh ops sessions rendered the login
+Fresh 390 px mobile and 768 px tablet browser sessions showed no horizontal
+overflow or console errors. Mobile renders the cream `#f5e4c7` wordmark from
+first paint with the bottle SVG absent; tablet and desktop retain the
+full-mark-to-wordmark animation, transparent compact background, and no
+backdrop blur. Fresh ops sessions rendered the login
 surface from exact VPS source `9c9d7b44b3daeb45edf7d8e0900c43c0cede6874`;
 workflow and independent exact-SHA acceptance passed without changing public
 storefront release locks.
@@ -198,6 +199,11 @@ durable repair. Do not use plan-wide process controls as a workaround.
 - PR #42 added shop search, segments, size filters, and name sort. Its merge
   automatically deployed and independently verified exact storefront source
   `273c04935b94884c2da90ebf52de3d9917dbc8c1` without changing the live VPS ops
+  source or any commerce release lock.
+- PR #44 made the home header wordmark-only below 640 px while preserving the
+  bottle transition on larger screens. Its merge automatically deployed and
+  independently verified exact storefront source
+  `14568a1a670ea2050c05273d556a1b1551e4dc49` without changing the live VPS ops
   source or any commerce release lock.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
