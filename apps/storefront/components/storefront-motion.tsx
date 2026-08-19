@@ -114,6 +114,7 @@ export function StorefrontMotion() {
           {
             allowMotion: "(prefers-reduced-motion: no-preference)",
             reduceMotion: "(prefers-reduced-motion: reduce)",
+            showExpandedLogo: "(min-width: 640px)",
             isDesktop: "(min-width: 1024px)",
           },
           (context) => {
@@ -128,7 +129,12 @@ export function StorefrontMotion() {
               "[data-header-logo-wordmark]",
             );
 
-            if (headerLogo && headerLogoIcon && headerLogoWordmark) {
+            if (
+              context.conditions?.showExpandedLogo &&
+              headerLogo &&
+              headerLogoIcon &&
+              headerLogoWordmark
+            ) {
               const readLogoValue = (name: string) =>
                 Number.parseFloat(
                   window.getComputedStyle(headerLogo).getPropertyValue(name),

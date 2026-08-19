@@ -122,6 +122,16 @@ body {
   transform: translate3d(0, var(--aura-logo-wordmark-compact-y), 0) scale(1);
 }
 
+@media (max-width: 639px) {
+  .aura-header-logo__icon {
+    display: none;
+  }
+
+  .aura-header-logo__wordmark {
+    transform: translate3d(0, var(--aura-logo-wordmark-compact-y), 0) scale(1);
+  }
+}
+
 .product-card-flat,
 .product-card-campaign {
   backface-visibility: hidden;

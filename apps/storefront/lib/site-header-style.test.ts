@@ -36,4 +36,29 @@ describe("storefront header logo", () => {
       assert.doesNotMatch(asset, /fill="(?:white|#fff(?:fff)?)"/iu);
     }
   });
+
+  it("shows only the wordmark on mobile while preserving the expanded logo above mobile", async () => {
+    const [globals, motion] = await Promise.all([
+      readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+      readFile(
+        new URL("../components/storefront-motion.tsx", import.meta.url),
+        "utf8",
+      ),
+    ]);
+    const mobileLogoRules = globals.match(
+      /@media \(max-width: 639px\) \{([\s\S]*?)\n\}\n\n\.product-card-flat/u,
+    );
+
+    assert.ok(mobileLogoRules?.[1], "mobile logo rules must exist");
+    assert.match(
+      mobileLogoRules[1],
+      /\.aura-header-logo__icon\s*\{[\s\S]*display:\s*none;/u,
+    );
+    assert.match(
+      mobileLogoRules[1],
+      /\.aura-header-logo__wordmark\s*\{[\s\S]*scale\(1\);/u,
+    );
+    assert.match(motion, /showExpandedLogo:\s*"\(min-width: 640px\)"/u);
+    assert.match(motion, /context\.conditions\?\.showExpandedLogo/u);
+  });
 });
