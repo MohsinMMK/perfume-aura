@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-19 11:42:57 UTC**
+Last refreshed: **2026-08-19 19:28:42 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -64,18 +64,21 @@ The storefront is a GitHub-connected Hostinger Node.js Web App following
 `./`, no build command or output directory, and entry
 `apps/storefront/server.js`. Repository variable
 `HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` enables exact live verification
-after the generated branch is published. PR #44 merged as exact source
-`14568a1a670ea2050c05273d556a1b1551e4dc49`. Its push automatically started
+after the generated branch is published. PR #46 merged as exact source
+`919071a96a229378597a8a1fa513121f10750258`. Its push automatically started
 workflow run
-[`32248338456`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32248338456),
+[`32292518427`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32292518427),
 which passed quality, disposable-PostgreSQL integration, verified packaging,
 generated-branch publication, Hostinger auto-deployment, and exact public
-verification at 2026-08-19 11:41:11 UTC. The VPS ops publish job stayed skipped
+verification at 2026-08-19 19:27:01 UTC. The VPS ops publish job stayed skipped
 because this changeset was storefront-only; ops remains exact source
 `13490d8e8c0c704d1e1f10670b26239be6b1c3c2`. The generated storefront branch is
-exact commit `d929ccb715bae05ce3b9c80bd02d2908ca9decf0`. The apex HTML marker
+exact commit `8fc33abfadf5663e780cbf8b4510a861568fc5ea`. The apex HTML marker
 reports the exact storefront source, dynamic HTML uses
 `private, no-cache, no-store`, and the `www` redirect preserves `/shop?probe=1`.
+An independent exact-source verifier passed against a real immutable Next asset,
+and a fresh 1280-by-720 browser pass confirmed the hero/header handoff with no
+horizontal overflow or console errors.
 
 A production `/shop` check after that release shows the 69-product launch
 listing with URL-driven search, Signature / Inspired / Featured segments, size
