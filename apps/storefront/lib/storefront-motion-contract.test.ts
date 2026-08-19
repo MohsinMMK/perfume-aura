@@ -46,7 +46,11 @@ describe("storefront motion contract", () => {
 
     assert.match(hero, /gsap\.matchMedia\(/);
     assert.match(hero, /prefers-reduced-motion: no-preference/);
-    assert.match(hero, /attachContinuousMotionGuard\(section, pulse\)/);
+    assert.doesNotMatch(hero, /headingRef/);
+    assert.match(hero, /attachContinuousMotionGuard\(media, pulse\)/);
+    assert.match(hero, /y:\s*-20/);
+    assert.match(hero, /y:\s*20/);
+    assert.match(hero, /floating \? "overflow-visible" : "overflow-hidden"/);
     assert.match(hero, /perfume-aura-100ml-floating-clean\.webp/);
     assert.doesNotMatch(hero, /perfume-aura-100ml-floating\.png/);
     assert.match(hero, /Show previous featured scent/);
@@ -81,7 +85,11 @@ describe("storefront motion contract", () => {
     assert.match(motion, /data-header-logo-wordmark/);
     assert.match(motion, /attachContinuousMotionGuard\(element, marquee\)/);
     assert.match(header, /data-compact=\{compact \? "true" : "false"\}/);
-    assert.match(header, /window\.scrollY > compactHeaderScrollY\(\)/);
+    assert.match(
+      header,
+      /window\.scrollY > compactHeaderScrollY\(window\.innerWidth\)/,
+    );
+    assert.match(motion, /compactHeaderScrollY\(window\.innerWidth\)/);
     assert.match(continuous, /visibilitychange/);
     assert.match(continuous, /mouseenter/);
     assert.match(continuous, /focusin/);

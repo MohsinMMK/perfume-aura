@@ -49,9 +49,8 @@ export function HomeHero({
   const slides = products.length > 0 ? [fallbackProduct, ...products] : fallbackSlides;
   const [activeIndex, setActiveIndex] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
-  const headingRef = useRef<HTMLHeadingElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
+  const imageRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLSpanElement>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
@@ -60,40 +59,25 @@ export function HomeHero({
 
   useEffect(() => {
     const section = sectionRef.current;
-    const heading = headingRef.current;
     const media = mediaRef.current;
     const controls = controlsRef.current;
     const cta = ctaRef.current;
-    if (!section || !heading || !media || !cta) return;
+    if (!section || !media || !cta) return;
     let active = true;
     let cleanup = () => {};
 
-    void Promise.all([import("gsap"), import("gsap/ScrollTrigger")]).then(
-      ([{ default: gsap }, { ScrollTrigger }]) => {
+    void import("gsap").then(
+      ({ default: gsap }) => {
         if (!active) return;
-        gsap.registerPlugin(ScrollTrigger);
         const motionMedia = gsap.matchMedia(section);
 
         motionMedia.add("(prefers-reduced-motion: no-preference)", () => {
           const timeline = gsap.timeline({ defaults: { ease: "power4.out" } });
-          timeline
-            .from(heading, { y: 56, duration: 0.78 }, 0.08)
-            .from(media, { y: 28, scale: 0.94, duration: 0.82 }, 0.18);
+          timeline.from(media, { y: 28, scale: 0.94, duration: 0.82 }, 0.18);
           if (controls) {
             timeline.from(controls, { scale: 0.86, duration: 0.42 }, 0.48);
           }
           timeline.from(cta, { y: 20, duration: 0.46 }, 0.56);
-
-          gsap.to(heading, {
-            y: -28,
-            ease: "none",
-            scrollTrigger: {
-              trigger: section,
-              start: "top top",
-              end: "bottom top",
-              scrub: 0.4,
-            },
-          });
         });
 
         cleanup = () => motionMedia.revert();
@@ -108,9 +92,10 @@ export function HomeHero({
 
   useEffect(() => {
     const section = sectionRef.current;
+    const media = mediaRef.current;
     const image = imageRef.current;
     const name = nameRef.current;
-    if (!section || !image || !name) return;
+    if (!section || !media || !image || !name) return;
     let active = true;
     let cleanup = () => {};
 
@@ -135,17 +120,23 @@ export function HomeHero({
           { y: 12 },
           { y: 0, duration: 0.38, ease: "power4.out" },
         );
-        if (activeProduct.floating) return;
+        if (!activeProduct.floating) return;
 
-        const pulse = gsap.to(image, {
-          y: -10,
-          duration: 2,
-          delay: 0.72,
-          repeat: -1,
-          yoyo: true,
-          ease: "sine.inOut",
-        });
-        return attachContinuousMotionGuard(section, pulse);
+        const pulse = gsap.timeline({ delay: 0.72 });
+        pulse
+          .to(image, {
+            y: -20,
+            duration: 1.4,
+            ease: "sine.inOut",
+          })
+          .to(image, {
+            y: 20,
+            duration: 2.8,
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut",
+          });
+        return attachContinuousMotionGuard(media, pulse);
       });
 
       cleanup = () => motionMedia.revert();
@@ -170,14 +161,14 @@ export function HomeHero({
         aria-hidden="true"
       />
       <div className="relative mx-auto grid min-h-[100svh] max-w-[100rem] grid-rows-[auto_1fr] px-[var(--aura-gutter)] pb-[var(--aura-gutter)] pt-28 lg:px-[var(--aura-gutter-lg)] lg:pb-8 lg:pt-20">
-        <div className="relative z-20 mx-auto max-w-[72rem] text-center">
-          <h1 ref={headingRef} className="font-display mx-auto max-w-[12ch] text-[clamp(3.25rem,6.9444vw,8.3333rem)] leading-[0.88] tracking-[-0.02em] text-balance lg:leading-[0.84]">
+        <div className="relative z-20 mx-auto max-w-[72rem] pb-8 text-center">
+          <h1 className="font-display relative mx-auto max-w-[12ch] text-[clamp(3.25rem,6.9444vw,8.3333rem)] leading-[0.88] tracking-[-0.02em] text-balance lg:top-14 lg:leading-[0.84]">
             The scent <span className="text-outline">that leaves an aura</span>
           </h1>
         </div>
 
-        <div className="relative mt-4 min-h-[27rem] sm:min-h-[34rem] lg:mt-3 lg:min-h-0">
-          <div className="absolute inset-x-0 top-24 z-20 flex items-center gap-3" aria-live="polite">
+        <div className="relative mt-8 grid min-h-[27rem] min-w-0 grid-rows-[auto_minmax(0,1fr)_auto] sm:min-h-[34rem] lg:min-h-0">
+          <div className="relative z-20 flex min-h-10 items-center gap-3" aria-live="polite">
             <span className="hidden pl-2 text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-[color:rgb(245_228_199_/_60%)] sm:block">
               Product no. 0{activeIndex + 1}
             </span>
@@ -187,17 +178,20 @@ export function HomeHero({
             </span>
           </div>
 
-          <div ref={mediaRef} className="absolute inset-x-0 bottom-10 top-12 mx-auto max-w-[47rem] overflow-hidden lg:bottom-0">
-            <Image
-              ref={imageRef}
-              key={activeProduct.image}
-              src={activeProduct.image}
-              alt={activeProduct.imageAlt}
-              fill
-              preload
-              sizes="(max-width: 768px) 100vw, 46rem"
-              className={`z-10 object-contain object-center ${activeProduct.floating ? "aura-hero-bottle-float scale-[.88] drop-shadow-[0_1.4rem_1.2rem_rgba(0,0,0,.34)] sm:scale-[.92]" : ""}`}
-            />
+          <div
+            ref={mediaRef}
+            className={`relative mx-auto min-h-0 w-full max-w-[47rem] ${activeProduct.floating ? "overflow-visible" : "overflow-hidden"}`}
+          >
+            <div ref={imageRef} key={activeProduct.image} className="absolute inset-0">
+              <Image
+                src={activeProduct.image}
+                alt={activeProduct.imageAlt}
+                fill
+                preload
+                sizes="(max-width: 768px) 100vw, 46rem"
+                className={`z-10 object-contain object-center ${activeProduct.floating ? "aura-hero-bottle-float scale-[.82] drop-shadow-[0_1.4rem_1.2rem_rgba(0,0,0,.34)] sm:scale-[.86] lg:scale-[.9]" : ""}`}
+              />
+            </div>
             {activeProduct.floating ? null : (
               <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(16,11,6,.1)_0%,transparent_18%,transparent_70%,rgba(16,11,6,.78)_100%)]" />
             )}
@@ -223,18 +217,18 @@ export function HomeHero({
               </button>
             </div>
           ) : null}
-        </div>
 
-        <div ref={ctaRef} className="absolute inset-x-3 bottom-3 z-30 flex justify-center sm:inset-x-8 lg:bottom-6">
-          <Button
-            render={<Link href={activeProduct.slug ? `/products/${activeProduct.slug}` : "/shop"} />}
-            nativeButton={false}
-            size="lg"
-            aria-label={activeProduct.slug ? `Shop now: ${activeProduct.name}` : "Shop the collection"}
-            className="min-h-16 w-full max-w-xs rounded-[var(--aura-radius)] bg-[var(--aura-ivory)] px-8 font-display text-xl tracking-[0.02em] text-[var(--aura-ink)] hover:bg-white"
-          >
-            Shop now
-          </Button>
+          <div ref={ctaRef} className="relative z-30 flex justify-center px-1 py-3 before:absolute before:inset-x-0 before:top-1/2 before:border-t before:border-dashed before:border-white/20 lg:py-5">
+            <Button
+              render={<Link href={activeProduct.slug ? `/products/${activeProduct.slug}` : "/shop"} />}
+              nativeButton={false}
+              size="lg"
+              aria-label={activeProduct.slug ? `Shop now: ${activeProduct.name}` : "Shop the collection"}
+              className="relative z-10 min-h-16 w-full max-w-xs rounded-[var(--aura-radius)] bg-[var(--aura-ivory)] px-8 font-display text-xl tracking-[0.02em] text-[var(--aura-ink)] hover:bg-white"
+            >
+              Shop now
+            </Button>
+          </div>
         </div>
       </div>
     </section>

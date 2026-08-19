@@ -77,7 +77,7 @@ export default async function HomePage() {
     <>
       <HomeHero products={featuredProducts} />
 
-      <section className="relative min-h-[86svh] overflow-hidden border-y border-dashed border-[color:rgb(245_228_199_/_22%)] bg-[var(--aura-ink)] px-5 py-24 text-[var(--aura-ivory)] sm:px-8 lg:py-36">
+      <section className="relative min-h-[86svh] overflow-hidden border-b border-dashed border-[color:rgb(245_228_199_/_22%)] bg-[var(--aura-ink)] px-5 py-24 text-[var(--aura-ivory)] sm:px-8 lg:py-36">
         <IngredientAtmosphere />
         <div className="relative z-10 mx-auto flex min-h-[62svh] max-w-[66rem] flex-col items-center justify-center text-center">
           <h2 data-motion-copy className="max-w-[17ch] text-[clamp(2.7rem,6vw,6.5rem)] leading-[0.98] tracking-[-0.04em] text-balance">
