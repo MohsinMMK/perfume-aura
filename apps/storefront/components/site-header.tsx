@@ -38,15 +38,13 @@ export function SiteHeader() {
   const { cart, setDrawerOpen } = useCart();
   const pathname = usePathname();
   const isHome = pathname === "/";
-  const [compact, setCompact] = useState(() => pathname !== "/");
+  const [scrolledPastHero, setScrolledPastHero] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const compact = !isHome || scrolledPastHero;
 
   useEffect(() => {
-    if (!isHome) {
-      setCompact(true);
-      return;
-    }
-    const update = () => setCompact(window.scrollY > compactHeaderScrollY());
+    if (!isHome) return;
+    const update = () => setScrolledPastHero(window.scrollY > compactHeaderScrollY());
     update();
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
