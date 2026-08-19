@@ -37,10 +37,15 @@ const compactHeaderScrollY = () => (window.innerWidth < 640 ? 96 : 144);
 export function SiteHeader() {
   const { cart, setDrawerOpen } = useCart();
   const pathname = usePathname();
-  const [compact, setCompact] = useState(false);
+  const isHome = pathname === "/";
+  const [compact, setCompact] = useState(() => pathname !== "/");
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
+    if (!isHome) {
+      setCompact(true);
+      return;
+    }
     const update = () => setCompact(window.scrollY > compactHeaderScrollY());
     update();
     window.addEventListener("scroll", update, { passive: true });
@@ -49,7 +54,7 @@ export function SiteHeader() {
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
-  }, []);
+  }, [isHome]);
 
   return (
     <header
@@ -58,33 +63,50 @@ export function SiteHeader() {
       className="pointer-events-none fixed inset-x-0 top-0 z-50 text-[var(--aura-ivory)]"
     >
       <div className="flex h-[5.5rem] items-start justify-between px-[var(--aura-gutter)] pt-[var(--aura-gutter)] lg:px-[var(--aura-gutter-lg)]">
-        <Link
-          href="/"
-          aria-label="Perfume Aura home"
-          aria-current={pathname === "/" ? "page" : undefined}
-          data-header-logo
-          className="aura-header-logo pointer-events-auto relative block h-12 w-[7.75rem] sm:w-40 lg:w-[12.25rem]"
-        >
-          <Image
-            src="/brand/perfume-aura-icon.svg"
-            alt=""
-            aria-hidden="true"
-            width={271}
-            height={386}
-            preload
-            data-header-logo-icon
-            className="aura-header-logo__icon absolute left-[0.95rem] top-0 h-auto w-[3.4rem] select-none sm:left-5 sm:w-[4.5rem] lg:left-[1.65rem] lg:w-24"
-          />
-          <Image
-            src="/brand/perfume-aura-wordmark.svg"
-            alt=""
-            aria-hidden="true"
-            width={422}
-            height={34}
-            data-header-logo-wordmark
-            className="aura-header-logo__wordmark absolute left-0 top-0 h-auto w-[7.75rem] select-none sm:w-40 lg:w-[12.25rem]"
-          />
-        </Link>
+        {isHome ? (
+          <Link
+            href="/"
+            aria-label="Perfume Aura home"
+            aria-current="page"
+            data-header-logo
+            className="aura-header-logo pointer-events-auto relative block h-12 w-[7.75rem] sm:w-40 lg:w-[12.25rem]"
+          >
+            <Image
+              src="/brand/perfume-aura-icon.svg"
+              alt=""
+              aria-hidden="true"
+              width={271}
+              height={386}
+              preload
+              data-header-logo-icon
+              className="aura-header-logo__icon absolute left-[0.95rem] top-0 h-auto w-[3.4rem] select-none sm:left-5 sm:w-[4.5rem] lg:left-[1.65rem] lg:w-24"
+            />
+            <Image
+              src="/brand/perfume-aura-wordmark.svg"
+              alt=""
+              aria-hidden="true"
+              width={422}
+              height={34}
+              data-header-logo-wordmark
+              className="aura-header-logo__wordmark absolute left-0 top-0 h-auto w-[7.75rem] select-none sm:w-40 lg:w-[12.25rem]"
+            />
+          </Link>
+        ) : (
+          <Link
+            href="/"
+            aria-label="Perfume Aura home"
+            className="pointer-events-auto inline-flex h-12 items-center focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)]"
+          >
+            <Image
+              src="/brand/perfume-aura-wordmark.svg"
+              alt="Perfume Aura"
+              width={422}
+              height={34}
+              className="h-auto w-[7.75rem] select-none sm:w-40 lg:w-[12.25rem]"
+              priority
+            />
+          </Link>
+        )}
 
         <div className="pointer-events-auto flex items-center gap-1.5">
           <nav
