@@ -3,6 +3,46 @@ import { readFile } from "node:fs/promises";
 import { describe, it } from "node:test";
 
 describe("storefront header logo", () => {
+  it("keeps the desktop navigation large and comfortably clickable", async () => {
+    const header = await readFile(
+      new URL("../components/site-header.tsx", import.meta.url),
+      "utf8",
+    );
+
+    assert.match(header, /items-center gap-9[\s\S]*px-5 py-3/u);
+    assert.match(header, /min-h-14[\s\S]*text-\[1\.4rem\]/u);
+  });
+
+  it("hands the desktop navigation off to descending compact controls", async () => {
+    const [header, globals] = await Promise.all([
+      readFile(new URL("../components/site-header.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    ]);
+
+    assert.match(header, /-translate-y-5 opacity-0/u);
+    assert.match(header, /data-compact-controls/u);
+    assert.match(header, /aura-compact-controls-enter/u);
+    assert.match(globals, /@keyframes aura-compact-controls-drop/u);
+    assert.match(
+      globals,
+      /prefers-reduced-motion: no-preference[\s\S]*aura-compact-controls-enter/u,
+    );
+  });
+
+  it("drops the complete home logo into place on page load", async () => {
+    const [header, globals] = await Promise.all([
+      readFile(new URL("../components/site-header.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    ]);
+
+    assert.match(header, /aura-header-logo-enter/u);
+    assert.match(globals, /@keyframes aura-header-logo-drop/u);
+    assert.match(
+      globals,
+      /aura-header-logo-drop 700ms cubic-bezier\(0\.16, 1, 0\.3, 1\)[\s\S]*140ms both/u,
+    );
+  });
+
   it("keeps the compact wordmark transparent over page content", async () => {
     const [globals, wordmark] = await Promise.all([
       readFile(new URL("../app/globals.css", import.meta.url), "utf8"),

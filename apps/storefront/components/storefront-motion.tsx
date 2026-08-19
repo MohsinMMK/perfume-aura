@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { attachContinuousMotionGuard } from "@/lib/continuous-motion";
+import { compactHeaderScrollY } from "@/lib/header-motion";
 
 const historyScrollStateKey = "__perfumeAuraScroll";
 
@@ -143,7 +144,7 @@ export function StorefrontMotion() {
                 scrollTrigger: {
                   trigger: document.documentElement,
                   start: "top top",
-                  end: () => `+=${window.innerWidth < 640 ? 96 : 144}`,
+                  end: () => `+=${compactHeaderScrollY(window.innerWidth)}`,
                   scrub: 0.35,
                   invalidateOnRefresh: true,
                 },

@@ -22,6 +22,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@perfume-aura/ui/components/sheet";
+import { compactHeaderScrollY } from "@/lib/header-motion";
 import { useCart } from "./cart-provider";
 
 const navigation = [
@@ -31,8 +32,6 @@ const navigation = [
   { href: "/contact", label: "Contact" },
   { href: "/faq", label: "FAQ" },
 ] as const;
-
-const compactHeaderScrollY = () => (window.innerWidth < 640 ? 96 : 144);
 
 export function SiteHeader() {
   const { cart, setDrawerOpen } = useCart();
@@ -44,7 +43,10 @@ export function SiteHeader() {
 
   useEffect(() => {
     if (!isHome) return;
-    const update = () => setScrolledPastHero(window.scrollY > compactHeaderScrollY());
+    const update = () =>
+      setScrolledPastHero(
+        window.scrollY > compactHeaderScrollY(window.innerWidth),
+      );
     update();
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
@@ -67,7 +69,7 @@ export function SiteHeader() {
             aria-label="Perfume Aura home"
             aria-current="page"
             data-header-logo
-            className="aura-header-logo pointer-events-auto relative block h-12 w-[7.75rem] sm:w-40 lg:w-[12.25rem]"
+            className="aura-header-logo aura-header-logo-enter pointer-events-auto relative block h-12 w-[7.75rem] sm:w-40 lg:w-[12.25rem]"
           >
             <Image
               src="/brand/perfume-aura-icon.svg"
@@ -85,6 +87,7 @@ export function SiteHeader() {
               aria-hidden="true"
               width={422}
               height={34}
+              preload
               data-header-logo-wordmark
               className="aura-header-logo__wordmark absolute left-0 top-0 h-auto w-[7.75rem] select-none sm:w-40 lg:w-[12.25rem]"
             />
@@ -106,10 +109,12 @@ export function SiteHeader() {
           </Link>
         )}
 
-        <div className="pointer-events-auto flex items-center gap-1.5">
+        <div className="pointer-events-none relative flex items-start justify-end">
           <nav
             aria-label="Primary navigation"
-            className={`hidden items-center gap-7 bg-[var(--aura-ink)]/82 px-4 py-3 backdrop-blur-sm lg:flex ${compact ? "lg:hidden" : ""}`}
+            aria-hidden={compact ? true : undefined}
+            inert={compact}
+            className={`hidden items-center gap-9 bg-[var(--aura-ink)]/82 px-5 py-3 backdrop-blur-sm transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none lg:flex ${compact ? "pointer-events-none -translate-y-5 opacity-0" : "pointer-events-auto translate-y-0 opacity-100"}`}
           >
             {navigation.map((item) => (
               <Link
@@ -117,14 +122,14 @@ export function SiteHeader() {
                 href={item.href}
                 prefetch={item.href === "/shop" ? null : false}
                 aria-current={pathname === item.href || pathname.startsWith(`${item.href}/`) ? "page" : undefined}
-                className="font-display min-h-11 content-center border-b border-transparent text-[1.08rem] tracking-[0.02em] transition hover:border-[var(--aura-ivory)] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] aria-[current=page]:border-[var(--aura-ivory)]"
+                className="font-display min-h-14 content-center border-b border-transparent text-[1.4rem] tracking-[0.02em] transition hover:border-[var(--aura-ivory)] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] aria-[current=page]:border-[var(--aura-ivory)]"
               >
                 {item.label}
               </Link>
             ))}
             <button
               type="button"
-              className="min-h-11 font-display text-[1.08rem] tracking-[0.02em]"
+              className="min-h-14 font-display text-[1.4rem] tracking-[0.02em]"
               aria-label={`Open cart with ${cart?.quantity ?? 0} items`}
               onClick={() => setDrawerOpen(true)}
             >
@@ -132,31 +137,35 @@ export function SiteHeader() {
             </button>
           </nav>
 
-          <Button
-            render={<Link href="/shop" />}
-            nativeButton={false}
-            className={`min-h-12 rounded-[var(--aura-radius)] bg-[var(--aura-ivory)] px-5 font-display text-base text-[var(--aura-ink)] hover:bg-white max-[359px]:hidden sm:px-7 ${compact ? "inline-flex" : "inline-flex lg:hidden"}`}
+          <div
+            data-compact-controls
+            className={`pointer-events-auto flex items-center gap-1.5 lg:absolute lg:right-0 lg:top-0 ${compact ? "aura-compact-controls-enter lg:flex" : "lg:hidden"}`}
           >
-            Get scent
-          </Button>
+            <Button
+              render={<Link href="/shop" />}
+              nativeButton={false}
+              className="min-h-12 rounded-[var(--aura-radius)] bg-[var(--aura-ivory)] px-5 font-display text-base text-[var(--aura-ink)] hover:bg-white max-[359px]:hidden sm:px-7"
+            >
+              Get scent
+            </Button>
 
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-lg"
-            className={`relative min-h-12 min-w-12 rounded-[var(--aura-radius)] border-[color:rgb(245_228_199_/_55%)] bg-[var(--aura-ink)]/90 text-[var(--aura-ivory)] hover:bg-[var(--aura-ivory)] hover:text-[var(--aura-ink)] ${compact ? "inline-flex" : "flex lg:hidden"}`}
-            aria-label={`Open cart with ${cart?.quantity ?? 0} items`}
-            onClick={() => setDrawerOpen(true)}
-          >
-            <HugeiconsIcon icon={ShoppingBag01Icon} strokeWidth={1.7} />
-            {(cart?.quantity ?? 0) > 0 ? (
-              <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-[var(--aura-orange)] text-[0.62rem] font-bold text-[var(--aura-ink)]">
-                {cart?.quantity}
-              </span>
-            ) : null}
-          </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-lg"
+              className="relative min-h-12 min-w-12 rounded-[var(--aura-radius)] border-[color:rgb(245_228_199_/_55%)] bg-[var(--aura-ink)]/90 text-[var(--aura-ivory)] hover:bg-[var(--aura-ivory)] hover:text-[var(--aura-ink)]"
+              aria-label={`Open cart with ${cart?.quantity ?? 0} items`}
+              onClick={() => setDrawerOpen(true)}
+            >
+              <HugeiconsIcon icon={ShoppingBag01Icon} strokeWidth={1.7} />
+              {(cart?.quantity ?? 0) > 0 ? (
+                <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-[var(--aura-orange)] text-[0.62rem] font-bold text-[var(--aura-ink)]">
+                  {cart?.quantity}
+                </span>
+              ) : null}
+            </Button>
 
-          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger
               render={
                 <Button
@@ -210,7 +219,8 @@ export function SiteHeader() {
                 </div>
               </nav>
             </SheetContent>
-          </Sheet>
+            </Sheet>
+          </div>
         </div>
       </div>
     </header>
