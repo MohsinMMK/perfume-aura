@@ -250,6 +250,12 @@ textarea {
   opacity: 1;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .shop-chip-icon {
+    transition: none;
+  }
+}
+
 @media (min-width: 1024px) {
   .aura-header-logo {
     --aura-logo-wordmark-start-scale: 0.755;
