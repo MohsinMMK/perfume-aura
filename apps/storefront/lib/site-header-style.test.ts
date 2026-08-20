@@ -9,8 +9,9 @@ describe("storefront header logo", () => {
       "utf8",
     );
 
-    assert.match(header, /items-center gap-9[\s\S]*px-5 py-3/u);
-    assert.match(header, /min-h-14[\s\S]*text-\[1\.4rem\]/u);
+    assert.match(header, /-mt-\[var\(--aura-gutter\)\][\s\S]*w-\[min\(66vw,58rem\)\]/u);
+    assert.match(header, /items-center justify-end gap-14[\s\S]*pl-8 pr-2/u);
+    assert.match(header, /min-h-20[\s\S]*text-\[clamp\(1\.6rem,2vw,2rem\)\]/u);
   });
 
   it("hands the desktop navigation off to descending compact controls", async () => {

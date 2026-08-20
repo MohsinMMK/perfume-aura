@@ -81,6 +81,19 @@ body {
   border-style: dashed;
 }
 
+.aura-cream-action {
+  border: 1px solid var(--aura-ivory);
+  background: var(--aura-ivory);
+  color: var(--aura-ink);
+}
+
+.aura-cream-action:hover,
+.aura-cream-action:focus-visible {
+  border-color: var(--aura-ivory) !important;
+  background-color: var(--aura-ink) !important;
+  color: var(--aura-ivory) !important;
+}
+
 .aura-header-logo {
   --aura-logo-icon-exit-y: -24px;
   --aura-logo-wordmark-start-scale: 0.68;

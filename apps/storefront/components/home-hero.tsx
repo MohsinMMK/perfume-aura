@@ -173,9 +173,10 @@ export function HomeHero({
               Product no. 0{activeIndex + 1}
             </span>
             <span className="h-px flex-1 border-t border-dashed border-white/20" />
-            <span ref={nameRef} data-testid="hero-scent-name" className="font-display pr-2 text-lg tracking-[0.04em] text-white/88 sm:pl-4">
+            <span ref={nameRef} data-testid="hero-scent-name" className="shrink-0 px-3 text-center font-display text-lg tracking-[0.04em] text-[var(--aura-ivory)] sm:pl-4 sm:pr-2">
               {activeProduct.name}
             </span>
+            <span aria-hidden="true" className="h-px flex-1 border-t border-dashed border-white/20 sm:hidden" />
           </div>
 
           <div
@@ -201,7 +202,7 @@ export function HomeHero({
             <div ref={controlsRef} className="absolute inset-x-2 top-[58%] z-30 flex -translate-y-1/2 justify-between sm:inset-x-8 lg:inset-x-14 lg:top-[52%]">
               <button
                 type="button"
-                className="grid min-h-14 min-w-14 place-items-center rounded-full bg-[var(--aura-ivory)] text-[var(--aura-ink)] transition hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] lg:min-h-20 lg:min-w-20"
+                className="aura-cream-action grid min-h-14 min-w-14 place-items-center rounded-full transition hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] lg:min-h-20 lg:min-w-20"
                 aria-label="Show previous featured scent"
                 onClick={() => rotate(-1)}
               >
@@ -209,7 +210,7 @@ export function HomeHero({
               </button>
               <button
                 type="button"
-                className="grid min-h-14 min-w-14 place-items-center rounded-full bg-[var(--aura-ivory)] text-[var(--aura-ink)] transition hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] lg:min-h-20 lg:min-w-20"
+                className="aura-cream-action grid min-h-14 min-w-14 place-items-center rounded-full transition hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] lg:min-h-20 lg:min-w-20"
                 aria-label="Show next featured scent"
                 onClick={() => rotate(1)}
               >
@@ -224,7 +225,7 @@ export function HomeHero({
               nativeButton={false}
               size="lg"
               aria-label={activeProduct.slug ? `Shop now: ${activeProduct.name}` : "Shop the collection"}
-              className="relative z-10 min-h-16 w-full max-w-xs rounded-[var(--aura-radius)] bg-[var(--aura-ivory)] px-8 font-display text-xl tracking-[0.02em] text-[var(--aura-ink)] hover:bg-white"
+              className="aura-cream-action relative z-10 min-h-16 w-full max-w-xs rounded-[var(--aura-radius)] px-8 font-display text-xl tracking-[0.02em] transition-colors"
             >
               Shop now
             </Button>

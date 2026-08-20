@@ -255,7 +255,7 @@ export function ShopListingControls({
           <button
             type="submit"
             aria-label="Search"
-            className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-r-[var(--aura-radius)] border border-[color:var(--aura-rule)] bg-[var(--aura-ivory)] text-[var(--aura-ink)] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[var(--aura-ivory)]"
+            className="aura-cream-action inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-r-[var(--aura-radius)] transition-colors focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[var(--aura-ivory)]"
           >
             <svg
               viewBox="0 0 16 16"

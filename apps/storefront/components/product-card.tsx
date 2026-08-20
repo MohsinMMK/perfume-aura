@@ -80,7 +80,7 @@ export function ProductCard({
               aria-label={
                 canPurchase ? "Add to cart" : "Add to cart is not available yet"
               }
-              className="pointer-events-auto min-h-12 rounded-[var(--aura-radius)] border border-[var(--aura-ivory)] bg-[var(--aura-ivory)] px-2 font-display text-sm tracking-[0.03em] text-[var(--aura-ink)] transition enabled:hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)] disabled:cursor-not-allowed sm:px-3 sm:text-base"
+              className="aura-cream-action pointer-events-auto min-h-12 rounded-[var(--aura-radius)] px-2 font-display text-sm tracking-[0.03em] transition disabled:cursor-not-allowed sm:px-3 sm:text-base"
             >
               Add to cart
             </button>
