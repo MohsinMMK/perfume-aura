@@ -3,6 +3,7 @@ import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import { resolveCustomerAuthTrustedOrigins } from "./customer-auth-policy";
 
 type CustomerMailEnvironment = Record<string, string | undefined> & {
+  CUSTOMER_INQUIRY_NOTIFICATION_TO?: string;
   CUSTOMER_SMTP_FROM?: string;
   CUSTOMER_SMTP_HOST?: string;
   CUSTOMER_SMTP_PASSWORD?: string;
@@ -10,6 +11,18 @@ type CustomerMailEnvironment = Record<string, string | undefined> & {
   CUSTOMER_SMTP_SECURE?: string;
   CUSTOMER_SMTP_USER?: string;
 };
+
+function notificationRecipient(environment: CustomerMailEnvironment): string {
+  const recipient = environment.CUSTOMER_INQUIRY_NOTIFICATION_TO?.trim();
+  if (
+    !recipient ||
+    recipient.length > 320 ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)
+  ) {
+    throw new Error("Inquiry notification recipient is not configured");
+  }
+  return recipient;
+}
 
 function escaped(value: string): string {
   return value.replace(/[&<>"']/g, (character) => ({
@@ -137,5 +150,40 @@ export async function sendCommerceOrderEmail(
     });
   } catch {
     throw new Error("Customer order email could not be delivered");
+  }
+}
+
+export async function sendInquiryNotification(
+  input: Readonly<{
+    businessName: string | null;
+    email: string;
+    kind: "contact" | "wholesale";
+    message: string;
+    name: string;
+  }>,
+  environment: CustomerMailEnvironment = process.env,
+): Promise<void> {
+  const transport = resolveTransport(environment);
+  const recipient = notificationRecipient(environment);
+  const kindLabel = input.kind === "wholesale" ? "Wholesale" : "Contact";
+  const lines = [
+    `${kindLabel} inquiry received`,
+    `Name: ${input.name}`,
+    `Email: ${input.email}`,
+    input.businessName ? `Business: ${input.businessName}` : null,
+    "",
+    input.message,
+  ].filter((line): line is string => line !== null);
+  try {
+    await nodemailer.createTransport(transport.options).sendMail({
+      from: transport.from,
+      to: recipient,
+      replyTo: input.email,
+      subject: `Perfume Aura ${kindLabel.toLowerCase()} inquiry`,
+      text: lines.join("\n"),
+      html: lines.map((line) => line ? `<p>${escaped(line)}</p>` : "<br>").join(""),
+    });
+  } catch {
+    throw new Error("Inquiry notification could not be delivered");
   }
 }

@@ -90,15 +90,34 @@ export async function readDurableCart(token: string): Promise<CartSnapshot> {
           eq(variantPrices.active, true),
           eq(variantPrices.currency, "INR"),
           sql`${variantPrices.approvedAt} IS NOT NULL`,
+          sql`${variantPrices.approvalReference} IS NOT NULL`,
           sql`${productMedia.approvedAt} IS NOT NULL`,
+          sql`${productMedia.approvalReference} IS NOT NULL`,
           sql`${productPublications.legalApprovedAt} IS NOT NULL`,
+          sql`${productPublications.legalApprovalReference} IS NOT NULL`,
           sql`${productPublications.contentApprovedAt} IS NOT NULL`,
+          sql`${productPublications.contentApprovalReference} IS NOT NULL`,
           sql`${productPublications.mediaApprovedAt} IS NOT NULL`,
+          sql`${productPublications.mediaApprovalReference} IS NOT NULL`,
           sql`${productVariants.quantityOnHand} - ${productVariants.qtyReserved} >= ${commerceCartItems.quantity}`,
         ),
       ),
     db
-      .select({ checkoutEnabled: commerceSettings.checkoutEnabled })
+      .select({
+        checkoutEnabled: commerceSettings.checkoutEnabled,
+        flatShippingAmountMinor: commerceSettings.flatShippingAmountMinor,
+        freeShippingThresholdMinor: commerceSettings.freeShippingThresholdMinor,
+        taxTreatment: commerceSettings.taxTreatment,
+        taxPolicyApproved: commerceSettings.taxPolicyApproved,
+        taxApprovalReference: commerceSettings.taxApprovalReference,
+        catalogLegalApproved: commerceSettings.catalogLegalApproved,
+        legalApprovalReference: commerceSettings.legalApprovalReference,
+        supportChannel: commerceSettings.supportChannel,
+        supportOperationsApproved: commerceSettings.supportOperationsApproved,
+        shippingPolicyApproved: commerceSettings.shippingPolicyApproved,
+        returnsPolicyApproved: commerceSettings.returnsPolicyApproved,
+        cancellationPolicyApproved: commerceSettings.cancellationPolicyApproved,
+      })
       .from(commerceSettings)
       .where(eq(commerceSettings.id, "primary"))
       .limit(1),
@@ -117,8 +136,17 @@ export async function readDurableCart(token: string): Promise<CartSnapshot> {
         }]
       : [],
   );
+  const settings = settingsRows[0];
   const checkoutEnabled =
-    settingsRows[0]?.checkoutEnabled === true &&
+    settings?.checkoutEnabled === true &&
+    settings.flatShippingAmountMinor === 9_900 &&
+    settings.freeShippingThresholdMinor === 99_900 &&
+    settings.taxTreatment === "prices_include_approved_tax" &&
+    settings.taxPolicyApproved && Boolean(settings.taxApprovalReference) &&
+    settings.catalogLegalApproved && Boolean(settings.legalApprovalReference) &&
+    Boolean(settings.supportChannel) && settings.supportOperationsApproved &&
+    settings.shippingPolicyApproved && settings.returnsPolicyApproved &&
+    settings.cancellationPolicyApproved &&
     process.env.STOREFRONT_CHECKOUT_RELEASE_APPROVED === "true";
 
   return {
@@ -174,6 +202,11 @@ export async function setDurableCartLine(
         .innerJoin(products, eq(products.id, productVariants.productId))
         .innerJoin(productPublications, eq(productPublications.productId, products.id))
         .innerJoin(variantPrices, eq(variantPrices.variantId, productVariants.id))
+        .innerJoin(productMedia, and(
+          eq(productMedia.productId, products.id),
+          eq(productMedia.kind, "pack"),
+          eq(productMedia.position, 0),
+        ))
         .where(
           and(
             eq(productVariants.id, variantId),
@@ -183,9 +216,15 @@ export async function setDurableCartLine(
             eq(variantPrices.active, true),
             eq(variantPrices.currency, "INR"),
             sql`${variantPrices.approvedAt} IS NOT NULL`,
+            sql`${variantPrices.approvalReference} IS NOT NULL`,
             sql`${productPublications.legalApprovedAt} IS NOT NULL`,
+            sql`${productPublications.legalApprovalReference} IS NOT NULL`,
             sql`${productPublications.contentApprovedAt} IS NOT NULL`,
+            sql`${productPublications.contentApprovalReference} IS NOT NULL`,
             sql`${productPublications.mediaApprovedAt} IS NOT NULL`,
+            sql`${productPublications.mediaApprovalReference} IS NOT NULL`,
+            sql`${productMedia.approvedAt} IS NOT NULL`,
+            sql`${productMedia.approvalReference} IS NOT NULL`,
           ),
         )
         .for("update", { of: productVariants })

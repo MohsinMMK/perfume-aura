@@ -13,6 +13,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!authorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const result = await reconcilePendingRefunds();
+    if (result.failed > 0 || result.mismatched > 0) {
+      return NextResponse.json(
+        { status: "degraded", ...result },
+        { status: 503 },
+      );
+    }
     return NextResponse.json({ status: "ok", ...result });
   } catch (error) {
     console.error("[refund reconciliation] maintenance job failed", {

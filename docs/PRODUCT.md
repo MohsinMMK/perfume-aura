@@ -31,6 +31,10 @@ commerce is fail-closed:
   SKU, stock, cost, and INR-price approval;
 - checkout, Cashfree prepaid UPI, customer authentication, contact and
   wholesale inquiries, reviews, and indexing are disabled;
+- when inquiry release is eventually approved, contact and wholesale require
+  explicit versioned privacy consent, use generic accepted responses and a
+  honeypot, apply HMAC-only email/IP throttles, and deliver asynchronously into
+  the audited support inbox;
 - disabled customer-auth routes return `404` without loading Better Auth or
   Neon;
 - cart totals are zero and checkout is blocked while public release is closed;

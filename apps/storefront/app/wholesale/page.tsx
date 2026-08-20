@@ -5,6 +5,7 @@ import { GatedInquiryForm } from "@/components/gated-inquiry-form";
 export const metadata: Metadata = { title: "Wholesale", alternates: { canonical: "/wholesale" } };
 
 export default function WholesalePage() {
+  const enabled = process.env.STOREFRONT_INQUIRIES_ENABLED === "true";
   return (
     <>
       <section className="relative min-h-[94svh] overflow-hidden bg-[var(--aura-ink)] px-[var(--aura-gutter)] pb-16 pt-28 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:pt-32">
@@ -47,9 +48,9 @@ export default function WholesalePage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--aura-text-muted-on-ink)]">Wholesale inquiry</p>
             <h2 className="font-display mt-5 text-[clamp(5rem,9vw,9rem)] leading-[0.75]">Bring the aura to your space</h2>
-            <p className="mt-6 max-w-md text-sm leading-7 text-[color:rgb(245_228_199_/_58%)]">Wholesale terms, minimums, territories, and support details will be published before inquiries open.</p>
+            <p className="mt-6 max-w-md text-sm leading-7 text-[color:rgb(245_228_199_/_68%)]">{enabled ? "Tell us about your store and territory. We will respond with only the terms that have been approved for release." : "Wholesale terms, minimums, territories, and support details will be published before inquiries open."}</p>
           </div>
-          <GatedInquiryForm kind="wholesale" enabled={process.env.STOREFRONT_INQUIRIES_ENABLED === "true"} />
+          <GatedInquiryForm kind="wholesale" enabled={enabled} />
         </div>
       </section>
     </>

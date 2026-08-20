@@ -141,10 +141,14 @@ export async function reserveCheckoutStock(input: Readonly<{
         variantId: variantPrices.variantId,
         publicationStatus: productPublications.status,
         legalApprovedAt: productPublications.legalApprovedAt,
+        legalApprovalReference: productPublications.legalApprovalReference,
         contentApprovedAt: productPublications.contentApprovedAt,
+        contentApprovalReference: productPublications.contentApprovalReference,
         mediaApprovedAt: productPublications.mediaApprovedAt,
+        mediaApprovalReference: productPublications.mediaApprovalReference,
         priceActive: variantPrices.active,
         priceApprovedAt: variantPrices.approvedAt,
+        priceApprovalReference: variantPrices.approvalReference,
         priceCurrency: variantPrices.currency,
         priceAmountMinor: variantPrices.amountMinor,
       })
@@ -164,10 +168,14 @@ export async function reserveCheckoutStock(input: Readonly<{
         variant.status !== "active" ||
         publication?.publicationStatus !== "published" ||
         !publication.legalApprovedAt ||
+        !publication.legalApprovalReference ||
         !publication.contentApprovedAt ||
+        !publication.contentApprovalReference ||
         !publication.mediaApprovedAt ||
+        !publication.mediaApprovalReference ||
         !publication.priceActive ||
         !publication.priceApprovedAt ||
+        !publication.priceApprovalReference ||
         publication.priceCurrency !== "INR" ||
         publication.priceAmountMinor <= 0
       ) {

@@ -155,6 +155,18 @@ fail closed. Cashfree order expiry is 15 minutes, the dashboard transaction TTL
 must be exactly 20 minutes, and stock release waits a further 5-minute safety
 allowance before a server provider-state check.
 
+Migration `0012_amused_cloak` adds one-shot customer reconciliation leases,
+per-record payment/refund retry state, unique provider-payment binding,
+evidence references for catalog/price/media approval, fixed 3–7-day PIN-code
+serviceability, and separate order/inquiry notification outboxes. Maintenance
+returns aggregate processed/succeeded/retried/mismatched/failed counts; one
+provider failure cannot starve the remainder of its batch.
+
+Checkout compares the complete stored cart set with the complete eligible join
+inside the locked cart transaction. Any missing, duplicated, unpublished,
+unapproved, unstocked, or changed line produces `409 CART_CHANGED`, removes only
+the invalid line, and creates no checkout, reservation, payment, or order.
+
 - Owner/staff public sign-up disabled. Customer sign-up is a distinct
   verified-email flow and defaults off until
   `STOREFRONT_CUSTOMER_AUTH_ENABLED=true` plus all secret, SMTP, and
@@ -184,7 +196,8 @@ ledger-first inventory API. `drizzle.config.ts` requires
 |---|---|
 | Better Auth | `user`, `session`, `account`, `verification`, `rate_limit`, `two_factor` |
 | Staff security | append-only `staff_invitation_events`, `ops_audit_events` |
-| Catalog and inventory | `products`, `product_variants`, `locations`, append-only `stock_movements` |
+| Catalog and inventory | `products`, `product_variants`, approval-gated publications/prices/media, `shipping_serviceability`, `locations`, append-only `stock_movements` |
+| Storefront commerce delivery | payment/refund reconciliation state, typed order events, separate order/inquiry notification outboxes |
 | Finance | invoices, payments, atomic `document_number_counters` |
 
 ```bash

@@ -122,10 +122,14 @@ export async function loadPublishedProducts(): Promise<readonly StorefrontProduc
           sql`${productPublications.heartNotes} IS NOT NULL`,
           sql`${productPublications.baseNotes} IS NOT NULL`,
           sql`${productPublications.legalApprovedAt} IS NOT NULL`,
+          sql`${productPublications.legalApprovalReference} IS NOT NULL`,
           sql`${productPublications.contentApprovedAt} IS NOT NULL`,
+          sql`${productPublications.contentApprovalReference} IS NOT NULL`,
           sql`${productPublications.mediaApprovedAt} IS NOT NULL`,
+          sql`${productPublications.mediaApprovalReference} IS NOT NULL`,
           sql`${productPublications.publishedAt} IS NOT NULL`,
           sql`${productMedia.approvedAt} IS NOT NULL`,
+          sql`${productMedia.approvalReference} IS NOT NULL`,
         ),
       )
       .orderBy(sql`${productPublications.featuredRank} nulls last`, productPublications.publicName),
@@ -147,6 +151,7 @@ export async function loadPublishedProducts(): Promise<readonly StorefrontProduc
           eq(variantPrices.active, true),
           eq(variantPrices.currency, "INR"),
           sql`${variantPrices.approvedAt} IS NOT NULL`,
+          sql`${variantPrices.approvalReference} IS NOT NULL`,
           sql`${variantPrices.amountMinor} > 0`,
         ),
       )
