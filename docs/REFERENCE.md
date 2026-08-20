@@ -101,7 +101,7 @@ Observed weaknesses to avoid or improve:
 - Fragrance-family, note, occasion, intensity, size, price, and availability filters
 - Explicit size buttons, price per ml, inventory state, and sticky mobile purchase action
 - Editorial scent-note explanation near the buy box
-- Guest checkout, transparent delivery, and clear return language
+- Anonymous cart building, account-gated checkout, transparent delivery, and clear return language
 - Discovery sets and bundles once real operational support exists
 
 #### Improve
@@ -121,11 +121,13 @@ Observed weaknesses to avoid or improve:
 
 ### India payment and trademark sources
 
-#### Cashfree and COD
+#### Cashfree prepaid UPI
 
-COM-ADR-025 selects Cashfree prepaid payments and COD. The official sources
-below support implementation review but do not prove merchant approval or
-production readiness:
+COM-ADR-030 supersedes COM-ADR-025: checkout is prepaid-only through Cashfree
+UPI, with no cash on delivery. Google Pay is a UPI
+app reached through the provider's supported intent flow, not a separate direct
+payment integration. The official sources below support implementation review
+but do not prove merchant approval or production readiness:
 
 - Its official [UPI payment-method documentation](https://www.cashfree.com/docs/payments/manage/payment-methods/upi) covers India UPI intent, QR, and collect flows.
 - Its [sandbox](https://www.cashfree.com/docs/payments/online/resources/sandbox-environment) supports test UPI VPAs.
@@ -135,8 +137,8 @@ production readiness:
 - Its [pricing page](https://www.cashfree.com/payment-gateway-charges/) is not a durable merchant fee decision; use the approved account contract.
 
 Release still requires KYC, sandbox and live credentials, signed-webhook proof,
-refund/reconciliation proof, account-specific fees, and an authorized prepaid
-and COD lifecycle test. No substitute provider is approved.
+refund/reconciliation proof, account-specific fees, approved UPI methods, and
+an authorized prepaid lifecycle test. No substitute provider is approved.
 
 #### Designer-reference risk
 

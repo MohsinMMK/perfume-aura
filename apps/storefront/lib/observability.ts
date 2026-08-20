@@ -2,7 +2,7 @@ import type { Breadcrumb, ErrorEvent } from "@sentry/nextjs";
 import type { CaptureResult, Properties } from "posthog-js";
 
 const sensitiveKeyPattern =
-  /(authorization|cookie|email|name|password|phone|query|search|secret|token)/i;
+  /(address|authorization|city|cookie|courier|email|name|password|phone|pin|postal|query|recipient|search|secret|state|token|tracking)/i;
 const urlPropertyPattern = /(current_url|referrer|url)$/i;
 const opaquePathSegmentPattern =
   /\/(?:[0-9a-f]{8}-[0-9a-f-]{27,}|[A-Za-z0-9_-]{24,})(?=\/|$)/gi;

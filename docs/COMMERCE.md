@@ -141,7 +141,7 @@ No requirement marked Proposed represents live behavior.
 |---|---|---|---|
 | CART-001 | Proposed | Persist server-authoritative guest carts. | Quantity and current price/availability are revalidated before checkout; client values are never trusted as financial truth. |
 | CART-002 | Proposed | Make empty-cart recovery useful. | Empty cart links to approved products or collections without fabricated recommendations. |
-| CHECK-001 | Proposed | Offer guest checkout first. | Customer can complete approved checkout without creating or entering owner authentication. |
+| CHECK-001 | Accepted | Require a verified customer account when checkout opens. | Visitors may browse and build a cart anonymously, but `/checkout` redirects signed-out visitors to customer sign-in and every new order is linked from the server-verified session. |
 | CHECK-002 | Blocked | Use one authoritative India shipping and return policy. | India-wide serviceability, courier, fees, threshold, delivery estimate, returns, cancellations, tax, and support are approved; PDP, cart, checkout, confirmation, and email render matching policy identifiers and current text. |
 | INV-001 | Proposed | Reserve stock atomically. | Reservation cannot exceed available quantity and is created in a transaction with deterministic lock order. |
 | INV-002 | Proposed | Release abandoned reservations. | Expired, cancelled, and failed checkout reservations release exactly once and produce auditable stock events. |
@@ -152,11 +152,11 @@ No requirement marked Proposed represents live behavior.
 
 | ID | Status | Requirement | Acceptance criteria |
 |---|---|---|---|
-| PAY-001 | Blocked | Prove approved India payment methods before production enablement. | Cashfree prepaid payments and COD are selected. Production remains blocked until merchant eligibility, account-specific fees, refund operations, signed webhook behavior, sandbox evidence, live credentials, and Hostinger runtime compatibility pass. |
+| PAY-001 | Blocked | Prove approved India payment methods before production enablement. | Cashfree prepaid UPI is selected, including provider-supported intent/QR flows such as Google Pay where eligible; COD is excluded. Production remains blocked until merchant eligibility, account-specific fees, approved UPI methods, refund operations, signed webhook behavior, sandbox evidence, live credentials, and Hostinger runtime compatibility pass. |
 | PAY-002 | Proposed | Process payment callbacks idempotently. | Authentic duplicate or reordered callbacks cannot create duplicate payment, order, invoice, or stock effects. |
 | PAY-003 | Proposed | Never trust browser payment success alone. | Server verifies provider state before marking order paid. |
 | AUTH-001 | Accepted | Keep owner authentication separate from public customer identity. | Customer routes cannot use or weaken owner-only Better Auth configuration. |
-| AUTH-002 | Blocked | Support launch-scope customer accounts without weakening guest purchase completion. | Account creation, sign-in, recovery, privacy, deletion, and authorization are approved and verified; checkout does not require an account unless a later accepted decision explicitly changes that rule. |
+| AUTH-002 | Blocked | Support launch-scope customer accounts without weakening anonymous browsing and cart creation. | Google is the primary sign-in path with verified email/password recovery and fallback; account creation, sign-in, recovery, privacy, deletion, and authorization are approved and verified; checkout requires a verified customer session. |
 | TRUST-001 | Blocked | Obtain Indian legal approval for trademark/reference naming before publication. | Exact public reference wording and disclaimer receive counsel approval for every intended surface; designer and inspired-reference names remain disabled on bottle labels and packaging until separate owner approval and India-counsel approval for that surface (COM-ADR-022); no product implies designer affiliation; no designer logo, copied image, copied description, or misleading packaging claim is used. A disclaimer is disclosure only and is not a statutory safe harbor. |
 | TRUST-002 | Accepted | Do not fabricate commerce facts. | No unverified pricing, availability, review, delivery, return, payment, or checkout claim is public. |
 
@@ -187,12 +187,12 @@ Only **Accepted** decisions authorize implementation assumptions. Proposed and P
 | COM-ADR-003 | 2026-07-29 | Accepted | Keep current public marketing honest until real commerce is operationally proven. | Prevents fabricated price, stock, review, shipping, payment, or checkout claims. |
 | COM-ADR-004 | 2026-07-29 | Superseded | Build public commerce as a separate `apps/storefront` Next.js application sharing controlled packages and data. | COM-ADR-023 accepted the separate storefront application and replaced this proposal with the deployed monorepo boundary. |
 | COM-ADR-005 | 2026-07-29 | Superseded | Stage storefront on a separate Hostinger Node domain before apex cutover. | COM-ADR-027 superseded the temporary staging-domain plan: the apex is the storefront and the former staging host must remain absent. |
-| COM-ADR-006 | 2026-07-29 | Superseded | Launch guest checkout before customer accounts. | COM-ADR-025 and the accepted launch scope replaced this sequencing proposal; guest checkout remains required without coupling customers to owner authentication. |
+| COM-ADR-006 | 2026-07-29 | Superseded | Launch guest checkout before customer accounts. | COM-ADR-030 requires a verified customer account at checkout while preserving anonymous browsing and cart creation. |
 | COM-ADR-007 | 2026-07-30 | Superseded | Model each approved fragrance as one product and each purchasable 10/30/50/100 ml size as a separate variant row. | COM-ADR-024 replaces the universal size rule; the one-row-per-variant invariant remains authoritative. |
 | COM-ADR-008 | 2026-07-30 | Superseded | Use a unique Perfume Aura public name as each inspired product's primary identity and keep designer/reference names off bottle labels. Public “Inspired by …” references remain disabled until every reference is corrected and Indian trademark counsel approves exact presentation and disclaimer language. | Owner selected Perfume Aura-led naming and confirmed the first 82 rows are inspired fragrances. COM-ADR-017 later replaced the unique-name strategy; its source-fidelity and no-silent-approval safeguards remain historical context. |
 | COM-ADR-009 | 2026-07-30 | Superseded | Plan all 103 source fragrances for launch with purchasable 10, 30, 50, and 100 ml variants. | COM-ADR-024 retains all 103 fragrances but replaces the universal size set and removes 10 ml from public commerce. |
 | COM-ADR-010 | 2026-07-30 | Accepted | Plan India-wide delivery in INR and record every selected product as supply-capable while numeric opening stock remains pending. | Owner confirmed market, currency, delivery reach, and current availability intent. Accepted facts authorize planning only; prices, costs, SKUs, barcodes, stock counts, reorder levels, product content, courier, fees, delivery estimates, returns, cancellations, tax, and support remain unresolved and block publication. |
-| COM-ADR-011 | 2026-07-30 | Superseded | Select India payment methods and provider architecture; UPI is a researched candidate, not yet an approved requirement. | COM-ADR-025 selects Cashfree plus COD, while merchant onboarding, account-specific fees, and live approval remain release gates. |
+| COM-ADR-011 | 2026-07-30 | Superseded | Select India payment methods and provider architecture; UPI is a researched candidate, not yet an approved requirement. | COM-ADR-025 first selected Cashfree plus COD; COM-ADR-030 now selects Cashfree prepaid UPI only, while merchant onboarding, account-specific fees, and live approval remain release gates. |
 | COM-ADR-012 | 2026-07-30 | Accepted | Include purchasable testers/discovery sets, bundles, customer accounts, and verified reviews in launch scope rather than deferring them. | Owner explicitly selected all optional capabilities for immediate launch. Each remains blocked on its own product, inventory, privacy/auth, moderation, policy, and verification requirements; this acceptance does not represent implementation or release readiness. |
 | COM-ADR-013 | 2026-07-30 | Accepted | Use all 21 supplied Signature Series source names as their owner-approved Perfume Aura public names. | Owner approved the complete Signature Series list without replacements. Approval records naming intent only; trademark collision clearance, content, images, sale data, and publication approval remain pending. |
 | COM-ADR-014 | 2026-07-30 | Superseded | Treat each selected fragrance's purchasable 10 ml variant as a tester and its 30/50/100 ml variants as bottles. | COM-ADR-024 removes 10 ml from public commerce and introduces collection-specific bottle sizes. |
@@ -206,16 +206,20 @@ Only **Accepted** decisions authorize implementation assumptions. Proposed and P
 | COM-ADR-022 | 2026-07-30 | Accepted | Keep designer and inspired-reference names disabled on bottle labels and packaging until separate explicit owner approval and India-counsel approval for that surface. | Owner-selected fail-closed product policy after REQUIREMENTS and RESEARCH conflicted on bottle-label readiness. This is packaging/surface control only. It is not trademark clearance, disclaimer approval, title clearance, or permission to use references on any other surface. |
 | COM-ADR-023 | 2026-08-02 | Accepted | Build the public storefront as a separate Next.js application in the existing Hostinger/Neon monorepo, stage it at `shop.perfumeaura.com`, and retain `app.perfumeaura.com` as the owner-only operations surface. | This keeps the current marketing site available during development, preserves one inventory source of truth, and avoids Shopify or Vercel production dependencies. |
 | COM-ADR-024 | 2026-08-02 | Accepted | Keep all 103 fragrances in intended launch scope; sell inspired/standard fragrances only in 30 ml at ₹600, 50 ml at ₹800, and 100 ml at ₹1,400; sell Signature fragrances only in 50 ml and 105 ml with owner-approved per-product prices in the ranges ₹1,200–₹1,800 and ₹2,200–₹3,000; do not sell 10 ml or publish discovery sets without a newly approved sample format. | The owner replaced the earlier universal size model. Standard prices are fixed; Signature prices, SKU, cost, stock, media, and legal approvals remain fail-closed inputs. |
-| COM-ADR-025 | 2026-08-02 | Accepted | Launch India/INR commerce with guest checkout, optional separate customer accounts using verified email/password plus Google and Apple, Cashfree prepaid payments, COD, configurable flat shipping, and manual courier fulfillment. | Cashfree, OAuth, SMTP, shipping values, policies, and provider credentials remain external release gates; no fallback provider or invented policy is authorized. |
+| COM-ADR-025 | 2026-08-02 | Superseded | Launch India/INR commerce with guest checkout, optional separate customer accounts using verified email/password plus Google and Apple, Cashfree prepaid payments, COD, configurable flat shipping, and manual courier fulfillment. | COM-ADR-030 replaces guest checkout, Apple launch sign-in, and COD with required customer authentication and Cashfree UPI-only checkout while preserving separate customer identity, configurable shipping, and manual courier fulfillment. |
 | COM-ADR-026 | 2026-08-02 | Accepted | Recreate the Bucks Sauce storefront structure and interaction rhythm with Perfume Aura branding, real Perfume Aura bottle photography, and original fragrance copy while correcting the audited accessibility and mobile-purchase defects. The current reference system is recorded in [`REFERENCE.md`](REFERENCE.md#storefront-design). | The owner confirmed permission/terms responsibility. Foreign branding, copy, media, unlicensed fonts, hidden focusable clones, inaccessible controls, and long blocking intros remain forbidden. |
 | COM-ADR-027 | 2026-08-02 | Accepted | Supersede the temporary staging-domain portion of COM-ADR-023: deploy the verified animated storefront at `perfumeaura.com`, permanently redirect `www` to the apex, retain `app.perfumeaura.com` for internal operations, and delete `shop.perfumeaura.com` after apex acceptance. | The static apex backup and Git history provide rollback material without retaining duplicate public sites. Neon remains shared and is never part of the website deletion scope. |
 | COM-ADR-028 | 2026-08-13 | Accepted | Adapt the reference site's expanded-to-compact header motion using the supplied `perfume-aura-icon.svg` and `perfume-aura-wordmark.svg` assets: the bottle icon lifts and fades on scroll while the wordmark remains as the compact identity. | The owner selected the inverse of the source site's retained-icon treatment. Use the existing GSAP/ScrollTrigger boundary, preserve native scrolling and reduced motion, and do not copy foreign marks or animation code. |
 | COM-ADR-029 | 2026-08-16 | Accepted | Use `Inspired by <brand> <reference>` as the storefront listing title for every `owner_approved_title_reference` inspired row; omit the word `family` from the customer title; if the cleaned reference already begins with the brand, do not repeat the brand; keep the 34 incomplete inspired rows unlistable; keep Signature names unchanged. This records listing identity only and is not India-counsel clearance, disclaimer approval, publication approval, or permission to use references on bottle labels or packaging. | Owner selected this title pattern for the live shop listing after rejecting `Perfume Aura` plus source-name titles. Mapping identities are unchanged. Legal review, sale data, media, and checkout remain fail-closed. |
+| COM-ADR-030 | 2026-08-20 | Accepted | Launch India/INR commerce with anonymous browsing and cart creation, required verified customer authentication at checkout, Google as the primary sign-in path with verified email/password fallback, Cashfree prepaid UPI intent/QR (including Google Pay where Cashfree and the customer's device support it), no COD, configurable flat shipping, and manual courier fulfillment. | The owner selected an account-linked prepaid-only journey. Cashfree remains the sole approved payment provider; Google Pay is a UPI app within the Cashfree flow, not a direct integration. OAuth, SMTP, shipping values, policies, merchant approval, approved UPI methods, refunds, provider credentials, sandbox proof, and live activation remain independent release gates. |
 
-Field-level supersession rule: COM-ADR-027 replaces only COM-ADR-023's temporary
-`shop.perfumeaura.com` staging-domain field. COM-ADR-023's separate storefront
-application, shared Neon source of truth, and private ops boundary remain
-accepted.
+Field-level supersession rules: COM-ADR-027 replaces only COM-ADR-023's
+temporary `shop.perfumeaura.com` staging-domain field. COM-ADR-023's separate
+storefront application, shared Neon source of truth, and private ops boundary
+remain accepted. COM-ADR-030 fully replaces COM-ADR-025. Anonymous browsing and
+cart creation, separate customer identity, configurable shipping, and manual
+courier remain; guest checkout, COD, and Apple launch sign-in are no longer
+selected launch requirements.
 
 ### Outstanding owner/legal inputs
 
@@ -225,10 +229,10 @@ Accepted scope does not make catalog rows sale-ready. These facts remain require
 - **COM-ADR-016 / 018–021 mappings:** 48 inspired rows have owner-approved title-reference strings; 4 have owner-approved family mappings with exact product/concentration details pending; `Green Creed`, `F Fabulous`, `Gucci Guilty EX`, and `Pawake` remain explicitly unresolved; 26 still need owner input. Exact rows, evidence metadata, and states are recorded in [`REFERENCE.md`](REFERENCE.md#inspired-mapping-register). `main_list:22` retains the approved `212 VIP Men` identity with an explicit evidence gap; `main_list:20` retains Ulta only as labeled strongest-available retailer evidence. All 21 Signature names are confirmed in-house with mapping not applicable. Source transcription stays unchanged; no internet guess may silently replace it.
 - **COM-ADR-022 bottle/packaging surface:** designer and inspired-reference names stay disabled on bottle labels and packaging until separate owner approval and India-counsel approval for that surface. This product policy is not legal clearance.
 - **COM-ADR-024 variant prices:** standard retail prices are approved, but Signature products still need one explicit price per approved size. No 10 ml row is sellable or publishable.
-- **COM-ADR-025 provider and policy inputs:** Cashfree merchant approval, Google/Apple credentials, SMTP, the flat shipping fee, optional free-shipping threshold, courier rules, returns/cancellations/tax text, and support ownership must be supplied before checkout can be enabled.
+- **COM-ADR-030 provider and policy inputs:** Cashfree merchant approval, Google credentials, SMTP, the flat shipping fee, optional free-shipping threshold, courier rules, returns/cancellations/tax text, and support ownership must be supplied before checkout can be enabled.
 - **COM-ADR-010 product/variant data:** INR retail price and cost, SKU, optional barcode, opening stock count, reorder level, audience, family, notes, occasion, season, intensity, concentration, longevity guidance, sillage, ingredients, usage, and approved images.
 - **COM-ADR-010 policy data:** courier, PIN-code/serviceability rules, delivery fee, free-shipping threshold, delivery estimate, returns, cancellations, tax treatment, and support channel.
-- **COM-ADR-025 provider gate:** Cashfree prepaid and COD are selected. Cashfree merchant KYC, sandbox access, account-specific fees, approved payment methods, webhook credentials, and production activation still require owner/provider evidence. Razorpay and manual bank transfer are not approved substitutes.
+- **COM-ADR-030 provider gate:** Cashfree prepaid UPI is selected and COD is excluded. Cashfree merchant KYC, sandbox access, account-specific fees, approved UPI intent/QR methods, webhook credentials, refund operations, and production activation still require owner/provider evidence. Google Pay is presented only when supported inside the Cashfree UPI flow. Razorpay, direct Google Pay integration, manual bank transfer, and COD are not approved substitutes.
 - **COM-ADR-012 operating data:** tester/discovery-set composition and packaging, bundle composition/pricing/stock allocation, customer-account privacy/auth rules, and completed-order review eligibility/moderation.
 
 ### Decision template
@@ -336,7 +340,7 @@ deployment, payment proof, inventory proof, or customer-journey proof.
 - [ ] Sizes, prices, SKUs, and stock policy approved
 - [ ] Delivery regions, fees, estimates, and provider approved
 - [ ] Return, cancellation, refund, privacy, and terms text approved
-- [ ] Payment methods and reconciliation procedure approved
+- [ ] Prepaid UPI methods, refund handling, and reconciliation procedure approved
 - [ ] Customer support owner and channels approved
 - [ ] Known residual risks accepted by owner
 
@@ -358,7 +362,7 @@ deployment, payment proof, inventory proof, or customer-journey proof.
 - [ ] Size and quantity errors are accessible and block invalid adds
 - [ ] Cart persists and revalidates price, availability, and quantity
 - [ ] Empty cart has useful, truthful recovery links
-- [ ] Guest checkout works without owner authentication
+- [ ] Anonymous browsing/cart works, while checkout requires a verified customer session and preserves the cart through sign-in
 - [ ] Address and delivery validation work
 - [ ] Order confirmation is non-enumerable and shows correct snapshot
 - [ ] Owner can locate and operate resulting order safely
@@ -434,7 +438,7 @@ deployment, payment proof, inventory proof, or customer-journey proof.
 - [ ] Payment health/sandbox route if applicable reports expected state without secrets
 - [ ] Auth/session and health routes do not return unexpected `500`
 - [ ] Authenticated owner product, inventory, order, invoice, and finance pages render
-- [ ] One explicitly authorized end-to-end transaction reconciles order, payment/COD, stock, invoice, and confirmation
+- [ ] One explicitly authorized end-to-end prepaid transaction reconciles order, payment, stock, invoice, and confirmation
 - [ ] Monitoring and support contacts active
 
 ### Post-release

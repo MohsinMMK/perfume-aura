@@ -1,0 +1,48 @@
+name: Storefront commerce maintenance
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: storefront-commerce-maintenance
+  cancel-in-progress: false
+
+jobs:
+  maintain:
+    if: vars.STOREFRONT_COMMERCE_MAINTENANCE_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Reconcile payments before expiring holds
+        env:
+          MAINTENANCE_SECRET: ${{ secrets.STOREFRONT_MAINTENANCE_SECRET }}
+        run: >-
+          curl --fail --silent --show-error --retry 2 --connect-timeout 10
+          -X POST -H "Authorization: Bearer ${MAINTENANCE_SECRET}"
+          https://perfumeaura.com/api/internal/reconcile-payments
+      - name: Expire final unpaid checkouts
+        env:
+          MAINTENANCE_SECRET: ${{ secrets.STOREFRONT_MAINTENANCE_SECRET }}
+        run: >-
+          curl --fail --silent --show-error --retry 2 --connect-timeout 10
+          -X POST -H "Authorization: Bearer ${MAINTENANCE_SECRET}"
+          https://perfumeaura.com/api/internal/expire-checkouts
+      - name: Reconcile refunds
+        env:
+          MAINTENANCE_SECRET: ${{ secrets.STOREFRONT_MAINTENANCE_SECRET }}
+        run: >-
+          curl --fail --silent --show-error --retry 2 --connect-timeout 10
+          -X POST -H "Authorization: Bearer ${MAINTENANCE_SECRET}"
+          https://perfumeaura.com/api/internal/reconcile-refunds
+      - name: Deliver transactional email
+        env:
+          MAINTENANCE_SECRET: ${{ secrets.STOREFRONT_MAINTENANCE_SECRET }}
+        run: >-
+          curl --fail --silent --show-error --retry 2 --connect-timeout 10
+          -X POST -H "Authorization: Bearer ${MAINTENANCE_SECRET}"
+          https://perfumeaura.com/api/internal/send-order-emails

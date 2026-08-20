@@ -3,6 +3,8 @@ import { randomBytes } from "node:crypto";
 type CustomerAuthEnvironment = Record<string, string | undefined> & {
   CUSTOMER_AUTH_SECRET?: string;
   CUSTOMER_AUTH_URL?: string;
+  CUSTOMER_GOOGLE_CLIENT_ID?: string;
+  CUSTOMER_GOOGLE_CLIENT_SECRET?: string;
   STOREFRONT_CUSTOMER_AUTH_ENABLED?: string;
   STOREFRONT_URL?: string;
   NEXT_PHASE?: string;
@@ -69,15 +71,33 @@ export const resolveCustomerAuthSecret = createCustomerAuthSecretResolver();
 
 export function customerAuthProviderReadiness(
   environment: CustomerAuthEnvironment = process.env,
-): Readonly<{ google: boolean; apple: boolean }> {
+): Readonly<{ google: boolean }> {
   return {
     google: Boolean(
-      environment.CUSTOMER_GOOGLE_CLIENT_ID &&
-      environment.CUSTOMER_GOOGLE_CLIENT_SECRET,
-    ),
-    apple: Boolean(
-      environment.CUSTOMER_APPLE_SERVICES_ID &&
-      environment.CUSTOMER_APPLE_CLIENT_SECRET,
+      environment.CUSTOMER_GOOGLE_CLIENT_ID?.trim() &&
+      environment.CUSTOMER_GOOGLE_CLIENT_SECRET?.trim(),
     ),
   };
+}
+
+export function resolveCustomerGoogleClientId(
+  environment: CustomerAuthEnvironment = process.env,
+): string | null {
+  if (!customerAuthProviderReadiness(environment).google) return null;
+  return environment.CUSTOMER_GOOGLE_CLIENT_ID?.trim() || null;
+}
+
+export function normalizeCustomerCallbackURL(value: string | undefined): string {
+  if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) {
+    return "/account";
+  }
+  try {
+    const base = new URL("https://perfumeaura.com");
+    const resolved = new URL(value, base);
+    return resolved.origin === base.origin
+      ? `${resolved.pathname}${resolved.search}${resolved.hash}`
+      : "/account";
+  } catch {
+    return "/account";
+  }
 }

@@ -18,7 +18,7 @@ Persisted money is integer INR paise; public money uses
 |---|---|
 | Ops auth | `/login`, `/forgot-password`, `/reset-password`, `/settings/security` |
 | Ops | `/dashboard`, `/products`, `/stock`, `/customers`, `/invoices`, `/payments`, `/finance`, `/commerce/*` |
-| Storefront | `/`, `/shop`, `/collections/[slug]`, `/products/[slug]`, `/search`, `/find-your-scent`, `/cart`, `/checkout`, `/order/[token]` |
+| Storefront | `/`, `/shop`, `/collections/[slug]`, `/products/[slug]`, `/search`, `/find-your-scent`, `/cart`, `/checkout`, `/account`, `/account/delivery`, `/account/orders`, `/account/orders/[orderNumber]`, legacy `/order/[token]` |
 | Store content | `/about`, `/faq`, `/contact`, `/wholesale`, `/shipping`, `/returns`, `/privacy`, `/terms` |
 | Customer boundary | `/account/*`, `/api/customer-auth/*` |
 
@@ -29,7 +29,7 @@ commerce is fail-closed:
 
 - no product or collection is public without identity, legal, content, media,
   SKU, stock, cost, and INR-price approval;
-- checkout, Cashfree, COD settlement, customer authentication, contact and
+- checkout, Cashfree prepaid UPI, customer authentication, contact and
   wholesale inquiries, reviews, and indexing are disabled;
 - disabled customer-auth routes return `404` without loading Better Auth or
   Neon;
@@ -75,7 +75,13 @@ capability.
 - Catalog projection never exposes cost, raw stock, internal notes, or archived
   records.
 - Cashfree success requires raw webhook verification and server-side status
-  verification. COD is settled only by fulfillment and confirmed collection.
+  verification. Checkout is prepaid-only through approved Cashfree UPI flows;
+  cash on delivery is not offered.
+- Visitors may browse and create a cart anonymously. Checkout requires a
+  verified customer session, derives email and user identity on the server,
+  and preserves the cart through the sign-in callback.
+- Customers can explicitly save one delivery profile; the checkout opt-in is
+  unchecked by default and historical order snapshots never change.
 
 ## Staff capability contract
 
@@ -83,8 +89,7 @@ Ops implements Better Auth Admin and 2FA plugins, strict `owner`/`staff`/`user`
 roles, server-side capabilities, immutable staff invitation/audit records,
 TOTP, recovery codes, trusted private devices, staff deactivation, and
 owner-only financial/publication/payment controls. Staff can update shipment
-state but cannot settle COD; that owner-only reconciliation is a separate
-server action.
+state but cannot manage refunds or other owner-only payment operations.
 
 `OPS_TWO_FACTOR_REQUIRED` and `OPS_STAFF_INVITES_ENABLED` remain false until
 the migration and restricted grants are applied, SMTP delivery is proven, the

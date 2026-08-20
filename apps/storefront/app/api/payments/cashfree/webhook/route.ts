@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { processCashfreeWebhook } from "@/lib/cashfree-webhook";
 import {
+  type CashfreeWebhookMetadata,
+  parseCashfreeWebhookMetadata,
   resolveCashfreeConfiguration,
   verifyCashfreeWebhookSignature,
 } from "@/lib/cashfree";
@@ -25,8 +27,17 @@ export async function POST(request: Request): Promise<NextResponse> {
   ) {
     return NextResponse.json({ error: "Invalid webhook signature" }, { status: 401 });
   }
+  let metadata: CashfreeWebhookMetadata;
   try {
-    const result = await processCashfreeWebhook(rawBody);
+    metadata = parseCashfreeWebhookMetadata({
+      idempotencyKey: request.headers.get("x-idempotency-key") ?? "",
+      version: request.headers.get("x-webhook-version") ?? "",
+    });
+  } catch {
+    return NextResponse.json({ error: "Invalid webhook metadata" }, { status: 400 });
+  }
+  try {
+    const result = await processCashfreeWebhook(rawBody, metadata);
     return NextResponse.json({ received: true, duplicate: result.duplicate });
   } catch (error: unknown) {
     console.error("Cashfree webhook processing failed", {

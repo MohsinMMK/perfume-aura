@@ -60,7 +60,6 @@ describe("operations role and capability policy", () => {
       "invoices.void",
       "payments.record",
       "finance.view",
-      "commerce.cod.reconcile",
       "commerce.refunds.manage",
       "commerce.promotions.manage",
       "commerce.release-gates.manage",

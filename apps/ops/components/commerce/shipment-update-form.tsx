@@ -8,30 +8,22 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@perfume-aura/ui/components/native-select";
-import { reconcileCodAction, updateShipmentAction } from "@/lib/commerce";
+import { updateShipmentAction } from "@/lib/commerce";
 
 type OrderShipment = {
-  codCollectedAt: Date | null;
-  codReconciledAt: Date | null;
   courier: string | null;
   id: string;
-  paymentState: string | null;
   shipmentStatus: string | null;
   trackingNumber: string | null;
 };
 
 export function ShipmentUpdateForm({
-  canReconcileCod,
   order,
 }: Readonly<{
-  canReconcileCod: boolean;
   order: OrderShipment;
 }>) {
   const [shipmentPending, setShipmentPending] = useState(false);
-  const [codPending, setCodPending] = useState(false);
   const [shipmentMessage, setShipmentMessage] = useState<string | null>(null);
-  const [codMessage, setCodMessage] = useState<string | null>(null);
-  const isCodOrder = order.paymentState?.startsWith("cod") ?? false;
 
   async function updateShipment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -48,24 +40,6 @@ export function ShipmentUpdateForm({
       setShipmentMessage("Shipment update failed");
     } finally {
       setShipmentPending(false);
-    }
-  }
-
-  async function reconcileCod(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setCodPending(true);
-    setCodMessage(null);
-    try {
-      const result = await reconcileCodAction(new FormData(event.currentTarget));
-      setCodMessage(
-        result.ok
-          ? "COD reconciliation saved"
-          : Object.values(result.fieldErrors ?? {}).flat()[0] ?? result.error,
-      );
-    } catch {
-      setCodMessage("COD reconciliation failed");
-    } finally {
-      setCodPending(false);
     }
   }
 
@@ -128,46 +102,6 @@ export function ShipmentUpdateForm({
             </p>
           ) : null}
         </form>
-
-        {canReconcileCod && isCodOrder ? (
-          <form
-            onSubmit={reconcileCod}
-            className="grid gap-3 border-t border-border pt-4"
-          >
-            <input type="hidden" name="orderId" value={order.id} />
-            <p className="text-xs font-medium">Owner-only COD reconciliation</p>
-            <label className="flex min-h-11 items-center gap-2 text-xs">
-              <input
-                type="checkbox"
-                name="codCollected"
-                defaultChecked={Boolean(order.codCollectedAt)}
-              />
-              COD collected
-            </label>
-            <label className="flex min-h-11 items-center gap-2 text-xs">
-              <input
-                type="checkbox"
-                name="codReconciled"
-                defaultChecked={Boolean(order.codReconciledAt)}
-              />
-              COD reconciled
-            </label>
-            <Button
-              type="submit"
-              size="sm"
-              variant="outline"
-              disabled={codPending}
-              focusableWhenDisabled={codPending}
-            >
-              {codPending ? "Reconciling…" : "Save COD reconciliation"}
-            </Button>
-            {codMessage ? (
-              <p role="status" className="text-xs">
-                {codMessage}
-              </p>
-            ) : null}
-          </form>
-        ) : null}
       </div>
     </details>
   );

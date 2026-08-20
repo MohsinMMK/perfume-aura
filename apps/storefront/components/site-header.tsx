@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -33,7 +34,11 @@ const navigation = [
   { href: "/faq", label: "FAQ" },
 ] as const;
 
-export function SiteHeader() {
+const CustomerNavigation = dynamic(() =>
+  import("./customer-header-navigation").then((module) => module.CustomerHeaderNavigation),
+);
+
+export function SiteHeader({ customerAuthEnabled }: Readonly<{ customerAuthEnabled: boolean }>) {
   const { cart, setDrawerOpen } = useCart();
   const pathname = usePathname();
   const isHome = pathname === "/";
@@ -127,6 +132,7 @@ export function SiteHeader() {
                 {item.label}
               </Link>
             ))}
+            {customerAuthEnabled ? <CustomerNavigation /> : <Link href="/account" prefetch={false} aria-label="Customer account" aria-current={pathname.startsWith("/account") ? "page" : undefined} className="grid min-h-20 min-w-12 place-items-center border-b border-transparent transition hover:border-[var(--aura-ivory)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] aria-[current=page]:border-[var(--aura-ivory)]"><HugeiconsIcon icon={UserCircleIcon} strokeWidth={1.7} /></Link>}
             <button
               type="button"
               className="min-h-20 font-display text-[clamp(1.6rem,2vw,2rem)] tracking-[0.01em]"
@@ -213,9 +219,7 @@ export function SiteHeader() {
                   <Button render={<Link href="/search" prefetch={false} onClick={() => setMenuOpen(false)} />} nativeButton={false} variant="outline" className="min-h-12 rounded-[var(--aura-radius)] border-[color:rgb(16_11_6_/_35%)] bg-transparent text-[var(--aura-ink)] hover:bg-[var(--aura-ink)] hover:text-[var(--aura-ivory)]">
                     <HugeiconsIcon icon={Search01Icon} strokeWidth={1.7} /> Search
                   </Button>
-                  <Button render={<Link href="/account" prefetch={false} onClick={() => setMenuOpen(false)} />} nativeButton={false} variant="outline" className="min-h-12 rounded-[var(--aura-radius)] border-[color:rgb(16_11_6_/_35%)] bg-transparent text-[var(--aura-ink)] hover:bg-[var(--aura-ink)] hover:text-[var(--aura-ivory)]">
-                    <HugeiconsIcon icon={UserCircleIcon} strokeWidth={1.7} /> Account
-                  </Button>
+                  {customerAuthEnabled ? <CustomerNavigation mobile closeMenu={() => setMenuOpen(false)} /> : <Button render={<Link href="/account" prefetch={false} onClick={() => setMenuOpen(false)} />} nativeButton={false} variant="outline" className="min-h-12 rounded-[var(--aura-radius)] border-[color:rgb(16_11_6_/_35%)] bg-transparent text-[var(--aura-ink)] hover:bg-[var(--aura-ink)] hover:text-[var(--aura-ivory)]"><HugeiconsIcon icon={UserCircleIcon} strokeWidth={1.7} /> Account</Button>}
                 </div>
               </nav>
             </SheetContent>

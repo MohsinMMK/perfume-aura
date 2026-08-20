@@ -50,7 +50,7 @@ export default async function CommercePage() {
             "Approve each product’s legal, content, media, SKU, stock, cost, and price data.",
             "Approve shipping, returns, cancellation, tax, and support settings.",
             "Verify Cashfree, customer-auth, OAuth, email, and production callback domains.",
-            "Run the authorized prepaid and COD lifecycle acceptance tests before release.",
+            "Run the authorized prepaid UPI lifecycle acceptance tests before release.",
           ].map((text, index) => <p key={text} className="rounded-md border p-4"><span className="mb-2 block text-xs font-semibold uppercase text-muted-foreground">Gate {index + 1}</span>{text}</p>)}
         </CardContent>
       </Card>

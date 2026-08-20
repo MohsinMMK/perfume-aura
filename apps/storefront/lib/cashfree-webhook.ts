@@ -2,8 +2,12 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import {
   and,
+  commerceOrderEvents,
   db,
   eq,
+  lte,
+  notificationOutbox,
+  or,
   paymentAttempts,
   paymentEvents,
   commerceOrders,
@@ -11,8 +15,9 @@ import {
   consumeCheckoutReservations,
 } from "@perfume-aura/db";
 import {
+  type CashfreeWebhookMetadata,
   cashfreeMajorToAmountMinor,
-  verifyCashfreeOrderPaid,
+  verifyCashfreePaymentSucceeded,
 } from "./cashfree";
 
 const webhookSchema = z.object({
@@ -36,19 +41,20 @@ const webhookSchema = z.object({
   }),
 });
 
-export async function processCashfreeWebhook(rawBody: string): Promise<Readonly<{
+export async function processCashfreeWebhook(
+  rawBody: string,
+  metadata: CashfreeWebhookMetadata,
+): Promise<Readonly<{
   duplicate: boolean;
   paid: boolean;
 }>> {
   const event = webhookSchema.parse(JSON.parse(rawBody) as unknown);
-  const providerEventId = event.data.payment
-    ? `${event.type}:${event.data.payment.cf_payment_id}`
-    : event.data.refund
-      ? `${event.type}:${event.data.refund.cf_refund_id}`
-      : `${event.type}:${createHash("sha256").update(rawBody).digest("hex")}`;
+  const providerEventId = metadata.idempotencyKey;
   const payloadDigest = createHash("sha256").update(rawBody).digest("hex");
 
   const eventReceipt = await db.transaction(async (tx) => {
+    const now = new Date();
+    const leaseExpiresAt = new Date(now.getTime() + 2 * 60 * 1_000);
     const inserted = await tx
       .insert(paymentEvents)
       .values({
@@ -57,12 +63,21 @@ export async function processCashfreeWebhook(rawBody: string): Promise<Readonly<
         eventType: event.type,
         payloadDigest,
         signatureVerified: true,
+        webhookVersion: metadata.version,
+        idempotencyHeader: metadata.idempotencyKey,
+        processingStatus: "received",
         occurredAt: new Date(event.event_time),
       })
       .onConflictDoNothing()
       .returning({ id: paymentEvents.id });
     const [stored] = await tx
-      .select({ id: paymentEvents.id, processedAt: paymentEvents.processedAt })
+      .select({
+        id: paymentEvents.id,
+        payloadDigest: paymentEvents.payloadDigest,
+        processedAt: paymentEvents.processedAt,
+        processingStatus: paymentEvents.processingStatus,
+        leaseExpiresAt: paymentEvents.leaseExpiresAt,
+      })
       .from(paymentEvents)
       .where(
         and(
@@ -70,16 +85,40 @@ export async function processCashfreeWebhook(rawBody: string): Promise<Readonly<
           eq(paymentEvents.providerEventId, providerEventId),
         ),
       )
+      .for("update")
       .limit(1);
     if (!stored) throw new Error("Cashfree event could not be persisted");
-    return {
-      id: stored.id,
-      alreadyProcessed: inserted.length === 0 && stored.processedAt !== null,
-    };
+    if (stored.payloadDigest !== payloadDigest) {
+      throw new Error("Cashfree webhook idempotency key payload mismatch");
+    }
+    if (stored.processingStatus === "processed" || stored.processedAt !== null) {
+      return { id: stored.id, alreadyProcessed: true };
+    }
+    if (
+      inserted.length === 0 &&
+      stored.processingStatus === "processing" &&
+      stored.leaseExpiresAt && stored.leaseExpiresAt > now
+    ) {
+      return { id: stored.id, alreadyProcessed: true };
+    }
+    await tx.update(paymentEvents).set({
+      processingStatus: "processing",
+      leaseExpiresAt,
+      failedAt: null,
+      failureCode: null,
+    }).where(and(
+      eq(paymentEvents.id, stored.id),
+      or(
+        eq(paymentEvents.processingStatus, "received"),
+        eq(paymentEvents.processingStatus, "failed"),
+        lte(paymentEvents.leaseExpiresAt, now),
+      ),
+    ));
+    return { id: stored.id, alreadyProcessed: false };
   });
   if (eventReceipt.alreadyProcessed) return { duplicate: true, paid: false };
-
-  const [attempt] = await db
+  try {
+    const [attempt] = await db
     .select()
     .from(paymentAttempts)
     .where(
@@ -89,33 +128,43 @@ export async function processCashfreeWebhook(rawBody: string): Promise<Readonly<
       ),
     )
     .limit(1);
-  if (!attempt || event.data.payment?.payment_status !== "SUCCESS") {
-    await db
-      .update(paymentEvents)
-      .set({ paymentAttemptId: attempt?.id, processedAt: new Date() })
-      .where(eq(paymentEvents.id, eventReceipt.id));
-    return { duplicate: false, paid: false };
-  }
+    if (
+      !attempt ||
+      event.type !== "PAYMENT_SUCCESS_WEBHOOK" ||
+      event.data.payment?.payment_status !== "SUCCESS"
+    ) {
+      await db.update(paymentEvents).set({
+        paymentAttemptId: attempt?.id,
+        processingStatus: "processed",
+        processedAt: new Date(),
+        leaseExpiresAt: null,
+      }).where(eq(paymentEvents.id, eventReceipt.id));
+      return { duplicate: false, paid: false };
+    }
 
-  if (
-    cashfreeMajorToAmountMinor(event.data.order.order_amount) !== attempt.amountMinor ||
-    cashfreeMajorToAmountMinor(event.data.payment.payment_amount) !== attempt.amountMinor
-  ) {
-    throw new Error("Cashfree webhook amount does not match the payment attempt");
-  }
+    if (
+      cashfreeMajorToAmountMinor(event.data.order.order_amount) !== attempt.amountMinor ||
+      cashfreeMajorToAmountMinor(event.data.payment.payment_amount) !== attempt.amountMinor
+    ) {
+      throw new Error("Cashfree webhook amount does not match the payment attempt");
+    }
 
-  await verifyCashfreeOrderPaid(attempt.providerOrderId ?? "", attempt.amountMinor);
-  const [order] = await db
+    await verifyCashfreePaymentSucceeded({
+      orderId: attempt.providerOrderId ?? "",
+      paymentId: event.data.payment.cf_payment_id,
+      expectedAmountMinor: attempt.amountMinor,
+    });
+    const [order] = await db
     .select({ checkoutSessionId: commerceOrders.checkoutSessionId })
     .from(commerceOrders)
     .where(eq(commerceOrders.id, attempt.orderId))
     .limit(1);
-  if (!order) throw new Error("Cashfree payment order was not found");
-  await consumeCheckoutReservations({
-    checkoutSessionId: order.checkoutSessionId,
-    orderId: attempt.orderId,
-  });
-  await db.transaction(async (tx) => {
+    if (!order) throw new Error("Cashfree payment order was not found");
+    await consumeCheckoutReservations({
+      checkoutSessionId: order.checkoutSessionId,
+      orderId: attempt.orderId,
+    });
+    await db.transaction(async (tx) => {
     await tx
       .update(paymentAttempts)
       .set({
@@ -132,10 +181,37 @@ export async function processCashfreeWebhook(rawBody: string): Promise<Readonly<
       .update(checkoutSessions)
       .set({ status: "completed", completedAt: new Date() })
       .where(eq(checkoutSessions.id, order.checkoutSessionId));
-    await tx
+      const [confirmedEvent] = await tx.insert(commerceOrderEvents).values({
+        orderId: attempt.orderId,
+        eventType: "payment_confirmed",
+        fromStatus: "pending",
+        toStatus: "confirmed",
+        idempotencyKey: `payment-confirmed:${attempt.id}`,
+      }).onConflictDoNothing().returning({ id: commerceOrderEvents.id });
+      if (confirmedEvent) {
+        await tx.insert(notificationOutbox).values({
+          orderEventId: confirmedEvent.id,
+          kind: "order_confirmed",
+        }).onConflictDoNothing();
+      }
+      await tx
       .update(paymentEvents)
-      .set({ paymentAttemptId: attempt.id, processedAt: new Date() })
+      .set({
+        paymentAttemptId: attempt.id,
+        processingStatus: "processed",
+        processedAt: new Date(),
+        leaseExpiresAt: null,
+      })
       .where(eq(paymentEvents.id, eventReceipt.id));
-  });
-  return { duplicate: false, paid: true };
+    });
+    return { duplicate: false, paid: true };
+  } catch (error) {
+    await db.update(paymentEvents).set({
+      processingStatus: "failed",
+      failedAt: new Date(),
+      leaseExpiresAt: null,
+      failureCode: "processing_failed",
+    }).where(eq(paymentEvents.id, eventReceipt.id));
+    throw error;
+  }
 }
