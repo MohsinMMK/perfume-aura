@@ -5,7 +5,10 @@ import { usePathname } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@perfume-aura/ui/components/button";
-import { shouldOfferGoogleOneTap } from "@/lib/google-one-tap-policy";
+import {
+  googleOneTapCallbackURL,
+  shouldOfferGoogleOneTap,
+} from "@/lib/google-one-tap-policy";
 import { GoogleSignInButton } from "./google-sign-in-button";
 
 const promptAttemptedKey = "pa_customer_google_prompt_attempted";
@@ -19,6 +22,7 @@ export function GoogleOneTapPrompt({
   const offerGoogleSignIn = shouldOfferGoogleOneTap(pathname);
   const attempted = useRef(false);
   const [showFallback, setShowFallback] = useState(false);
+  const [fallbackCallbackURL, setFallbackCallbackURL] = useState(pathname);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -62,11 +66,16 @@ export function GoogleOneTapPrompt({
     }
     attempted.current = true;
     let active = true;
+    const callbackURL = googleOneTapCallbackURL(
+      window.location.pathname,
+      window.location.search,
+    );
     void import("@/lib/customer-auth-client")
       .then(({ createCustomerGoogleAuthClient }) => {
         if (!active) return;
+        setFallbackCallbackURL(callbackURL);
         return createCustomerGoogleAuthClient(clientId).oneTap({
-          callbackURL: pathname,
+          callbackURL,
           autoSelect: false,
           cancelOnTapOutside: true,
           onPromptNotification: () => {
@@ -75,7 +84,10 @@ export function GoogleOneTapPrompt({
         });
       })
       .catch(() => {
-        if (active) setShowFallback(true);
+        if (active) {
+          setFallbackCallbackURL(callbackURL);
+          setShowFallback(true);
+        }
       });
 
     return () => {
@@ -105,7 +117,7 @@ export function GoogleOneTapPrompt({
         Continue with Google to view orders and return to checkout faster.
       </p>
       <div className="mt-4 overflow-hidden rounded-sm">
-        <GoogleSignInButton clientId={clientId} callbackURL={pathname} />
+        <GoogleSignInButton clientId={clientId} callbackURL={fallbackCallbackURL} />
       </div>
     </aside>
   );

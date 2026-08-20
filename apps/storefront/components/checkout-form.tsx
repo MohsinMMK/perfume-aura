@@ -23,6 +23,7 @@ type CheckoutResponse = Readonly<{
   accountOrderPath?: string;
   cashfreePaymentSessionId?: string;
   cashfreeMode?: "sandbox" | "production";
+  code?: "CART_CHANGED";
   error?: string;
 }>;
 
@@ -33,7 +34,7 @@ export function CheckoutForm({
   email: string;
   initialProfile: DeliveryProfileInput | null;
 }>) {
-  const { cart, loading } = useCart();
+  const { cart, loading, refreshCart } = useCart();
   const requestId = useRef<string | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +64,13 @@ export function CheckoutForm({
         }),
       });
       const result = (await response.json()) as CheckoutResponse;
+      if (response.status === 409 && result.code === "CART_CHANGED") {
+        requestId.current = null;
+        await refreshCart();
+        throw new Error(
+          result.error ?? "Your cart changed. Review the updated items before continuing.",
+        );
+      }
       if (!response.ok) throw new Error(result.error ?? "Checkout failed");
       if (!result.cashfreePaymentSessionId || !result.cashfreeMode) {
         throw new Error("Cashfree payment session was not returned");

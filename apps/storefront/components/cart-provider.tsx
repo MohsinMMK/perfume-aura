@@ -16,6 +16,7 @@ type CartContextValue = Readonly<{
   loading: boolean;
   drawerOpen: boolean;
   setDrawerOpen: (open: boolean) => void;
+  refreshCart: () => Promise<void>;
   addItem: (variantId: string) => Promise<void>;
   setQuantity: (variantId: string, quantity: number) => Promise<void>;
 }>;
@@ -69,6 +70,15 @@ export function CartProvider({
   const [loading, setLoading] = useState(loadRemoteCart);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  const refreshCart = useCallback(async () => {
+    setLoading(true);
+    try {
+      setCart(await requestCart("GET"));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!loadRemoteCart) return;
 
@@ -118,10 +128,11 @@ export function CartProvider({
       loading,
       drawerOpen,
       setDrawerOpen,
+      refreshCart,
       addItem,
       setQuantity,
     }),
-    [addItem, cart, drawerOpen, loading, setQuantity],
+    [addItem, cart, drawerOpen, loading, refreshCart, setQuantity],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

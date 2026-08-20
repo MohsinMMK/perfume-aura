@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { createCustomerAuth } from "@/lib/customer-auth";
 import { isCustomerAuthEnabled } from "@/lib/customer-auth-policy";
-import { placeCheckoutOrder } from "@/lib/checkout";
+import {
+  CheckoutCartChangedError,
+  placeCheckoutOrder,
+} from "@/lib/checkout";
 
 const cartCookieName = "pa_storefront_cart";
 
@@ -27,6 +30,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json({ error: error.issues[0]?.message ?? "Invalid checkout details." }, { status: 400 });
+    }
+    if (error instanceof CheckoutCartChangedError) {
+      return NextResponse.json(
+        { code: error.code, error: error.message },
+        { status: 409 },
+      );
     }
     console.error("[storefront checkout] checkout failed", {
       name: error instanceof Error ? error.name : "UnknownError",

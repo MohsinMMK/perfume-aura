@@ -11,17 +11,21 @@ import {
   commerceSettings,
   db,
   eq,
+  inArray,
   paymentAttempts,
+  productMedia,
   productPublications,
   products,
   productVariants,
   releaseCheckoutReservations,
   reserveCheckoutStock,
+  shippingServiceability,
   sql,
   storefrontCustomerProfile,
   variantPrices,
 } from "@perfume-aura/db";
 import { createCashfreeOrder } from "./cashfree";
+import { compareCheckoutCartSet } from "./checkout-cart-eligibility";
 import { deliveryProfileInputSchema } from "./customer-profile";
 
 const checkoutInputSchema = deliveryProfileInputSchema.extend({
@@ -37,6 +41,15 @@ type CheckoutResult = Readonly<{
   cashfreePaymentSessionId: string;
   cashfreeMode: "sandbox" | "production";
 }>;
+
+export class CheckoutCartChangedError extends Error {
+  readonly code = "CART_CHANGED";
+
+  constructor() {
+    super("Your cart changed. Review the updated items before continuing to UPI.");
+    this.name = "CheckoutCartChangedError";
+  }
+}
 
 function digest(value: string): string {
   return createHash("sha256").update(value).digest("hex");
@@ -125,55 +138,29 @@ export async function placeCheckoutOrder(
   if (
     !settings?.checkoutEnabled || settings.flatShippingAmountMinor == null ||
     !settings.taxTreatment || !settings.supportChannel ||
+    !settings.taxPolicyApproved || !settings.taxApprovalReference ||
+    !settings.catalogLegalApproved || !settings.legalApprovalReference ||
+    !settings.supportOperationsApproved ||
     !settings.shippingPolicyApproved || !settings.returnsPolicyApproved ||
     !settings.cancellationPolicyApproved
   ) {
     throw new Error("Checkout policy settings are incomplete");
   }
-  if (![
-    "prices_include_approved_tax",
-    "no_tax_collected_owner_approved",
-  ].includes(settings.taxTreatment)) {
+  if (settings.taxTreatment !== "prices_include_approved_tax") {
     throw new Error("Checkout tax treatment is not a supported approved code");
   }
+  if (
+    settings.flatShippingAmountMinor !== 9_900 ||
+    settings.freeShippingThresholdMinor !== 99_900
+  ) {
+    throw new Error("Checkout shipping policy does not match the approved launch policy");
+  }
+  const flatShippingAmountMinor = settings.flatShippingAmountMinor;
+  const freeShippingThresholdMinor = settings.freeShippingThresholdMinor;
 
   const [cart] = await db.select({ id: commerceCarts.id, status: commerceCarts.status })
     .from(commerceCarts).where(eq(commerceCarts.tokenDigest, digest(cartToken))).limit(1);
   if (!cart || cart.status !== "active") throw new Error("Cart is unavailable");
-
-  const lines = await db.select({
-    variantId: productVariants.id,
-    productName: productPublications.publicName,
-    sku: productVariants.sku,
-    sizeMl: productVariants.sizeMl,
-    quantity: commerceCartItems.quantity,
-    amountMinor: variantPrices.amountMinor,
-  }).from(commerceCartItems)
-    .innerJoin(productVariants, eq(productVariants.id, commerceCartItems.variantId))
-    .innerJoin(products, eq(products.id, productVariants.productId))
-    .innerJoin(productPublications, eq(productPublications.productId, products.id))
-    .innerJoin(variantPrices, eq(variantPrices.variantId, productVariants.id))
-    .where(and(
-      eq(commerceCartItems.cartId, cart.id), eq(products.status, "active"),
-      eq(productVariants.status, "active"), eq(productPublications.status, "published"),
-      eq(variantPrices.active, true), eq(variantPrices.currency, "INR"),
-      sql`${productPublications.publicName} IS NOT NULL`,
-      sql`${productPublications.legalApprovedAt} IS NOT NULL`,
-      sql`${productPublications.contentApprovedAt} IS NOT NULL`,
-      sql`${productPublications.mediaApprovedAt} IS NOT NULL`,
-      sql`${variantPrices.approvedAt} IS NOT NULL`, sql`${variantPrices.amountMinor} > 0`,
-    ));
-  if (lines.length === 0) throw new Error("Cart has no approved products");
-
-  const subtotalAmountMinor = lines.reduce(
-    (sum, line) => sum + line.amountMinor * line.quantity,
-    0,
-  );
-  const freeShipping = settings.freeShippingThresholdMinor != null &&
-    subtotalAmountMinor >= settings.freeShippingThresholdMinor;
-  const shippingAmountMinor = freeShipping ? 0 : settings.flatShippingAmountMinor;
-  const totalAmountMinor = subtotalAmountMinor + shippingAmountMinor;
-  if (totalAmountMinor <= 0) throw new Error("Order total must be positive");
 
   const checkoutToken = randomBytes(32).toString("base64url");
   const legacyAccessToken = randomBytes(32).toString("base64url");
@@ -207,6 +194,102 @@ export async function placeCheckoutOrder(
       .where(eq(commerceCarts.id, cart.id)).for("update").limit(1);
     if (lockedCart?.status !== "active") throw new Error("Cart is already being checked out");
 
+    const [serviceability] = await transaction.select({
+      delhiveryEnabled: shippingServiceability.delhiveryEnabled,
+      indiaPostEnabled: shippingServiceability.indiaPostEnabled,
+      deliveryMinBusinessDays: shippingServiceability.deliveryMinBusinessDays,
+      deliveryMaxBusinessDays: shippingServiceability.deliveryMaxBusinessDays,
+    }).from(shippingServiceability).where(and(
+      eq(shippingServiceability.postalCode, input.postalCode),
+      eq(shippingServiceability.active, true),
+      sql`${shippingServiceability.delhiveryEnabled} OR ${shippingServiceability.indiaPostEnabled}`,
+    )).limit(1);
+    if (!serviceability) {
+      throw new Error("Delivery is not available for this PIN code yet");
+    }
+
+    const storedLines = await transaction
+      .select({
+        variantId: commerceCartItems.variantId,
+        quantity: commerceCartItems.quantity,
+      })
+      .from(commerceCartItems)
+      .where(eq(commerceCartItems.cartId, cart.id));
+    if (storedLines.length === 0) throw new Error("Cart has no products");
+
+    const lines = await transaction.select({
+      variantId: productVariants.id,
+      productName: productPublications.publicName,
+      sku: productVariants.sku,
+      sizeMl: productVariants.sizeMl,
+      quantity: commerceCartItems.quantity,
+      amountMinor: variantPrices.amountMinor,
+    }).from(commerceCartItems)
+      .innerJoin(productVariants, eq(productVariants.id, commerceCartItems.variantId))
+      .innerJoin(products, eq(products.id, productVariants.productId))
+      .innerJoin(productPublications, eq(productPublications.productId, products.id))
+      .innerJoin(variantPrices, eq(variantPrices.variantId, productVariants.id))
+      .innerJoin(productMedia, and(
+        eq(productMedia.productId, products.id),
+        eq(productMedia.kind, "pack"),
+        eq(productMedia.position, 0),
+      ))
+      .where(and(
+        eq(commerceCartItems.cartId, cart.id), eq(products.status, "active"),
+        eq(productVariants.status, "active"), eq(productPublications.status, "published"),
+        eq(variantPrices.active, true), eq(variantPrices.currency, "INR"),
+        sql`${productPublications.publicName} IS NOT NULL`,
+        sql`${productPublications.publicSlug} IS NOT NULL`,
+        sql`${productPublications.legalApprovedAt} IS NOT NULL`,
+        sql`${productPublications.legalApprovalReference} IS NOT NULL`,
+        sql`${productPublications.contentApprovedAt} IS NOT NULL`,
+        sql`${productPublications.contentApprovalReference} IS NOT NULL`,
+        sql`${productPublications.mediaApprovedAt} IS NOT NULL`,
+        sql`${productPublications.mediaApprovalReference} IS NOT NULL`,
+        sql`${productMedia.approvedAt} IS NOT NULL`,
+        sql`${productMedia.approvalReference} IS NOT NULL`,
+        sql`${variantPrices.approvedAt} IS NOT NULL`,
+        sql`${variantPrices.approvalReference} IS NOT NULL`,
+        sql`${variantPrices.amountMinor} > 0`,
+        sql`${productVariants.quantityOnHand} - ${productVariants.qtyReserved} >= ${commerceCartItems.quantity}`,
+      ));
+    const cartComparison = compareCheckoutCartSet(
+      storedLines.map((line) => line.variantId),
+      lines.map((line) => line.variantId),
+    );
+    if (cartComparison.changed) {
+      const removedVariantIds = cartComparison.removedVariantIds;
+      if (removedVariantIds.length > 0) {
+        await transaction.delete(commerceCartItems).where(and(
+          eq(commerceCartItems.cartId, cart.id),
+          inArray(commerceCartItems.variantId, removedVariantIds),
+        ));
+      }
+      return { cartChanged: true as const };
+    }
+
+    const subtotalAmountMinor = lines.reduce(
+      (sum, line) => sum + line.amountMinor * line.quantity,
+      0,
+    );
+    const freeShipping = subtotalAmountMinor >= freeShippingThresholdMinor;
+    const shippingAmountMinor = freeShipping ? 0 : flatShippingAmountMinor;
+    const totalAmountMinor = subtotalAmountMinor + shippingAmountMinor;
+    if (totalAmountMinor <= 0) throw new Error("Order total must be positive");
+
+    const availableCouriers = [
+      serviceability.delhiveryEnabled ? "Delhivery" : null,
+      serviceability.indiaPostEnabled ? "India Post" : null,
+    ].filter((courier): courier is string => courier !== null);
+    const approvedShippingAddress = {
+      ...shippingAddress,
+      availableCouriers,
+      deliveryEstimateBusinessDays: {
+        minimum: serviceability.deliveryMinBusinessDays,
+        maximum: serviceability.deliveryMaxBusinessDays,
+      },
+    };
+
     const [checkout] = await transaction.insert(checkoutSessions).values({
       cartId: cart.id,
       tokenDigest: digest(checkoutToken),
@@ -215,7 +298,7 @@ export async function placeCheckoutOrder(
       status: "open",
       pricingVersion: 1,
       email: customer.email,
-      shippingAddress,
+      shippingAddress: approvedShippingAddress,
       expiresAt: finalizationDeadlineAt,
     }).returning({ id: checkoutSessions.id });
     if (!checkout) throw new Error("Checkout session could not be created");
@@ -234,7 +317,7 @@ export async function placeCheckoutOrder(
       taxAmountMinor: 0,
       discountAmountMinor: 0,
       totalAmountMinor,
-      shippingAddressSnapshot: shippingAddress,
+      shippingAddressSnapshot: approvedShippingAddress,
     }).returning({ id: commerceOrders.id });
     if (!order) throw new Error("Order could not be created");
 
@@ -295,8 +378,18 @@ export async function placeCheckoutOrder(
     await transaction.update(commerceCarts)
       .set({ customerUserId: customer.userId, status: "converted", updatedAt: new Date() })
       .where(eq(commerceCarts.id, cart.id));
-    return { checkoutId: checkout.id, orderId: order.id, attemptId: attempt.id };
+    return {
+      cartChanged: false as const,
+      checkoutId: checkout.id,
+      orderId: order.id,
+      attemptId: attempt.id,
+      lines,
+      totalAmountMinor,
+    };
   });
+  if (created.cartChanged) throw new CheckoutCartChangedError();
+
+  const { lines, totalAmountMinor } = created;
 
   try {
     await reserveCheckoutStock({

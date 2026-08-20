@@ -30,6 +30,7 @@ function isOrderMailKind(value: string): value is OrderMailKind {
 export async function drainOrderEmailOutbox(input: Readonly<{
   now?: Date;
   limit?: number;
+  sendImplementation?: typeof sendCommerceOrderEmail;
 }> = {}): Promise<Readonly<{ sent: number; failed: number }>> {
   const now = input.now ?? new Date();
   const limit = input.limit ?? 20;
@@ -93,7 +94,7 @@ export async function drainOrderEmailOutbox(input: Readonly<{
       const details = message.kind === "order_shipped"
         ? [message.courier, message.trackingNumber ? `Tracking ${message.trackingNumber}` : null].filter(Boolean).join(" · ")
         : undefined;
-      await sendCommerceOrderEmail({
+      await (input.sendImplementation ?? sendCommerceOrderEmail)({
         to: message.email,
         kind: message.kind,
         orderNumber: message.orderNumber,

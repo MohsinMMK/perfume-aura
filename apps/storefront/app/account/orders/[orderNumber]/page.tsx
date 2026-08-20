@@ -46,6 +46,7 @@ export default async function CustomerOrderPage({
         name: error instanceof Error ? error.name : "UnknownError",
       });
     }
+    redirect(`/account/orders/${encodeURIComponent(orderNumber)}`);
   }
   const order = await getCustomerOrder(session.user.id, orderNumber);
   if (!order) notFound();
@@ -54,7 +55,6 @@ export default async function CustomerOrderPage({
   return <>
     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#79633e]">Order {order.orderNumber}</p>
     <h1 className="mt-3 font-display text-6xl sm:text-8xl">Order details</h1>
-    {query.payment === "return" ? <p role="status" className="mt-6 border border-[var(--aura-brass)] p-4 text-sm">Payment confirmation is checked securely on our server. This page updates after Cashfree confirms the payment.</p> : null}
     <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_20rem]">
       <div>
         <dl className="grid gap-4 border-y border-black/15 py-5 text-sm sm:grid-cols-3">

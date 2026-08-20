@@ -22,7 +22,12 @@ type SettingsValue = {
   flatShippingAmountMinor: number | null;
   freeShippingThresholdMinor: number | null;
   taxTreatment: string | null;
+  taxPolicyApproved: boolean;
+  taxApprovalReference: string | null;
+  catalogLegalApproved: boolean;
+  legalApprovalReference: string | null;
   supportChannel: string | null;
+  supportOperationsApproved: boolean;
   shippingPolicyApproved: boolean;
   returnsPolicyApproved: boolean;
   cancellationPolicyApproved: boolean;
@@ -113,6 +118,14 @@ export function CommerceSettingsForm({ settings }: { settings: SettingsValue }) 
             </NativeSelect>
           </div>
           <div className="grid gap-2 sm:col-span-2">
+            <Label htmlFor="taxApprovalReference">Tax approval reference</Label>
+            <Input id="taxApprovalReference" name="taxApprovalReference" defaultValue={settings?.taxApprovalReference ?? ""} placeholder="Approved decision or adviser reference" />
+          </div>
+          <label className="flex min-h-11 items-center gap-3 rounded-md border px-3 text-sm sm:col-span-2">
+            <input name="taxPolicyApproved" type="checkbox" defaultChecked={settings?.taxPolicyApproved ?? false} className="size-4" />
+            Tax treatment and evidence reference approved
+          </label>
+          <div className="grid gap-2 sm:col-span-2">
             <Label htmlFor="supportChannel">Approved customer support channel</Label>
             <Input
               id="supportChannel"
@@ -122,6 +135,18 @@ export function CommerceSettingsForm({ settings }: { settings: SettingsValue }) 
               placeholder="Email or phone approved for public policy pages"
             />
           </div>
+          <label className="flex min-h-11 items-center gap-3 rounded-md border px-3 text-sm sm:col-span-2">
+            <input name="supportOperationsApproved" type="checkbox" defaultChecked={settings?.supportOperationsApproved ?? false} className="size-4" />
+            Support channel, staffing, and response operations approved
+          </label>
+          <div className="grid gap-2 sm:col-span-2">
+            <Label htmlFor="legalApprovalReference">Catalog legal approval reference</Label>
+            <Input id="legalApprovalReference" name="legalApprovalReference" defaultValue={settings?.legalApprovalReference ?? ""} placeholder="India-counsel evidence reference" />
+          </div>
+          <label className="flex min-h-11 items-center gap-3 rounded-md border px-3 text-sm sm:col-span-2">
+            <input name="catalogLegalApproved" type="checkbox" defaultChecked={settings?.catalogLegalApproved ?? false} className="size-4" />
+            Catalog naming, surfaces, and disclaimer treatment approved
+          </label>
           <fieldset className="grid gap-3 sm:col-span-2">
             <legend className="text-sm font-medium">Policy approvals</legend>
             {[

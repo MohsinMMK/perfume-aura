@@ -19,13 +19,18 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Reconcile payments before expiring holds
+        id: payments
+        continue-on-error: true
         env:
           MAINTENANCE_SECRET: ${{ secrets.STOREFRONT_MAINTENANCE_SECRET }}
         run: >-
-          curl --fail --silent --show-error --retry 2 --connect-timeout 10
+          curl --fail --silent --show-error --connect-timeout 10
           -X POST -H "Authorization: Bearer ${MAINTENANCE_SECRET}"
           https://perfumeaura.com/api/internal/reconcile-payments
       - name: Expire final unpaid checkouts
+        id: expiry
+        if: steps.payments.outcome == 'success'
+        continue-on-error: true
         env:
           MAINTENANCE_SECRET: ${{ secrets.STOREFRONT_MAINTENANCE_SECRET }}
         run: >-
@@ -33,16 +38,47 @@ jobs:
           -X POST -H "Authorization: Bearer ${MAINTENANCE_SECRET}"
           https://perfumeaura.com/api/internal/expire-checkouts
       - name: Reconcile refunds
+        id: refunds
+        if: always()
+        continue-on-error: true
         env:
           MAINTENANCE_SECRET: ${{ secrets.STOREFRONT_MAINTENANCE_SECRET }}
         run: >-
-          curl --fail --silent --show-error --retry 2 --connect-timeout 10
+          curl --fail --silent --show-error --connect-timeout 10
           -X POST -H "Authorization: Bearer ${MAINTENANCE_SECRET}"
           https://perfumeaura.com/api/internal/reconcile-refunds
       - name: Deliver transactional email
+        id: email
+        if: always()
+        continue-on-error: true
         env:
           MAINTENANCE_SECRET: ${{ secrets.STOREFRONT_MAINTENANCE_SECRET }}
         run: >-
           curl --fail --silent --show-error --retry 2 --connect-timeout 10
           -X POST -H "Authorization: Bearer ${MAINTENANCE_SECRET}"
           https://perfumeaura.com/api/internal/send-order-emails
+      - name: Deliver inquiry notifications
+        id: inquiry_email
+        if: always()
+        continue-on-error: true
+        env:
+          MAINTENANCE_SECRET: ${{ secrets.STOREFRONT_MAINTENANCE_SECRET }}
+        run: >-
+          curl --fail --silent --show-error --retry 2 --connect-timeout 10
+          -X POST -H "Authorization: Bearer ${MAINTENANCE_SECRET}"
+          https://perfumeaura.com/api/internal/send-inquiry-notifications
+      - name: Require every maintenance stream to succeed
+        if: always()
+        env:
+          PAYMENT_OUTCOME: ${{ steps.payments.outcome }}
+          EXPIRY_OUTCOME: ${{ steps.expiry.outcome }}
+          REFUND_OUTCOME: ${{ steps.refunds.outcome }}
+          EMAIL_OUTCOME: ${{ steps.email.outcome }}
+          INQUIRY_EMAIL_OUTCOME: ${{ steps.inquiry_email.outcome }}
+        run: |
+          set -euo pipefail
+          [[ "$PAYMENT_OUTCOME" == "success" ]]
+          [[ "$EXPIRY_OUTCOME" == "success" ]]
+          [[ "$REFUND_OUTCOME" == "success" ]]
+          [[ "$EMAIL_OUTCOME" == "success" ]]
+          [[ "$INQUIRY_EMAIL_OUTCOME" == "success" ]]

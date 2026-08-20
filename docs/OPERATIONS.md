@@ -160,8 +160,9 @@ do not expose them to browsers or replace them with an unauthenticated cron:
 | `/api/internal/expire-checkouts` | Release only provider-final expired holds and restore the cart |
 | `/api/internal/reconcile-refunds` | Advance pending Cashfree refunds from server-verified state |
 | `/api/internal/send-order-emails` | Drain the transactional order-email outbox with retry/backoff |
+| `/api/internal/send-inquiry-notifications` | Drain the separate support-inquiry notification outbox without persisting PII in it |
 
-Keep all four jobs disabled until migration `0011_unknown_dormammu`, restricted
+Keep all five jobs disabled until migrations through `0012_amused_cloak`, restricted
 runtime grants, Cashfree sandbox behavior, and Hostinger SMTP delivery are
 proven on their owning environments. A failed or ambiguous provider response
 must retain stock and remain available for the next reconciliation run.
@@ -170,8 +171,9 @@ The repository-owned scheduler is
 32-character-or-longer `STOREFRONT_MAINTENANCE_SECRET` in Hostinger and GitHub
 Actions, then set the repository variable
 `STOREFRONT_COMMERCE_MAINTENANCE_ENABLED=true` only after every preceding gate
-passes. The scheduler reconciles payments before attempting expiry, then
-reconciles refunds and drains email; its default remains disabled.
+passes. The scheduler reconciles payments before attempting expiry; refund,
+order-email, and inquiry-email streams still run independently and the final
+step reports any degraded stream. Its default remains disabled.
 
 Verify after deployment:
 

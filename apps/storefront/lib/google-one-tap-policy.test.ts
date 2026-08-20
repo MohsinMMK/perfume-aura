@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { shouldOfferGoogleOneTap } from "./google-one-tap-policy";
+import {
+  googleOneTapCallbackURL,
+  shouldOfferGoogleOneTap,
+} from "./google-one-tap-policy";
 
 describe("Google One Tap route policy", () => {
   it("offers sign-in only on discovery and shopping routes", () => {
@@ -28,5 +31,22 @@ describe("Google One Tap route policy", () => {
     ]) {
       assert.equal(shouldOfferGoogleOneTap(pathname), false, pathname);
     }
+  });
+
+  it("preserves the current local path and query for sign-in", () => {
+    assert.equal(
+      googleOneTapCallbackURL("/shop", "?collection=signature&page=2"),
+      "/shop?collection=signature&page=2",
+    );
+    assert.equal(
+      googleOneTapCallbackURL("/products/aura-elixir", "variant=100ml"),
+      "/products/aura-elixir?variant=100ml",
+    );
+  });
+
+  it("rejects external and protocol-relative callbacks", () => {
+    assert.equal(googleOneTapCallbackURL("//example.com", ""), "/account");
+    assert.equal(googleOneTapCallbackURL("https://example.com", ""), "/account");
+    assert.equal(googleOneTapCallbackURL("/shop\\example", ""), "/account");
   });
 });
