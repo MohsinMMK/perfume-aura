@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-19 19:28:42 UTC**
+Last refreshed: **2026-08-20 06:31:23 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -79,6 +79,20 @@ reports the exact storefront source, dynamic HTML uses
 An independent exact-source verifier passed against a real immutable Next asset,
 and a fresh 1280-by-720 browser pass confirmed the hero/header handoff with no
 horizontal overflow or console errors.
+
+PR #48 merged as exact storefront source
+`24ba5349165cf43969066a3e30f31e8833d594e2`. Workflow run
+[`32339366806`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32339366806)
+passed quality, all disposable-PostgreSQL integration tests, verified packaging,
+generated-branch publication, Hostinger auto-deployment, and exact public
+verification at 2026-08-20 06:28:58 UTC. The generated storefront branch is
+exact commit `a28a391f7a0f60215f8bc7102346573c6126300b`; the VPS ops deployment
+stayed skipped. An independent verifier confirmed the exact storefront source,
+release locks, the path-preserving `www` redirect, and a real immutable Next
+asset. Fresh 390-by-844, 768-by-1024, and 1280-by-720 browser passes confirmed
+the responsive header, centered mobile scent label, journey heading and cards,
+edge-aligned footer, cream-action hover treatment, compact-header scroll
+handoff, zero horizontal overflow, and zero console errors.
 
 A production `/shop` check after that release shows the 69-product launch
 listing with URL-driven search, Signature / Inspired / Featured segments, size
@@ -208,6 +222,10 @@ durable repair. Do not use plan-wide process controls as a workaround.
   independently verified exact storefront source
   `14568a1a670ea2050c05273d556a1b1551e4dc49` without changing the live VPS ops
   source or any commerce release lock.
+- PR #48 refined the responsive header, journey, footer, and shared cream-action
+  treatment. Its merge automatically deployed and independently verified exact
+  storefront source `24ba5349165cf43969066a3e30f31e8833d594e2` without
+  changing the live VPS ops source or any commerce release lock.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
   deployment path.
