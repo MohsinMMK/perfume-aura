@@ -1,7 +1,8 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
+  check,
   index,
   integer,
   pgTable,
@@ -46,6 +47,7 @@ export const storefrontSession = pgTable("storefront_session", {
 
 export const storefrontAccount = pgTable("storefront_account", {
   id: text("id").primaryKey(),
+  issuer: text("issuer").notNull(),
   accountId: text("account_id").notNull(),
   providerId: text("provider_id").notNull(),
   userId: text("user_id")
@@ -66,10 +68,34 @@ export const storefrontAccount = pgTable("storefront_account", {
     .$onUpdate(() => new Date()),
 }, (table) => [
   index("storefront_account_user_id_idx").on(table.userId),
-  uniqueIndex("storefront_account_provider_account_unique").on(
-    table.providerId,
+  uniqueIndex("storefront_account_issuer_account_unique").on(
+    table.issuer,
     table.accountId,
   ),
+]);
+
+/** Delivery PII is intentionally isolated from Better Auth user/session rows. */
+export const storefrontCustomerProfile = pgTable("storefront_customer_profile", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => storefrontUser.id, { onDelete: "cascade" }),
+  recipientName: text("recipient_name").notNull(),
+  phone: text("phone").notNull(),
+  addressLine1: text("address_line_1").notNull(),
+  addressLine2: text("address_line_2"),
+  city: text("city").notNull(),
+  state: text("state").notNull(),
+  postalCode: text("postal_code").notNull(),
+  country: text("country").notNull().default("IN"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+}, (table) => [
+  check("storefront_customer_profile_country_check", sql`${table.country} = 'IN'`),
+  check("storefront_customer_profile_postal_check", sql`${table.postalCode} ~ '^[1-9][0-9]{5}$'`),
+  check("storefront_customer_profile_phone_check", sql`${table.phone} ~ '^\\+91[6-9][0-9]{9}$'`),
 ]);
 
 export const storefrontVerification = pgTable("storefront_verification", {

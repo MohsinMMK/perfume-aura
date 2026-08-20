@@ -118,7 +118,7 @@ async function assertPhase04Catalog(pool: Pool): Promise<void> {
     SELECT count(*)::text AS count
     FROM drizzle.__drizzle_migrations
   `);
-  assert.equal(journal.rows[0]?.count, "11");
+  assert.equal(journal.rows[0]?.count, "12");
 
   const authCatalog = await pool.query<{
     rate_limit_exists: boolean;

@@ -54,6 +54,7 @@ export {
   storefrontAccount,
   storefrontVerification,
   storefrontRateLimit,
+  storefrontCustomerProfile,
   storefrontUserRelations,
   storefrontSessionRelations,
   storefrontAccountRelations,

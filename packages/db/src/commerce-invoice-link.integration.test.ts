@@ -57,6 +57,8 @@ describe("commerce order invoice linking", () => {
       .values({
         cartId,
         tokenDigest: `invoice-link-checkout-${suffix}`,
+        requestId: randomUUID(),
+        payloadDigest: `invoice-link-payload-${suffix}`,
         email: "invoice-link@example.test",
         expiresAt: new Date(Date.now() + 60_000),
       })

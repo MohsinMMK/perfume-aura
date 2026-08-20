@@ -5,7 +5,12 @@ import {
   products,
   productVariants,
   checkoutSessions,
+  commerceCarts,
+  commerceOrderEvents,
+  commerceOrders,
   locations,
+  notificationOutbox,
+  paymentAttempts,
   stockMovements,
   stockReservations,
   variantPrices,
@@ -362,6 +367,7 @@ export async function consumeCheckoutReservations(input: Readonly<{
 export async function expireAbandonedCheckouts(input: Readonly<{
   now?: Date;
   limit?: number;
+  canReleasePaymentPending?: (checkoutSessionId: string) => Promise<boolean>;
 }> = {}): Promise<Readonly<{ expiredCheckoutCount: number; releasedReservationCount: number }>> {
   const now = input.now ?? new Date();
   const limit = input.limit ?? 100;
@@ -385,9 +391,21 @@ export async function expireAbandonedCheckouts(input: Readonly<{
   let expiredCheckoutCount = 0;
   let releasedReservationCount = 0;
   for (const candidate of candidates) {
+    const [candidateStatus] = await runDomainTransaction((tx) => tx
+      .select({ status: checkoutSessions.status })
+      .from(checkoutSessions)
+      .where(eq(checkoutSessions.id, candidate.id))
+      .limit(1));
+    if (
+      candidateStatus?.status === "payment_pending" &&
+      (!input.canReleasePaymentPending ||
+        !(await input.canReleasePaymentPending(candidate.id)))
+    ) {
+      continue;
+    }
     const result = await runDomainTransaction(async (tx) => {
       const [checkout] = await tx
-        .select({ id: checkoutSessions.id, status: checkoutSessions.status, expiresAt: checkoutSessions.expiresAt })
+        .select({ id: checkoutSessions.id, cartId: checkoutSessions.cartId, status: checkoutSessions.status, expiresAt: checkoutSessions.expiresAt })
         .from(checkoutSessions)
         .where(eq(checkoutSessions.id, candidate.id))
         .for("update")
@@ -418,7 +436,7 @@ export async function expireAbandonedCheckouts(input: Readonly<{
           .orderBy(asc(productVariants.id))
           .for("update");
         for (const reservation of active) {
-          await tx
+          const updatedVariants = await tx
             .update(productVariants)
             .set({
               qtyReserved: sql`${productVariants.qtyReserved} - ${reservation.quantity}`,
@@ -430,7 +448,14 @@ export async function expireAbandonedCheckouts(input: Readonly<{
                 eq(productVariants.id, reservation.variantId),
                 sql`${productVariants.qtyReserved} >= ${reservation.quantity}`,
               ),
+            )
+            .returning({ id: productVariants.id });
+          if (updatedVariants.length !== 1) {
+            throw new DomainError(
+              "INVALID_STATE",
+              "Reserved inventory balance is inconsistent",
             );
+          }
           await tx
             .update(stockReservations)
             .set({ status: "expired", releasedAt: now, releaseReason: "expired" })
@@ -441,6 +466,39 @@ export async function expireAbandonedCheckouts(input: Readonly<{
         .update(checkoutSessions)
         .set({ status: "expired", updatedAt: now })
         .where(eq(checkoutSessions.id, checkout.id));
+      await tx.update(commerceCarts).set({ status: "active", updatedAt: now })
+        .where(eq(commerceCarts.id, checkout.cartId));
+      const [order] = await tx.select({ id: commerceOrders.id, status: commerceOrders.status })
+        .from(commerceOrders)
+        .where(eq(commerceOrders.checkoutSessionId, checkout.id))
+        .for("update")
+        .limit(1);
+      if (order && order.status === "pending") {
+        await tx.update(commerceOrders).set({
+          status: "cancelled",
+          paymentState: "failed",
+          cancelledAt: now,
+          updatedAt: now,
+        }).where(eq(commerceOrders.id, order.id));
+        await tx.update(paymentAttempts).set({ status: "cancelled", updatedAt: now })
+          .where(and(
+            eq(paymentAttempts.orderId, order.id),
+            inArray(paymentAttempts.status, ["created", "pending"]),
+          ));
+        const [cancelledEvent] = await tx.insert(commerceOrderEvents).values({
+          orderId: order.id,
+          eventType: "cancelled",
+          fromStatus: "pending",
+          toStatus: "cancelled",
+          idempotencyKey: `checkout-expired:${checkout.id}`,
+        }).onConflictDoNothing().returning({ id: commerceOrderEvents.id });
+        if (cancelledEvent) {
+          await tx.insert(notificationOutbox).values({
+            orderEventId: cancelledEvent.id,
+            kind: "order_cancelled",
+          }).onConflictDoNothing();
+        }
+      }
       return { expired: true, released: active.length };
     });
     if (result.expired) expiredCheckoutCount += 1;

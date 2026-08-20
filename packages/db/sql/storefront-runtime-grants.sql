@@ -10,20 +10,22 @@ BEGIN;
 
 REVOKE ALL PRIVILEGES ON TABLE
   "storefront_account", "storefront_rate_limit", "storefront_session",
-  "storefront_user", "storefront_verification", "commerce_bundle_items",
+  "storefront_user", "storefront_verification", "storefront_customer_profile",
+  "commerce_bundle_items",
   "commerce_bundles", "checkout_sessions", "commerce_cart_items",
   "commerce_carts", "commerce_collection_products", "commerce_collections",
   "commerce_inquiries", "commerce_order_events", "commerce_order_items",
   "commerce_orders", "commerce_refunds", "commerce_return_items",
   "commerce_returns", "commerce_settings", "customer_order_claims",
-  "payment_attempts", "payment_events", "product_media",
+  "notification_outbox", "payment_attempts", "payment_events", "product_media",
   "product_publications", "promotion_redemptions", "promotions",
   "commerce_reviews", "shipments", "stock_reservations", "variant_prices"
 FROM :"runtime_role";
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
   "storefront_account", "storefront_rate_limit", "storefront_session",
-  "storefront_user", "storefront_verification", "commerce_bundle_items",
+  "storefront_user", "storefront_verification", "storefront_customer_profile",
+  "commerce_bundle_items",
   "commerce_bundles", "checkout_sessions", "commerce_cart_items",
   "commerce_carts", "commerce_collection_products", "commerce_collections",
   "commerce_inquiries", "commerce_return_items", "commerce_returns",
@@ -33,12 +35,12 @@ TO :"runtime_role";
 
 GRANT SELECT, INSERT, UPDATE ON TABLE
   "commerce_orders", "commerce_refunds", "payment_attempts",
-  "stock_reservations"
+  "payment_events", "notification_outbox", "stock_reservations"
 TO :"runtime_role";
 
 GRANT SELECT, INSERT ON TABLE
   "commerce_order_events", "commerce_order_items", "customer_order_claims",
-  "payment_events", "promotion_redemptions"
+  "promotion_redemptions"
 TO :"runtime_role";
 
 COMMIT;
@@ -51,6 +53,7 @@ WITH matrix(table_name, allowed) AS (
     ('storefront_session', ARRAY['SELECT','INSERT','UPDATE','DELETE']),
     ('storefront_user', ARRAY['SELECT','INSERT','UPDATE','DELETE']),
     ('storefront_verification', ARRAY['SELECT','INSERT','UPDATE','DELETE']),
+    ('storefront_customer_profile', ARRAY['SELECT','INSERT','UPDATE','DELETE']),
     ('commerce_bundle_items', ARRAY['SELECT','INSERT','UPDATE','DELETE']),
     ('commerce_bundles', ARRAY['SELECT','INSERT','UPDATE','DELETE']),
     ('checkout_sessions', ARRAY['SELECT','INSERT','UPDATE','DELETE']),
@@ -71,11 +74,12 @@ WITH matrix(table_name, allowed) AS (
     ('commerce_orders', ARRAY['SELECT','INSERT','UPDATE']),
     ('commerce_refunds', ARRAY['SELECT','INSERT','UPDATE']),
     ('payment_attempts', ARRAY['SELECT','INSERT','UPDATE']),
+    ('payment_events', ARRAY['SELECT','INSERT','UPDATE']),
+    ('notification_outbox', ARRAY['SELECT','INSERT','UPDATE']),
     ('stock_reservations', ARRAY['SELECT','INSERT','UPDATE']),
     ('commerce_order_events', ARRAY['SELECT','INSERT']),
     ('commerce_order_items', ARRAY['SELECT','INSERT']),
     ('customer_order_claims', ARRAY['SELECT','INSERT']),
-    ('payment_events', ARRAY['SELECT','INSERT']),
     ('promotion_redemptions', ARRAY['SELECT','INSERT'])
 ), privileges(privilege) AS (
   VALUES ('SELECT'), ('INSERT'), ('UPDATE'), ('DELETE'), ('TRUNCATE'),

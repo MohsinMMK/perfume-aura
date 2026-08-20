@@ -31,7 +31,9 @@ export const orderStatusEnum = pgEnum("commerce_order_status", ["pending", "conf
 export const orderPaymentStateEnum = pgEnum("order_payment_state", ["unpaid", "prepaid_pending", "paid", "cod_due", "cod_collected", "partially_refunded", "refunded", "failed"]);
 export const commercePaymentProviderEnum = pgEnum("commerce_payment_provider", ["cashfree", "cod"]);
 export const paymentAttemptStatusEnum = pgEnum("payment_attempt_status", ["created", "pending", "succeeded", "failed", "cancelled"]);
+export const paymentEventProcessingStatusEnum = pgEnum("payment_event_processing_status", ["received", "processing", "processed", "failed"]);
 export const refundStatusEnum = pgEnum("commerce_refund_status", ["requested", "processing", "succeeded", "failed", "cancelled"]);
+export const notificationOutboxStatusEnum = pgEnum("notification_outbox_status", ["pending", "processing", "sent", "failed"]);
 export const shipmentStatusEnum = pgEnum("shipment_status", ["pending", "booked", "shipped", "delivered", "rto", "cancelled"]);
 export const reviewStatusEnum = pgEnum("review_status", ["pending", "approved", "rejected"]);
 export const returnStatusEnum = pgEnum("return_status", ["requested", "approved", "received", "refunded", "rejected", "cancelled"]);
@@ -164,6 +166,8 @@ export const checkoutSessions = pgTable("checkout_sessions", {
   id: uuid("id").defaultRandom().primaryKey(),
   cartId: uuid("cart_id").notNull().references(() => commerceCarts.id, { onDelete: "restrict" }),
   tokenDigest: text("token_digest").notNull().unique(),
+  requestId: uuid("request_id").notNull().unique(),
+  payloadDigest: text("payload_digest").notNull(),
   status: checkoutStatusEnum("status").notNull().default("open"),
   pricingVersion: integer("pricing_version").notNull().default(1),
   email: text("email"),
@@ -258,6 +262,10 @@ export const paymentAttempts = pgTable("payment_attempts", {
   status: paymentAttemptStatusEnum("status").notNull().default("created"),
   providerOrderId: text("provider_order_id"),
   providerPaymentId: text("provider_payment_id"),
+  providerSessionId: text("provider_session_id"),
+  providerOrderExpiresAt: timestamp("provider_order_expires_at", { withTimezone: true }),
+  finalizationDeadlineAt: timestamp("finalization_deadline_at", { withTimezone: true }),
+  lastReconciledAt: timestamp("last_reconciled_at", { withTimezone: true }),
   idempotencyKey: text("idempotency_key").notNull().unique(),
   currency: text("currency").notNull().default("INR"),
   amountMinor: integer("amount_minor").notNull(),
@@ -278,6 +286,12 @@ export const paymentEvents = pgTable("payment_events", {
   eventType: text("event_type").notNull(),
   payloadDigest: text("payload_digest").notNull(),
   signatureVerified: boolean("signature_verified").notNull().default(false),
+  webhookVersion: text("webhook_version"),
+  idempotencyHeader: text("idempotency_header"),
+  processingStatus: paymentEventProcessingStatusEnum("processing_status").notNull().default("received"),
+  leaseExpiresAt: timestamp("lease_expires_at", { withTimezone: true }),
+  failedAt: timestamp("failed_at", { withTimezone: true }),
+  failureCode: text("failure_code"),
   occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
   processedAt: timestamp("processed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -295,9 +309,31 @@ export const commerceRefunds = pgTable("commerce_refunds", {
   currency: text("currency").notNull().default("INR"),
   amountMinor: integer("amount_minor").notNull(),
   reason: text("reason").notNull(),
+  providerStatus: text("provider_status"),
+  arn: text("arn"),
+  processedAt: timestamp("processed_at", { withTimezone: true }),
+  lastReconciledAt: timestamp("last_reconciled_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => [check("commerce_refunds_money_check", sql`${table.currency} = 'INR' AND ${table.amountMinor} > 0`)]);
+
+export const notificationOutbox = pgTable("notification_outbox", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orderEventId: uuid("order_event_id").notNull().references(() => commerceOrderEvents.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull(),
+  status: notificationOutboxStatusEnum("status").notNull().default("pending"),
+  attemptCount: integer("attempt_count").notNull().default(0),
+  nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+  leaseExpiresAt: timestamp("lease_expires_at", { withTimezone: true }),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  errorCode: text("error_code"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, (table) => [
+  uniqueIndex("notification_outbox_event_kind_unique").on(table.orderEventId, table.kind),
+  index("notification_outbox_status_next_idx").on(table.status, table.nextAttemptAt),
+  check("notification_outbox_attempt_count_check", sql`${table.attemptCount} >= 0`),
+]);
 
 export const shipments = pgTable("shipments", {
   id: uuid("id").defaultRandom().primaryKey(),
