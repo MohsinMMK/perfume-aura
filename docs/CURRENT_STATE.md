@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-20 18:34:06 UTC**
+Last refreshed: **2026-08-20 19:18:24 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -116,6 +116,31 @@ readiness, unauthenticated-session, release-lock, redirect, and current static
 asset probes passed. Fresh 390-by-844, 768-by-1024, and 1280-by-900 production
 browser passes had zero horizontal overflow and zero console errors or warnings.
 
+PR #53 merged migration `0012_amused_cloak` as exact source
+`dbab3abdae9372d135cf54f1961360469e166ed9`. Its protected migration
+changeset correctly published neither runtime. The migration was applied to
+production through the direct Neon owner connection after the isolated normal
+branch proof and a zero-row provider-payment collision check. Production
+advanced from 12 to 13 migrations; all five payment-reconciliation fields and
+both new inquiry tables were present; every commerce release gate remained
+closed. The storefront and ops restricted grant scripts were reapplied and
+both drift queries returned zero rows before the runtime merge.
+
+PR #54 merged the commerce production hardening as exact source
+`5a426b542eecb8c825b4b20590a68d93fc03908d`. Workflow run
+[`32407236586`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32407236586)
+passed quality, all 83 disposable-PostgreSQL integration tests, verified
+packaging, immutable ops image rollout, generated storefront publication, and
+exact live verification on both surfaces. Ops runs immutable image digest
+`sha256:5f236d1fff3c4e37f63c048ee0312c95daee8d018fe8353ccfef912e7002eadc`;
+the generated storefront branch is exact commit
+`3f9aa0f07f2f470ca38f1191f7dc1f65e89c0eef`. Independent production
+verifiers passed for both surfaces against exact source, health/readiness,
+unauthenticated-session behavior, storefront locks, the path-preserving `www`
+redirect, and real immutable Next assets. Fresh `/shop` browser passes at
+390-by-844, 768-by-1024, and 1280-by-900 reported zero horizontal overflow and
+zero console errors or warnings.
+
 A production `/shop` check after that release shows the 69-product launch
 listing with URL-driven search, Signature / Inspired / Featured segments, size
 filters, and name sort. Incomplete inspired rows such as Heaven Rose remain
@@ -211,7 +236,7 @@ maintenance workflow secret and enable variable, and an authorized sandbox
 payment/refund flow remain outstanding. Customer authentication, catalog
 publication, checkout, and commerce maintenance therefore remain closed.
 
-The current production-hardening candidate passed `pnpm check`, all 221 unit
+The deployed production-hardening release passed `pnpm check`, all 221 unit
 tests, and all 83 integration tests against a fully migrated disposable
 loopback PostgreSQL database. The integration database was removed afterward.
 Both Next production
@@ -219,7 +244,7 @@ builds, all guarded client-JavaScript budgets, the commerce and runtime-grant
 contracts, deployment self-tests, lint/typecheck, and dependency audits were
 green. No Graphify or browser artifacts were committed.
 
-The candidate adds atomic stale-cart rejection, approval invalidation for
+The release adds atomic stale-cart rejection, approval invalidation for
 customer-facing catalog changes, deterministic catalog-import identity guards,
 fail-closed inquiry throttling, per-record Cashfree reconciliation isolation,
 customer reconciliation leases, provider-bound refunds, and fenced email and
@@ -227,14 +252,14 @@ inquiry outbox claims. The maintenance scheduler keeps payment reconciliation
 and checkout expiry safety-coupled while allowing refund and notification
 workers to run independently.
 
-Migration `0012_amused_cloak` passed on the temporary normal Neon branch
+Migration `0012_amused_cloak` first passed on the temporary normal Neon branch
 `release-0012-20260821`, created from production `main` with an automatic
 expiry. The branch had zero provider-payment identity collisions; migration
 count advanced from 12 to 13; all five payment reconciliation columns and both
 new tables were present; every new commerce gate remained closed; and both
-restricted runtime grant matrices returned zero drift. This is isolated-branch
-evidence only. Production still requires the protected schema merge followed
-by direct-owner migration and grant verification before the runtime release.
+restricted runtime grant matrices returned zero drift. The protected schema
+merge, direct-owner production migration, restricted grant verification,
+runtime merge, and exact flags-off production deployment have now completed.
 
 ## Repository and next action
 
@@ -297,6 +322,11 @@ by direct-owner migration and grant verification before the runtime release.
 - PR #51 deployed the flags-off customer account, UPI checkout, order tracking,
   refund, fulfillment, and email-outbox implementation as exact source
   `dd3784156c32990f2b3649df9c1541bdd29de302` on both production surfaces.
+- PR #53 introduced and proved migration `0012_amused_cloak`; production owner
+  migration and both restricted grant matrices completed before runtime merge.
+- PR #54 deployed commerce production hardening as exact source
+  `5a426b542eecb8c825b4b20590a68d93fc03908d` on both production surfaces with
+  every customer-commerce release flag still closed.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
   deployment path.
@@ -321,8 +351,9 @@ Next actions:
    refund, and clean-browser sandbox acceptance with every production release
    flag still closed; do not expose customer auth or checkout before all
    provider and business gates pass.
-7. Merge schema PR #53, apply and verify `0012` plus both restricted grant
-   matrices through the production Neon owner connection, then rebase and merge
-   the runtime hardening PR. Deploy both surfaces flags-off and record the exact
-   source, workflow, generated branch, image digest, health, redirect, static
-   asset, and release-lock evidence in a Markdown-only follow-up PR.
+7. Complete provider-owned Google OAuth, Hostinger SMTP, Cashfree KYC and
+   UPI-only sandbox acceptance; populate only legally and commercially approved
+   catalog rows and commerce settings; then enable customer auth, public
+   catalog, checkout, inquiries, and maintenance in the documented gated order.
+   The separately authorized low-value live UPI purchase and refund remain the
+   final boundary before coordinated public activation.
