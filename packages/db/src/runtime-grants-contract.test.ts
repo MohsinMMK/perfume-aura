@@ -10,7 +10,11 @@ describe("customer commerce runtime grant matrices", () => {
     ]);
     assert.match(storefront, /storefront_customer_profile/);
     assert.match(storefront, /'payment_events', ARRAY\['SELECT','INSERT','UPDATE'\]/);
+    assert.match(storefront, /'inquiry_notification_outbox', ARRAY\['SELECT','INSERT','UPDATE'\]/);
     assert.match(storefront, /'notification_outbox', ARRAY\['SELECT','INSERT','UPDATE'\]/);
+    assert.match(storefront, /'shipping_serviceability', ARRAY\['SELECT'\]/);
+    assert.match(ops, /'inquiry_notification_outbox', ARRAY\['SELECT','INSERT','UPDATE'\]/);
     assert.match(ops, /'notification_outbox', ARRAY\['SELECT','INSERT','UPDATE'\]/);
+    assert.match(ops, /'shipping_serviceability', ARRAY\['SELECT','INSERT','UPDATE'\]/);
   });
 });
