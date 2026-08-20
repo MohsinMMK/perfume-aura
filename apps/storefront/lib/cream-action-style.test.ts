@@ -41,5 +41,9 @@ describe("cream action design contract", () => {
     assert.match(files[1], /aura-cream-action[^"]*[\s\S]*Shop now/u);
     assert.match(files[2], /aura-cream-action[^"]*[\s\S]*Shop the collection/u);
     assert.match(files[3], /aura-cream-action[^"]*[\s\S]*Add to cart/u);
+    assert.match(
+      files[3],
+      /aura-cream-action[^"]*focus-visible:outline-2[^"]*focus-visible:outline-offset-2[^"]*focus-visible:outline-\[var\(--aura-ivory\)\]/u,
+    );
   });
 });
