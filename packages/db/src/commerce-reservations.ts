@@ -391,18 +391,13 @@ export async function expireAbandonedCheckouts(input: Readonly<{
   let expiredCheckoutCount = 0;
   let releasedReservationCount = 0;
   for (const candidate of candidates) {
-    const [candidateStatus] = await runDomainTransaction((tx) => tx
-      .select({ status: checkoutSessions.status })
-      .from(checkoutSessions)
-      .where(eq(checkoutSessions.id, candidate.id))
-      .limit(1));
-    if (
-      candidateStatus?.status === "payment_pending" &&
-      (!input.canReleasePaymentPending ||
-        !(await input.canReleasePaymentPending(candidate.id)))
-    ) {
-      continue;
-    }
+    // Authorize every candidate before opening the locking transaction. The
+    // checkout may move from open to payment_pending between discovery and
+    // locking, so the locked status below is the only state used to decide
+    // whether provider authorization is required.
+    const paymentPendingReleaseAuthorized = input.canReleasePaymentPending
+      ? await input.canReleasePaymentPending(candidate.id)
+      : false;
     const result = await runDomainTransaction(async (tx) => {
       const [checkout] = await tx
         .select({ id: checkoutSessions.id, cartId: checkoutSessions.cartId, status: checkoutSessions.status, expiresAt: checkoutSessions.expiresAt })
@@ -415,6 +410,9 @@ export async function expireAbandonedCheckouts(input: Readonly<{
         (checkout.status !== "open" && checkout.status !== "payment_pending") ||
         checkout.expiresAt > now
       ) {
+        return { expired: false, released: 0 };
+      }
+      if (checkout.status === "payment_pending" && !paymentPendingReleaseAuthorized) {
         return { expired: false, released: 0 };
       }
       const reservations = await tx
