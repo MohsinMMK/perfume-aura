@@ -14,6 +14,7 @@ import {
   paymentAttempts,
   productVariants,
   products,
+  sql,
   stockMovements,
   stockReservations,
 } from "@perfume-aura/db";
@@ -157,6 +158,41 @@ describe("Cashfree payment and refund lifecycle", () => {
       () => finalizeCashfreePayment({ paymentAttemptId: seeded.attemptId, paymentId: `different-${paymentId}` }),
       /already bound to another payment/,
     );
+  });
+
+  it("does not let a stale order-email worker overwrite a newer claim", async () => {
+    const seeded = await seedPayment({ withReservation: false });
+    const [event] = await db.insert(commerceOrderEvents).values({
+      orderId: seeded.orderId,
+      eventType: "payment_confirmed",
+      toStatus: "confirmed",
+      idempotencyKey: `lease-fence-${randomUUID()}`,
+    }).returning({ id: commerceOrderEvents.id });
+    assert.ok(event);
+    const [outbox] = await db.insert(notificationOutbox).values({
+      orderEventId: event.id,
+      kind: "order_confirmed",
+      nextAttemptAt: new Date("2026-08-20T12:00:00.000Z"),
+    }).returning({ id: notificationOutbox.id });
+    assert.ok(outbox);
+    const now = new Date("2026-08-20T12:15:00.000Z");
+
+    const result = await drainOrderEmailOutbox({
+      now,
+      sendImplementation: async () => {
+        await db.update(notificationOutbox).set({
+          status: "processing",
+          attemptCount: sql`${notificationOutbox.attemptCount} + 1`,
+          leaseExpiresAt: new Date(now.getTime() + 4 * 60 * 1_000),
+        }).where(eq(notificationOutbox.id, outbox.id));
+      },
+    });
+    assert.deepEqual(result, { sent: 0, failed: 0 });
+    const [stored] = await db.select({
+      attemptCount: notificationOutbox.attemptCount,
+      status: notificationOutbox.status,
+    }).from(notificationOutbox).where(eq(notificationOutbox.id, outbox.id));
+    assert.deepEqual(stored, { attemptCount: 2, status: "processing" });
   });
 
   it("isolates a failed provider lookup so a later payment still reconciles", async () => {

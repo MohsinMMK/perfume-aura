@@ -43,6 +43,17 @@ export function resolveTrustedInquiryIp(
     : null;
 }
 
+export function requireTrustedInquiryIp(
+  headers: Headers,
+  environment: InquirySecurityEnvironment = process.env,
+): string {
+  const trustedIp = resolveTrustedInquiryIp(headers, environment);
+  if (!trustedIp) {
+    throw new Error("Inquiry IP rate limiting is not safely configured");
+  }
+  return trustedIp;
+}
+
 export async function readBoundedInquiryJson(
   request: Request,
 ): Promise<unknown | null> {

@@ -37,15 +37,20 @@ export async function drainInquiryNotificationOutbox(input: Readonly<{
       .orderBy(inquiryNotificationOutbox.nextAttemptAt, inquiryNotificationOutbox.id)
       .limit(limit)
       .for("update", { skipLocked: true });
+    const claims: Array<{ attemptCount: number; id: string }> = [];
     for (const row of rows) {
-      await transaction.update(inquiryNotificationOutbox).set({
+      const [claim] = await transaction.update(inquiryNotificationOutbox).set({
         status: "processing",
         leaseExpiresAt,
         attemptCount: sql`${inquiryNotificationOutbox.attemptCount} + 1`,
         updatedAt: now,
-      }).where(eq(inquiryNotificationOutbox.id, row.id));
+      }).where(eq(inquiryNotificationOutbox.id, row.id)).returning({
+        attemptCount: inquiryNotificationOutbox.attemptCount,
+        id: inquiryNotificationOutbox.id,
+      });
+      if (claim) claims.push(claim);
     }
-    return rows;
+    return claims;
   });
 
   let sent = 0;
@@ -53,7 +58,6 @@ export async function drainInquiryNotificationOutbox(input: Readonly<{
   for (const claim of claimed) {
     const [notification] = await db
       .select({
-        attemptCount: inquiryNotificationOutbox.attemptCount,
         businessName: commerceInquiries.businessName,
         email: commerceInquiries.email,
         kind: commerceInquiries.kind,
@@ -63,39 +67,56 @@ export async function drainInquiryNotificationOutbox(input: Readonly<{
       })
       .from(inquiryNotificationOutbox)
       .innerJoin(commerceInquiries, eq(commerceInquiries.id, inquiryNotificationOutbox.inquiryId))
-      .where(eq(inquiryNotificationOutbox.id, claim.id))
+      .where(and(
+        eq(inquiryNotificationOutbox.id, claim.id),
+        eq(inquiryNotificationOutbox.status, "processing"),
+        eq(inquiryNotificationOutbox.attemptCount, claim.attemptCount),
+      ))
       .limit(1);
-    if (!notification || notification.notificationKind !== "support_inquiry_received") {
-      await db.update(inquiryNotificationOutbox).set({
+    if (!notification) continue;
+    if (notification.notificationKind !== "support_inquiry_received") {
+      const invalidated = await db.update(inquiryNotificationOutbox).set({
         status: "failed",
         leaseExpiresAt: null,
         errorCode: "invalid_notification",
         nextAttemptAt: new Date(now.getTime() + 24 * 60 * 60 * 1_000),
         updatedAt: new Date(),
-      }).where(eq(inquiryNotificationOutbox.id, claim.id));
-      failed += 1;
+      }).where(and(
+        eq(inquiryNotificationOutbox.id, claim.id),
+        eq(inquiryNotificationOutbox.status, "processing"),
+        eq(inquiryNotificationOutbox.attemptCount, claim.attemptCount),
+      )).returning({ id: inquiryNotificationOutbox.id });
+      if (invalidated.length === 1) failed += 1;
       continue;
     }
     try {
       await (input.sendImplementation ?? sendInquiryNotification)(notification);
-      await db.update(inquiryNotificationOutbox).set({
+      const completed = await db.update(inquiryNotificationOutbox).set({
         status: "sent",
         sentAt: new Date(),
         leaseExpiresAt: null,
         errorCode: null,
         updatedAt: new Date(),
-      }).where(eq(inquiryNotificationOutbox.id, claim.id));
-      sent += 1;
+      }).where(and(
+        eq(inquiryNotificationOutbox.id, claim.id),
+        eq(inquiryNotificationOutbox.status, "processing"),
+        eq(inquiryNotificationOutbox.attemptCount, claim.attemptCount),
+      )).returning({ id: inquiryNotificationOutbox.id });
+      if (completed.length === 1) sent += 1;
     } catch {
-      const retryMinutes = Math.min(24 * 60, 2 ** Math.min(notification.attemptCount, 10));
-      await db.update(inquiryNotificationOutbox).set({
+      const retryMinutes = Math.min(24 * 60, 2 ** Math.min(claim.attemptCount, 10));
+      const deferred = await db.update(inquiryNotificationOutbox).set({
         status: "failed",
         leaseExpiresAt: null,
         errorCode: "delivery_failed",
         nextAttemptAt: new Date(Date.now() + retryMinutes * 60 * 1_000),
         updatedAt: new Date(),
-      }).where(eq(inquiryNotificationOutbox.id, claim.id));
-      failed += 1;
+      }).where(and(
+        eq(inquiryNotificationOutbox.id, claim.id),
+        eq(inquiryNotificationOutbox.status, "processing"),
+        eq(inquiryNotificationOutbox.attemptCount, claim.attemptCount),
+      )).returning({ id: inquiryNotificationOutbox.id });
+      if (deferred.length === 1) failed += 1;
     }
   }
   return { sent, failed };

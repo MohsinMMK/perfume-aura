@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   inquiryRateLimitDigest,
   readBoundedInquiryJson,
+  requireTrustedInquiryIp,
   resolveInquiryRateLimitSecret,
   resolveTrustedInquiryIp,
 } from "./inquiry-security";
@@ -22,6 +23,15 @@ describe("inquiry request boundary", () => {
     assert.equal(resolveTrustedInquiryIp(new Headers({ "x-hostinger-client-ip": "203.0.113.7, 10.0.0.1" }), environment), null);
     assert.equal(resolveTrustedInquiryIp(new Headers({ "x-hostinger-client-ip": "not-an-ip" }), environment), null);
     assert.equal(resolveTrustedInquiryIp(new Headers({ "x-hostinger-client-ip": "203.0.113.7" }), {}), null);
+    assert.equal(requireTrustedInquiryIp(
+      new Headers({ "x-hostinger-client-ip": "203.0.113.7" }),
+      environment,
+    ), "203.0.113.7");
+    assert.throws(() => requireTrustedInquiryIp(new Headers(), environment));
+    assert.throws(() => requireTrustedInquiryIp(
+      new Headers({ "x-hostinger-client-ip": "203.0.113.7" }),
+      {},
+    ));
   });
 
   it("rejects oversized JSON even when content-length is absent", async () => {

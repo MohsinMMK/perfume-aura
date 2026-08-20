@@ -52,15 +52,20 @@ export async function drainOrderEmailOutbox(input: Readonly<{
       .orderBy(notificationOutbox.nextAttemptAt, notificationOutbox.id)
       .limit(limit)
       .for("update", { skipLocked: true });
+    const claims: Array<{ attemptCount: number; id: string }> = [];
     for (const row of rows) {
-      await transaction.update(notificationOutbox).set({
+      const [claim] = await transaction.update(notificationOutbox).set({
         status: "processing",
         leaseExpiresAt,
         attemptCount: sql`${notificationOutbox.attemptCount} + 1`,
         updatedAt: now,
-      }).where(eq(notificationOutbox.id, row.id));
+      }).where(eq(notificationOutbox.id, row.id)).returning({
+        attemptCount: notificationOutbox.attemptCount,
+        id: notificationOutbox.id,
+      });
+      if (claim) claims.push(claim);
     }
-    return rows;
+    return claims;
   });
 
   let sent = 0;
@@ -68,7 +73,6 @@ export async function drainOrderEmailOutbox(input: Readonly<{
   for (const claim of claimed) {
     const [message] = await db.select({
       kind: notificationOutbox.kind,
-      attemptCount: notificationOutbox.attemptCount,
       email: commerceOrders.guestEmail,
       orderNumber: commerceOrders.orderNumber,
       courier: shipments.courier,
@@ -77,16 +81,25 @@ export async function drainOrderEmailOutbox(input: Readonly<{
       .innerJoin(commerceOrderEvents, eq(commerceOrderEvents.id, notificationOutbox.orderEventId))
       .innerJoin(commerceOrders, eq(commerceOrders.id, commerceOrderEvents.orderId))
       .leftJoin(shipments, eq(shipments.orderId, commerceOrders.id))
-      .where(eq(notificationOutbox.id, claim.id)).limit(1);
-    if (!message?.email || !isOrderMailKind(message.kind)) {
-      await db.update(notificationOutbox).set({
+      .where(and(
+        eq(notificationOutbox.id, claim.id),
+        eq(notificationOutbox.status, "processing"),
+        eq(notificationOutbox.attemptCount, claim.attemptCount),
+      )).limit(1);
+    if (!message) continue;
+    if (!message.email || !isOrderMailKind(message.kind)) {
+      const invalidated = await db.update(notificationOutbox).set({
         status: "failed",
         leaseExpiresAt: null,
         errorCode: "invalid_message",
         nextAttemptAt: new Date(now.getTime() + 24 * 60 * 60 * 1_000),
         updatedAt: new Date(),
-      }).where(eq(notificationOutbox.id, claim.id));
-      failed += 1;
+      }).where(and(
+        eq(notificationOutbox.id, claim.id),
+        eq(notificationOutbox.status, "processing"),
+        eq(notificationOutbox.attemptCount, claim.attemptCount),
+      )).returning({ id: notificationOutbox.id });
+      if (invalidated.length === 1) failed += 1;
       continue;
     }
     try {
@@ -101,26 +114,32 @@ export async function drainOrderEmailOutbox(input: Readonly<{
         orderUrl: new URL(`/account/orders/${encodeURIComponent(message.orderNumber)}`, storefrontUrl).toString(),
         details,
       });
-      await db.update(notificationOutbox).set({
+      const completed = await db.update(notificationOutbox).set({
         status: "sent",
         sentAt: new Date(),
         leaseExpiresAt: null,
         errorCode: null,
         updatedAt: new Date(),
-      }).where(eq(notificationOutbox.id, claim.id));
-      sent += 1;
+      }).where(and(
+        eq(notificationOutbox.id, claim.id),
+        eq(notificationOutbox.status, "processing"),
+        eq(notificationOutbox.attemptCount, claim.attemptCount),
+      )).returning({ id: notificationOutbox.id });
+      if (completed.length === 1) sent += 1;
     } catch {
-      const attemptCount = message.attemptCount;
-      const retryMinutes = Math.min(24 * 60, 2 ** Math.min(attemptCount, 10));
-      await db.update(notificationOutbox).set({
+      const retryMinutes = Math.min(24 * 60, 2 ** Math.min(claim.attemptCount, 10));
+      const deferred = await db.update(notificationOutbox).set({
         status: "failed",
-        attemptCount,
         leaseExpiresAt: null,
         errorCode: "delivery_failed",
         nextAttemptAt: new Date(Date.now() + retryMinutes * 60 * 1_000),
         updatedAt: new Date(),
-      }).where(eq(notificationOutbox.id, claim.id));
-      failed += 1;
+      }).where(and(
+        eq(notificationOutbox.id, claim.id),
+        eq(notificationOutbox.status, "processing"),
+        eq(notificationOutbox.attemptCount, claim.attemptCount),
+      )).returning({ id: notificationOutbox.id });
+      if (deferred.length === 1) failed += 1;
     }
   }
   return { sent, failed };

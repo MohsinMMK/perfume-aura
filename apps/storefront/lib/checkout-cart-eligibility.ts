@@ -14,3 +14,26 @@ export function compareCheckoutCartSet(
     removedVariantIds,
   };
 }
+
+export type CheckoutCartLineSnapshot = Readonly<{
+  amountMinor: number;
+  quantity: number;
+  variantId: string;
+}>;
+
+export function checkoutCartSnapshotChanged(
+  presentedLines: readonly CheckoutCartLineSnapshot[],
+  currentLines: readonly CheckoutCartLineSnapshot[],
+): boolean {
+  if (presentedLines.length !== currentLines.length) return true;
+  const presentedByVariant = new Map(
+    presentedLines.map((line) => [line.variantId, line] as const),
+  );
+  if (presentedByVariant.size !== presentedLines.length) return true;
+  return currentLines.some((currentLine) => {
+    const presentedLine = presentedByVariant.get(currentLine.variantId);
+    return !presentedLine ||
+      presentedLine.quantity !== currentLine.quantity ||
+      presentedLine.amountMinor !== currentLine.amountMinor;
+  });
+}

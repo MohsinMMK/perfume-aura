@@ -120,7 +120,7 @@ export function CatalogPublicationForm({ initial }: Readonly<{ initial: CatalogP
             </NativeSelect>
           </div>
           <Field label="Featured rank" name="featuredRank" type="number" min={0} defaultValue={initial.featuredRank ?? ""} />
-          <p className="text-sm text-muted-foreground sm:col-span-2">Approval and publication fail closed until every active variant has an approved price reference and approved product media exists.</p>
+          <p className="text-sm text-muted-foreground sm:col-span-2">Approval and publication fail closed until every active variant has an approved price reference and approved product media exists. Changed customer-facing copy must first be saved as Draft with legal and content approvals cleared.</p>
           {error ? <p className="text-sm text-destructive sm:col-span-2" role="alert">{error}</p> : null}
           {message ? <p className="text-sm text-emerald-700 sm:col-span-2" role="status">{message}</p> : null}
         </CardContent>

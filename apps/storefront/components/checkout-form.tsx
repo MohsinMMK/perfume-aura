@@ -42,7 +42,7 @@ export function CheckoutForm({
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!enabled) return;
+    if (!enabled || !cart) return;
     setPending(true);
     setError(null);
     requestId.current ??= crypto.randomUUID();
@@ -53,6 +53,11 @@ export function CheckoutForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           requestId: requestId.current,
+          cartLines: cart.lines.map((line) => ({
+            variantId: line.variantId,
+            quantity: line.quantity,
+            amountMinor: line.unitPrice.amountMinor,
+          })),
           recipientName: formData.get("recipientName"),
           phone: formData.get("phone"),
           addressLine1: formData.get("addressLine1"),
@@ -129,12 +134,12 @@ export function CheckoutForm({
       <aside className="border border-black/20 bg-[#fbf8f2] p-6 lg:sticky lg:top-28 lg:self-start">
         <h2 className="font-display text-3xl">Pay by UPI</h2>
         <p className="mt-3 text-sm leading-6 text-[#5f584f]">
-          Cashfree opens UPI Intent on supported phones and a dynamic UPI QR on desktop. Pay with Google Pay, PhonePe, Paytm, or any supported UPI app.
+          Cashfree opens a UPI app on mobile or a QR on desktop. Use Google Pay, PhonePe, Paytm, or any UPI app.
         </p>
         <div className="mt-6 flex justify-between border-t border-black/20 pt-4 text-sm">
           <span>Subtotal</span><strong>{cart ? formatMoney(cart.subtotal) : "—"}</strong>
         </div>
-        <p className="mt-3 text-xs leading-5 text-[#655f57]">Shipping and tax totals are checked again before the order is created. Cash on delivery is not available.</p>
+        <p className="mt-3 text-xs leading-5 text-[#655f57]">Totals are verified before order creation. Cash on delivery is unavailable.</p>
         <Button type="submit" className="mt-6 min-h-12 w-full rounded-none" disabled={!enabled || pending || loading} focusableWhenDisabled={pending}>
           {pending ? "Opening UPI…" : "Continue to UPI"}
         </Button>
