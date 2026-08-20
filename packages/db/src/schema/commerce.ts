@@ -59,8 +59,11 @@ export const productPublications = pgTable("product_publications", {
   seoDescription: text("seo_description"),
   status: publicationStatusEnum("status").notNull().default("draft"),
   legalApprovedAt: timestamp("legal_approved_at", { withTimezone: true }),
+  legalApprovalReference: text("legal_approval_reference"),
   contentApprovedAt: timestamp("content_approved_at", { withTimezone: true }),
+  contentApprovalReference: text("content_approval_reference"),
   mediaApprovedAt: timestamp("media_approved_at", { withTimezone: true }),
+  mediaApprovalReference: text("media_approval_reference"),
   publishedAt: timestamp("published_at", { withTimezone: true }),
   featuredRank: integer("featured_rank"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -81,7 +84,9 @@ export const productMedia = pgTable("product_media", {
   height: integer("height").notNull(),
   position: integer("position").notNull().default(0),
   approvedAt: timestamp("approved_at", { withTimezone: true }),
+  approvalReference: text("approval_reference"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => [
   uniqueIndex("product_media_product_position_unique").on(table.productId, table.position),
   index("product_media_product_kind_idx").on(table.productId, table.kind),
@@ -116,6 +121,7 @@ export const variantPrices = pgTable("variant_prices", {
   currency: text("currency").notNull().default("INR"),
   amountMinor: integer("amount_minor").notNull(),
   approvedAt: timestamp("approved_at", { withTimezone: true }),
+  approvalReference: text("approval_reference"),
   active: boolean("active").notNull().default(false),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => [check("variant_prices_money_check", sql`${table.currency} = 'INR' AND ${table.amountMinor} >= 0`)]);
@@ -126,7 +132,12 @@ export const commerceSettings = pgTable("commerce_settings", {
   flatShippingAmountMinor: integer("flat_shipping_amount_minor"),
   freeShippingThresholdMinor: integer("free_shipping_threshold_minor"),
   taxTreatment: text("tax_treatment"),
+  taxPolicyApproved: boolean("tax_policy_approved").notNull().default(false),
+  taxApprovalReference: text("tax_approval_reference"),
+  catalogLegalApproved: boolean("catalog_legal_approved").notNull().default(false),
+  legalApprovalReference: text("legal_approval_reference"),
   supportChannel: text("support_channel"),
+  supportOperationsApproved: boolean("support_operations_approved").notNull().default(false),
   shippingPolicyApproved: boolean("shipping_policy_approved").notNull().default(false),
   returnsPolicyApproved: boolean("returns_policy_approved").notNull().default(false),
   cancellationPolicyApproved: boolean("cancellation_policy_approved").notNull().default(false),
@@ -134,6 +145,22 @@ export const commerceSettings = pgTable("commerce_settings", {
   updatedBy: text("updated_by"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => [check("commerce_settings_money_check", sql`${table.currency} = 'INR' AND (${table.flatShippingAmountMinor} IS NULL OR ${table.flatShippingAmountMinor} >= 0) AND (${table.freeShippingThresholdMinor} IS NULL OR ${table.freeShippingThresholdMinor} >= 0)`)]);
+
+export const shippingServiceability = pgTable("shipping_serviceability", {
+  postalCode: text("postal_code").primaryKey(),
+  delhiveryEnabled: boolean("delhivery_enabled").notNull().default(false),
+  indiaPostEnabled: boolean("india_post_enabled").notNull().default(false),
+  deliveryMinBusinessDays: integer("delivery_min_business_days").notNull().default(3),
+  deliveryMaxBusinessDays: integer("delivery_max_business_days").notNull().default(7),
+  active: boolean("active").notNull().default(true),
+  updatedBy: text("updated_by"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, (table) => [
+  index("shipping_serviceability_active_postal_idx").on(table.active, table.postalCode),
+  check("shipping_serviceability_postal_check", sql`${table.postalCode} ~ '^[1-9][0-9]{5}$'`),
+  check("shipping_serviceability_courier_check", sql`NOT ${table.active} OR ${table.delhiveryEnabled} OR ${table.indiaPostEnabled}`),
+  check("shipping_serviceability_delivery_check", sql`${table.deliveryMinBusinessDays} = 3 AND ${table.deliveryMaxBusinessDays} = 7`),
+]);
 
 export const commerceCarts = pgTable("commerce_carts", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -266,6 +293,11 @@ export const paymentAttempts = pgTable("payment_attempts", {
   providerOrderExpiresAt: timestamp("provider_order_expires_at", { withTimezone: true }),
   finalizationDeadlineAt: timestamp("finalization_deadline_at", { withTimezone: true }),
   lastReconciledAt: timestamp("last_reconciled_at", { withTimezone: true }),
+  reconciliationAttemptCount: integer("reconciliation_attempt_count").notNull().default(0),
+  nextReconcileAt: timestamp("next_reconcile_at", { withTimezone: true }),
+  lastReconciliationErrorCode: text("last_reconciliation_error_code"),
+  customerReconcileLeaseUntil: timestamp("customer_reconcile_lease_until", { withTimezone: true }),
+  customerReconciledAt: timestamp("customer_reconciled_at", { withTimezone: true }),
   idempotencyKey: text("idempotency_key").notNull().unique(),
   currency: text("currency").notNull().default("INR"),
   amountMinor: integer("amount_minor").notNull(),
@@ -274,7 +306,12 @@ export const paymentAttempts = pgTable("payment_attempts", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => [
   uniqueIndex("payment_attempts_provider_order_unique").on(table.provider, table.providerOrderId),
+  uniqueIndex("payment_attempts_provider_payment_unique").on(table.provider, table.providerPaymentId),
   index("payment_attempts_order_created_idx").on(table.orderId, table.createdAt),
+  index("payment_attempts_reconciliation_due_idx")
+    .on(table.status, table.nextReconcileAt, table.createdAt)
+    .where(sql`${table.provider} = 'cashfree' AND ${table.status} IN ('created', 'pending')`),
+  check("payment_attempts_reconciliation_attempt_check", sql`${table.reconciliationAttemptCount} >= 0`),
   check("payment_attempts_money_check", sql`${table.currency} = 'INR' AND ${table.amountMinor} > 0`),
 ]);
 
@@ -313,9 +350,18 @@ export const commerceRefunds = pgTable("commerce_refunds", {
   arn: text("arn"),
   processedAt: timestamp("processed_at", { withTimezone: true }),
   lastReconciledAt: timestamp("last_reconciled_at", { withTimezone: true }),
+  reconciliationAttemptCount: integer("reconciliation_attempt_count").notNull().default(0),
+  nextReconcileAt: timestamp("next_reconcile_at", { withTimezone: true }),
+  lastReconciliationErrorCode: text("last_reconciliation_error_code"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
-}, (table) => [check("commerce_refunds_money_check", sql`${table.currency} = 'INR' AND ${table.amountMinor} > 0`)]);
+}, (table) => [
+  index("commerce_refunds_reconciliation_due_idx")
+    .on(table.status, table.nextReconcileAt, table.createdAt)
+    .where(sql`${table.status} = 'processing'`),
+  check("commerce_refunds_reconciliation_attempt_check", sql`${table.reconciliationAttemptCount} >= 0`),
+  check("commerce_refunds_money_check", sql`${table.currency} = 'INR' AND ${table.amountMinor} > 0`),
+]);
 
 export const notificationOutbox = pgTable("notification_outbox", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -462,3 +508,21 @@ export const commerceInquiries = pgTable("commerce_inquiries", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => [index("commerce_inquiries_kind_status_created_idx").on(table.kind, table.status, table.createdAt)]);
+
+export const inquiryNotificationOutbox = pgTable("inquiry_notification_outbox", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  inquiryId: uuid("inquiry_id").notNull().references(() => commerceInquiries.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull().default("support_inquiry_received"),
+  status: notificationOutboxStatusEnum("status").notNull().default("pending"),
+  attemptCount: integer("attempt_count").notNull().default(0),
+  nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+  leaseExpiresAt: timestamp("lease_expires_at", { withTimezone: true }),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  errorCode: text("error_code"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, (table) => [
+  uniqueIndex("inquiry_notification_outbox_inquiry_kind_unique").on(table.inquiryId, table.kind),
+  index("inquiry_notification_outbox_status_next_idx").on(table.status, table.nextAttemptAt),
+  check("inquiry_notification_outbox_attempt_count_check", sql`${table.attemptCount} >= 0`),
+]);
