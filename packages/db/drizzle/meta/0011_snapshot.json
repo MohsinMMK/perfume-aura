@@ -298,7 +298,8 @@
           "name": "invoice_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "position": {
           "name": "position",
@@ -317,7 +318,8 @@
           "name": "description",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "'legacy'"
         },
         "quantity": {
           "name": "quantity",
