@@ -55,12 +55,21 @@ describe("storefront motion contract", () => {
     assert.doesNotMatch(hero, /perfume-aura-100ml-floating\.png/);
     assert.match(hero, /Show previous featured scent/);
     assert.match(hero, /Show next featured scent/);
+    assert.match(hero, /data-testid="hero-scent-name"[^>]*shrink-0 px-3 text-center[^>]*text-\[var\(--aura-ivory\)\]/u);
+    assert.match(hero, /aria-hidden="true" className="h-px flex-1 border-t border-dashed border-white\/20 sm:hidden"/u);
     assert.doesNotMatch(hero, /filter:\s*"blur/);
     assert.doesNotMatch(hero, /setInterval|autoplay/i);
 
     assert.match(home, /data-motion-journey-pin/);
+    assert.match(home, /lg:justify-start[\s\S]*lg:pt-20/);
+    assert.match(home, /data-motion-journey-heading/);
+    assert.match(home, /viewBox="0 -12 1000 340"/);
+    assert.match(home, /max-w-\[56rem\][\s\S]*sm:max-w-\[64rem\]/);
+    assert.match(home, /lg:min-h-\[26rem\]/);
     assert.match(home, /aura-snap-row/);
     assert.match(home, /snap-x snap-mandatory/);
+    assert.match(home, /render=\{<Link href="\/shop" \/>\}[\s\S]*aura-cream-action[\s\S]*Shop the collection/u);
+    assert.doesNotMatch(home, /Shop the collection[\s\S]*underline underline-offset-8/u);
     assert.match(globals, /\[data-motion-journey-track\]/);
     assert.match(globals, /transform:\s*none !important;/);
 

@@ -36,7 +36,7 @@ export default async function SearchPage({
               <label htmlFor="catalog-search" className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em]">Search the catalog</label>
               <Input id="catalog-search" name="q" defaultValue={query} className="min-h-14 rounded-[var(--aura-radius)] border-[color:var(--aura-rule)] bg-transparent px-4 text-[var(--aura-ivory)]" />
             </div>
-            <Button type="submit" className="min-h-14 rounded-[var(--aura-radius)] bg-[var(--aura-ivory)] px-8 font-display text-xl text-[var(--aura-ink)] sm:self-end">Search</Button>
+            <Button type="submit" className="aura-cream-action min-h-14 rounded-[var(--aura-radius)] px-8 font-display text-xl transition-colors sm:self-end">Search</Button>
           </form>
         </div>
 

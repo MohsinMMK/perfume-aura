@@ -146,11 +146,11 @@ export default async function HomePage() {
       </section>
 
       <section data-motion-journey className="relative overflow-x-clip bg-[var(--aura-ink)] px-[var(--aura-gutter)] py-20 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:py-0">
-        <div data-motion-journey-pin className="mx-auto max-w-[94rem] lg:flex lg:h-[100svh] lg:max-w-none lg:flex-col lg:justify-center lg:overflow-hidden">
-          <div className="relative z-10 mb-14 lg:mb-16 lg:px-8">
+        <div data-motion-journey-pin className="mx-auto max-w-[94rem] lg:flex lg:h-[100svh] lg:max-w-none lg:flex-col lg:justify-start lg:overflow-hidden lg:pt-20">
+          <div className="relative z-10 mb-10 sm:mb-12 lg:mb-10 lg:px-8">
             <h2 className="sr-only">Why Perfume Aura</h2>
-            <div data-motion-horizontal className="-ml-[25vw] w-[150vw] sm:-ml-[10vw] sm:w-[120vw] lg:ml-0 lg:w-full" aria-hidden="true">
-              <svg viewBox="0 0 1000 360" className="h-auto w-full overflow-visible" focusable="false">
+            <div data-motion-journey-heading className="mx-auto w-full max-w-[56rem] sm:max-w-[64rem]" aria-hidden="true">
+              <svg viewBox="0 -12 1000 340" className="h-auto w-full overflow-visible" focusable="false">
                 <defs>
                   <path id="why-perfume-aura-arc" d="M 196 216 A 430 430 0 0 1 804 216" />
                 </defs>
@@ -171,12 +171,12 @@ export default async function HomePage() {
                 </text>
               </svg>
             </div>
-            <p className="ml-auto mt-10 max-w-xl text-xl leading-8 text-[color:rgb(245_228_199_/_76%)]">A guided way to move from atmosphere to composition—without needing to know every note by name.</p>
+            <p className="ml-auto mt-6 max-w-xl text-base leading-7 text-[color:rgb(245_228_199_/_76%)] sm:mt-8 sm:text-lg lg:mt-8">A guided way to move from atmosphere to composition—without needing to know every note by name.</p>
           </div>
 
           <div data-motion-journey-track className="aura-snap-row relative -mx-[var(--aura-gutter)] flex snap-x snap-mandatory gap-[var(--aura-gap)] overflow-x-auto px-[var(--aura-gutter)] pb-3 lg:mx-0 lg:w-max lg:gap-[var(--aura-gap-lg)] lg:overflow-visible lg:px-8 lg:pb-0">
             {processSteps.map((step, index) => (
-              <article data-motion-stage key={step.number} className={`relative min-h-[30rem] w-[88vw] shrink-0 snap-center overflow-hidden rounded-[var(--aura-radius)] p-6 sm:w-[70vw] lg:w-[48vw] ${index === 0 ? "bg-[var(--aura-brass)] text-[var(--aura-ink)]" : index === 1 ? "bg-[var(--aura-orange)] text-[var(--aura-ink)]" : "bg-[var(--aura-red)] text-white"}`}>
+              <article data-motion-stage key={step.number} className={`relative min-h-[24rem] w-[88vw] shrink-0 snap-center overflow-hidden rounded-[var(--aura-radius)] p-6 sm:min-h-[28rem] sm:w-[70vw] lg:min-h-[26rem] lg:w-[48vw] ${index === 0 ? "bg-[var(--aura-brass)] text-[var(--aura-ink)]" : index === 1 ? "bg-[var(--aura-orange)] text-[var(--aura-ink)]" : "bg-[var(--aura-red)] text-white"}`}>
                 <div className="flex items-start justify-between">
                   <span className="font-display text-5xl">{step.number}</span>
                   <HugeiconsIcon icon={step.icon} strokeWidth={1.4} className="size-10" />
@@ -218,7 +218,15 @@ export default async function HomePage() {
           </div>
         </div>
         <div className="mt-14 text-center">
-          <Link href="/shop" className="inline-flex min-h-12 items-center gap-2 font-display text-2xl underline underline-offset-8">Shop the collection <span aria-hidden="true">→</span></Link>
+          <Button
+            render={<Link href="/shop" />}
+            nativeButton={false}
+            size="lg"
+            className="aura-cream-action min-h-16 w-[calc(100%-2rem)] max-w-sm justify-between rounded-[var(--aura-radius)] px-8 font-display text-xl tracking-[0.02em] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)]"
+          >
+            Shop the collection
+            <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={1.8} aria-hidden="true" />
+          </Button>
         </div>
       </section>
     </>
