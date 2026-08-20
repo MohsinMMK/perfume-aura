@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-20 06:31:23 UTC**
+Last refreshed: **2026-08-20 11:48:27 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -94,6 +94,28 @@ the responsive header, centered mobile scent label, journey heading and cards,
 edge-aligned footer, cream-action hover treatment, compact-header scroll
 handoff, zero horizontal overflow, and zero console errors.
 
+PR #50 merged the customer-commerce schema as migration
+`0011_unknown_dormammu`; its protected migration changeset correctly did not
+deploy either runtime. The migration was then applied through the Neon owner
+connection, both restricted runtime grant sets were reapplied, and their drift
+queries returned zero rows. Production now contains the storefront customer
+profile, notification outbox, issuer, checkout idempotency, payment lifecycle,
+and refund reconciliation structures while preserving immutable historical
+order snapshots and inert legacy COD values.
+
+PR #51 merged as exact source
+`dd3784156c32990f2b3649df9c1541bdd29de302`. Workflow run
+[`32364851643`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32364851643)
+passed quality, all disposable-PostgreSQL integration tests, verified archives,
+the immutable ops image rollout, generated storefront publication, and exact
+live verification on both surfaces. Ops runs immutable image digest
+`sha256:da96d3ae29990682bd46acf114775810529e65948f519e11ac32b880e023d4f4`;
+the generated storefront branch is exact commit
+`83d690901d846d1751439cab59bf9cce19c188f4`. Independent version, health,
+readiness, unauthenticated-session, release-lock, redirect, and current static
+asset probes passed. Fresh 390-by-844, 768-by-1024, and 1280-by-900 production
+browser passes had zero horizontal overflow and zero console errors or warnings.
+
 A production `/shop` check after that release shows the 69-product launch
 listing with URL-driven search, Signature / Inspired / Featured segments, size
 filters, and name sort. Incomplete inspired rows such as Heaven Rose remain
@@ -171,6 +193,31 @@ hosting plan and storefront. Hostinger still has not supplied scoped process
 attribution, a supervisor/restart cause, HCDN routing evidence, a case ID, or a
 durable repair. Do not use plan-wide process controls as a workaround.
 
+## Customer-commerce foundation
+
+COM-ADR-030 is implemented and deployed flags-off: Better Auth 1.7.1 issuer
+support, Google-primary One Tap and rendered-button fallback, verified
+account-gated checkout, one optional saved Indian delivery profile,
+customer-linked orders, Cashfree UPI-only Hosted Checkout, request and webhook
+idempotency, provider-aware reservation expiry, customer-safe order tracking,
+owner refunds, fulfillment events, and a transactional email outbox. Active COD
+and Apple launch controls are absent; legacy database/provider compatibility
+remains inert for historical records.
+
+This is deployed code and schema evidence, not provider or launch acceptance.
+Production Google OAuth configuration, Cashfree KYC/domain/UPI-only/20-minute
+transaction-TTL/refund/webhook acceptance, Hostinger SMTP acceptance, the
+maintenance workflow secret and enable variable, and an authorized sandbox
+payment/refund flow remain outstanding. Customer authentication, catalog
+publication, checkout, and commerce maintenance therefore remain closed.
+
+The final local gate passed `pnpm check`, all 209 unit tests, and all 67
+integration tests against a fully migrated disposable loopback PostgreSQL
+database. The integration database was removed afterward. Both Next production
+builds, all guarded client-JavaScript budgets, the commerce and runtime-grant
+contracts, deployment self-tests, lint/typecheck, and dependency audits were
+green. No Graphify or browser artifacts were committed.
+
 ## Repository and next action
 
 - PR #21 introduced the generated storefront branch and was merged.
@@ -226,6 +273,12 @@ durable repair. Do not use plan-wide process controls as a workaround.
   treatment. Its merge automatically deployed and independently verified exact
   storefront source `24ba5349165cf43969066a3e30f31e8833d594e2` without
   changing the live VPS ops source or any commerce release lock.
+- PR #50 introduced and proved the customer-commerce migration and restricted
+  grants. Its migration changeset did not publish either runtime; production
+  migration and grant verification completed before the runtime release.
+- PR #51 deployed the flags-off customer account, UPI checkout, order tracking,
+  refund, fulfillment, and email-outbox implementation as exact source
+  `dd3784156c32990f2b3649df9c1541bdd29de302` on both production surfaces.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
   deployment path.
@@ -246,3 +299,7 @@ Next actions:
 5. Keep Inspired-by listing titles fail-closed for legal clearance, sale data,
    and Neon import. Do not apply a production catalog migration or open
    checkout without a separate owner-authorized gate.
+6. Complete Google, Cashfree UPI, SMTP, maintenance-worker, reconciliation,
+   refund, and clean-browser sandbox acceptance with every production release
+   flag still closed; do not expose customer auth or checkout before all
+   provider and business gates pass.
