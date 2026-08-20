@@ -34,9 +34,9 @@ describe("direct operations action capability boundaries", () => {
       },
       {
         source: commerce,
-        name: "reconcileCodAction",
-        capability: "commerce.cod.reconcile",
-        input: "codReconciliationSchema.safeParse",
+        name: "requestRefundAction",
+        capability: "commerce.refunds.manage",
+        input: "refundRequestSchema.safeParse",
       },
       {
         source: products,
@@ -79,16 +79,23 @@ describe("direct operations action capability boundaries", () => {
     }
   });
 
-  it("keeps settlement separate from staff shipment updates", async () => {
+  it("requires paid state without letting shipment updates mutate payment", async () => {
     const commerce = await sourceFile("commerce.ts");
     const shipment = exportedFunction(commerce, "updateShipmentAction");
-    const reconciliation = exportedFunction(commerce, "reconcileCodAction");
 
-    assert.doesNotMatch(shipment, /paymentState\s*:\s*["']cod_collected/);
+    assert.match(shipment, /paymentState: commerceOrders\.paymentState/);
+    assert.match(shipment, /order\.paymentState !== "paid"/);
+    assert.doesNotMatch(shipment, /\.set\(\{[^}]*paymentState/s);
     assert.doesNotMatch(shipment, /paymentAttempts/);
-    assert.match(reconciliation, /commerce\.cod\.reconcile/);
-    assert.match(reconciliation, /paymentState:\s*["']cod_collected/);
-    assert.match(reconciliation, /paymentAttempts/);
+  });
+
+  it("keeps an ambiguous refund reserved until provider reconciliation", async () => {
+    const commerce = await sourceFile("commerce.ts");
+    const refund = exportedFunction(commerce, "requestRefundAction");
+
+    assert.match(refund, /providerStatus: "REQUEST_UNKNOWN"/);
+    assert.match(refund, /status: "processing"/);
+    assert.match(refund, /Do not submit another refund/);
   });
 
   it("never enables invitations without mandatory two-factor enrollment", async () => {

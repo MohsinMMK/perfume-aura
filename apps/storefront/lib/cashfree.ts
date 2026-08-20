@@ -1,7 +1,15 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 
-const cashfreeApiVersion = "2025-01-01";
+const cashfreeApiVersion = "2026-01-01";
+export const cashfreeWebhookVersion = "2025-01-01";
+const cashfreeOrderExpiryMilliseconds = 15 * 60 * 1_000;
+const cashfreeUpiPaymentGroups = new Set([
+  "upi",
+  "upi_credit_card",
+  "upi_ppi",
+  "upi_ppi_offline",
+]);
 const sandboxBaseUrl = "https://sandbox.cashfree.com/pg";
 const productionBaseUrl = "https://api.cashfree.com/pg";
 
@@ -65,6 +73,7 @@ const orderResponseSchema = z.object({
     "TERMINATION_REQUESTED",
   ]),
   payment_session_id: z.string().optional(),
+  order_expiry_time: z.string().datetime({ offset: true }).optional(),
 });
 
 export type CashfreeOrder = z.infer<typeof orderResponseSchema>;
@@ -105,6 +114,7 @@ export async function createCashfreeOrder(
   dependencies: Readonly<{
     configuration?: CashfreeConfiguration;
     fetchImplementation?: typeof fetch;
+    now?: Date;
   }> = {},
 ): Promise<CashfreeOrder> {
   if (!/^[0-9a-f-]{36}$/i.test(input.idempotencyKey)) {
@@ -112,6 +122,13 @@ export async function createCashfreeOrder(
   }
   const configuration =
     dependencies.configuration ?? resolveCashfreeConfiguration();
+  const now = dependencies.now ?? new Date();
+  if (Number.isNaN(now.getTime())) {
+    throw new Error("Cashfree order creation time is invalid");
+  }
+  const orderExpiryTime = new Date(
+    now.getTime() + cashfreeOrderExpiryMilliseconds,
+  ).toISOString();
   const payload = await cashfreeRequest(
     "/orders",
     {
@@ -133,16 +150,89 @@ export async function createCashfreeOrder(
         order_meta: {
           return_url: input.returnUrl,
           notify_url: input.notifyUrl,
+          payment_methods: "upi",
         },
+        order_expiry_time: orderExpiryTime,
       }),
     },
     configuration,
     dependencies.fetchImplementation ?? fetch,
   );
-  return orderResponseSchema.parse(payload);
+  const order = orderResponseSchema.parse(payload);
+  if (
+    order.order_id !== input.orderId ||
+    order.order_currency !== "INR" ||
+    cashfreeMajorToAmountMinor(order.order_amount) !== input.amountMinor
+  ) {
+    throw new Error("Cashfree created an order that does not match the local request");
+  }
+  return order;
 }
 
-async function getCashfreeOrder(
+const paymentResponseSchema = z.object({
+  cf_payment_id: z.union([z.string(), z.number()]).transform(String),
+  order_id: z.string(),
+  entity: z.literal("payment"),
+  is_captured: z.boolean(),
+  order_amount: z.number().nonnegative(),
+  order_currency: z.literal("INR"),
+  payment_group: z.string(),
+  payment_amount: z.number().nonnegative(),
+  payment_currency: z.literal("INR"),
+  payment_status: z.enum([
+    "SUCCESS",
+    "NOT_ATTEMPTED",
+    "FAILED",
+    "USER_DROPPED",
+    "VOID",
+    "CANCELLED",
+    "PENDING",
+  ]),
+});
+
+export type CashfreePayment = z.infer<typeof paymentResponseSchema>;
+
+export async function getCashfreePayment(
+  orderId: string,
+  paymentId: string,
+  dependencies: Readonly<{
+    configuration?: CashfreeConfiguration;
+    fetchImplementation?: typeof fetch;
+  }> = {},
+): Promise<CashfreePayment> {
+  if (!orderId || !paymentId) {
+    throw new Error("Cashfree order and payment IDs are required");
+  }
+  const configuration =
+    dependencies.configuration ?? resolveCashfreeConfiguration();
+  const payload = await cashfreeRequest(
+    `/orders/${encodeURIComponent(orderId)}/payments/${encodeURIComponent(paymentId)}`,
+    { method: "GET" },
+    configuration,
+    dependencies.fetchImplementation ?? fetch,
+  );
+  return paymentResponseSchema.parse(payload);
+}
+
+export async function listCashfreePayments(
+  orderId: string,
+  dependencies: Readonly<{
+    configuration?: CashfreeConfiguration;
+    fetchImplementation?: typeof fetch;
+  }> = {},
+): Promise<readonly CashfreePayment[]> {
+  if (!orderId) throw new Error("Cashfree order ID is required");
+  const configuration = dependencies.configuration ?? resolveCashfreeConfiguration();
+  const payload = await cashfreeRequest(
+    `/orders/${encodeURIComponent(orderId)}/payments`,
+    { method: "GET" },
+    configuration,
+    dependencies.fetchImplementation ?? fetch,
+  );
+  return z.array(paymentResponseSchema).parse(payload);
+}
+
+export async function getCashfreeOrder(
   orderId: string,
   dependencies: Readonly<{
     configuration?: CashfreeConfiguration;
@@ -170,6 +260,7 @@ export async function verifyCashfreeOrderPaid(
 ): Promise<CashfreeOrder> {
   const order = await getCashfreeOrder(orderId, dependencies);
   if (
+    order.order_id !== orderId ||
     order.order_status !== "PAID" ||
     order.order_currency !== "INR" ||
     cashfreeMajorToAmountMinor(order.order_amount) !== expectedAmountMinor
@@ -177,6 +268,65 @@ export async function verifyCashfreeOrderPaid(
     throw new Error("Cashfree order is not server-verified as paid for the expected amount");
   }
   return order;
+}
+
+export async function verifyCashfreePaymentSucceeded(
+  input: Readonly<{
+    orderId: string;
+    paymentId: string;
+    expectedAmountMinor: number;
+  }>,
+  dependencies: Readonly<{
+    configuration?: CashfreeConfiguration;
+    fetchImplementation?: typeof fetch;
+  }> = {},
+): Promise<Readonly<{ order: CashfreeOrder; payment: CashfreePayment }>> {
+  const [order, payment] = await Promise.all([
+    verifyCashfreeOrderPaid(
+      input.orderId,
+      input.expectedAmountMinor,
+      dependencies,
+    ),
+    getCashfreePayment(input.orderId, input.paymentId, dependencies),
+  ]);
+  if (
+    payment.cf_payment_id !== input.paymentId ||
+    payment.order_id !== input.orderId ||
+    payment.payment_status !== "SUCCESS" ||
+    !payment.is_captured ||
+    !cashfreeUpiPaymentGroups.has(payment.payment_group) ||
+    cashfreeMajorToAmountMinor(payment.order_amount) !==
+      input.expectedAmountMinor ||
+    cashfreeMajorToAmountMinor(payment.payment_amount) !== input.expectedAmountMinor
+  ) {
+    throw new Error(
+      "Cashfree payment is not server-verified as a captured UPI success for the expected order and amount",
+    );
+  }
+  return { order, payment };
+}
+
+export type CashfreeWebhookMetadata = Readonly<{
+  idempotencyKey: string;
+  version: typeof cashfreeWebhookVersion;
+}>;
+
+export function parseCashfreeWebhookMetadata(input: Readonly<{
+  idempotencyKey: string;
+  version: string;
+}>): CashfreeWebhookMetadata {
+  if (input.version !== cashfreeWebhookVersion) {
+    throw new Error("Unsupported Cashfree webhook version");
+  }
+  const idempotencyKey = input.idempotencyKey.trim();
+  if (
+    !idempotencyKey ||
+    idempotencyKey.length > 512 ||
+    /[\u0000-\u001f\u007f]/.test(idempotencyKey)
+  ) {
+    throw new Error("Invalid Cashfree webhook idempotency key");
+  }
+  return { idempotencyKey, version: cashfreeWebhookVersion };
 }
 
 const refundResponseSchema = z.object({
@@ -230,6 +380,25 @@ export async function createCashfreeRefund(
         refund_speed: "STANDARD",
       }),
     },
+    configuration,
+    dependencies.fetchImplementation ?? fetch,
+  );
+  return refundResponseSchema.parse(Array.isArray(payload) ? payload[0] : payload);
+}
+
+export async function getCashfreeRefund(
+  orderId: string,
+  refundId: string,
+  dependencies: Readonly<{
+    configuration?: CashfreeConfiguration;
+    fetchImplementation?: typeof fetch;
+  }> = {},
+): Promise<CashfreeRefund> {
+  if (!orderId || !refundId) throw new Error("Cashfree order and refund IDs are required");
+  const configuration = dependencies.configuration ?? resolveCashfreeConfiguration();
+  const payload = await cashfreeRequest(
+    `/orders/${encodeURIComponent(orderId)}/refunds/${encodeURIComponent(refundId)}`,
+    { method: "GET" },
     configuration,
     dependencies.fetchImplementation ?? fetch,
   );

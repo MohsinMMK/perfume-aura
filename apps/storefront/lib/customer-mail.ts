@@ -97,3 +97,45 @@ export async function sendCustomerAuthEmail(
     throw new Error("Customer authentication email could not be delivered");
   }
 }
+
+const orderMailLabels = {
+  order_confirmed: ["Your Perfume Aura order is confirmed", "Payment confirmed. We are preparing your order."],
+  order_shipped: ["Your Perfume Aura order has shipped", "Your order is on its way."],
+  order_delivered: ["Your Perfume Aura order was delivered", "Your order has been marked delivered."],
+  order_cancelled: ["Your Perfume Aura order was cancelled", "Your order was cancelled. Contact support if you need help."],
+  refund_succeeded: ["Your Perfume Aura refund is complete", "Cashfree has confirmed your refund."],
+  refund_processing: ["Your Perfume Aura refund is processing", "Your refund request was accepted and is being processed."],
+  refund_failed: ["Your Perfume Aura refund needs attention", "The refund could not be completed. Our support team can help."],
+} as const;
+
+export type OrderMailKind = keyof typeof orderMailLabels;
+
+export async function sendCommerceOrderEmail(
+  input: Readonly<{
+    to: string;
+    kind: OrderMailKind;
+    orderNumber: string;
+    orderUrl: string;
+    details?: string;
+  }>,
+  environment: CustomerMailEnvironment = process.env,
+): Promise<void> {
+  const orderUrl = verifiedActionUrl(input.orderUrl, environment).toString();
+  const transport = resolveTransport(environment);
+  const [subject, summary] = orderMailLabels[input.kind];
+  const details = input.details?.trim();
+  const text = [summary, `Order: ${input.orderNumber}`, details, `View order: ${orderUrl}`]
+    .filter(Boolean).join("\n\n");
+  const html = `<p>${escaped(summary)}</p><p>Order: ${escaped(input.orderNumber)}</p>${details ? `<p>${escaped(details)}</p>` : ""}<p><a href="${escaped(orderUrl)}">View order</a></p>`;
+  try {
+    await nodemailer.createTransport(transport.options).sendMail({
+      from: transport.from,
+      to: input.to,
+      subject,
+      text,
+      html,
+    });
+  } catch {
+    throw new Error("Customer order email could not be delivered");
+  }
+}

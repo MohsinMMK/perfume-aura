@@ -3,8 +3,10 @@ import { readFile } from "node:fs/promises";
 import { describe, it } from "node:test";
 import {
   createCustomerAuthSecretResolver,
+  customerAuthProviderReadiness,
   isCustomerAuthEnabled,
   resolveCustomerAuthBaseUrl,
+  resolveCustomerGoogleClientId,
   resolveCustomerAuthTrustedOrigins,
 } from "./customer-auth-policy";
 
@@ -38,6 +40,25 @@ describe("storefront customer-auth boundary", () => {
     );
   });
 
+  it("requires a complete Google provider configuration before exposing its client ID", () => {
+    assert.deepEqual(customerAuthProviderReadiness({}), {
+      google: false,
+    });
+    assert.equal(
+      resolveCustomerGoogleClientId({
+        CUSTOMER_GOOGLE_CLIENT_ID: "google-client-id",
+      }),
+      null,
+    );
+    assert.equal(
+      resolveCustomerGoogleClientId({
+        CUSTOMER_GOOGLE_CLIENT_ID: "  google-client-id  ",
+        CUSTOMER_GOOGLE_CLIENT_SECRET: "  google-client-secret  ",
+      }),
+      "google-client-id",
+    );
+  });
+
   it("uses the apex during production builds", () => {
     assert.equal(
       resolveCustomerAuthBaseUrl({ NEXT_PHASE: "phase-production-build" }),
@@ -68,6 +89,18 @@ describe("storefront customer-auth boundary", () => {
     );
     assert.doesNotMatch(accountForm, /^import .*customer-auth-client/m);
     assert.match(accountForm, /import\("@\/lib\/customer-auth-client"\)/);
+    assert.doesNotMatch(accountForm, /Continue with Apple/);
+  });
+
+  it("keeps One Tap conditional and disables implicit account linking", async () => {
+    const authConfiguration = await readFile(
+      new URL("./customer-auth.ts", import.meta.url),
+      "utf8",
+    );
+
+    assert.match(authConfiguration, /providerReadiness\.google \? \[oneTap\(\)\] : \[\]/);
+    assert.match(authConfiguration, /disableImplicitLinking:\s*true/);
+    assert.match(authConfiguration, /freshAge:\s*60 \* 60/);
   });
 
   it("avoids release-locked cart hydration and limits automatic prefetch", async () => {

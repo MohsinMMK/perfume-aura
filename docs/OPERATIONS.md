@@ -143,6 +143,36 @@ workbook and does not require `STOREFRONT_PREVIEW_CATALOG` or
 Neon-published sellable products. Do not import the launch workbook into
 production Neon or open checkout without a separate authorized gate.
 
+Cashfree owner refund actions in ops require the same reviewed merchant
+`CASHFREE_ENV`, `CASHFREE_CLIENT_ID`, and `CASHFREE_CLIENT_SECRET` values as the
+storefront. Keep them only in the root-owned ops runtime secret store. The
+storefront additionally requires `CASHFREE_PAYMENT_TTL_MINUTES=20`; a missing
+or different value blocks checkout expiry processing and checkout creation.
+
+Once the account and checkout release gates have passed, invoke these bounded
+storefront maintenance endpoints with `POST` and the existing
+`STOREFRONT_MAINTENANCE_SECRET` bearer token. They are idempotent batch workers;
+do not expose them to browsers or replace them with an unauthenticated cron:
+
+| Endpoint | Responsibility |
+|---|---|
+| `/api/internal/reconcile-payments` | Verify pending Cashfree attempts against provider state |
+| `/api/internal/expire-checkouts` | Release only provider-final expired holds and restore the cart |
+| `/api/internal/reconcile-refunds` | Advance pending Cashfree refunds from server-verified state |
+| `/api/internal/send-order-emails` | Drain the transactional order-email outbox with retry/backoff |
+
+Keep all four jobs disabled until migration `0011_unknown_dormammu`, restricted
+runtime grants, Cashfree sandbox behavior, and Hostinger SMTP delivery are
+proven on their owning environments. A failed or ambiguous provider response
+must retain stock and remain available for the next reconciliation run.
+The repository-owned scheduler is
+`.github/workflows/storefront-commerce-maintenance.yml`. Configure the same
+32-character-or-longer `STOREFRONT_MAINTENANCE_SECRET` in Hostinger and GitHub
+Actions, then set the repository variable
+`STOREFRONT_COMMERCE_MAINTENANCE_ENABLED=true` only after every preceding gate
+passes. The scheduler reconciles payments before attempting expiry, then
+reconciles refunds and drains email; its default remains disabled.
+
 Verify after deployment:
 
 ```bash
@@ -380,7 +410,7 @@ The capability matrix must remain:
 | Staff management and security audit | Yes | No |
 | Cost and commercial fields | Yes | No |
 | Finance and payment recording | Yes | No |
-| COD reconciliation and refunds | Yes | No |
+| Refunds and payment exception handling | Yes | No |
 | Promotions and release gates | Yes | No |
 | Approved shipment update | Yes | Yes |
 
@@ -390,10 +420,10 @@ Prove staff denial through direct server actions, not only hidden navigation:
 - view cost or change commercial fields;
 - adjust stock where owner-only;
 - record payments or view finance;
-- reconcile COD or manage refunds;
+- manage refunds or payment exceptions;
 - manage promotions or release gates;
 - void invoices;
-- settle COD while updating a shipment.
+- change payment state while updating a shipment.
 
 Unknown, missing, stale, comma-separated, or non-staff roles must fail closed.
 

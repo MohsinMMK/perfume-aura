@@ -1,16 +1,20 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+
 import {
-  and,
   commerceInquiries,
   commerceOrders,
+  commerceOrderEvents,
   commerceOrderItems,
+  commerceRefunds,
   commerceReturns,
   commerceSettings,
   count,
   db,
   desc,
   eq,
+  notificationOutbox,
   paymentAttempts,
   productPublications,
   products,
@@ -24,6 +28,7 @@ import { z } from "zod";
 import { actionError, actionOk, type ActionResult, zodFieldErrors } from "@/lib/action-result";
 import { hasOpsCapability } from "@/lib/ops-access";
 import { requireCapability } from "@/lib/session";
+import { requestCashfreeRefund } from "@/lib/cashfree-refunds";
 
 export type CommerceOverview = {
   catalogBlocked: number;
@@ -39,7 +44,7 @@ export async function getCommerceOverview(): Promise<CommerceOverview> {
   const session = await requireCapability("commerce.view");
   const canManagePayments = hasOpsCapability(
     session.user.role,
-    "commerce.cod.reconcile",
+    "commerce.refunds.manage",
   );
   const canManageReleaseGates = hasOpsCapability(
     session.user.role,
@@ -51,7 +56,7 @@ export async function getCommerceOverview(): Promise<CommerceOverview> {
       db.select({ total: count(productPublications.productId) }).from(productPublications).where(sql`${productPublications.status} <> 'published'`),
       db.select({ total: count(commerceOrders.id) }).from(commerceOrders).where(sql`${commerceOrders.status} NOT IN ('delivered', 'cancelled', 'returned')`),
       canManagePayments
-        ? db.select({ total: count(paymentAttempts.id) }).from(paymentAttempts).where(sql`${paymentAttempts.status} IN ('pending', 'failed')`)
+        ? db.select({ total: count(paymentAttempts.id) }).from(paymentAttempts).where(sql`${paymentAttempts.provider} = 'cashfree' AND ${paymentAttempts.status} IN ('pending', 'failed')`)
         : Promise.resolve([{ total: 0 }]),
       db.select({ total: count(reviews.id) }).from(reviews).where(eq(reviews.status, "pending")),
       db.select({ total: count(commerceInquiries.id) }).from(commerceInquiries).where(eq(commerceInquiries.status, "new")),
@@ -129,25 +134,23 @@ export type CommerceOrderRow = {
   shipmentStatus: string | null;
   courier: string | null;
   trackingNumber: string | null;
-  codCollectedAt: Date | null;
-  codReconciledAt: Date | null;
 };
 
 export async function listCommerceOrders(): Promise<CommerceOrderRow[]> {
   const session = await requireCapability("commerce.view");
-  const canReconcileCod = hasOpsCapability(
+  const canManagePayments = hasOpsCapability(
     session.user.role,
-    "commerce.cod.reconcile",
+    "commerce.refunds.manage",
   );
   return db
     .select({
       id: commerceOrders.id,
       orderNumber: commerceOrders.orderNumber,
       status: commerceOrders.status,
-      paymentState: canReconcileCod
-        ? commerceOrders.paymentState
+      paymentState: canManagePayments
+        ? sql<string | null>`CASE WHEN ${commerceOrders.paymentState} IN ('cod_due', 'cod_collected') THEN NULL ELSE ${commerceOrders.paymentState}::text END`
         : sql<string | null>`null::text`,
-      totalAmountMinor: canReconcileCod
+      totalAmountMinor: canManagePayments
         ? commerceOrders.totalAmountMinor
         : sql<number | null>`null::bigint`,
       guestEmail: commerceOrders.guestEmail,
@@ -155,12 +158,6 @@ export async function listCommerceOrders(): Promise<CommerceOrderRow[]> {
       shipmentStatus: shipments.status,
       courier: shipments.courier,
       trackingNumber: shipments.trackingNumber,
-      codCollectedAt: canReconcileCod
-        ? shipments.codCollectedAt
-        : sql<Date | null>`null::timestamptz`,
-      codReconciledAt: canReconcileCod
-        ? shipments.codReconciledAt
-        : sql<Date | null>`null::timestamptz`,
     })
     .from(commerceOrders)
     .leftJoin(shipments, eq(shipments.orderId, commerceOrders.id))
@@ -179,24 +176,8 @@ const shipmentUpdateSchema = z.object({
   }
 });
 
-const codReconciliationSchema = z
-  .object({
-    orderId: z.string().uuid(),
-    codCollected: z.boolean(),
-    codReconciled: z.boolean(),
-  })
-  .superRefine((value, context) => {
-    if (value.codReconciled && !value.codCollected) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["codReconciled"],
-        message: "COD cannot be reconciled before collection is confirmed.",
-      });
-    }
-  });
-
 export async function updateShipmentAction(formData: FormData): Promise<ActionResult> {
-  await requireCapability("commerce.shipments.update");
+  const session = await requireCapability("commerce.shipments.update");
   const parsed = shipmentUpdateSchema.safeParse({
     orderId: formData.get("orderId"),
     status: formData.get("status"),
@@ -206,9 +187,47 @@ export async function updateShipmentAction(formData: FormData): Promise<ActionRe
   if (!parsed.success) return actionError("Shipment was not updated.", zodFieldErrors(parsed.error));
 
   await db.transaction(async (transaction) => {
-    const [order] = await transaction.select({ id: commerceOrders.id, paymentState: commerceOrders.paymentState }).from(commerceOrders).where(eq(commerceOrders.id, parsed.data.orderId)).for("update").limit(1);
+    const [order] = await transaction.select({
+      id: commerceOrders.id,
+      status: commerceOrders.status,
+      paymentState: commerceOrders.paymentState,
+    }).from(commerceOrders).where(eq(commerceOrders.id, parsed.data.orderId)).for("update").limit(1);
     if (!order) throw new Error("Order was not found");
-    const [shipment] = await transaction.select({ id: shipments.id }).from(shipments).where(eq(shipments.orderId, order.id)).for("update").limit(1);
+    const [shipment] = await transaction.select({
+      id: shipments.id,
+      status: shipments.status,
+    }).from(shipments).where(eq(shipments.orderId, order.id)).for("update").limit(1);
+    const shipmentTransitions = {
+      pending: ["pending", "booked", "cancelled"],
+      booked: ["booked", "shipped", "cancelled"],
+      shipped: ["shipped", "delivered", "rto"],
+      delivered: ["delivered", "rto"],
+      rto: ["rto"],
+      cancelled: ["cancelled", "booked"],
+    } as const;
+    if (
+      shipment &&
+      !shipmentTransitions[shipment.status].includes(parsed.data.status as never)
+    ) {
+      throw new Error("Shipment status cannot move backwards");
+    }
+    const orderTransitionSources = {
+      booked: ["confirmed", "processing"],
+      shipped: ["confirmed", "processing", "shipped"],
+      delivered: ["shipped", "delivered"],
+      rto: ["shipped", "delivered", "returned"],
+    } as const;
+    if (parsed.data.status in orderTransitionSources) {
+      if (order.paymentState !== "paid") {
+        throw new Error("Only a paid order can enter fulfillment");
+      }
+      const allowedSources = orderTransitionSources[
+        parsed.data.status as keyof typeof orderTransitionSources
+      ];
+      if (!allowedSources.includes(order.status as never)) {
+        throw new Error("Order status does not permit this shipment transition");
+      }
+    }
     const now = new Date();
     const values = {
       status: parsed.data.status,
@@ -224,15 +243,37 @@ export async function updateShipmentAction(formData: FormData): Promise<ActionRe
     } else {
       await transaction.insert(shipments).values({ orderId: order.id, ...values });
     }
+    const orderTransition = {
+      booked: { status: "processing", eventType: "shipment_booked" },
+      shipped: { status: "shipped", eventType: "shipped" },
+      delivered: { status: "delivered", eventType: "delivered" },
+      rto: { status: "returned", eventType: "returned" },
+    } as const;
+    const transition = parsed.data.status in orderTransition
+      ? orderTransition[parsed.data.status as keyof typeof orderTransition]
+      : null;
+    if (transition && order.status !== transition.status) {
+      await transaction.update(commerceOrders).set({ status: transition.status, updatedAt: now }).where(eq(commerceOrders.id, order.id));
+      const [orderEvent] = await transaction.insert(commerceOrderEvents).values({
+        orderId: order.id,
+        eventType: transition.eventType,
+        fromStatus: order.status,
+        toStatus: transition.status,
+        idempotencyKey: `shipment:${order.id}:${parsed.data.status}`,
+        actorId: session.user.id,
+      }).onConflictDoNothing().returning({ id: commerceOrderEvents.id });
+      if (orderEvent && (parsed.data.status === "shipped" || parsed.data.status === "delivered")) {
+        await transaction.insert(notificationOutbox).values({
+          orderEventId: orderEvent.id,
+          kind: parsed.data.status === "shipped" ? "order_shipped" : "order_delivered",
+        }).onConflictDoNothing();
+      }
+    }
     if (parsed.data.status === "delivered") {
-      await transaction.update(commerceOrders).set({ status: "delivered" }).where(eq(commerceOrders.id, order.id));
       await transaction
         .update(commerceOrderItems)
         .set({ fulfilledQuantity: sql`${commerceOrderItems.quantity}` })
         .where(eq(commerceOrderItems.orderId, order.id));
-    }
-    if (parsed.data.status === "rto") {
-      await transaction.update(commerceOrders).set({ status: "returned" }).where(eq(commerceOrders.id, order.id));
     }
   });
   revalidatePath("/commerce/orders");
@@ -240,63 +281,95 @@ export async function updateShipmentAction(formData: FormData): Promise<ActionRe
   return actionOk();
 }
 
-/** Owner-only money settlement, deliberately separate from staff fulfillment. */
-export async function reconcileCodAction(formData: FormData): Promise<ActionResult> {
-  await requireCapability("commerce.cod.reconcile");
-  const parsed = codReconciliationSchema.safeParse({
-    orderId: formData.get("orderId"),
-    codCollected: formData.get("codCollected") === "on",
-    codReconciled: formData.get("codReconciled") === "on",
-  });
-  if (!parsed.success) {
-    return actionError("COD reconciliation was not updated.", zodFieldErrors(parsed.error));
-  }
+const refundRequestSchema = z.object({
+  orderId: z.string().uuid(),
+  amountMinor: z.number().int().positive(),
+  reason: z.string().trim().min(5).max(240),
+});
 
-  await db.transaction(async (transaction) => {
-    const [order] = await transaction
-      .select({ id: commerceOrders.id, paymentState: commerceOrders.paymentState, status: commerceOrders.status })
-      .from(commerceOrders)
-      .where(eq(commerceOrders.id, parsed.data.orderId))
-      .for("update")
-      .limit(1);
-    if (!order || order.paymentState !== "cod_due") {
-      throw new Error("COD order was not found");
-    }
-    const now = new Date();
-    const values = {
-      codCollectedAt: parsed.data.codCollected ? now : null,
-      codReconciledAt: parsed.data.codReconciled ? now : null,
-      updatedAt: now,
-    };
-    const [shipment] = await transaction
-      .select({ id: shipments.id })
-      .from(shipments)
-      .where(eq(shipments.orderId, order.id))
-      .for("update")
-      .limit(1);
-    if (shipment) {
-      await transaction.update(shipments).set(values).where(eq(shipments.id, shipment.id));
-    } else {
-      await transaction.insert(shipments).values({ orderId: order.id, status: "pending", ...values });
-    }
-    if (parsed.data.codCollected && parsed.data.codReconciled) {
-      await transaction
-        .update(commerceOrders)
-        .set({ paymentState: "cod_collected" })
-        .where(eq(commerceOrders.id, order.id));
-      await transaction
-        .update(paymentAttempts)
-        .set({ status: "succeeded", verifiedAt: now })
-        .where(
-          and(
-            eq(paymentAttempts.orderId, order.id),
-            eq(paymentAttempts.provider, "cod"),
-          ),
-        );
-    }
+export async function requestRefundAction(formData: FormData): Promise<ActionResult> {
+  await requireCapability("commerce.refunds.manage");
+  const rupees = Number(String(formData.get("amount") ?? ""));
+  const parsed = refundRequestSchema.safeParse({
+    orderId: formData.get("orderId"),
+    amountMinor: Number.isFinite(rupees) ? Math.round(rupees * 100) : Number.NaN,
+    reason: formData.get("reason"),
   });
+  if (!parsed.success) return actionError("Refund was not requested.", zodFieldErrors(parsed.error));
+
+  const idempotencyKey = randomUUID();
+  const refundReference = `refund-${idempotencyKey}`;
+  const prepared = await db.transaction(async (transaction) => {
+    const [order] = await transaction.select({ id: commerceOrders.id, totalAmountMinor: commerceOrders.totalAmountMinor })
+      .from(commerceOrders).where(eq(commerceOrders.id, parsed.data.orderId)).for("update").limit(1);
+    if (!order) throw new Error("Order was not found");
+    const [attempt] = await transaction.select({ id: paymentAttempts.id, providerOrderId: paymentAttempts.providerOrderId })
+      .from(paymentAttempts).where(sql`${paymentAttempts.orderId} = ${order.id} AND ${paymentAttempts.provider} = 'cashfree' AND ${paymentAttempts.status} = 'succeeded'`)
+      .for("update").limit(1);
+    if (!attempt?.providerOrderId) throw new Error("A captured Cashfree payment was not found");
+    const [totals] = await transaction.select({
+      reservedAmountMinor: sql<number>`coalesce(sum(${commerceRefunds.amountMinor}), 0)::int`,
+    }).from(commerceRefunds).where(sql`${commerceRefunds.paymentAttemptId} = ${attempt.id} AND ${commerceRefunds.status} NOT IN ('failed', 'cancelled')`);
+    if ((totals?.reservedAmountMinor ?? 0) + parsed.data.amountMinor > order.totalAmountMinor) {
+      throw new Error("Refund amount exceeds the remaining captured payment");
+    }
+    const [refund] = await transaction.insert(commerceRefunds).values({
+      paymentAttemptId: attempt.id,
+      idempotencyKey,
+      status: "requested",
+      currency: "INR",
+      amountMinor: parsed.data.amountMinor,
+      reason: parsed.data.reason,
+      providerStatus: "REQUESTED",
+    }).returning({ id: commerceRefunds.id });
+    if (!refund) throw new Error("Refund request could not be persisted");
+    return { refundId: refund.id, providerOrderId: attempt.providerOrderId, orderId: order.id };
+  });
+
+  try {
+    const providerRefund = await requestCashfreeRefund({
+      providerOrderId: prepared.providerOrderId,
+      refundId: refundReference,
+      idempotencyKey,
+      amountMinor: parsed.data.amountMinor,
+      reason: parsed.data.reason,
+    });
+    await db.transaction(async (transaction) => {
+      await transaction.update(commerceRefunds).set({
+        providerRefundId: providerRefund.cf_refund_id,
+        providerStatus: providerRefund.refund_status,
+        arn: providerRefund.refund_arn ?? null,
+        status: "processing",
+        lastReconciledAt: new Date(),
+        updatedAt: new Date(),
+      }).where(eq(commerceRefunds.id, prepared.refundId));
+      const [event] = await transaction.insert(commerceOrderEvents).values({
+        orderId: prepared.orderId,
+        eventType: "refund_processing",
+        idempotencyKey: `refund:${prepared.refundId}:processing`,
+      }).onConflictDoNothing().returning({ id: commerceOrderEvents.id });
+      if (event) {
+        await transaction.insert(notificationOutbox).values({
+          orderEventId: event.id,
+          kind: "refund_processing",
+        }).onConflictDoNothing();
+      }
+    });
+  } catch (error) {
+    await db.update(commerceRefunds).set({
+      status: "processing",
+      providerStatus: "REQUEST_UNKNOWN",
+      lastReconciledAt: null,
+      updatedAt: new Date(),
+    })
+      .where(eq(commerceRefunds.id, prepared.refundId));
+    console.error("[Cashfree refund] provider outcome requires reconciliation", {
+      name: error instanceof Error ? error.name : "UnknownError",
+    });
+    revalidatePath("/commerce/orders");
+    return actionError("Refund outcome is being verified. Do not submit another refund.");
+  }
   revalidatePath("/commerce/orders");
-  revalidatePath("/commerce");
   return actionOk();
 }
 

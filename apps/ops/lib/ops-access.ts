@@ -42,7 +42,6 @@ export const OPS_CAPABILITIES = [
   "commerce.shipments.update",
   "commerce.support.manage",
   "commerce.reviews.moderate",
-  "commerce.cod.reconcile",
   "commerce.refunds.manage",
   "commerce.promotions.manage",
   "commerce.release-gates.manage",

@@ -201,7 +201,9 @@ const expectedComAdr022Decision =
 const expectedComAdr022Reason =
   "Owner-selected fail-closed product policy after REQUIREMENTS and RESEARCH conflicted on bottle-label readiness. This is packaging/surface control only. It is not trademark clearance, disclaimer approval, title clearance, or permission to use references on any other surface.";
 const requiredComAdr023FieldSupersession =
-  /Field-level supersession rule: COM-ADR-027 replaces only COM-ADR-023's temporary\s+`shop\.perfumeaura\.com` staging-domain field\. COM-ADR-023's separate storefront\s+application, shared Neon source of truth, and private ops boundary remain\s+accepted\./;
+  /Field-level supersession rules: COM-ADR-027 replaces only COM-ADR-023's\s+temporary `shop\.perfumeaura\.com` staging-domain field\. COM-ADR-023's separate\s+storefront application, shared Neon source of truth, and private ops boundary\s+remain accepted\./;
+const requiredComAdr030Supersession =
+  /COM-ADR-030 fully replaces COM-ADR-025\. Anonymous browsing and\s+cart creation, separate customer identity, configurable shipping, and manual\s+courier remain; guest checkout, COD, and Apple launch sign-in are no longer\s+selected launch requirements\./;
 const forbiddenLegalContradictionPattern =
   /either unfair advantage or conduct contrary|paragraphs are alternatives|grants legal clearance for public titles|permits reference use on PDP copy|permission to use references on every surface|grants trademark clearance/i;
 const requiredReviewFlags = new Set([
@@ -1012,10 +1014,10 @@ async function verifyCommerceFoundation() {
   const decisionIds = decisionRows.map(([id]) => id);
   assert.deepEqual(
     decisionIds,
-    Array.from({ length: 29 }, (_, index) =>
+    Array.from({ length: 30 }, (_, index) =>
       `COM-ADR-${String(index + 1).padStart(3, "0")}`,
     ),
-    "commerce decision IDs must be unique and sequential through COM-ADR-029",
+    "commerce decision IDs must be unique and sequential through COM-ADR-030",
   );
   for (const [id, date, status, decision, reason] of decisionRows) {
     assertCalendarDate(date, `${id} decision date`);
@@ -1051,11 +1053,12 @@ async function verifyCommerceFoundation() {
     ["COM-ADR-022", "Accepted"],
     ["COM-ADR-023", "Accepted"],
     ["COM-ADR-024", "Accepted"],
-    ["COM-ADR-025", "Accepted"],
+    ["COM-ADR-025", "Superseded"],
     ["COM-ADR-026", "Accepted"],
     ["COM-ADR-027", "Accepted"],
     ["COM-ADR-028", "Accepted"],
     ["COM-ADR-029", "Accepted"],
+    ["COM-ADR-030", "Accepted"],
   ]) {
     assert.equal(
       decisionStatuses.get(id),
@@ -1108,6 +1111,10 @@ async function verifyCommerceFoundation() {
       "COM-ADR-029",
       "Use `Inspired by <brand> <reference>` as the storefront listing title for every `owner_approved_title_reference` inspired row; omit the word `family` from the customer title; if the cleaned reference already begins with the brand, do not repeat the brand; keep the 34 incomplete inspired rows unlistable; keep Signature names unchanged. This records listing identity only and is not India-counsel clearance, disclaimer approval, publication approval, or permission to use references on bottle labels or packaging.",
     ],
+    [
+      "COM-ADR-030",
+      "Launch India/INR commerce with anonymous browsing and cart creation, required verified customer authentication at checkout, Google as the primary sign-in path with verified email/password fallback, Cashfree prepaid UPI intent/QR (including Google Pay where Cashfree and the customer's device support it), no COD, configurable flat shipping, and manual courier fulfillment.",
+    ],
   ]);
   for (const [id, , , decision] of decisionRows) {
     const expectedDecision = expectedOwnerDecisionStatements.get(id);
@@ -1123,6 +1130,11 @@ async function verifyCommerceFoundation() {
     decisions,
     requiredComAdr023FieldSupersession,
     "COM-ADR-027 must explicitly preserve the still-valid fields of COM-ADR-023",
+  );
+  assert.match(
+    decisions,
+    requiredComAdr030Supersession,
+    "COM-ADR-030 must explicitly replace COM-ADR-025 and preserve its still-selected fields",
   );
 
   const comAdr022 = decisionRows.find(([id]) => id === "COM-ADR-022");

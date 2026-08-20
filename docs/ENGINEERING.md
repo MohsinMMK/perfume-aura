@@ -56,7 +56,7 @@ container for ops; Neon remains the shared managed database.
 | Ops deploy mechanism | GitHub Actions verified standalone → immutable GHCR image → Tailscale forced SSH → hardened VPS container (`apps/ops/server.js`) |
 | Storefront deploy mechanism | Checksum-verified Hostinger Node.js artifact with `apps/storefront/server.js`; generated-branch publication is supported when provider connectivity and owning gates permit it |
 | Active deploy and rollback state | [`CURRENT_STATE.md`](CURRENT_STATE.md) owns current provider paths, generated branches, releases, and rollback eligibility |
-| Payments | Cashfree Payment Gateway (server-created INR orders, signed raw-body webhooks, server status verification, refunds) plus separately reconciled COD |
+| Payments | Cashfree Payment Gateway for prepaid INR UPI (server-created orders, signed raw-body webhooks, server status verification, and refunds); no COD checkout |
 | Registrar | GoDaddy; registration/renewal only |
 
 Official tooling only: shadcn CLI, current App Router docs, TypeScript 7 with
@@ -142,6 +142,18 @@ Intentional payment-trigger deferral remains in force: payment mutation is not
 database-trigger-blocked until a linked reversal/credit-note model can preserve
 the authoritative net-sum. Fulfillment is aggregate-only for free-text invoice
 lines. Return movements are not netted into invoice fulfillment, and a draft line with a matching sale movement is rejected by preflight and reconciliation.
+
+Legacy COD enum values and reconciliation columns remain in the database for
+migration compatibility only. Active storefront and ops flows must not create,
+advertise, or expose COD controls; a later schema-removal migration requires
+separate production-data proof and authorization.
+
+Storefront checkout accepts only a stable request UUID and validated Indian
+delivery fields. The verified customer ID/email come from the server session;
+request/payload digests make exact retries reusable and conflicting reuse
+fail closed. Cashfree order expiry is 15 minutes, the dashboard transaction TTL
+must be exactly 20 minutes, and stock release waits a further 5-minute safety
+allowance before a server provider-state check.
 
 - Owner/staff public sign-up disabled. Customer sign-up is a distinct
   verified-email flow and defaults off until

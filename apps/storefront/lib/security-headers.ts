@@ -6,12 +6,12 @@ export type SecurityHeaderOptions = {
 export function contentSecurityPolicy(development: boolean): string {
   const directives = [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${development ? " 'unsafe-eval'" : ""} https://sdk.cashfree.com`,
-    "style-src 'self' 'unsafe-inline'",
+    `script-src 'self' 'unsafe-inline'${development ? " 'unsafe-eval'" : ""} https://sdk.cashfree.com https://accounts.google.com/gsi/client`,
+    "style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style",
     "img-src 'self' blob: data:",
     "font-src 'self' data:",
-    `connect-src 'self' https://api.cashfree.com https://*.posthog.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io${development ? " ws: wss:" : ""}`,
-    "frame-src https://sdk.cashfree.com https://api.cashfree.com https://sandbox.cashfree.com https://payments.cashfree.com https://payments-test.cashfree.com",
+    `connect-src 'self' https://api.cashfree.com https://accounts.google.com/gsi/ https://*.posthog.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io${development ? " ws: wss:" : ""}`,
+    "frame-src https://sdk.cashfree.com https://api.cashfree.com https://sandbox.cashfree.com https://payments.cashfree.com https://payments-test.cashfree.com https://accounts.google.com/gsi/",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -57,7 +57,7 @@ export function securityHeaders({
     },
     {
       key: "Cross-Origin-Opener-Policy",
-      value: "same-origin",
+      value: "same-origin-allow-popups",
     },
     {
       key: "Cross-Origin-Resource-Policy",

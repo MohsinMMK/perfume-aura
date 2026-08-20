@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "FAQ", alternates: { canonical: "/faq
 const questions = [
   ["Is the online store open?", "Not yet. Online checkout is not available while product, payment, delivery, and policy details are being completed."],
   ["Which sizes are planned?", "Standard scents are planned in 30 ml, 50 ml, and 100 ml. Signature scents are planned in 50 ml and 105 ml. No 10 ml product or discovery set is available for sale."],
-  ["How will payments work?", "Cashfree prepaid payments and cash on delivery are planned. Payment is not available yet."],
+  ["How will payments work?", "Checkout will be prepaid through Cashfree UPI. Google Pay and other supported UPI apps may appear when available for your device. Cash on delivery will not be offered. Payment is not available yet."],
   ["Will delivery be available across India?", "India-wide delivery is planned. Fees, thresholds, courier details, and delivery estimates are not available yet."],
 ] as const;
 

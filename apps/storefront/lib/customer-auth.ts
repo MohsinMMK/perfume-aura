@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { oneTap } from "better-auth/plugins";
 import {
   db,
   storefrontAccount,
@@ -25,14 +26,6 @@ export function createCustomerAuth() {
           google: {
             clientId: process.env.CUSTOMER_GOOGLE_CLIENT_ID as string,
             clientSecret: process.env.CUSTOMER_GOOGLE_CLIENT_SECRET as string,
-          },
-        }
-      : {}),
-    ...(providerReadiness.apple
-      ? {
-          apple: {
-            clientId: process.env.CUSTOMER_APPLE_SERVICES_ID as string,
-            clientSecret: process.env.CUSTOMER_APPLE_CLIENT_SECRET as string,
           },
         }
       : {}),
@@ -79,9 +72,9 @@ export function createCustomerAuth() {
       encryptOAuthTokens: true,
       accountLinking: {
         enabled: true,
-        disableImplicitLinking: false,
+        disableImplicitLinking: true,
         requireLocalEmailVerified: true,
-        trustedProviders: ["google", "apple"],
+        trustedProviders: ["google"],
         allowDifferentEmails: false,
         allowUnlinkingAll: false,
         updateUserInfoOnLink: false,
@@ -108,12 +101,14 @@ export function createCustomerAuth() {
         "/request-password-reset": { window: 60, max: 3 },
         "/reset-password": { window: 60, max: 5 },
         "/send-verification-email": { window: 60, max: 3 },
+        "/sign-in/social": { window: 60, max: 10 },
+        "/one-tap/callback": { window: 60, max: 10 },
       },
     },
     session: {
       expiresIn: 60 * 60 * 24 * 30,
       updateAge: 60 * 60 * 24,
-      freshAge: 60 * 60 * 24,
+      freshAge: 60 * 60,
     },
     advanced: {
       cookiePrefix: "pa_customer",
@@ -122,7 +117,10 @@ export function createCustomerAuth() {
       disableOriginCheck: false,
       crossSubDomainCookies: { enabled: false },
     },
-    plugins: [nextCookies()],
+    plugins: [
+      ...(providerReadiness.google ? [oneTap()] : []),
+      nextCookies(),
+    ],
   });
 }
 
