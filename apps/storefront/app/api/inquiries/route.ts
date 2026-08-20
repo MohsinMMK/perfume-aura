@@ -5,8 +5,8 @@ import {
   claimInquiryRateLimit,
   inquiryRateLimitDigest,
   readBoundedInquiryJson,
+  requireTrustedInquiryIp,
   resolveInquiryRateLimitSecret,
-  resolveTrustedInquiryIp,
 } from "@/lib/inquiry-security";
 
 const inquirySchema = z.object({
@@ -35,8 +35,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!consentVersion) return NextResponse.json({ error: "Inquiry consent is not configured." }, { status: 503 });
 
   let rateLimitSecret: string;
+  let trustedIp: string;
   try {
     rateLimitSecret = resolveInquiryRateLimitSecret();
+    trustedIp = requireTrustedInquiryIp(request.headers);
   } catch {
     return NextResponse.json({ error: "Inquiries are temporarily unavailable." }, { status: 503 });
   }
@@ -53,24 +55,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     limit: 3,
     windowMilliseconds: 60 * 60 * 1_000,
   });
-  const trustedIp = resolveTrustedInquiryIp(request.headers);
-  const ipDigest = trustedIp
-    ? inquiryRateLimitDigest(trustedIp, rateLimitSecret)
-    : null;
-  const [ipHourlyAllowed, ipDailyAllowed] = ipDigest
-    ? await Promise.all([
-        claimInquiryRateLimit({
-          key: `inquiry:ip-hour:${ipDigest}`,
-          limit: 10,
-          windowMilliseconds: 60 * 60 * 1_000,
-        }),
-        claimInquiryRateLimit({
-          key: `inquiry:ip-day:${ipDigest}`,
-          limit: 30,
-          windowMilliseconds: 24 * 60 * 60 * 1_000,
-        }),
-      ])
-    : [true, true];
+  const ipDigest = inquiryRateLimitDigest(trustedIp, rateLimitSecret);
+  const [ipHourlyAllowed, ipDailyAllowed] = await Promise.all([
+    claimInquiryRateLimit({
+      key: `inquiry:ip-hour:${ipDigest}`,
+      limit: 10,
+      windowMilliseconds: 60 * 60 * 1_000,
+    }),
+    claimInquiryRateLimit({
+      key: `inquiry:ip-day:${ipDigest}`,
+      limit: 30,
+      windowMilliseconds: 24 * 60 * 60 * 1_000,
+    }),
+  ]);
   if (!emailAllowed || !ipHourlyAllowed || !ipDailyAllowed) {
     return acceptedResponse();
   }

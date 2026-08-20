@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -37,6 +38,25 @@ async function writeTemplates(openingStock = "5", legalReference = "LEGAL-TEST-2
     ])}\n`),
     writeFile(join(templateRoot, "catalog-media-review.csv"), `${headers.media}\n${csv([
       "launch-one", "pack", "catalog/launch-one-pack.webp", "Launch One perfume bottle", "1200", "1600", "0", "MEDIA-ASSET-TEST-2026",
+    ])}\n`),
+    writeFile(join(templateRoot, "shipping-serviceability-review.csv"), `${headers.serviceability}\n400001,true,true,3,7,true\n`),
+  ]);
+}
+
+async function writeIdentityConflictTemplates(internalSlug: string): Promise<void> {
+  await Promise.all([
+    writeFile(join(templateRoot, "catalog-products-review.csv"), `${headers.products}\n${csv([
+      "different-product-key", "Conflicting Product", internalSlug, "Perfume Aura", "perfume", "Conflicting internal record",
+      "Identity Conflict", "identity-conflict", "woody", "pepper", "cedar", "amber", "strong", "evening",
+      "Up to eight hours", "Fragrance composition", "External use only", "A conflicting product identity.",
+      "This row must never overwrite an existing product with the same internal slug.", "Identity Conflict perfume", "Identity conflict import safety test.",
+      "approved", "LEGAL-CONFLICT-2026", "CONTENT-CONFLICT-2026", "MEDIA-CONFLICT-2026", "0",
+    ])}\n`),
+    writeFile(join(templateRoot, "catalog-variants-review.csv"), `${headers.variants}\n${csv([
+      "different-product-key", "IDENTITY-CONFLICT-100", "100", "10000", "19900", "5", "2", "CA-CONFLICT-2026", "true",
+    ])}\n`),
+    writeFile(join(templateRoot, "catalog-media-review.csv"), `${headers.media}\n${csv([
+      "different-product-key", "pack", "catalog/identity-conflict.webp", "Identity conflict perfume bottle", "1200", "1600", "0", "MEDIA-CONFLICT-2026",
     ])}\n`),
     writeFile(join(templateRoot, "shipping-serviceability-review.csv"), `${headers.serviceability}\n400001,true,true,3,7,true\n`),
   ]);
@@ -130,5 +150,28 @@ describe("reviewed catalog importer", () => {
     assert.match(conflict.stderr, /opening stock changed/);
     const result = await pool.query<{ quantity_on_hand: number }>("SELECT quantity_on_hand FROM product_variants WHERE sku='LAUNCH-ONE-100'");
     assert.equal(result.rows[0]?.quantity_on_hand, 5);
+  });
+
+  it("rejects a slug that belongs to another deterministic product identity", async () => {
+    const conflictingSlug = `existing-${randomUUID()}`;
+    const existingId = randomUUID();
+    await pool.query(
+      "INSERT INTO products (id, name, slug, status) VALUES ($1, 'Existing Product', $2, 'active')",
+      [existingId, conflictingSlug],
+    );
+    await writeIdentityConflictTemplates(conflictingSlug);
+    const dryRun = await runImporter(["--dry-run"]);
+    assert.equal(dryRun.code, 0, dryRun.stderr);
+    const manifest = JSON.parse(dryRun.stdout.trim()) as { digest: string; signature: string };
+    const conflict = await runImporter(["--apply"], {
+      CONFIRM_CATALOG_IMPORT: "APPLY_REVIEWED_CATALOG",
+      CONFIRM_CATALOG_DIGEST: manifest.digest,
+      CONFIRM_CATALOG_SIGNATURE: manifest.signature,
+      DATABASE_URL_DIRECT: databaseUrl,
+    });
+    assert.notEqual(conflict.code, 0);
+    assert.match(conflict.stderr, /belongs to a different product identity/);
+    const result = await pool.query<{ name: string }>("SELECT name FROM products WHERE id=$1", [existingId]);
+    assert.equal(result.rows[0]?.name, "Existing Product");
   });
 });

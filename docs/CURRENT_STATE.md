@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-20 11:48:27 UTC**
+Last refreshed: **2026-08-20 18:34:06 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -211,12 +211,30 @@ maintenance workflow secret and enable variable, and an authorized sandbox
 payment/refund flow remain outstanding. Customer authentication, catalog
 publication, checkout, and commerce maintenance therefore remain closed.
 
-The final local gate passed `pnpm check`, all 209 unit tests, and all 67
-integration tests against a fully migrated disposable loopback PostgreSQL
-database. The integration database was removed afterward. Both Next production
+The current production-hardening candidate passed `pnpm check`, all 221 unit
+tests, and all 83 integration tests against a fully migrated disposable
+loopback PostgreSQL database. The integration database was removed afterward.
+Both Next production
 builds, all guarded client-JavaScript budgets, the commerce and runtime-grant
 contracts, deployment self-tests, lint/typecheck, and dependency audits were
 green. No Graphify or browser artifacts were committed.
+
+The candidate adds atomic stale-cart rejection, approval invalidation for
+customer-facing catalog changes, deterministic catalog-import identity guards,
+fail-closed inquiry throttling, per-record Cashfree reconciliation isolation,
+customer reconciliation leases, provider-bound refunds, and fenced email and
+inquiry outbox claims. The maintenance scheduler keeps payment reconciliation
+and checkout expiry safety-coupled while allowing refund and notification
+workers to run independently.
+
+Migration `0012_amused_cloak` passed on the temporary normal Neon branch
+`release-0012-20260821`, created from production `main` with an automatic
+expiry. The branch had zero provider-payment identity collisions; migration
+count advanced from 12 to 13; all five payment reconciliation columns and both
+new tables were present; every new commerce gate remained closed; and both
+restricted runtime grant matrices returned zero drift. This is isolated-branch
+evidence only. Production still requires the protected schema merge followed
+by direct-owner migration and grant verification before the runtime release.
 
 ## Repository and next action
 
@@ -303,3 +321,8 @@ Next actions:
    refund, and clean-browser sandbox acceptance with every production release
    flag still closed; do not expose customer auth or checkout before all
    provider and business gates pass.
+7. Merge schema PR #53, apply and verify `0012` plus both restricted grant
+   matrices through the production Neon owner connection, then rebase and merge
+   the runtime hardening PR. Deploy both surfaces flags-off and record the exact
+   source, workflow, generated branch, image digest, health, redirect, static
+   asset, and release-lock evidence in a Markdown-only follow-up PR.

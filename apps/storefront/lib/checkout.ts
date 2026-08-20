@@ -25,11 +25,19 @@ import {
   variantPrices,
 } from "@perfume-aura/db";
 import { createCashfreeOrder } from "./cashfree";
-import { compareCheckoutCartSet } from "./checkout-cart-eligibility";
+import {
+  checkoutCartSnapshotChanged,
+  compareCheckoutCartSet,
+} from "./checkout-cart-eligibility";
 import { deliveryProfileInputSchema } from "./customer-profile";
 
 const checkoutInputSchema = deliveryProfileInputSchema.extend({
   requestId: z.string().uuid(),
+  cartLines: z.array(z.object({
+    variantId: z.string().uuid(),
+    quantity: z.number().int().min(1).max(10),
+    amountMinor: z.number().int().positive(),
+  })).min(1).max(100),
   saveAddress: z.boolean().default(false),
 });
 
@@ -69,11 +77,14 @@ function payloadDigest(
   identity: CheckoutCustomerIdentity,
   cartToken: string,
 ): string {
+  const canonicalCartLines = [...input.cartLines]
+    .sort((left, right) => left.variantId.localeCompare(right.variantId));
   return digest(JSON.stringify({
     cart: digest(cartToken),
     userId: identity.userId,
     email: identity.email.trim().toLowerCase(),
     ...input,
+    cartLines: canonicalCartLines,
   }));
 }
 
@@ -257,7 +268,15 @@ export async function placeCheckoutOrder(
       storedLines.map((line) => line.variantId),
       lines.map((line) => line.variantId),
     );
-    if (cartComparison.changed) {
+    const presentedCartChanged = checkoutCartSnapshotChanged(
+      input.cartLines,
+      lines.map((line) => ({
+        variantId: line.variantId,
+        quantity: line.quantity,
+        amountMinor: line.amountMinor,
+      })),
+    );
+    if (cartComparison.changed || presentedCartChanged) {
       const removedVariantIds = cartComparison.removedVariantIds;
       if (removedVariantIds.length > 0) {
         await transaction.delete(commerceCartItems).where(and(

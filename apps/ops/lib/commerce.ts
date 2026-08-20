@@ -33,10 +33,15 @@ import {
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { actionError, actionOk, type ActionResult, zodFieldErrors } from "@/lib/action-result";
-import { hasOpsCapability } from "@/lib/ops-access";
-import { requireCapability } from "@/lib/session";
+import {
+  changedApprovedRecordRequiresReset,
+  reviewedPublicationContentChanged,
+  type ReviewedPublicationContent,
+} from "@/lib/catalog-approval-policy";
 import { requestCashfreeRefund } from "@/lib/cashfree-refunds";
+import { hasOpsCapability } from "@/lib/ops-access";
 import { safeAuditMetadata } from "@/lib/ops-audit";
+import { requireCapability } from "@/lib/session";
 
 export type CommerceOverview = {
   catalogBlocked: number;
@@ -222,7 +227,7 @@ const catalogVariantPriceSchema = z.object({
   approved: z.boolean(),
   approvalReference: z.string().trim().max(240).optional(),
 }).superRefine((value, context) => {
-  if ((value.active || value.approved) && (!value.approvalReference || value.approvalReference.length < 3)) {
+  if (value.approved && (!value.approvalReference || value.approvalReference.length < 3)) {
     context.addIssue({ code: z.ZodIssueCode.custom, path: ["approvalReference"], message: "An approved price evidence reference is required." });
   }
 });
@@ -241,7 +246,7 @@ export async function updateCatalogVariantPriceAction(formData: FormData): Promi
   });
   if (!parsed.success) return actionError("Variant price was not saved.", zodFieldErrors(parsed.error));
 
-  await db.transaction(async (transaction) => {
+  const saved = await db.transaction(async (transaction) => {
     const [variant] = await transaction.select({ id: productVariants.id, productId: productVariants.productId })
       .from(productVariants).where(eq(productVariants.id, parsed.data.variantId)).for("update").limit(1);
     if (!variant || variant.productId !== parsed.data.productId) throw new Error("Variant was not found for this product");
@@ -254,6 +259,15 @@ export async function updateCatalogVariantPriceAction(formData: FormData): Promi
     if ((current && parsed.data.expectedUpdatedAt !== current.updatedAt.toISOString()) || (!current && parsed.data.expectedUpdatedAt !== "missing")) {
       throw new Error("This price changed after the page loaded. Reload and try again.");
     }
+    const priceChanged = Boolean(current && (
+      current.amountMinor !== parsed.data.amountMinor ||
+      current.active !== parsed.data.active
+    ));
+    if (changedApprovedRecordRequiresReset({
+      changed: priceChanged,
+      existingApprovedAt: current?.approvedAt,
+      requestedApproved: parsed.data.approved,
+    })) return false;
     const now = new Date();
     const values = {
       currency: "INR",
@@ -270,7 +284,11 @@ export async function updateCatalogVariantPriceAction(formData: FormData): Promi
       action: "commerce.catalog.variant_price_updated", targetType: "variant_price", targetId: variant.id,
       metadata: safeAuditMetadata({ from_amount_minor: current?.amountMinor ?? null, to_amount_minor: parsed.data.amountMinor, from_active: current?.active ?? false, to_active: parsed.data.active, approved: parsed.data.approved }),
     });
+    return true;
   });
+  if (!saved) {
+    return actionError("Changed prices must first be saved unapproved, then reviewed and approved in a separate action.");
+  }
   revalidatePath("/commerce/catalog");
   revalidatePath(`/commerce/catalog/${parsed.data.productId}`);
   return actionOk();
@@ -298,7 +316,7 @@ export async function updateCatalogMediaAction(formData: FormData): Promise<Acti
     approved: formData.get("approved") === "on", approvalReference: formData.get("approvalReference"),
   });
   if (!parsed.success) return actionError("Media metadata was not saved.", zodFieldErrors(parsed.error));
-  await db.transaction(async (transaction) => {
+  const saved = await db.transaction(async (transaction) => {
     const [current] = await transaction.select({
       id: productMedia.id, productId: productMedia.productId, altText: productMedia.altText,
       position: productMedia.position, approvedAt: productMedia.approvedAt,
@@ -306,6 +324,13 @@ export async function updateCatalogMediaAction(formData: FormData): Promise<Acti
     }).from(productMedia).where(eq(productMedia.id, parsed.data.mediaId)).for("update").limit(1);
     if (!current || current.productId !== parsed.data.productId) throw new Error("Media was not found for this product");
     if (current.updatedAt.toISOString() !== parsed.data.expectedUpdatedAt) throw new Error("This media record changed after the page loaded. Reload and try again.");
+    const metadataChanged = current.altText !== parsed.data.altText ||
+      current.position !== parsed.data.position;
+    if (changedApprovedRecordRequiresReset({
+      changed: metadataChanged,
+      existingApprovedAt: current.approvedAt,
+      requestedApproved: parsed.data.approved,
+    })) return false;
     const now = new Date();
     await transaction.update(productMedia).set({
       altText: parsed.data.altText, position: parsed.data.position,
@@ -318,7 +343,11 @@ export async function updateCatalogMediaAction(formData: FormData): Promise<Acti
       action: "commerce.catalog.media_metadata_updated", targetType: "product_media", targetId: current.id,
       metadata: safeAuditMetadata({ from_position: current.position, to_position: parsed.data.position, alt_text_changed: current.altText !== parsed.data.altText, approved: parsed.data.approved }),
     });
+    return true;
   });
+  if (!saved) {
+    return actionError("Changed media metadata must first be saved unapproved, then reviewed and approved in a separate action.");
+  }
   revalidatePath(`/commerce/catalog/${parsed.data.productId}`);
   return actionOk();
 }
@@ -410,7 +439,7 @@ export async function updateCatalogPublicationAction(
     return actionError("Catalog review was not saved.", zodFieldErrors(parsed.error));
   }
 
-  await db.transaction(async (transaction) => {
+  const saved = await db.transaction(async (transaction) => {
     const [product] = await transaction
       .select({ id: products.id, status: products.status })
       .from(products)
@@ -421,6 +450,21 @@ export async function updateCatalogPublicationAction(
     const [current] = await transaction
       .select({
         status: productPublications.status,
+        publicName: productPublications.publicName,
+        publicSlug: productPublications.publicSlug,
+        scentFamily: productPublications.scentFamily,
+        topNotes: productPublications.topNotes,
+        heartNotes: productPublications.heartNotes,
+        baseNotes: productPublications.baseNotes,
+        intensity: productPublications.intensity,
+        occasion: productPublications.occasion,
+        longevityGuidance: productPublications.longevityGuidance,
+        ingredients: productPublications.ingredients,
+        usageInstructions: productPublications.usageInstructions,
+        shortDescription: productPublications.shortDescription,
+        longDescription: productPublications.longDescription,
+        seoTitle: productPublications.seoTitle,
+        seoDescription: productPublications.seoDescription,
         updatedAt: productPublications.updatedAt,
         legalApprovedAt: productPublications.legalApprovedAt,
         contentApprovedAt: productPublications.contentApprovedAt,
@@ -436,6 +480,48 @@ export async function updateCatalogPublicationAction(
       (!current && parsed.data.expectedUpdatedAt !== "missing")
     ) {
       throw new Error("This catalog review changed after the page loaded. Reload and try again.");
+    }
+
+    const reviewedContent: ReviewedPublicationContent = {
+      baseNotes: noteList(parsed.data.baseNotes),
+      heartNotes: noteList(parsed.data.heartNotes),
+      topNotes: noteList(parsed.data.topNotes),
+      contentFields: {
+        publicName: parsed.data.publicName,
+        publicSlug: parsed.data.publicSlug,
+        scentFamily: optionalText(parsed.data.scentFamily),
+        intensity: optionalText(parsed.data.intensity),
+        occasion: optionalText(parsed.data.occasion),
+        longevityGuidance: optionalText(parsed.data.longevityGuidance),
+        ingredients: optionalText(parsed.data.ingredients),
+        usageInstructions: optionalText(parsed.data.usageInstructions),
+        shortDescription: parsed.data.shortDescription,
+        longDescription: parsed.data.longDescription,
+        seoTitle: parsed.data.seoTitle,
+        seoDescription: parsed.data.seoDescription,
+      },
+    };
+    const contentChanged = Boolean(current && reviewedPublicationContentChanged({
+      baseNotes: current.baseNotes,
+      heartNotes: current.heartNotes,
+      topNotes: current.topNotes,
+      contentFields: {
+        publicName: current.publicName,
+        publicSlug: current.publicSlug,
+        scentFamily: current.scentFamily,
+        intensity: current.intensity,
+        occasion: current.occasion,
+        longevityGuidance: current.longevityGuidance,
+        ingredients: current.ingredients,
+        usageInstructions: current.usageInstructions,
+        shortDescription: current.shortDescription,
+        longDescription: current.longDescription,
+        seoTitle: current.seoTitle,
+        seoDescription: current.seoDescription,
+      },
+    }, reviewedContent));
+    if (contentChanged && (parsed.data.legalApproved || parsed.data.contentApproved)) {
+      return { approvalResetRequired: true as const };
     }
 
     if (parsed.data.status === "approved" || parsed.data.status === "published") {
@@ -473,15 +559,15 @@ export async function updateCatalogPublicationAction(
     const values = {
       publicName: parsed.data.publicName,
       publicSlug: parsed.data.publicSlug,
-      scentFamily: optionalText(parsed.data.scentFamily),
-      topNotes: noteList(parsed.data.topNotes),
-      heartNotes: noteList(parsed.data.heartNotes),
-      baseNotes: noteList(parsed.data.baseNotes),
-      intensity: optionalText(parsed.data.intensity),
-      occasion: optionalText(parsed.data.occasion),
-      longevityGuidance: optionalText(parsed.data.longevityGuidance),
-      ingredients: optionalText(parsed.data.ingredients),
-      usageInstructions: optionalText(parsed.data.usageInstructions),
+      scentFamily: reviewedContent.contentFields.scentFamily,
+      topNotes: reviewedContent.topNotes ? [...reviewedContent.topNotes] : null,
+      heartNotes: reviewedContent.heartNotes ? [...reviewedContent.heartNotes] : null,
+      baseNotes: reviewedContent.baseNotes ? [...reviewedContent.baseNotes] : null,
+      intensity: reviewedContent.contentFields.intensity,
+      occasion: reviewedContent.contentFields.occasion,
+      longevityGuidance: reviewedContent.contentFields.longevityGuidance,
+      ingredients: reviewedContent.contentFields.ingredients,
+      usageInstructions: reviewedContent.contentFields.usageInstructions,
       shortDescription: parsed.data.shortDescription,
       longDescription: parsed.data.longDescription,
       seoTitle: parsed.data.seoTitle,
@@ -495,7 +581,7 @@ export async function updateCatalogPublicationAction(
       mediaApprovalReference: parsed.data.mediaApproved ? parsed.data.mediaApprovalReference : null,
       publishedAt:
         parsed.data.status === "published"
-          ? current?.publishedAt ?? now
+          ? contentChanged ? now : current?.publishedAt ?? now
           : null,
       featuredRank: parsed.data.featuredRank,
       updatedAt: now,
@@ -518,7 +604,12 @@ export async function updateCatalogPublicationAction(
         media_approved: parsed.data.mediaApproved,
       }),
     });
+    return { approvalResetRequired: false as const };
   });
+
+  if (saved.approvalResetRequired) {
+    return actionError("Changed public content must first be saved as draft with legal and content approvals cleared, then reviewed and approved in a separate action.");
+  }
 
   revalidatePath("/commerce/catalog");
   revalidatePath(`/commerce/catalog/${parsed.data.productId}`);

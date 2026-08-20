@@ -171,8 +171,10 @@ The repository-owned scheduler is
 32-character-or-longer `STOREFRONT_MAINTENANCE_SECRET` in Hostinger and GitHub
 Actions, then set the repository variable
 `STOREFRONT_COMMERCE_MAINTENANCE_ENABLED=true` only after every preceding gate
-passes. The scheduler reconciles payments before attempting expiry; refund,
-order-email, and inquiry-email streams still run independently and the final
+passes. The scheduler reconciles payments before attempting expiry. Expiry still
+runs after a degraded reconciliation batch because it independently verifies
+provider finality for each checkout; ambiguous records retain stock. Refund,
+order-email, and inquiry-email streams also run independently, and the final
 step reports any degraded stream. Its default remains disabled.
 
 Verify after deployment:

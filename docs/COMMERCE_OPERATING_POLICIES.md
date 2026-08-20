@@ -22,9 +22,10 @@ They are requests for professional review, not approvals.
 | Response-time claim | Disabled until staffing and evidence are approved |
 
 `STOREFRONT_INQUIRY_CONSENT_VERSION` must match the approved version recorded
-here before `STOREFRONT_INQUIRIES_ENABLED` may become true. IP-derived abuse
-controls remain disabled until Hostinger proves the configured header cannot be
-client-spoofed.
+here before `STOREFRONT_INQUIRIES_ENABLED` may become true. Inquiries must also
+remain disabled until Hostinger proves the configured IP header cannot be
+client-spoofed; once inquiries are enabled, a missing or invalid trusted IP
+fails the submission endpoint closed instead of bypassing IP throttling.
 
 ## Catalog publication evidence
 

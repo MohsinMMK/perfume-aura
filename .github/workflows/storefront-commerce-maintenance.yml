@@ -29,7 +29,7 @@ jobs:
           https://perfumeaura.com/api/internal/reconcile-payments
       - name: Expire final unpaid checkouts
         id: expiry
-        if: steps.payments.outcome == 'success'
+        if: always()
         continue-on-error: true
         env:
           MAINTENANCE_SECRET: ${{ secrets.STOREFRONT_MAINTENANCE_SECRET }}

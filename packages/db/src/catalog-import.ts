@@ -224,9 +224,19 @@ async function applyPlan(plan: Awaited<ReturnType<typeof validate>>): Promise<vo
 
 async function upsertProduct(client: PoolClient, row: CsvRow): Promise<string> {
   const id = deterministicUuid(`product:${required(row, "product_key")}`);
+  const slug = required(row, "internal_slug");
+  const existing = await client.query<{ id: string; slug: string }>(
+    "SELECT id, slug FROM products WHERE id=$1 OR slug=$2 FOR UPDATE",
+    [id, slug],
+  );
+  assert.ok(
+    existing.rows.every((product) => product.id === id),
+    `internal slug ${slug} belongs to a different product identity`,
+  );
+  assert.ok(existing.rows.length <= 1, `product identity conflict for ${slug}`);
   const result = await client.query<{ id: string }>(`INSERT INTO products (id, name, slug, brand, category, description, status)
-    VALUES ($1,$2,$3,$4,$5,$6,'active') ON CONFLICT (slug) DO UPDATE SET name=excluded.name, brand=excluded.brand, category=excluded.category, description=excluded.description, updated_at=now() RETURNING id`,
-  [id, required(row, "internal_name"), required(row, "internal_slug"), nullable(row.brand), nullable(row.category), nullable(row.internal_description)]);
+    VALUES ($1,$2,$3,$4,$5,$6,'active') ON CONFLICT (id) DO UPDATE SET name=excluded.name, slug=excluded.slug, brand=excluded.brand, category=excluded.category, description=excluded.description, updated_at=now() RETURNING id`,
+  [id, required(row, "internal_name"), slug, nullable(row.brand), nullable(row.category), nullable(row.internal_description)]);
   const saved = result.rows[0]; assert.ok(saved); return saved.id;
 }
 
