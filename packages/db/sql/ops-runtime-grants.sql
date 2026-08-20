@@ -9,11 +9,16 @@
 BEGIN;
 
 REVOKE ALL PRIVILEGES ON TABLE
-  "two_factor", "staff_invitation_events", "ops_audit_events"
+  "two_factor", "staff_invitation_events", "ops_audit_events",
+  "notification_outbox"
 FROM :"runtime_role";
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
   "two_factor"
+TO :"runtime_role";
+
+GRANT SELECT, INSERT, UPDATE ON TABLE
+  "notification_outbox"
 TO :"runtime_role";
 
 -- Immutable event tables permit insertion and readback only. PostgreSQL
@@ -28,6 +33,7 @@ COMMIT;
 WITH matrix(table_name, allowed) AS (
   VALUES
     ('two_factor', ARRAY['SELECT','INSERT','UPDATE','DELETE']),
+    ('notification_outbox', ARRAY['SELECT','INSERT','UPDATE']),
     ('staff_invitation_events', ARRAY['SELECT','INSERT']),
     ('ops_audit_events', ARRAY['SELECT','INSERT'])
 ), privileges(privilege) AS (
