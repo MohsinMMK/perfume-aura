@@ -65,6 +65,8 @@ UPDATE "checkout_sessions"
 SET "request_id" = "id", "payload_digest" = 'legacy:' || "id"::text;--> statement-breakpoint
 ALTER TABLE "checkout_sessions" ALTER COLUMN "request_id" SET NOT NULL;--> statement-breakpoint
 ALTER TABLE "checkout_sessions" ALTER COLUMN "payload_digest" SET NOT NULL;--> statement-breakpoint
+ALTER TABLE "checkout_sessions" ALTER COLUMN "request_id" SET DEFAULT gen_random_uuid();--> statement-breakpoint
+ALTER TABLE "checkout_sessions" ALTER COLUMN "payload_digest" SET DEFAULT 'legacy';--> statement-breakpoint
 ALTER TABLE "commerce_refunds" ADD COLUMN "provider_status" text;--> statement-breakpoint
 ALTER TABLE "commerce_refunds" ADD COLUMN "arn" text;--> statement-breakpoint
 ALTER TABLE "commerce_refunds" ADD COLUMN "processed_at" timestamp with time zone;--> statement-breakpoint
