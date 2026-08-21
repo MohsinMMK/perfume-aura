@@ -77,35 +77,48 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
     <>
       {productStructuredData ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productStructuredData).replaceAll("<", "\\u003c") }} /> : null}
 
-      <section className="grid min-h-[100svh] bg-[var(--aura-ink)] text-[var(--aura-ivory)] lg:grid-cols-2">
-        <div className="relative min-h-[22svh] overflow-hidden pt-20 sm:min-h-[52svh] lg:min-h-[100svh] lg:pt-0" style={{ backgroundColor: galleryColors[product.accent] }}>
-          <Image src={product.image} alt={product.imageAlt} fill preload sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
-          <div className="absolute inset-x-4 bottom-4 flex items-center justify-between text-[0.58rem] font-semibold uppercase tracking-[0.15em] text-white drop-shadow-[0_1px_8px_rgba(16,11,6,.9)]">
+      <section className="grid grid-rows-[47svh_auto] bg-[var(--aura-ink)] text-[var(--aura-ivory)] min-[360px]:grid-rows-[50svh_auto] sm:min-h-[100svh] sm:grid-rows-none lg:grid-cols-2 lg:grid-rows-1">
+        <div
+          data-product-gallery
+          className="relative h-full overflow-hidden bg-[var(--aura-ink)] sm:h-auto sm:min-h-[52svh] lg:min-h-[100svh]"
+        >
+          <div
+            data-product-image-frame
+            className="absolute inset-x-2 bottom-2 top-[72px] overflow-hidden rounded-[var(--aura-radius)] bg-cover bg-center sm:inset-0 sm:rounded-none"
+            style={{
+              backgroundColor: galleryColors[product.accent],
+              backgroundImage: `url("${product.image}")`,
+            }}
+          >
+            <div className="absolute inset-0 bg-black/20 backdrop-blur-xl sm:hidden" aria-hidden="true" />
+            <Image src={product.image} alt={product.imageAlt} fill preload sizes="(max-width: 639px) calc(100vw - 0.5rem), (max-width: 1024px) 100vw, 50vw" className="object-contain object-center sm:object-cover" />
+          </div>
+          <div className="absolute inset-x-3 bottom-2 flex items-center justify-between text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-white drop-shadow-[0_1px_8px_rgba(16,11,6,.9)] sm:inset-x-4 sm:bottom-4 sm:text-[0.58rem] sm:tracking-[0.15em]">
             <span>Perfume Aura</span>
             <span>{product.publicationState === "design_preview" ? "Preview" : "Perfume Aura edition"}</span>
           </div>
         </div>
 
-        <div className="flex items-end px-5 pb-8 pt-4 sm:px-10 sm:py-12 lg:min-h-[100svh] lg:px-3 lg:pb-3 lg:pt-24 xl:px-5">
+        <div className="flex items-start px-5 py-2 sm:items-end sm:px-10 sm:py-12 lg:min-h-[100svh] lg:px-3 lg:pb-3 lg:pt-24 xl:px-5">
           <div className="w-full">
             <div className="lg:text-center">
-              <Link href="/shop" className="inline-flex min-h-8 items-center font-display text-lg text-[color:rgb(245_228_199_/_62%)] underline-offset-8 hover:underline">Shop / {product.collectionSlug === "signature" ? "Signature" : product.collectionSlug === "inspired" ? "Inspired" : "Collection"}</Link>
-              <h1 className="font-display mt-1 text-[clamp(3.6rem,7vw,7.8rem)] leading-[0.77] lg:mx-auto lg:max-w-[8.5ch]">{product.name}</h1>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_62%)] max-sm:line-clamp-2 lg:mx-auto lg:max-w-[30rem]">{product.summary}</p>
+              <Link href="/shop" className="inline-flex min-h-6 items-center font-display text-sm text-[color:rgb(245_228_199_/_62%)] underline-offset-8 hover:underline sm:min-h-8 sm:text-lg">Shop / {product.collectionSlug === "signature" ? "Signature" : product.collectionSlug === "inspired" ? "Inspired" : "Collection"}</Link>
+              <h1 className="font-display text-[clamp(2.25rem,10vw,2.75rem)] leading-[0.86] text-balance sm:mt-1 sm:text-[clamp(3.6rem,7vw,7.8rem)] sm:leading-[0.77] lg:mx-auto lg:max-w-[8.5ch]">{product.name}</h1>
+              <p className="mt-1 hidden max-w-xl text-xs leading-4 text-[color:rgb(245_228_199_/_62%)] min-[360px]:line-clamp-2 sm:mt-3 sm:block sm:text-sm sm:leading-6 lg:mx-auto lg:max-w-[30rem]">{product.summary}</p>
             </div>
-            <p className="font-display mt-4 text-4xl lg:mt-5 lg:px-2">{firstPrice ? `From ${formatMoney(firstPrice)}` : "Price not available yet"}</p>
+            <p className="font-display mt-1 text-2xl sm:mt-4 sm:text-4xl lg:mt-5 lg:px-2">{firstPrice ? `From ${formatMoney(firstPrice)}` : "Price not available yet"}</p>
 
-            <div className="mt-5 grid gap-[var(--aura-gap)] sm:grid-cols-2 lg:mt-6">
-              <div className="flex min-h-28 flex-col justify-between rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] p-4 lg:min-h-40 lg:p-5">
+            <div className="mt-2 grid grid-cols-2 gap-[var(--aura-gap)] sm:mt-5 lg:mt-6">
+              <div className="hidden min-h-28 flex-col justify-between rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] p-4 sm:flex lg:min-h-40 lg:p-5">
                 <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-[var(--aura-text-muted-on-ink)]">Scent profile</p>
-                <p className="font-display mt-4 text-2xl lg:text-[2rem] lg:leading-none">{detailValue(product.family)}</p>
+                <p className="font-display mt-3 text-[1.35rem] leading-none sm:mt-4 sm:text-2xl lg:text-[2rem]">{detailValue(product.family)}</p>
               </div>
-              <div className="flex min-h-28 flex-col justify-between rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] p-4 lg:min-h-40 lg:p-5">
+              <div className="hidden min-h-28 flex-col justify-between rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] p-4 sm:flex lg:min-h-40 lg:p-5">
                 <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-[var(--aura-text-muted-on-ink)]">Made for</p>
-                <p className="font-display mt-4 text-2xl lg:text-[2rem] lg:leading-none">{detailValue(product.occasion)}</p>
+                <p className="font-display mt-3 text-[1.35rem] leading-none sm:mt-4 sm:text-2xl lg:text-[2rem]">{detailValue(product.occasion)}</p>
               </div>
 
-              <div className="grid min-h-40 grid-cols-3 overflow-hidden rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] text-center">
+              <div className="col-span-2 hidden min-h-40 grid-cols-3 overflow-hidden rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] text-center sm:grid sm:col-span-1">
                 {productAssurances.map(([icon, label]) => (
                   <div key={label} className="grid place-items-center border-r border-[color:var(--aura-rule)] px-2 py-5 last:border-r-0">
                     <HugeiconsIcon icon={icon} strokeWidth={1.5} className="size-7" />
@@ -117,6 +130,29 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
               <AddToCart product={product} />
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="grid gap-[var(--aura-gap)] bg-[var(--aura-ink)] px-5 pb-10 pt-20 text-[var(--aura-ivory)] sm:hidden">
+        <p className="text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-[var(--aura-text-muted-on-ink)]">Product details</p>
+        <p className="max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_68%)]">{product.summary}</p>
+        <div className="grid grid-cols-2 gap-[var(--aura-gap)]">
+          <div className="flex min-h-24 flex-col justify-between rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] p-3">
+            <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-[var(--aura-text-muted-on-ink)]">Scent profile</p>
+            <p className="font-display mt-3 text-[1.35rem] leading-none">{detailValue(product.family)}</p>
+          </div>
+          <div className="flex min-h-24 flex-col justify-between rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] p-3">
+            <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-[var(--aura-text-muted-on-ink)]">Made for</p>
+            <p className="font-display mt-3 text-[1.35rem] leading-none">{detailValue(product.occasion)}</p>
+          </div>
+        </div>
+        <div className="grid min-h-24 grid-cols-3 overflow-hidden rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] text-center">
+          {productAssurances.map(([icon, label]) => (
+            <div key={label} className="grid place-items-center border-r border-[color:var(--aura-rule)] px-2 py-3 last:border-r-0">
+              <HugeiconsIcon icon={icon} strokeWidth={1.5} className="size-6" />
+              <span className="text-[0.56rem] uppercase tracking-[0.08em] text-[color:rgb(245_228_199_/_55%)]">{label}</span>
+            </div>
+          ))}
         </div>
       </section>
 
