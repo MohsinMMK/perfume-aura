@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-20 19:18:24 UTC**
+Last refreshed: **2026-08-21 11:22:30 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -140,6 +140,20 @@ unauthenticated-session behavior, storefront locks, the path-preserving `www`
 redirect, and real immutable Next assets. Fresh `/shop` browser passes at
 390-by-844, 768-by-1024, and 1280-by-900 reported zero horizontal overflow and
 zero console errors or warnings.
+
+PR #56 merged the responsive Khanect AI footer attribution as exact storefront
+source `83d32f9c7542e77a289f4c2142ecc514f9622ae4`. Workflow run
+[`32476320377`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32476320377)
+passed quality, all 83 disposable-PostgreSQL integration tests, verified
+packaging, generated-branch publication, Hostinger auto-deployment, and exact
+live verification at 2026-08-21 11:20:25 UTC. The generated storefront branch
+is exact commit `73f2ddf5ea8a299c52ed92127e78d96485165819`; the VPS ops deployment
+stayed skipped. An independent verifier confirmed the exact storefront source,
+release locks, path-preserving `www` redirect, and a real immutable Next asset.
+Fresh 393 px mobile and 1280-by-900 desktop browser passes confirmed the
+right-aligned footer credit, hover and keyboard-focus logo reveal,
+reduced-motion fallback, zero horizontal overflow, and zero console errors or
+warnings.
 
 A production `/shop` check after that release shows the 69-product launch
 listing with URL-driven search, Signature / Inspired / Featured segments, size
@@ -327,6 +341,9 @@ runtime merge, and exact flags-off production deployment have now completed.
 - PR #54 deployed commerce production hardening as exact source
   `5a426b542eecb8c825b4b20590a68d93fc03908d` on both production surfaces with
   every customer-commerce release flag still closed.
+- PR #56 deployed the responsive Khanect AI footer attribution as exact
+  storefront source `83d32f9c7542e77a289f4c2142ecc514f9622ae4` without changing
+  the live VPS ops source or any commerce release lock.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
   deployment path.
