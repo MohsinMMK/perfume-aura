@@ -59,11 +59,27 @@ export function SiteFooter() {
         </div>
       </div>
 
-      <div className="mt-3 flex w-full flex-col gap-3 border-t border-dashed border-[color:var(--aura-rule)] px-[var(--aura-gutter)] pt-3 text-[0.62rem] uppercase tracking-[0.08em] text-[color:rgb(245_228_199_/_65%)] sm:flex-row sm:items-center sm:justify-between lg:px-[var(--aura-gutter-lg)]">
+      <div className="mt-3 grid w-full gap-x-5 border-t border-dashed border-[color:var(--aura-rule)] px-[var(--aura-gutter)] pt-3 text-[0.62rem] uppercase tracking-[0.08em] text-[color:rgb(245_228_199_/_65%)] sm:grid-cols-[1fr_auto] sm:items-center lg:grid-cols-[1fr_auto_1fr] lg:px-[var(--aura-gutter-lg)]">
         <p>© {new Date().getFullYear()} Perfume Aura. All rights reserved.</p>
-        <div className="flex flex-wrap gap-x-4 gap-y-2">
+        <div className="flex flex-wrap gap-x-4 sm:justify-end lg:justify-center">
           {policies.map(([label, href]) => <Link key={href} href={href} prefetch={false} className="inline-flex min-h-11 items-center hover:text-[var(--aura-ivory)]">{label}</Link>)}
         </div>
+        <a
+          href="https://khanect.com"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Website by Khanect AI"
+          className="group inline-flex min-h-11 w-fit items-center justify-self-end text-[var(--aura-ivory)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)] sm:col-span-2 lg:col-span-1"
+        >
+          <span aria-hidden="true" className="relative grid h-6 min-w-[9.5rem] overflow-hidden text-right">
+            <span className="col-start-1 row-start-1 self-center transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-[140%] group-focus-visible:translate-y-[140%] motion-reduce:transition-none">
+              Website by Khanect AI
+            </span>
+            <span className="col-start-1 row-start-1 grid -translate-y-[140%] place-items-center transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0 group-focus-visible:translate-y-0 motion-reduce:transition-none">
+              <Image src="/brand/khanect-ai-mark.svg" alt="" width={944} height={764} className="h-6 w-auto select-none" />
+            </span>
+          </span>
+        </a>
       </div>
     </footer>
   );

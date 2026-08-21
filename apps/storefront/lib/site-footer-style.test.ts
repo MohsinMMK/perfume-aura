@@ -47,7 +47,7 @@ describe("storefront footer identity", () => {
     assert.doesNotMatch(footer, /grid w-full border-y/u);
   });
 
-  it("separates the copyright and policy row with one dashed rule", async () => {
+  it("separates the copyright, policy, and maker row with one dashed rule", async () => {
     const footer = await readFile(
       new URL("../components/site-footer.tsx", import.meta.url),
       "utf8",
@@ -55,7 +55,7 @@ describe("storefront footer identity", () => {
 
     assert.match(
       footer,
-      /mt-3 flex w-full[\s\S]*border-t border-dashed[\s\S]*pt-3/u,
+      /mt-3 grid w-full[\s\S]*border-t border-dashed[\s\S]*pt-3/u,
     );
   });
 
@@ -84,5 +84,20 @@ describe("storefront footer identity", () => {
     assert.match(footer, /grid min-h-44[\s\S]*p-5/u);
     assert.match(footer, /<div data-footer-aura-list>[\s\S]*Join the Aura list/u);
     assert.doesNotMatch(footer, /data-footer-aura-list[^>]*className/u);
+  });
+
+  it("reveals the supplied Khanect AI mark from above as its credit label exits below", async () => {
+    const footer = await readFile(
+      new URL("../components/site-footer.tsx", import.meta.url),
+      "utf8",
+    );
+
+    assert.match(footer, /href="https:\/\/khanect\.com"/u);
+    assert.match(footer, /aria-label="Website by Khanect AI"/u);
+    assert.match(footer, /min-h-11[^"]*justify-self-end/u);
+    assert.match(footer, /group-hover:translate-y-\[140%\]/u);
+    assert.match(footer, /-translate-y-\[140%\][\s\S]*group-hover:translate-y-0/u);
+    assert.match(footer, /src="\/brand\/khanect-ai-mark\.svg"/u);
+    assert.match(footer, /motion-reduce:transition-none/u);
   });
 });
