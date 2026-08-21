@@ -27,10 +27,14 @@ describe("mobile product detail design contract", () => {
     ]);
 
     assert.doesNotMatch(page, /grid-rows-\[47svh_53svh\]/u);
+    assert.match(page, /href="\/shop" className="inline-flex min-h-11/u);
     assert.match(page, /text-\[clamp\(2\.25rem,10vw,2\.75rem\)\]/u);
-    assert.match(page, /mt-2 grid grid-cols-2[^"]*sm:mt-5/u);
+    assert.match(page, /mt-1 grid grid-cols-2[^"]*sm:mt-5/u);
     assert.match(page, /col-span-2 hidden min-h-40[^"]*sm:grid sm:col-span-1/u);
-    assert.match(page, /Product details[\s\S]*sm:hidden/u);
+    assert.match(
+      page,
+      /<section className="[^"]*sm:hidden[^"]*">[\s\S]*?<p[^>]*>Product details<\/p>/u,
+    );
     assert.match(addToCart, /col-span-2 grid[^"]*sm:col-span-1/u);
     assert.match(addToCart, /min-h-11 min-w-0[^"]*sm:min-h-12 sm:min-w-\[5\.5rem\]/u);
     assert.match(addToCart, /min-h-12 w-full[^"]*sm:min-h-\[4\.75rem\]/u);

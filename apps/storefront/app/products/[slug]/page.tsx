@@ -99,16 +99,16 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
           </div>
         </div>
 
-        <div className="flex items-start px-5 py-2 sm:items-end sm:px-10 sm:py-12 lg:min-h-[100svh] lg:px-3 lg:pb-3 lg:pt-24 xl:px-5">
+        <div className="flex items-start px-5 sm:items-end sm:px-10 sm:py-12 lg:min-h-[100svh] lg:px-3 lg:pb-3 lg:pt-24 xl:px-5">
           <div className="w-full">
             <div className="lg:text-center">
-              <Link href="/shop" className="inline-flex min-h-6 items-center font-display text-sm text-[color:rgb(245_228_199_/_62%)] underline-offset-8 hover:underline sm:min-h-8 sm:text-lg">Shop / {product.collectionSlug === "signature" ? "Signature" : product.collectionSlug === "inspired" ? "Inspired" : "Collection"}</Link>
+              <Link href="/shop" className="inline-flex min-h-11 items-center font-display text-sm text-[color:rgb(245_228_199_/_62%)] underline-offset-8 hover:underline sm:min-h-8 sm:text-lg">Shop / {product.collectionSlug === "signature" ? "Signature" : product.collectionSlug === "inspired" ? "Inspired" : "Collection"}</Link>
               <h1 className="font-display text-[clamp(2.25rem,10vw,2.75rem)] leading-[0.86] text-balance sm:mt-1 sm:text-[clamp(3.6rem,7vw,7.8rem)] sm:leading-[0.77] lg:mx-auto lg:max-w-[8.5ch]">{product.name}</h1>
               <p className="mt-1 hidden max-w-xl text-xs leading-4 text-[color:rgb(245_228_199_/_62%)] min-[360px]:line-clamp-2 sm:mt-3 sm:block sm:text-sm sm:leading-6 lg:mx-auto lg:max-w-[30rem]">{product.summary}</p>
             </div>
             <p className="font-display mt-1 text-2xl sm:mt-4 sm:text-4xl lg:mt-5 lg:px-2">{firstPrice ? `From ${formatMoney(firstPrice)}` : "Price not available yet"}</p>
 
-            <div className="mt-2 grid grid-cols-2 gap-[var(--aura-gap)] sm:mt-5 lg:mt-6">
+            <div className="mt-1 grid grid-cols-2 gap-[var(--aura-gap)] sm:mt-5 lg:mt-6">
               <div className="hidden min-h-28 flex-col justify-between rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] p-4 sm:flex lg:min-h-40 lg:p-5">
                 <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-[var(--aura-text-muted-on-ink)]">Scent profile</p>
                 <p className="font-display mt-3 text-[1.35rem] leading-none sm:mt-4 sm:text-2xl lg:text-[2rem]">{detailValue(product.family)}</p>
