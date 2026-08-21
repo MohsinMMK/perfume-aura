@@ -96,7 +96,9 @@ describe("storefront footer identity", () => {
     assert.match(footer, /aria-label="Website by Khanect AI"/u);
     assert.match(footer, /min-h-11[^"]*justify-self-end/u);
     assert.match(footer, /group-hover:translate-y-\[140%\]/u);
+    assert.match(footer, /group-focus-visible:translate-y-\[140%\]/u);
     assert.match(footer, /-translate-y-\[140%\][\s\S]*group-hover:translate-y-0/u);
+    assert.match(footer, /group-focus-visible:translate-y-0/u);
     assert.match(footer, /src="\/brand\/khanect-ai-mark\.svg"/u);
     assert.match(footer, /motion-reduce:transition-none/u);
   });

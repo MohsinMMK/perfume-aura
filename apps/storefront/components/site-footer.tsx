@@ -62,7 +62,7 @@ export function SiteFooter() {
       <div className="mt-3 grid w-full gap-x-5 border-t border-dashed border-[color:var(--aura-rule)] px-[var(--aura-gutter)] pt-3 text-[0.62rem] uppercase tracking-[0.08em] text-[color:rgb(245_228_199_/_65%)] sm:grid-cols-[1fr_auto] sm:items-center lg:grid-cols-[1fr_auto_1fr] lg:px-[var(--aura-gutter-lg)]">
         <p>© {new Date().getFullYear()} Perfume Aura. All rights reserved.</p>
         <div className="flex flex-wrap gap-x-4 sm:justify-end lg:justify-center">
-          {policies.map(([label, href]) => <Link key={href} href={href} prefetch={false} className="inline-flex min-h-11 items-center hover:text-[var(--aura-ivory)]">{label}</Link>)}
+          {policies.map(([label, href]) => <Link key={href} href={href} prefetch={false} className="inline-flex min-h-11 items-center hover:text-[var(--aura-ivory)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)]">{label}</Link>)}
         </div>
         <a
           href="https://khanect.com"
