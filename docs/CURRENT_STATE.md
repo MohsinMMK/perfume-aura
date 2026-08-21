@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-21 11:22:30 UTC**
+Last refreshed: **2026-08-21 21:04:57 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -154,6 +154,22 @@ Fresh 393 px mobile and 1280-by-900 desktop browser passes confirmed the
 right-aligned footer credit, hover and keyboard-focus logo reveal,
 reduced-motion fallback, zero horizontal overflow, and zero console errors or
 warnings.
+
+PR #58 merged the adaptive mobile product-detail refinement as exact storefront
+source `88521ca775321fc13ab9756ea3c78d695c2e2ca2`. Workflow run
+[`32525289244`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32525289244)
+passed quality, all 83 disposable-PostgreSQL integration tests, verified
+packaging, generated-branch publication, Hostinger auto-deployment, and exact
+live verification at 2026-08-21 20:56:07 UTC. The generated storefront branch
+is exact commit `46c093c1e69ccb4c31f2979036c389df75db308e`; the VPS ops
+deployment stayed skipped. The verifier confirmed the exact storefront source,
+closed release locks, path-preserving `www` redirect, and immutable asset
+`/_next/static/chunks/36n1lupunhhzk.css`. Pre-release browser checks at
+320-by-568, 393-by-659, and 589-by-1204 confirmed the 8 px rounded image frame,
+44 px breadcrumb target, visible purchase action, adaptive details handoff, and
+zero horizontal overflow. A separate remote fetch confirmed the live Dior
+Sauvage product content; direct workstation browser acceptance was unavailable
+because connections to every resolved Hostinger CDN address timed out.
 
 A production `/shop` check after that release shows the 69-product launch
 listing with URL-driven search, Signature / Inspired / Featured segments, size
@@ -344,6 +360,9 @@ runtime merge, and exact flags-off production deployment have now completed.
 - PR #56 deployed the responsive Khanect AI footer attribution as exact
   storefront source `83d32f9c7542e77a289f4c2142ecc514f9622ae4` without changing
   the live VPS ops source or any commerce release lock.
+- PR #58 deployed the adaptive mobile product-detail layout as exact storefront
+  source `88521ca775321fc13ab9756ea3c78d695c2e2ca2` without changing the live
+  VPS ops source or any commerce release lock.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
   deployment path.
