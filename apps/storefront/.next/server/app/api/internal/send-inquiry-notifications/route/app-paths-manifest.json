@@ -1,0 +1,3 @@
+{
+  "/api/internal/send-inquiry-notifications/route": "app/api/internal/send-inquiry-notifications/route.js"
+}

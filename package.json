@@ -1,0 +1,11 @@
+{
+  "name": "perfume-aura-storefront-standalone",
+  "private": true,
+  "engines": { "node": ">=24.6.0 <25" },
+  "dependencies": {},
+  "scripts": {
+    "build": "echo prebuilt-standalone",
+    "postinstall": "echo skip-postinstall",
+    "start": "node apps/storefront/server.js"
+  }
+}

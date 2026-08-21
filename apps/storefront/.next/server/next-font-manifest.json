@@ -1,0 +1,33 @@
+{
+  "app": {
+    "[project]/apps/storefront/app/_not-found/page": [],
+    "[project]/apps/storefront/app/about/page": [],
+    "[project]/apps/storefront/app/account/delivery/page": [],
+    "[project]/apps/storefront/app/account/orders/[orderNumber]/page": [],
+    "[project]/apps/storefront/app/account/orders/page": [],
+    "[project]/apps/storefront/app/account/page": [],
+    "[project]/apps/storefront/app/account/recover/page": [],
+    "[project]/apps/storefront/app/account/register/page": [],
+    "[project]/apps/storefront/app/account/settings/page": [],
+    "[project]/apps/storefront/app/account/sign-in/page": [],
+    "[project]/apps/storefront/app/cart/page": [],
+    "[project]/apps/storefront/app/checkout/page": [],
+    "[project]/apps/storefront/app/collections/[slug]/page": [],
+    "[project]/apps/storefront/app/contact/page": [],
+    "[project]/apps/storefront/app/faq/page": [],
+    "[project]/apps/storefront/app/find-your-scent/page": [],
+    "[project]/apps/storefront/app/order/[token]/page": [],
+    "[project]/apps/storefront/app/page": [],
+    "[project]/apps/storefront/app/privacy/page": [],
+    "[project]/apps/storefront/app/products/[slug]/page": [],
+    "[project]/apps/storefront/app/returns/page": [],
+    "[project]/apps/storefront/app/search/page": [],
+    "[project]/apps/storefront/app/shipping/page": [],
+    "[project]/apps/storefront/app/shop/page": [],
+    "[project]/apps/storefront/app/terms/page": [],
+    "[project]/apps/storefront/app/wholesale/page": []
+  },
+  "appUsingSizeAdjust": false,
+  "pages": {},
+  "pagesUsingSizeAdjust": false
+}

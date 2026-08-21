@@ -1,0 +1,5 @@
+;!function(){try { var e="undefined"!=typeof globalThis?globalThis:"undefined"!=typeof global?global:"undefined"!=typeof window?window:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&((e._debugIds|| (e._debugIds={}))[n]="6e2def56-7b3f-3910-4eba-4b6d22dc7293")}catch(e){}}();
+module.exports=[195498,(a,b,c)=>{"use strict";Object.defineProperty(c,"__esModule",{value:!0}),Object.defineProperty(c,"default",{enumerable:!0,get:function(){return f}});let d=a.r(87164),e=a.r(140430);function f(){return(0,d.jsx)(e.HTTPAccessErrorFallback,{status:401,message:"You're not authorized to access this page."})}("function"==typeof c.default||"object"==typeof c.default&&null!==c.default)&&void 0===c.default.__esModule&&(Object.defineProperty(c.default,"__esModule",{value:!0}),Object.assign(c.default,c),b.exports=c.default)},588270,a=>{a.n(a.i(195498))}];
+
+//# debugId=6e2def56-7b3f-3910-4eba-4b6d22dc7293
+//# sourceMappingURL=0lc2_next_dist_client_components_builtin_unauthorized_0ibkzx-.js.map

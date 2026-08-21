@@ -1,0 +1,3 @@
+{
+  "/api/account/claim-order/route": "app/api/account/claim-order/route.js"
+}

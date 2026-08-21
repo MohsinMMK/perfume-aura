@@ -1,0 +1,3 @@
+{
+  "/api/internal/expire-checkouts/route": "app/api/internal/expire-checkouts/route.js"
+}
