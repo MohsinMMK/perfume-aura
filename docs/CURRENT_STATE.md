@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-23 16:42:00 UTC**
+Last refreshed: **2026-08-23 17:11:32 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -33,16 +33,22 @@ and ignored local environment files.
 ## Exact releases and automation
 
 Both production surfaces run exact source
-`6a3dc24fbcacc9ed0f44219e9e0f260e0a2e207b`. Ops uses immutable image digest
-`sha256:f3cef390441886c598e8b1d929cc806c1844c6553cae17daa032c483a7c74a72`.
-Workflow run [`32640619706`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32640619706)
+`613828984e860b2c311e94384c5a679e9ae45a14`. Ops uses immutable image digest
+`sha256:5d9c7363cd017f17594e40551c40e45245ebc1482af098db372fa7d2a10ad62d`;
+the generated storefront branch is exact commit
+`975a30ba82da9dcf7f79af04470d871cdf0cb134`. Workflow run
+[`32653259699`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32653259699)
 passed quality, all disposable-PostgreSQL integration tests, verified
 packaging, immutable image build/push, Tailscale deployment through the
-restricted SSH identity, generated-branch publication, Hostinger
-auto-deployment, and exact live verification on both surfaces at 2026-08-23
-12:58:10 UTC. Independent acceptance rechecked both exact versions, ops
-live/ready/unauthenticated-session behavior, storefront release locks, a real
-immutable Next asset, and the path- and query-preserving `www` redirect.
+restricted SSH identity, and generated-branch publication. Its first live
+acceptance snapshot failed after the exact release arrived at production but
+before every HCDN edge returned the new discovery files. After propagation,
+the corrected exact-release verifier passed independently for both surfaces,
+including ops live/ready/unauthenticated-session behavior, storefront release
+locks, the exact four-URL sitemap and crawler policy, real immutable Next
+assets, and the path- and query-preserving `www` redirect. PR #63 corrected the
+verifier's homepage URL expectation to the canonical non-trailing-slash form;
+it did not alter either production runtime.
 
 Routine ops deployment is now:
 
@@ -252,6 +258,14 @@ is allowed, while preview commerce and incomplete policy/inquiry pages remain
 `noindex` and private account, API, cart, checkout, and order paths stay
 disallowed in `robots.txt`. Product and collection URLs enter the sitemap only
 after the existing public-catalog gate opens.
+IndexNow accepted all four live discovery URLs with HTTP `202` on 2026-08-23.
+Fresh 390-by-844 production browser sessions on the home page and fragrance
+guide confirmed canonical metadata, Open Graph metadata, Organization/WebSite
+and Article/Breadcrumb structured data, zero horizontal overflow, and zero
+console errors or warnings. A throttled live Lighthouse run scored SEO 100,
+accessibility 100, best practices 100, performance 77, and cumulative layout
+shift 0; the remaining performance variance is primarily LCP/network cost and
+does not weaken the crawl or release locks.
 `OPS_TWO_FACTOR_REQUIRED` and
 `OPS_STAFF_INVITES_ENABLED` remain false until the complete staff release gate
 passes. Green health never authorizes opening a release flag.
@@ -390,21 +404,34 @@ runtime merge, and exact flags-off production deployment have now completed.
   matching, and mutation-origin hardening as exact source
   `6a3dc24fbcacc9ed0f44219e9e0f260e0a2e207b` on both production surfaces with
   every commerce and staff-security release flag still closed.
+- PR #62 deployed the search-discovery foundation as exact source
+  `613828984e860b2c311e94384c5a679e9ae45a14`: public crawler access, an exact
+  four-URL sitemap, canonical/social metadata, safe entity and editorial
+  structured data, a server-rendered fragrance guide, self-hosted fonts,
+  IndexNow support, and fail-closed preview-commerce indexing. No commerce,
+  customer-auth, inquiry, or staff-security flag opened.
+- PR #63 corrected only the production verifier's canonical homepage sitemap
+  expectation after the live release exposed the trailing-slash mismatch. Its
+  merge remained deployment-free.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
   deployment path.
 
 Next actions:
 
-1. Obtain India-counsel clearance and owner-approved catalog facts: unresolved
+1. Verify the domain in Google Search Console, submit
+   `https://perfumeaura.com/sitemap.xml`, and review indexing/coverage after
+   Google recrawls. This requires the owner's Google account; IndexNow is
+   already submitted for supported engines.
+2. Obtain India-counsel clearance and owner-approved catalog facts: unresolved
    mappings, Signature prices, SKUs, costs, opening stock, media, and structured
    scent content. Do not migrate or publish sale data before that gate.
-2. Supply and accept the provider identities: Google OAuth production client,
+3. Supply and accept the provider identities: Google OAuth production client,
    Hostinger SMTP sender credentials and delivery proof, and Cashfree merchant
    KYC/UPI-only sandbox credentials, webhooks, transaction TTL, and refunds.
-3. Approve the operating rules and references for tax, serviceability/courier,
+4. Approve the operating rules and references for tax, serviceability/courier,
    shipping fee and threshold, returns/cancellations, and support staffing.
-4. Complete owner TOTP/recovery and staff journey acceptance, then separately
+5. Complete owner TOTP/recovery and staff journey acceptance, then separately
    authorize the documented maintenance, customer-auth, catalog, checkout, and
    inquiry activation sequence plus the final low-value live UPI
    purchase/refund. Until then, keep every commerce and staff-security flag
