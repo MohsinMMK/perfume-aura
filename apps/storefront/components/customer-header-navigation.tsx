@@ -36,6 +36,12 @@ export function CustomerHeaderNavigation({
     if (result.error) return;
     closeMenu?.();
     setSignedIn(false);
+    const [Sentry, { resetStorefrontPostHog }] = await Promise.all([
+      import("@sentry/nextjs"),
+      import("@/lib/posthog-client"),
+    ]);
+    Sentry.setUser(null);
+    await resetStorefrontPostHog();
     router.replace("/");
     router.refresh();
   };
