@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-23 21:43:37 UTC**
+Last refreshed: **2026-08-23 22:05:37 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -33,23 +33,21 @@ and ignored local environment files.
 ## Exact releases and automation
 
 Both production surfaces run exact source
-`4746fe1bb70f7cd37d8616729e7bf628699821e4`. Ops uses immutable image digest
-`sha256:7e079713a03d97eb09d5242f2fa63c067b18e57b9c37117da326491b2aeedbd5`;
+`1c283305d2c1a5889d5cc72dd87da24e58bd54f6`. Ops uses immutable image digest
+`sha256:8794d2c4c62021fa8f9d1cbfdb8c6f436782b6724e6e7b6766052a4811d178f4`;
 the generated storefront branch is exact commit
-`fbcead016ff9f63d218e7d93fa15fdfdea226767`. Workflow run
-[`32653933909`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32653933909)
+`27a8a0c61e7e7b9d2fe3f376734ed2ad0de3ae75`. Workflow run
+[`32668717916`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32668717916)
 passed quality, all disposable-PostgreSQL integration tests, verified
 packaging, immutable image build/push, Tailscale deployment through the
 restricted SSH identity, generated-branch publication, and exact live
-verification on both surfaces. Independent corrected-verifier acceptance also
-passed both surfaces, including ops live/ready/unauthenticated-session
-behavior, storefront release locks, the exact four-URL sitemap and crawler
-policy, real immutable Next assets, and the path- and query-preserving `www`
-redirect. The preceding SEO workflow run `32653259699` first exposed an HCDN
-propagation window and a homepage sitemap trailing-slash mismatch in the
-verifier; PR #63 corrected that verifier contract, then its normal runtime
-workflow repackaged and deployed the unchanged website behavior as the current
-exact source.
+verification on both surfaces. Independent exact-source acceptance also passed
+ops live/ready/unauthenticated-session behavior, storefront release locks, the
+exact four-URL sitemap and crawler policy, real immutable Next assets, and the
+path- and query-preserving `www` redirect. Fresh 1280-by-800 and 390-by-844
+in-app browser checks confirmed the production hero, journey, CTA, and footer,
+with no root horizontal overflow, failed loaded images, or console warnings or
+errors.
 
 PR #67 merged the dependency modernization and Better Auth 1.7 operations
 identity migration as exact source
@@ -62,9 +60,10 @@ collisions. The direct-owner production migration advanced the migration count
 from 13 to 14, backfilled issuer `local:credential`, made issuer non-null, and
 created the unique issuer/account identity index. Both restricted runtime grant
 scripts returned zero drift, and no commerce-settings row exists, so the
-application's server-authoritative default remains flags-off. The next action
-is an explicit flags-off deployment of both runtimes from a migration-free
-main commit, followed by exact live acceptance.
+application's server-authoritative default remains flags-off. PR #68 recorded
+the migration gate as migration-free source
+`1c283305d2c1a5889d5cc72dd87da24e58bd54f6`; its explicit flags-off deployment
+and exact production acceptance completed in workflow run `32668717916`.
 
 Routine ops deployment is now:
 
@@ -437,6 +436,13 @@ runtime merge, and exact flags-off production deployment have now completed.
   normal non-Markdown main workflow repackaged, deployed, and exactly verified
   source `4746fe1bb70f7cd37d8616729e7bf628699821e4` on both surfaces without
   changing website behavior or opening any release flag.
+- PR #67 modernized the supported dependency set, migrated ops identity keys
+  to Better Auth 1.7's issuer-aware contract, and kept runtime publication
+  blocked until migration `0013_silly_vanisher` and restricted grants passed.
+- PR #68 recorded the completed production migration gate. Its explicit
+  migration-free dispatch deployed and exactly verified source
+  `1c283305d2c1a5889d5cc72dd87da24e58bd54f6` on both production surfaces with
+  every commerce and staff-security release flag still closed.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
   deployment path.
