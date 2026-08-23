@@ -203,6 +203,7 @@ export async function ensureOwnerAccount(
       await transaction.insert(account).values({
         id: randomUUID(),
         accountId: owner.id,
+        issuer: "local:credential",
         providerId: "credential",
         userId: owner.id,
         password: hashedPassword,
@@ -269,6 +270,7 @@ export async function recoverOwnerCredential(
       await transaction.insert(account).values({
         id: randomUUID(),
         accountId: owner.id,
+        issuer: "local:credential",
         providerId: "credential",
         userId: owner.id,
         password: hashedPassword,

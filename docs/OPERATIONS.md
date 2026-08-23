@@ -166,8 +166,8 @@ do not expose them to browsers or replace them with an unauthenticated cron:
 | `/api/internal/send-order-emails` | Drain the transactional order-email outbox with retry/backoff |
 | `/api/internal/send-inquiry-notifications` | Drain the separate support-inquiry notification outbox without persisting PII in it |
 
-Keep all five jobs disabled until migrations through `0012_amused_cloak`, restricted
-runtime grants, Cashfree sandbox behavior, and Hostinger SMTP delivery are
+Keep all five jobs disabled until migrations through `0013_silly_vanisher`,
+restricted runtime grants, Cashfree sandbox behavior, and Hostinger SMTP delivery are
 proven on their owning environments. A failed or ambiguous provider response
 must retain stock and remain available for the next reconciliation run.
 The repository-owned scheduler is
@@ -263,6 +263,13 @@ casually.
 
 Production migrations remain manual direct-owner operations. Reapply restricted
 runtime grants after every schema change.
+
+Migration `0013_silly_vanisher` is the Better Auth 1.7 operations identity
+boundary. Before applying it, prove every operations account provider is
+`credential` and that rewriting each credential `account_id` to its `user_id`
+creates no duplicate `(issuer, account_id)` pair. The migration fails closed on
+an unmapped provider or collision, backfills issuer `local:credential`, and
+then makes issuer required with a unique issuer/account identity index.
 
 ## Migrations and runtime grants
 

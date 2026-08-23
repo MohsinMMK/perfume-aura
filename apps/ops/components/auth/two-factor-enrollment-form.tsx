@@ -45,9 +45,16 @@ export function TwoFactorEnrollmentForm({
     setPending(true);
 
     try {
-      const result = await authClient.twoFactor.enable({ password });
+      const result = await authClient.twoFactor.enable({
+        password,
+        method: "totp",
+      });
       if (result.error || !result.data) {
         setError(errorMessage(result.error));
+        return;
+      }
+      if (result.data.method !== "totp") {
+        setError("Authenticator enrollment returned an unexpected method.");
         return;
       }
       setEnrollment({

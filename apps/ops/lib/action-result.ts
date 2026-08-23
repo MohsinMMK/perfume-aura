@@ -1,3 +1,5 @@
+import type { ZodError } from "zod";
+
 export type ActionResult<T = undefined> =
   | { ok: true; data?: T }
   | { ok: false; error: string; fieldErrors?: Record<string, string[]> };
@@ -14,12 +16,19 @@ export function actionError(
 }
 
 export function zodFieldErrors(
-  error: { flatten: () => { fieldErrors: Record<string, string[] | undefined> } },
+  error: ZodError,
 ): Record<string, string[]> {
-  const flat = error.flatten().fieldErrors;
   const out: Record<string, string[]> = {};
-  for (const [key, msgs] of Object.entries(flat)) {
-    if (msgs && msgs.length > 0) out[key] = msgs;
+  for (const issue of error.issues) {
+    const firstPathSegment = issue.path[0];
+    if (
+      typeof firstPathSegment !== "string" &&
+      typeof firstPathSegment !== "number"
+    ) {
+      continue;
+    }
+    const key = String(firstPathSegment);
+    (out[key] ??= []).push(issue.message);
   }
   return out;
 }

@@ -105,6 +105,20 @@ echo "==> Installing locked Linux x64 sharp runtime"
 cp "$RUNTIME_DEPS_DIR/package.json" "$SHARP_TMP/package.json"
 cp "$RUNTIME_DEPS_DIR/package-lock.json" "$SHARP_TMP/package-lock.json"
 (cd "$SHARP_TMP" && npm ci --omit=dev --ignore-scripts --no-audit --no-fund --os=linux --cpu=x64 --libc=glibc >/dev/null)
+
+# The traced tree follows pnpm aliases and can duplicate the host platform's
+# large Sharp/libvips binary throughout several resolver neighborhoods. This
+# archive has one declared Linux x64/glibc target, so discard every traced
+# platform binary before installing the locked target runtime in the two
+# resolver boundaries used by the extracted server.
+while IFS= read -r -d '' traced_sharp_platform_directory; do
+  rm -rf "$traced_sharp_platform_directory"
+done < <(
+  find "$STAGE" -type d \
+    \( -name 'sharp-*-*' -o -name 'sharp-libvips-*-*' \) \
+    -prune -print0
+)
+
 for destination in "$STAGE/apps/storefront/node_modules" "$STAGE/node_modules"; do
   mkdir -p "$destination"
   rm -rf "$destination/sharp" "$destination/@img"
@@ -231,9 +245,9 @@ for required in apps/storefront/server.js apps/storefront/.next/static apps/stor
 done
 
 echo "==> Compressing and validating archive"
-(cd "$STAGE" && zip -qry "$ZIP_PATH" .)
+(cd "$STAGE" && zip -qry9X "$ZIP_PATH" .)
 ARCHIVE_BYTES="$(wc -c < "$ZIP_PATH" | tr -d ' ')"
-[[ "$ARCHIVE_BYTES" -le "$MAX_ARCHIVE_BYTES" ]] || { echo "ERROR: archive exceeds Hostinger 50MB limit" >&2; exit 1; }
+[[ "$ARCHIVE_BYTES" -le "$MAX_ARCHIVE_BYTES" ]] || { echo "ERROR: archive is ${ARCHIVE_BYTES} bytes and exceeds Hostinger 50MB limit" >&2; exit 1; }
 python3 - "$ZIP_PATH" "$EXTRACTED" <<'PY'
 import os, pathlib, stat, sys, zipfile
 archive, destination = sys.argv[1:]
