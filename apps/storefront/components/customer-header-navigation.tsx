@@ -36,12 +36,19 @@ export function CustomerHeaderNavigation({
     if (result.error) return;
     closeMenu?.();
     setSignedIn(false);
-    const [Sentry, { resetStorefrontPostHog }] = await Promise.all([
-      import("@sentry/nextjs"),
-      import("@/lib/posthog-client"),
-    ]);
-    Sentry.setUser(null);
-    await resetStorefrontPostHog();
+    try {
+      const [Sentry, { resetStorefrontPostHog }] = await Promise.all([
+        import("@sentry/nextjs"),
+        import("@/lib/posthog-client"),
+      ]);
+      Sentry.setUser(null);
+      await resetStorefrontPostHog();
+    } catch (error: unknown) {
+      console.error(
+        "[customer-auth] telemetry identity reset failed after sign-out",
+        error,
+      );
+    }
     router.replace("/");
     router.refresh();
   };
