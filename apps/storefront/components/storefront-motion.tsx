@@ -204,7 +204,6 @@ export function StorefrontMotion() {
               .forEach((element) => {
                 gsap.from(element, {
                   y: 36,
-                  opacity: 0.18,
                   duration: 0.78,
                   ease: "power4.out",
                   scrollTrigger: {
@@ -220,7 +219,6 @@ export function StorefrontMotion() {
               .forEach((element, index) => {
                 gsap.from(element, {
                   y: 56,
-                  opacity: 0.2,
                   duration: 0.82,
                   delay: Math.min(index, 4) * 0.055,
                   ease: "power4.out",
@@ -258,7 +256,6 @@ export function StorefrontMotion() {
             if (stackedPanels.length > 0) {
               gsap.from(stackedPanels, {
                 y: 36,
-                opacity: 0.2,
                 stagger: 0.08,
                 duration: 0.7,
                 ease: "power4.out",
@@ -352,7 +349,6 @@ export function StorefrontMotion() {
               .forEach((element, index) => {
                 gsap.from(element, {
                   y: 48,
-                  opacity: 0.2,
                   duration: 0.82,
                   delay: Math.min(index, 3) * 0.06,
                   ease: "power4.out",
@@ -415,10 +411,9 @@ export function StorefrontMotion() {
                     .forEach((stage) => {
                       gsap.fromTo(
                         stage,
-                        { y: 28, opacity: 0.72 },
+                        { y: 28 },
                         {
                           y: 0,
-                          opacity: 1,
                           ease: "none",
                           scrollTrigger: {
                             trigger: stage,

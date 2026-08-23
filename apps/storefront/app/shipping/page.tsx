@@ -3,7 +3,7 @@ import { EditorialPage } from "@/components/editorial-page";
 import { loadApprovedCommercePolicy } from "@/lib/commerce-policy";
 import { formatMoney } from "@/lib/money";
 
-export const metadata: Metadata = { title: "Shipping policy", alternates: { canonical: "/shipping" } };
+export const metadata: Metadata = { title: "Shipping policy", alternates: { canonical: "/shipping" }, robots: { index: false, follow: false } };
 
 export default async function ShippingPage() {
   const policy = await loadApprovedCommercePolicy();

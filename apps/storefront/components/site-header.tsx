@@ -28,9 +28,8 @@ import { useCart } from "./cart-provider";
 
 const navigation = [
   { href: "/shop", label: "Shop" },
-  { href: "/wholesale", label: "Wholesale" },
+  { href: "/fragrance-guide", label: "Scent guide" },
   { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
   { href: "/faq", label: "FAQ" },
 ] as const;
 
@@ -148,11 +147,11 @@ export function SiteHeader({ customerAuthEnabled }: Readonly<{ customerAuthEnabl
             className={`pointer-events-auto flex items-center gap-1.5 lg:absolute lg:right-0 lg:top-0 ${compact ? "aura-compact-controls-enter lg:flex" : "lg:hidden"}`}
           >
             <Button
-              render={<Link href="/shop" />}
+              render={<Link href="/fragrance-guide" />}
               nativeButton={false}
               className="aura-cream-action min-h-12 rounded-[var(--aura-radius)] px-5 font-display text-base transition-colors max-[359px]:hidden sm:px-7"
             >
-              Get scent
+              Scent guide
             </Button>
 
             <Button

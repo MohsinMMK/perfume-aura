@@ -269,6 +269,22 @@ budget checks, and the full workspace dependency audit. The audit fails on any
 known severity and also checks the separate ops runtime lock. Run integration
 tests separately with explicitly supplied disposable database URLs.
 
+## Search discovery
+
+`apps/storefront/lib/seo.ts` owns the canonical site identity, discovery
+sitemap entries, private crawler paths, and JSON-LD serialization. Keep the
+release-locked sitemap limited to `/`, `/fragrance-guide`, `/about`, and
+`/faq`; published product and collection URLs enter it only through the
+existing public-catalog gate. Placeholder, preview, account, transactional,
+search, and incomplete-policy pages must remain `noindex`.
+
+The homepage publishes one Organization/WebSite graph. The fragrance guide
+publishes visible Article and BreadcrumbList data that matches its rendered
+content. Do not add speculative Product, Offer, AggregateRating, FAQ, social,
+address, or contact facts, and do not create scaled keyword pages. Root social
+metadata uses the verified bottle still life; self-hosted fonts are preloaded
+through `next/font/local` with adjusted fallbacks to protect layout stability.
+
 Ops local bootstrap uses `apps/ops/.env.local` copied from `.env.example`.
 Export command-required values explicitly rather than sourcing the file, then
 run migrations, seed `MAIN`, seed the owner, and start ops:

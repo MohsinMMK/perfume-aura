@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { AboutBottleStage } from "@/components/about-bottle-stage";
 
-export const metadata: Metadata = { title: "Our story", alternates: { canonical: "/about" } };
+export const metadata: Metadata = {
+  title: "Our story",
+  description:
+    "Meet Perfume Aura, an India-focused fragrance house built around expressive presentation and careful, verified product claims.",
+  alternates: { canonical: "/about" },
+};
 
 export default function AboutPage() {
   return (

@@ -3,6 +3,7 @@ import Link from "next/link";
 
 const navigation = [
   ["Shop", "/shop"],
+  ["Scent guide", "/fragrance-guide"],
   ["Wholesale", "/wholesale"],
   ["About", "/about"],
   ["FAQ", "/faq"],
@@ -22,7 +23,7 @@ export function SiteFooter() {
       <div className="grid w-full gap-3 lg:grid-cols-[18rem_14rem_1fr_7rem]">
         <div className="grid min-h-44 place-items-center rounded-[var(--aura-radius)] border border-dashed border-[color:var(--aura-rule)] p-5 text-center">
           <Link href="/" aria-label="Perfume Aura home" className="grid place-items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)]">
-            <Image src="/brand/perfume-aura-icon.svg" alt="" aria-hidden="true" width={271} height={386} className="h-auto w-20 select-none sm:w-24" />
+            <Image src="/brand/perfume-aura-icon.svg" alt="" aria-hidden="true" width={271} height={386} className="h-[7.125rem] w-20 select-none sm:h-[8.5625rem] sm:w-24" />
             <Image src="/brand/perfume-aura-wordmark.svg" alt="" aria-hidden="true" width={422} height={34} className="h-auto w-40 select-none sm:w-44" />
           </Link>
         </div>

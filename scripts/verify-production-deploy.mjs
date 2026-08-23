@@ -340,10 +340,13 @@ export async function verifyProductionDeploy(options) {
   const robots = await fetchStatus(`${publicBase}/robots.txt`, { fetchImpl });
   if (
     robots.status !== 200 ||
-    !robots.text.includes("Disallow: /") ||
+    !robots.text.includes("Allow: /") ||
+    !robots.text.includes("Disallow: /account/") ||
+    !robots.text.includes("Disallow: /api/") ||
+    !robots.text.includes("Disallow: /checkout") ||
     !robots.text.includes(`${publicBase}/sitemap.xml`)
   ) {
-    throw new Error("storefront robots.txt is not release locked at the apex");
+    throw new Error("storefront robots.txt is missing discovery or private-route directives at the apex");
   }
 
   const customerAuth = await fetchStatus(
@@ -442,7 +445,7 @@ function successRoutes(commit, staticPath, publicBase = "pending") {
     "/search": { status: 200, body: "search" },
     "/robots.txt": {
       status: 200,
-      body: `User-Agent: *\nDisallow: /\nSitemap: ${publicBase}/sitemap.xml\n`,
+      body: `User-Agent: *\nAllow: /\nDisallow: /account/\nDisallow: /api/\nDisallow: /cart\nDisallow: /checkout\nDisallow: /order/\nSitemap: ${publicBase}/sitemap.xml\n`,
     },
     "/api/customer-auth/get-session": {
       status: 404,
@@ -591,7 +594,7 @@ async function selfTest() {
   const successRoutesFixture = successRoutes(commit, staticPath);
   const success = await createFixtureServer(successRoutesFixture);
   successRoutesFixture["/robots.txt"].body =
-    `User-Agent: *\nDisallow: /\nSitemap: ${success.baseUrl}/sitemap.xml\n`;
+    `User-Agent: *\nAllow: /\nDisallow: /account/\nDisallow: /api/\nDisallow: /checkout\nSitemap: ${success.baseUrl}/sitemap.xml\n`;
   try {
     const result = await verifyProductionDeploy({
       expectedCommit: commit,
@@ -609,7 +612,7 @@ async function selfTest() {
   const storefrontRoutes = successRoutes(commit, staticPath, "pending");
   const storefront = await createFixtureServer(storefrontRoutes);
   storefrontRoutes["/robots.txt"].body =
-    `User-Agent: *\nDisallow: /\nSitemap: ${storefront.baseUrl}/sitemap.xml\n`;
+    `User-Agent: *\nAllow: /\nDisallow: /account/\nDisallow: /api/\nDisallow: /checkout\nSitemap: ${storefront.baseUrl}/sitemap.xml\n`;
   try {
     const result = await verifyProductionDeploy({
       expectedCommit: commit,
@@ -627,7 +630,7 @@ async function selfTest() {
   const exactStorefrontRoutes = successRoutes(commit, staticPath, "pending");
   const exactStorefront = await createFixtureServer(exactStorefrontRoutes);
   exactStorefrontRoutes["/robots.txt"].body =
-    `User-Agent: *\nDisallow: /\nSitemap: ${exactStorefront.baseUrl}/sitemap.xml\n`;
+    `User-Agent: *\nAllow: /\nDisallow: /account/\nDisallow: /api/\nDisallow: /checkout\nSitemap: ${exactStorefront.baseUrl}/sitemap.xml\n`;
   const www = await createFixtureServer({
     "/shop": {
       status: 308,
@@ -655,7 +658,7 @@ async function selfTest() {
     `<html data-perfume-aura-release="${"b".repeat(40)}"><script src="${staticPath}"></script></html>`;
   const staleStorefront = await createFixtureServer(staleStorefrontRoutes);
   staleStorefrontRoutes["/robots.txt"].body =
-    `User-Agent: *\nDisallow: /\nSitemap: ${staleStorefront.baseUrl}/sitemap.xml\n`;
+    `User-Agent: *\nAllow: /\nDisallow: /account/\nDisallow: /api/\nDisallow: /checkout\nSitemap: ${staleStorefront.baseUrl}/sitemap.xml\n`;
   const staleWww = await createFixtureServer({
     "/shop": {
       status: 308,
@@ -683,7 +686,7 @@ async function selfTest() {
   const redirectStorefrontRoutes = successRoutes(commit, staticPath, "pending");
   const redirectStorefront = await createFixtureServer(redirectStorefrontRoutes);
   redirectStorefrontRoutes["/robots.txt"].body =
-    `User-Agent: *\nDisallow: /\nSitemap: ${redirectStorefront.baseUrl}/sitemap.xml\n`;
+    `User-Agent: *\nAllow: /\nDisallow: /account/\nDisallow: /api/\nDisallow: /checkout\nSitemap: ${redirectStorefront.baseUrl}/sitemap.xml\n`;
   const badWww = await createFixtureServer({
     "/shop": {
       status: 302,

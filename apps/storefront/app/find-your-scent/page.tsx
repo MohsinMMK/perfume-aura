@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ScentFinder } from "@/components/scent-finder";
 import { getStorefrontProducts } from "@/lib/catalog";
 
-export const metadata: Metadata = { title: "Find your scent", alternates: { canonical: "/find-your-scent" } };
+export const metadata: Metadata = { title: "Find your scent", alternates: { canonical: "/find-your-scent" }, robots: { index: false, follow: false } };
 
 export default async function FindYourScentPage() {
   const products = (await getStorefrontProducts())

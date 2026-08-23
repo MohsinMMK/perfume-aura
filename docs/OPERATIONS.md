@@ -325,8 +325,17 @@ https://app.perfumeaura.com/api/auth/get-session
 ```
 
 Also verify a real static asset, the authenticated owner journey when
-authorized, storefront locks, robots, canonical metadata, and both DNS
-requirements.
+authorized, storefront locks, discovery `robots.txt`, the four canonical
+release-locked sitemap URLs, homepage and fragrance-guide metadata/JSON-LD,
+`noindex` on preview commerce routes, and both DNS requirements. After an exact
+storefront release passes live acceptance, notify IndexNow from the deployed
+sitemap:
+
+```bash
+pnpm storefront:indexnow
+```
+
+An accepted IndexNow response confirms receipt, not ranking or inclusion.
 
 ## Staff operations release procedure
 

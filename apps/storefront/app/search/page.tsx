@@ -9,7 +9,7 @@ import {
   parseShopListingQuery,
 } from "@/lib/shop-listing-query";
 
-export const metadata: Metadata = { title: "Search", alternates: { canonical: "/search" } };
+export const metadata: Metadata = { title: "Search", alternates: { canonical: "/search" }, robots: { index: false, follow: false } };
 
 export default async function SearchPage({
   searchParams,
