@@ -119,6 +119,18 @@ for destination in "$STAGE/apps/storefront/node_modules" "$STAGE/node_modules"; 
     if [[ -e "$SHARP_TMP/node_modules/$dependency" ]]; then rm -rf "$destination/$dependency"; cp -R "$SHARP_TMP/node_modules/$dependency" "$destination/$dependency"; fi
   done
 done
+
+# The standalone trace is produced on macOS, but this archive runs only on the
+# declared Linux x64/glibc target. Remove traced Darwin Sharp binaries after the
+# locked Linux runtime has been installed; otherwise dereferenced pnpm aliases
+# duplicate the same large dylib throughout the archive.
+while IFS= read -r -d '' darwin_sharp_directory; do
+  rm -rf "$darwin_sharp_directory"
+done < <(
+  find "$STAGE" -type d \
+    \( -name 'sharp-darwin-*' -o -name 'sharp-libvips-darwin-*' \) \
+    -print0
+)
 cp "$RUNTIME_DEPS_DIR/package-lock.json" "$STAGE/runtime-package-lock.json"
 
 cat > "$STAGE/package.json" <<'JSON'
@@ -231,9 +243,9 @@ for required in apps/storefront/server.js apps/storefront/.next/static apps/stor
 done
 
 echo "==> Compressing and validating archive"
-(cd "$STAGE" && zip -qry "$ZIP_PATH" .)
+(cd "$STAGE" && zip -qry9X "$ZIP_PATH" .)
 ARCHIVE_BYTES="$(wc -c < "$ZIP_PATH" | tr -d ' ')"
-[[ "$ARCHIVE_BYTES" -le "$MAX_ARCHIVE_BYTES" ]] || { echo "ERROR: archive exceeds Hostinger 50MB limit" >&2; exit 1; }
+[[ "$ARCHIVE_BYTES" -le "$MAX_ARCHIVE_BYTES" ]] || { echo "ERROR: archive is ${ARCHIVE_BYTES} bytes and exceeds Hostinger 50MB limit" >&2; exit 1; }
 python3 - "$ZIP_PATH" "$EXTRACTED" <<'PY'
 import os, pathlib, stat, sys, zipfile
 archive, destination = sys.argv[1:]

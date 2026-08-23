@@ -280,7 +280,8 @@ describe(
       await api.db.insert(api.account).values([
         {
           id: randomUUID(),
-          accountId: duplicateCredentialUser,
+          accountId: randomUUID(),
+          issuer: "local:credential",
           providerId: "credential",
           userId: duplicateCredentialUser,
           password: "first-placeholder",
@@ -288,6 +289,7 @@ describe(
         {
           id: randomUUID(),
           accountId: duplicateCredentialUser,
+          issuer: "local:credential",
           providerId: "credential",
           userId: duplicateCredentialUser,
           password: "second-placeholder",
@@ -618,6 +620,7 @@ describe(
       await api.db.insert(api.account).values({
         id: randomUUID(),
         accountId: userId,
+        issuer: "local:credential",
         providerId: "credential",
         userId,
         password: await hashPassword(userPassword),

@@ -293,7 +293,7 @@ fs.writeFileSync(path.join(root, "apps/ops/server.js"), `console.log('${commit.s
 fs.writeFileSync(path.join(root, "apps/ops/.next/static/chunks/main.js"), "export default 1\n");
 fs.writeFileSync(
   path.join(root, "apps/ops/node_modules/next/package.json"),
-  JSON.stringify({ name: "next", version: "16.2.11" }),
+  JSON.stringify({ name: "next", version: "16.3.2" }),
 );
 fs.writeFileSync(
   path.join(root, "apps/ops/node_modules/sharp/package.json"),

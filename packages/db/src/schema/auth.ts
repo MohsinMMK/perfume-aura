@@ -7,6 +7,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 /**
@@ -66,6 +67,7 @@ export const account = pgTable(
   {
     id: text("id").primaryKey(),
     accountId: text("account_id").notNull(),
+    issuer: text("issuer").notNull(),
     providerId: text("provider_id").notNull(),
     userId: text("user_id")
       .notNull()
@@ -89,7 +91,13 @@ export const account = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (table) => [index("account_user_id_idx").on(table.userId)],
+  (table) => [
+    index("account_user_id_idx").on(table.userId),
+    uniqueIndex("account_issuer_account_id_unique").on(
+      table.issuer,
+      table.accountId,
+    ),
+  ],
 );
 
 export const verification = pgTable(

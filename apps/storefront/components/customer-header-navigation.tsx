@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { UserCircleIcon } from "@hugeicons/core-free-icons";
@@ -13,6 +14,7 @@ export function CustomerHeaderNavigation({
   mobile?: boolean;
   closeMenu?: () => void;
 }>) {
+  const router = useRouter();
   const [signedIn, setSignedIn] = useState(false);
   useEffect(() => {
     const controller = new AbortController();
@@ -33,7 +35,9 @@ export function CustomerHeaderNavigation({
     const result = await customerAuthClient.signOut();
     if (result.error) return;
     closeMenu?.();
-    window.location.assign("/");
+    setSignedIn(false);
+    router.replace("/");
+    router.refresh();
   };
 
   if (mobile) {

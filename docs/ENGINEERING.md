@@ -44,8 +44,8 @@ container for ops; Neon remains the shared managed database.
 |---|---|
 | Workspace | pnpm `10.32.1` monorepo, aligned to the observed Hostinger deployment baseline |
 | Runtime | Node `24.x`; repository, CI, and ops image baseline `24.6.0`, engines `>=24.6.0 <25` |
-| Ops + storefront | Next.js `16.2.11`, App Router, React 19, TypeScript `7.0.2` native CLI |
-| TypeScript compatibility | `@typescript/native` aliases TypeScript `7.0.2`; `typescript` aliases `@typescript/typescript6` for Next.js and ESLint compiler-API consumers |
+| Ops + storefront | Next.js `16.3.2`, App Router, React `19.2.8`, standard TypeScript `6.0.2` compiler |
+| TypeScript compatibility | `typescript@6.0.2` is the shared Next.js/ESLint compiler; `@typescript/native` retains the TypeScript `7.0.2` native CLI compatibility lane |
 | UI | shadcn/ui, Base UI, Tailwind CSS 4, Hugeicons |
 | Auth | Two isolated Better Auth boundaries: owner ops and storefront customer, each with separate tables, secrets, cookies, origins, and Drizzle adapter |
 | Database | Neon PostgreSQL + Drizzle ORM/Kit + `pg` Pool |
@@ -59,8 +59,8 @@ container for ops; Neon remains the shared managed database.
 | Payments | Cashfree Payment Gateway for prepaid INR UPI (server-created orders, signed raw-body webhooks, server status verification, and refunds); no COD checkout |
 | Registrar | GoDaddy; registration/renewal only |
 
-Official tooling only: shadcn CLI, current App Router docs, TypeScript 7 with
-the temporary TypeScript 6 compatibility package, Better Auth, Drizzle, Neon,
+Official tooling only: shadcn CLI, current App Router docs, standard TypeScript
+6 with the separate TypeScript 7 native CLI lane, Better Auth, Drizzle, Neon,
 Hostinger, PostHog, Sentry, and pnpm. No hand-rolled substitutes. No Vercel
 production deployment.
 
@@ -235,7 +235,10 @@ Migration and inventory rules:
    already-issued invoice is the deliberate archived-SKU exception.
 4. Migration `0008_phase03_contract` owns validated financial/inventory checks;
    `0010_curved_puma` owns Admin/2FA roles, final-owner protection, and immutable
-   staff records. Production migration order and grant reapplication belong in
+   staff records. `0013_silly_vanisher` gives Better Auth 1.7 operations
+   accounts a non-null issuer, rewrites credential identities to the stable
+   user ID, rejects unmapped providers, and enforces issuer/account uniqueness.
+   Production migration order and grant reapplication belong in
    [`OPERATIONS.md`](OPERATIONS.md#migrations-and-runtime-grants).
 5. Migration tests require lowercase loopback database names matching
    `perfume_aura_phaseNN_<purpose>` and never load application env files.
@@ -350,7 +353,7 @@ deploy while `CURRENT_STATE.md` contains an active deployment blocker.
 
 Current repository baseline, not a field-performance claim:
 
-- Next.js `16.2.11`, React `19.2.8`, App Router, and standalone output.
+- Next.js `16.3.2`, React `19.2.8`, App Router, and standalone output.
 - Fonts are self-hosted with `next/font`.
 - Storefront skips locked-cart hydration, limits low-intent prefetch, and
   defers disabled customer-auth code.
