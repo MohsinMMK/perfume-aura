@@ -119,7 +119,12 @@ export default function FragranceGuidePage() {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#79633e]">Fragrance families</p>
             <h2 className="font-display mt-4 max-w-[12ch] text-[clamp(4rem,8vw,8rem)] leading-[0.78]">Use families as directions, not rules</h2>
             <p className="mt-7 max-w-3xl text-base leading-8 text-black/70">A fragrance can belong to more than one family. Use these descriptions to reduce the field, then judge the complete composition rather than a single note.</p>
-            <div className="mt-12 overflow-x-auto">
+            <div
+              role="region"
+              aria-label="Fragrance family comparison"
+              tabIndex={0}
+              className="mt-12 overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ink)]"
+            >
               <table className="w-full min-w-[44rem] border-collapse text-left">
                 <thead>
                   <tr className="border-y border-black/25 text-xs uppercase tracking-[0.16em]">

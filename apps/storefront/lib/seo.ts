@@ -11,6 +11,7 @@ export const discoverySitemapEntries = [
 ] as const;
 
 export const privateCrawlerPaths = [
+  "/account",
   "/account/",
   "/api/",
   "/cart",
@@ -37,7 +38,7 @@ export function createHomeStructuredData(origin = getStorefrontOrigin()) {
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "OnlineStore",
+        "@type": "Organization",
         "@id": organizationId,
         name: siteName,
         url: origin,
