@@ -10,6 +10,7 @@ import {
   commerceOrderItems,
   commerceRefunds,
   commerceReturns,
+  commerceReturnItems,
   commerceSettings,
   and,
   count,
@@ -39,6 +40,7 @@ import {
   type ReviewedPublicationContent,
 } from "@/lib/catalog-approval-policy";
 import { requestCashfreeRefund } from "@/lib/cashfree-refunds";
+import { canTransitionCommerceReturn } from "@/lib/commerce-lifecycle";
 import { hasOpsCapability } from "@/lib/ops-access";
 import { safeAuditMetadata } from "@/lib/ops-audit";
 import { requireCapability } from "@/lib/session";
@@ -883,6 +885,63 @@ export async function listCommerceReviews() {
     .limit(100);
 }
 
+const reviewModerationSchema = z.object({
+  reviewId: z.string().uuid(),
+  expectedStatus: z.enum(["pending", "approved", "rejected"]),
+  status: z.enum(["pending", "approved", "rejected"]),
+});
+
+export async function moderateCommerceReviewAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const session = await requireCapability("commerce.reviews.moderate");
+  const parsed = reviewModerationSchema.safeParse({
+    reviewId: formData.get("reviewId"),
+    expectedStatus: formData.get("expectedStatus"),
+    status: formData.get("status"),
+  });
+  if (!parsed.success) {
+    return actionError("Review status was not updated.", zodFieldErrors(parsed.error));
+  }
+
+  await db.transaction(async (transaction) => {
+    const [current] = await transaction
+      .select({ status: reviews.status })
+      .from(reviews)
+      .where(eq(reviews.id, parsed.data.reviewId))
+      .for("update")
+      .limit(1);
+    if (!current) throw new Error("Review was not found");
+    if (current.status !== parsed.data.expectedStatus) {
+      throw new Error("This review changed after the page loaded. Reload and try again.");
+    }
+    if (current.status === parsed.data.status) return;
+
+    const moderated = parsed.data.status !== "pending";
+    await transaction.update(reviews).set({
+      status: parsed.data.status,
+      moderatedBy: moderated ? session.user.id : null,
+      moderatedAt: moderated ? new Date() : null,
+    }).where(eq(reviews.id, parsed.data.reviewId));
+    await transaction.insert(opsAuditEvents).values({
+      id: randomUUID(),
+      actorUserId: session.user.id,
+      action: "commerce.review.moderated",
+      targetType: "commerce_review",
+      targetId: parsed.data.reviewId,
+      metadata: safeAuditMetadata({
+        from_status: current.status,
+        to_status: parsed.data.status,
+      }),
+    });
+  });
+
+  revalidatePath("/commerce");
+  revalidatePath("/commerce/reviews");
+  revalidatePath("/products/[slug]", "page");
+  return actionOk();
+}
+
 export async function listCommerceSupport() {
   await requireCapability("commerce.support.manage");
   const [inquiries, returns] = await Promise.all([
@@ -903,9 +962,101 @@ export async function listCommerceSupport() {
     }).from(commerceInquiries)
       .leftJoin(inquiryNotificationOutbox, eq(inquiryNotificationOutbox.inquiryId, commerceInquiries.id))
       .orderBy(desc(commerceInquiries.createdAt)).limit(100),
-    db.select().from(commerceReturns).orderBy(desc(commerceReturns.requestedAt)).limit(100),
+    db.select({
+      id: commerceReturns.id,
+      orderId: commerceReturns.orderId,
+      orderNumber: commerceOrders.orderNumber,
+      status: commerceReturns.status,
+      reason: commerceReturns.reason,
+      customerNotes: commerceReturns.customerNotes,
+      resolutionNotes: commerceReturns.resolutionNotes,
+      requestedAt: commerceReturns.requestedAt,
+      resolvedAt: commerceReturns.resolvedAt,
+    }).from(commerceReturns)
+      .innerJoin(commerceOrders, eq(commerceOrders.id, commerceReturns.orderId))
+      .orderBy(desc(commerceReturns.requestedAt)).limit(100),
   ]);
   return { inquiries, returns };
+}
+
+const returnStatusSchema = z.object({
+  returnId: z.string().uuid(),
+  expectedStatus: z.enum(["requested", "approved", "received", "refunded", "rejected", "cancelled"]),
+  status: z.enum(["requested", "approved", "received", "refunded", "rejected", "cancelled"]),
+  resolutionNotes: z.string().trim().max(2_000).optional(),
+}).superRefine((value, context) => {
+  if (["rejected", "cancelled"].includes(value.status) && !value.resolutionNotes) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["resolutionNotes"], message: "Resolution notes are required for rejection or cancellation." });
+  }
+});
+
+export async function updateCommerceReturnStatusAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const session = await requireCapability("commerce.support.manage");
+  const parsed = returnStatusSchema.safeParse({
+    returnId: formData.get("returnId"),
+    expectedStatus: formData.get("expectedStatus"),
+    status: formData.get("status"),
+    resolutionNotes: String(formData.get("resolutionNotes") ?? "").trim() || undefined,
+  });
+  if (!parsed.success) {
+    return actionError("Return status was not updated.", zodFieldErrors(parsed.error));
+  }
+
+  await db.transaction(async (transaction) => {
+    const [current] = await transaction.select({
+      status: commerceReturns.status,
+      orderId: commerceReturns.orderId,
+    }).from(commerceReturns)
+      .where(eq(commerceReturns.id, parsed.data.returnId))
+      .for("update")
+      .limit(1);
+    if (!current) throw new Error("Return request was not found");
+    if (current.status !== parsed.data.expectedStatus) {
+      throw new Error("This return changed after the page loaded. Reload and try again.");
+    }
+    if (!canTransitionCommerceReturn(current.status, parsed.data.status)) {
+      throw new Error(`Return cannot move from ${current.status} to ${parsed.data.status}`);
+    }
+    if (current.status === parsed.data.status) return;
+
+    if (parsed.data.status === "refunded") {
+      const [order] = await transaction.select({ paymentState: commerceOrders.paymentState })
+        .from(commerceOrders).where(eq(commerceOrders.id, current.orderId)).for("update").limit(1);
+      if (order?.paymentState !== "refunded") {
+        throw new Error("A return can be marked refunded only after the verified payment state is fully refunded");
+      }
+    }
+    if (parsed.data.status === "received") {
+      await transaction.update(commerceReturnItems).set({
+        receivedQuantity: commerceReturnItems.quantity,
+      }).where(eq(commerceReturnItems.returnId, parsed.data.returnId));
+    }
+
+    const terminal = ["refunded", "rejected", "cancelled"].includes(parsed.data.status);
+    await transaction.update(commerceReturns).set({
+      status: parsed.data.status,
+      resolutionNotes: parsed.data.resolutionNotes ?? null,
+      resolvedAt: terminal ? new Date() : null,
+    }).where(eq(commerceReturns.id, parsed.data.returnId));
+    await transaction.insert(opsAuditEvents).values({
+      id: randomUUID(),
+      actorUserId: session.user.id,
+      action: "commerce.return.status_updated",
+      targetType: "commerce_return",
+      targetId: parsed.data.returnId,
+      metadata: safeAuditMetadata({
+        from_status: current.status,
+        to_status: parsed.data.status,
+        resolution_recorded: Boolean(parsed.data.resolutionNotes),
+      }),
+    });
+  });
+
+  revalidatePath("/commerce");
+  revalidatePath("/commerce/support");
+  return actionOk();
 }
 
 const inquiryStatusSchema = z.object({

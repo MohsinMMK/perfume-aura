@@ -20,7 +20,7 @@ Persisted money is integer INR paise; public money uses
 | Ops | `/dashboard`, `/products`, `/stock`, `/customers`, `/invoices`, `/payments`, `/finance`, `/commerce/*` |
 | Storefront | `/`, `/shop`, `/collections/[slug]`, `/products/[slug]`, `/search`, `/find-your-scent`, `/cart`, `/checkout`, `/account`, `/account/delivery`, `/account/orders`, `/account/orders/[orderNumber]`, legacy `/order/[token]` |
 | Store content | `/about`, `/faq`, `/contact`, `/wholesale`, `/shipping`, `/returns`, `/privacy`, `/terms` |
-| Customer boundary | `/account/*`, `/api/customer-auth/*` |
+| Customer boundary | `/account/*`, `/api/customer-auth/*`, `/api/account/*` |
 
 ## Commerce release locks
 
@@ -86,6 +86,16 @@ capability.
   and preserves the cart through the sign-in callback.
 - Customers can explicitly save one delivery profile; the checkout opt-in is
   unchecked by default and historical order snapshots never change.
+- A verified customer may submit one pending review for each delivered,
+  fully fulfilled order item. Only staff-approved reviews enter the public
+  product projection.
+- A verified customer may request one full-order return only after every item
+  is fulfilled and within seven calendar days of the recorded delivery.
+  Staff controls the audited requested → approved → received → refunded path;
+  refunded status requires the order payment state to be fully refunded.
+- The scent finder considers only published structured scent profiles, explains
+  every matching answer axis, and returns no recommendation when fewer than two
+  axes match.
 
 ## Staff capability contract
 

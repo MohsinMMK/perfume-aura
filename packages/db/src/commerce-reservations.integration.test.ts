@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { describe, it } from "node:test";
+import { after, before, describe, it } from "node:test";
 import { and, count, eq } from "drizzle-orm";
 import {
   checkoutSessions,
@@ -14,16 +14,17 @@ import {
   stockReservations,
   variantPrices,
 } from "./schema";
-import { db } from "./client";
-import {
-  consumeCheckoutReservations,
-  expireAbandonedCheckouts,
-  releaseCheckoutReservations,
-  reserveCheckoutStock,
-} from "./commerce-reservations";
 import { requireDisposableTestDatabaseUrl } from "./test-database-guard";
 
-requireDisposableTestDatabaseUrl();
+const testDatabaseUrl = requireDisposableTestDatabaseUrl();
+process.env.DATABASE_URL = testDatabaseUrl;
+
+let db: typeof import("./client").db;
+let pool: typeof import("./client").pool | undefined;
+let consumeCheckoutReservations: typeof import("./commerce-reservations").consumeCheckoutReservations;
+let expireAbandonedCheckouts: typeof import("./commerce-reservations").expireAbandonedCheckouts;
+let releaseCheckoutReservations: typeof import("./commerce-reservations").releaseCheckoutReservations;
+let reserveCheckoutStock: typeof import("./commerce-reservations").reserveCheckoutStock;
 
 async function seedSellableVariant(quantityOnHand = 10): Promise<Readonly<{
   checkoutSessionId: string;
@@ -96,6 +97,20 @@ async function seedSellableVariant(quantityOnHand = 10): Promise<Readonly<{
 }
 
 describe("commerce reservation state transitions", () => {
+  before(async () => {
+    ({ db, pool } = await import("./client"));
+    ({
+      consumeCheckoutReservations,
+      expireAbandonedCheckouts,
+      releaseCheckoutReservations,
+      reserveCheckoutStock,
+    } = await import("./commerce-reservations"));
+  });
+
+  after(async () => {
+    await pool?.end();
+  });
+
   it("reserves and consumes stock exactly once across retries", async () => {
     const seeded = await seedSellableVariant();
     const expiry = new Date(Date.now() + 40 * 60_000);

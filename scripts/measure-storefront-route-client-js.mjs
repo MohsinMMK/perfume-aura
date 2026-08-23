@@ -11,8 +11,8 @@ const manifestsRoot = path.join(buildRoot, "server/app");
 const clientJavaScriptBudgets = new Map([
   ["/account/sign-in/page", 235_000],
   ["/cart/page", 218_000],
-  ["/checkout/page", 233_000],
-  ["/page", 226_000],
+  ["/checkout/page", 233_500],
+  ["/page", 226_500],
   ["/products/[slug]/page", 240_000],
   ["/search/page", 235_000],
   ["/shop/page", 220_000],

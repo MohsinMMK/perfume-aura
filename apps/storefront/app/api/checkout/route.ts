@@ -6,12 +6,16 @@ import {
   CheckoutCartChangedError,
   placeCheckoutOrder,
 } from "@/lib/checkout";
+import { isTrustedStorefrontMutation } from "@/lib/customer-request-security";
 
 const cartCookieName = "pa_storefront_cart";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!isCustomerAuthEnabled()) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  if (!isTrustedStorefrontMutation(request.headers)) {
+    return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
   }
   const session = await createCustomerAuth().api.getSession({ headers: request.headers });
   if (!session?.user || !session.user.emailVerified) {

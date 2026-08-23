@@ -12,6 +12,7 @@ import {
   setPreviewCartLine,
 } from "@/lib/cart-store";
 import type { CartSnapshot } from "@/lib/cart-store";
+import { isTrustedStorefrontMutation } from "@/lib/customer-request-security";
 
 const cartCookieName = "pa_storefront_cart";
 
@@ -71,6 +72,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  if (!isTrustedStorefrontMutation(request.headers)) {
+    return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
+  }
   const parsedBody = cartMutationSchema.safeParse(await request.json());
   if (!parsedBody.success) {
     return NextResponse.json(
