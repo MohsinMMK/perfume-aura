@@ -39,4 +39,20 @@ describe("scent finder", () => {
       occasion: "Occasion",
     }), []);
   });
+
+  it("does not use a token from the wrong product field", () => {
+    const crossFieldToken: ScentFinderProduct = {
+      slug: "cross-field-token",
+      name: "Cross Field Token",
+      family: "Fresh citrus",
+      intensity: "Balanced",
+      occasion: "Everyday office",
+      notes: { top: ["strong bergamot"], heart: ["rose"], base: ["musk"] },
+    };
+    assert.deepEqual(recommendScentProfiles([crossFieldToken], {
+      mood: "Radiant",
+      intensity: "Commanding",
+      occasion: "Evening",
+    }), []);
+  });
 });

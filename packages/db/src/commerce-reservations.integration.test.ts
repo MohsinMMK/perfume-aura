@@ -20,7 +20,7 @@ const testDatabaseUrl = requireDisposableTestDatabaseUrl();
 process.env.DATABASE_URL = testDatabaseUrl;
 
 let db: typeof import("./client").db;
-let pool: typeof import("./client").pool;
+let pool: typeof import("./client").pool | undefined;
 let consumeCheckoutReservations: typeof import("./commerce-reservations").consumeCheckoutReservations;
 let expireAbandonedCheckouts: typeof import("./commerce-reservations").expireAbandonedCheckouts;
 let releaseCheckoutReservations: typeof import("./commerce-reservations").releaseCheckoutReservations;
@@ -108,7 +108,7 @@ describe("commerce reservation state transitions", () => {
   });
 
   after(async () => {
-    await pool.end();
+    await pool?.end();
   });
 
   it("reserves and consumes stock exactly once across retries", async () => {

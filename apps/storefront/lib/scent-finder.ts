@@ -41,32 +41,45 @@ const answerTokens = {
   },
 } as const;
 
-function normalizedProductText(product: ScentFinderProduct): string {
-  return [
-    product.family,
-    product.intensity,
-    product.occasion,
-    ...product.notes.top,
-    ...product.notes.heart,
-    ...product.notes.base,
-  ].join(" ").toLocaleLowerCase("en-IN");
-}
-
 export function recommendScentProfiles(
   products: readonly ScentFinderProduct[],
   answers: ScentFinderAnswers,
   limit = 3,
 ): readonly ScentFinderRecommendation[] {
   return products.flatMap((product) => {
-    const searchable = normalizedProductText(product);
+    const noteText = [...product.notes.top, ...product.notes.heart, ...product.notes.base].join(" ");
     const axes = [
-      { key: "mood", answer: answers.mood, source: product.family, tokens: answerTokens.mood[answers.mood] },
-      { key: "intensity", answer: answers.intensity, source: product.intensity, tokens: answerTokens.intensity[answers.intensity] },
-      { key: "occasion", answer: answers.occasion, source: product.occasion, tokens: answerTokens.occasion[answers.occasion] },
+      {
+        key: "mood",
+        answer: answers.mood,
+        sources: [
+          { label: "family", value: product.family },
+          { label: "notes", value: noteText },
+        ],
+        tokens: answerTokens.mood[answers.mood],
+      },
+      {
+        key: "intensity",
+        answer: answers.intensity,
+        sources: [{ label: "intensity", value: product.intensity }],
+        tokens: answerTokens.intensity[answers.intensity],
+      },
+      {
+        key: "occasion",
+        answer: answers.occasion,
+        sources: [{ label: "occasion", value: product.occasion }],
+        tokens: answerTokens.occasion[answers.occasion],
+      },
     ] as const;
-    const reasons = axes.flatMap((axis) => axis.tokens.some((token) => searchable.includes(token))
-      ? [`${axis.key}: ${axis.answer} matches ${axis.source}`]
-      : []);
+    const reasons = axes.flatMap((axis) => {
+      const matchedSource = axis.sources.find((source) => {
+        const searchable = source.value.toLocaleLowerCase("en-IN");
+        return axis.tokens.some((token) => searchable.includes(token));
+      });
+      return matchedSource
+        ? [`${axis.key}: ${axis.answer} matches product ${matchedSource.label}`]
+        : [];
+    });
     return reasons.length >= 2 ? [{ slug: product.slug, name: product.name, reasons }] : [];
   }).toSorted((left, right) => right.reasons.length - left.reasons.length || left.name.localeCompare(right.name)).slice(0, limit);
 }

@@ -343,8 +343,9 @@ failure and record privacy-safe production results in `CURRENT_STATE.md`.
 - The staff commit and deployment artifact are CI-verified.
 - `OPS_TWO_FACTOR_REQUIRED` and `OPS_STAFF_INVITES_ENABLED` are not `true`.
 - Every `STOREFRONT_*` release flag remains false.
-- Integration tests use only `TEST_DATABASE_URL` on loopback PostgreSQL with a
-  name matching `perfume_aura_phaseNN_<purpose>`.
+- Integration tests set `TEST_DATABASE_URL`, `DATABASE_URL`, and
+  `DATABASE_URL_DIRECT` to the same loopback PostgreSQL database with a name
+  matching `perfume_aura_phaseNN_<purpose>`.
 
 Never use production or Neon as an integration-test database.
 
@@ -353,8 +354,9 @@ Never use production or Neon as an integration-test database.
 1. Create an isolated Neon branch and apply `0010_curved_puma`.
 2. Validate the migration and restricted grant contract on that Neon branch;
    do not run the integration suite there.
-3. Apply the same migration to a disposable loopback PostgreSQL database and run
-   authenticated integration tests through `TEST_DATABASE_URL`.
+3. Apply the same migration to a disposable loopback PostgreSQL database and
+   run authenticated integration tests with all three database URL variables
+   set to that exact loopback database.
 4. Apply the reviewed migration to production using `DATABASE_URL_DIRECT`.
 5. Reapply `packages/db/sql/ops-runtime-grants.sql` with the reviewed runtime
    role; reject any unexpected effective privilege.

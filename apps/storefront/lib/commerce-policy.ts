@@ -13,7 +13,9 @@ type CommercePolicySettings = Readonly<{
   flatShippingAmountMinor: number | null;
   freeShippingThresholdMinor: number | null;
   taxPolicyApproved: boolean;
+  taxApprovalReference: string | null;
   catalogLegalApproved: boolean;
+  legalApprovalReference: string | null;
   supportChannel: string | null;
   supportOperationsApproved: boolean;
   shippingPolicyApproved: boolean;
@@ -31,7 +33,9 @@ export function resolveApprovedCommercePolicy(
     !release.checkoutReleaseApproved ||
     !settings?.checkoutEnabled ||
     !settings.taxPolicyApproved ||
+    !settings.taxApprovalReference?.trim() ||
     !settings.catalogLegalApproved ||
+    !settings.legalApprovalReference?.trim() ||
     !settings.supportOperationsApproved ||
     !settings.shippingPolicyApproved ||
     !settings.returnsPolicyApproved ||
@@ -62,7 +66,9 @@ export async function loadApprovedCommercePolicy(): Promise<ApprovedCommercePoli
     flatShippingAmountMinor: commerceSettings.flatShippingAmountMinor,
     freeShippingThresholdMinor: commerceSettings.freeShippingThresholdMinor,
     taxPolicyApproved: commerceSettings.taxPolicyApproved,
+    taxApprovalReference: commerceSettings.taxApprovalReference,
     catalogLegalApproved: commerceSettings.catalogLegalApproved,
+    legalApprovalReference: commerceSettings.legalApprovalReference,
     supportChannel: commerceSettings.supportChannel,
     supportOperationsApproved: commerceSettings.supportOperationsApproved,
     shippingPolicyApproved: commerceSettings.shippingPolicyApproved,

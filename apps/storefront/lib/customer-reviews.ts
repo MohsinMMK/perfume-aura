@@ -20,25 +20,51 @@ export async function submitCustomerReview(
   rawInput: unknown,
 ): Promise<void> {
   const input = customerReviewSchema.parse(rawInput);
-  const [eligible] = await db
-    .select({ id: commerceOrderItems.id })
-    .from(commerceOrderItems)
-    .innerJoin(commerceOrders, eq(commerceOrders.id, commerceOrderItems.orderId))
-    .where(and(
-      eq(commerceOrderItems.id, input.orderItemId),
-      eq(commerceOrders.customerUserId, customerUserId),
-      eq(commerceOrders.status, "delivered"),
-      eq(commerceOrderItems.fulfilledQuantity, commerceOrderItems.quantity),
-    ))
-    .limit(1);
-  if (!eligible) throw new Error("This order item is not eligible for review");
+  await db.transaction(async (transaction) => {
+    const [candidate] = await transaction
+      .select({ orderId: commerceOrderItems.orderId })
+      .from(commerceOrderItems)
+      .where(eq(commerceOrderItems.id, input.orderItemId))
+      .limit(1);
+    if (!candidate) throw new Error("This order item is not eligible for review");
 
-  await db.insert(reviews).values({
-    orderItemId: eligible.id,
-    customerUserId,
-    rating: input.rating,
-    title: input.title || null,
-    body: input.body,
-    status: "pending",
+    const [order] = await transaction
+      .select({ id: commerceOrders.id, status: commerceOrders.status })
+      .from(commerceOrders)
+      .where(and(
+        eq(commerceOrders.id, candidate.orderId),
+        eq(commerceOrders.customerUserId, customerUserId),
+      ))
+      .for("update")
+      .limit(1);
+    if (order?.status !== "delivered") {
+      throw new Error("This order item is not eligible for review");
+    }
+    const [item] = await transaction
+      .select({
+        id: commerceOrderItems.id,
+        fulfilledQuantity: commerceOrderItems.fulfilledQuantity,
+        quantity: commerceOrderItems.quantity,
+      })
+      .from(commerceOrderItems)
+      .where(and(
+        eq(commerceOrderItems.id, input.orderItemId),
+        eq(commerceOrderItems.orderId, candidate.orderId),
+      ))
+      .for("update")
+      .limit(1);
+    if (
+      !item ||
+      item.fulfilledQuantity !== item.quantity
+    ) throw new Error("This order item is not eligible for review");
+
+    await transaction.insert(reviews).values({
+      orderItemId: item.id,
+      customerUserId,
+      rating: input.rating,
+      title: input.title || null,
+      body: input.body,
+      status: "pending",
+    });
   });
 }

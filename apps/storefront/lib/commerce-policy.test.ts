@@ -6,7 +6,9 @@ const approvedSettings = {
   flatShippingAmountMinor: 9_900,
   freeShippingThresholdMinor: 99_900,
   taxPolicyApproved: true,
+  taxApprovalReference: "CA-GST-2026-08-23",
   catalogLegalApproved: true,
+  legalApprovalReference: "INDIA-COUNSEL-2026-08-23",
   supportChannel: "support@perfumeaura.com",
   supportOperationsApproved: true,
   shippingPolicyApproved: true,
@@ -24,6 +26,20 @@ describe("public commerce policy projection", () => {
     assert.equal(resolveApprovedCommercePolicy({
       ...approvedSettings,
       returnsPolicyApproved: false,
+    }, {
+      publicRelease: true,
+      checkoutReleaseApproved: true,
+    }), null);
+    assert.equal(resolveApprovedCommercePolicy({
+      ...approvedSettings,
+      taxApprovalReference: " ",
+    }, {
+      publicRelease: true,
+      checkoutReleaseApproved: true,
+    }), null);
+    assert.equal(resolveApprovedCommercePolicy({
+      ...approvedSettings,
+      legalApprovalReference: null,
     }, {
       publicRelease: true,
       checkoutReleaseApproved: true,

@@ -18,8 +18,14 @@ import { submitCustomerReview } from "./customer-reviews";
 import { requestCustomerOrderReturn } from "./customer-returns";
 
 const integrationDatabaseUrl = new URL(process.env.TEST_DATABASE_URL ?? "");
+assert.ok(["postgres:", "postgresql:"].includes(integrationDatabaseUrl.protocol));
 assert.ok(["127.0.0.1", "localhost", "::1"].includes(integrationDatabaseUrl.hostname));
-assert.match(integrationDatabaseUrl.pathname, /^\/perfume_aura_[a-z0-9_]+$/);
+assert.match(
+  integrationDatabaseUrl.pathname,
+  /^\/perfume_aura_phase\d{2}_[a-z0-9]+(?:_[a-z0-9]+)*$/,
+);
+assert.equal(integrationDatabaseUrl.search, "");
+assert.doesNotMatch(integrationDatabaseUrl.pathname, /(?:^|[_-])prod(?:uction)?(?:[_-]|$)/i);
 
 async function seedDeliveredOrder() {
   const suffix = randomUUID();
