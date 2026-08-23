@@ -105,6 +105,20 @@ echo "==> Installing locked Linux x64 sharp runtime"
 cp "$RUNTIME_DEPS_DIR/package.json" "$SHARP_TMP/package.json"
 cp "$RUNTIME_DEPS_DIR/package-lock.json" "$SHARP_TMP/package-lock.json"
 (cd "$SHARP_TMP" && npm ci --omit=dev --ignore-scripts --no-audit --no-fund --os=linux --cpu=x64 --libc=glibc >/dev/null)
+
+# The traced tree follows pnpm aliases and can duplicate the host platform's
+# large Sharp/libvips binary throughout several resolver neighborhoods. This
+# archive has one declared Linux x64/glibc target, so discard every traced
+# platform binary before installing the locked target runtime in the two
+# resolver boundaries used by the extracted server.
+while IFS= read -r -d '' traced_sharp_platform_directory; do
+  rm -rf "$traced_sharp_platform_directory"
+done < <(
+  find "$STAGE" -type d \
+    \( -name 'sharp-*-*' -o -name 'sharp-libvips-*-*' \) \
+    -prune -print0
+)
+
 for destination in "$STAGE/apps/storefront/node_modules" "$STAGE/node_modules"; do
   mkdir -p "$destination"
   rm -rf "$destination/sharp" "$destination/@img"
@@ -119,18 +133,6 @@ for destination in "$STAGE/apps/storefront/node_modules" "$STAGE/node_modules"; 
     if [[ -e "$SHARP_TMP/node_modules/$dependency" ]]; then rm -rf "$destination/$dependency"; cp -R "$SHARP_TMP/node_modules/$dependency" "$destination/$dependency"; fi
   done
 done
-
-# The standalone trace is produced on macOS, but this archive runs only on the
-# declared Linux x64/glibc target. Remove traced Darwin Sharp binaries after the
-# locked Linux runtime has been installed; otherwise dereferenced pnpm aliases
-# duplicate the same large dylib throughout the archive.
-while IFS= read -r -d '' darwin_sharp_directory; do
-  rm -rf "$darwin_sharp_directory"
-done < <(
-  find "$STAGE" -type d \
-    \( -name 'sharp-darwin-*' -o -name 'sharp-libvips-darwin-*' \) \
-    -print0
-)
 cp "$RUNTIME_DEPS_DIR/package-lock.json" "$STAGE/runtime-package-lock.json"
 
 cat > "$STAGE/package.json" <<'JSON'
