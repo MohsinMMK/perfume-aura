@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-21 21:04:57 UTC**
+Last refreshed: **2026-08-23 13:02:05 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -32,16 +32,17 @@ and ignored local environment files.
 
 ## Exact releases and automation
 
-The public operations surface runs source
-`13490d8e8c0c704d1e1f10670b26239be6b1c3c2` from immutable image digest
-`sha256:b59418264aa28ca27890e9163f5b5f7ad101eb124ee331de0da22d87283ab53b`.
-Workflow run [`31963658075`](https://github.com/MohsinMMK/perfume-aura/actions/runs/31963658075)
+Both production surfaces run exact source
+`6a3dc24fbcacc9ed0f44219e9e0f260e0a2e207b`. Ops uses immutable image digest
+`sha256:f3cef390441886c598e8b1d929cc806c1844c6553cae17daa032c483a7c74a72`.
+Workflow run [`32640619706`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32640619706)
 passed quality, all disposable-PostgreSQL integration tests, verified
-packaging, image build/push, Tailscale deployment through the restricted SSH
-identity, generated-branch publication, Hostinger auto-deployment, and exact
-public verification at 2026-08-16 18:13:18 UTC. The apex version and an
-independent `/shop` check report that exact source. The `www` redirect
-preserves `/shop?probe=1`.
+packaging, immutable image build/push, Tailscale deployment through the
+restricted SSH identity, generated-branch publication, Hostinger
+auto-deployment, and exact live verification on both surfaces at 2026-08-23
+12:58:10 UTC. Independent acceptance rechecked both exact versions, ops
+live/ready/unauthenticated-session behavior, storefront release locks, a real
+immutable Next asset, and the path- and query-preserving `www` redirect.
 
 Routine ops deployment is now:
 
@@ -171,6 +172,23 @@ zero horizontal overflow. A separate remote fetch confirmed the live Dior
 Sauvage product content; direct workstation browser acceptance was unavailable
 because connections to every resolved Hostinger CDN address timed out.
 
+PR #60 merged the flags-off customer lifecycle completion as exact source
+`6a3dc24fbcacc9ed0f44219e9e0f260e0a2e207b`. It added verified-delivery product
+reviews with staff moderation, full-order return requests and staff lifecycle
+management, approval-backed shipping and return projections, structured-only
+scent recommendations, and same-origin mutation enforcement. Workflow run
+[`32640619706`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32640619706)
+deployed both production surfaces; ops uses immutable image digest
+`sha256:f3cef390441886c598e8b1d929cc806c1844c6553cae17daa032c483a7c74a72`.
+Fresh 390-by-844, 768-by-1024, and 1440-by-1000 browser acceptance covered the
+home page, scent finder, policy pages, product delivery/returns disclosure,
+disabled customer sign-in, and ops login with zero horizontal overflow and
+zero console errors. Lazy product imagery loaded after scrolling; the finder
+returned no fabricated match; policy content stayed unpublished; customer
+mutation routes returned `404` before auth/database initialization; and a
+cross-origin cart mutation returned `403` while the same-origin request reached
+normal validation.
+
 A production `/shop` check after that release shows the 69-product launch
 listing with URL-driven search, Signature / Inspired / Featured segments, size
 filters, and name sort. Incomplete inspired rows such as Heaven Rose remain
@@ -266,8 +284,8 @@ maintenance workflow secret and enable variable, and an authorized sandbox
 payment/refund flow remain outstanding. Customer authentication, catalog
 publication, checkout, and commerce maintenance therefore remain closed.
 
-The deployed production-hardening release passed `pnpm check`, all 221 unit
-tests, and all 83 integration tests against a fully migrated disposable
+The deployed customer-lifecycle release passed `pnpm check`, all 232 unit
+tests, and all 88 integration tests against a fully migrated disposable
 loopback PostgreSQL database. The integration database was removed afterward.
 Both Next production
 builds, all guarded client-JavaScript budgets, the commerce and runtime-grant
@@ -363,33 +381,26 @@ runtime merge, and exact flags-off production deployment have now completed.
 - PR #58 deployed the adaptive mobile product-detail layout as exact storefront
   source `88521ca775321fc13ab9756ea3c78d695c2e2ca2` without changing the live
   VPS ops source or any commerce release lock.
+- PR #60 deployed reviews, returns, policy projection, structured-only scent
+  matching, and mutation-origin hardening as exact source
+  `6a3dc24fbcacc9ed0f44219e9e0f260e0a2e207b` on both production surfaces with
+  every commerce and staff-security release flag still closed.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
   deployment path.
 
 Next actions:
 
-1. The frozen Hostinger ops rollback window expired on
-   2026-08-16 14:47:58 UTC. Remove it only with explicit authorization and
-   fresh exact-SHA acceptance evidence.
-2. Keep storefront commerce and staff security flags closed.
-3. Staff release and VPS ops observability may proceed independently after a
-   fresh exact-SHA VPS acceptance and their owning authorization gates pass;
-   the unresolved shared-plan incident does not block that VPS-only work.
-4. Managed-storefront provider or observability changes remain gated by the
-   rollback window, storefront Git-path decision, and scoped Hostinger incident
-   evidence. Follow procedures in [`OPERATIONS.md`](OPERATIONS.md) and
-   [`ENGINEERING.md`](ENGINEERING.md); do not start releases from this file.
-5. Keep Inspired-by listing titles fail-closed for legal clearance, sale data,
-   and Neon import. Do not apply a production catalog migration or open
-   checkout without a separate owner-authorized gate.
-6. Complete Google, Cashfree UPI, SMTP, maintenance-worker, reconciliation,
-   refund, and clean-browser sandbox acceptance with every production release
-   flag still closed; do not expose customer auth or checkout before all
-   provider and business gates pass.
-7. Complete provider-owned Google OAuth, Hostinger SMTP, Cashfree KYC and
-   UPI-only sandbox acceptance; populate only legally and commercially approved
-   catalog rows and commerce settings; then enable customer auth, public
-   catalog, checkout, inquiries, and maintenance in the documented gated order.
-   The separately authorized low-value live UPI purchase and refund remain the
-   final boundary before coordinated public activation.
+1. Obtain India-counsel clearance and owner-approved catalog facts: unresolved
+   mappings, Signature prices, SKUs, costs, opening stock, media, and structured
+   scent content. Do not migrate or publish sale data before that gate.
+2. Supply and accept the provider identities: Google OAuth production client,
+   Hostinger SMTP sender credentials and delivery proof, and Cashfree merchant
+   KYC/UPI-only sandbox credentials, webhooks, transaction TTL, and refunds.
+3. Approve the operating rules and references for tax, serviceability/courier,
+   shipping fee and threshold, returns/cancellations, and support staffing.
+4. Complete owner TOTP/recovery and staff journey acceptance, then separately
+   authorize the documented maintenance, customer-auth, catalog, checkout,
+   inquiry, and indexing activation sequence plus the final low-value live UPI
+   purchase/refund. Until then, keep every commerce and staff-security flag
+   closed.
