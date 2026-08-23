@@ -68,8 +68,8 @@ describe("storefront motion contract", () => {
     assert.match(home, /lg:min-h-\[26rem\]/);
     assert.match(home, /aura-snap-row/);
     assert.match(home, /snap-x snap-mandatory/);
-    assert.match(home, /render=\{<Link href="\/shop" \/>\}[\s\S]*aura-cream-action[\s\S]*Shop the collection/u);
-    assert.doesNotMatch(home, /Shop the collection[\s\S]*underline underline-offset-8/u);
+    assert.match(home, /render=\{<Link href="\/fragrance-guide" \/>\}[\s\S]*aura-cream-action[\s\S]*Learn how to choose a scent/u);
+    assert.doesNotMatch(home, /Learn how to choose a scent[\s\S]*underline underline-offset-8/u);
     assert.match(globals, /\[data-motion-journey-track\]/);
     assert.match(globals, /transform:\s*none !important;/);
 

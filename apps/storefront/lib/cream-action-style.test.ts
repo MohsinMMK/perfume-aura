@@ -35,11 +35,11 @@ describe("cream action design contract", () => {
       assert.match(file, /aura-cream-action/u);
     }
 
-    assert.match(files[0], /aura-cream-action[^"]*[\s\S]*Get scent/u);
+    assert.match(files[0], /aura-cream-action[^"]*[\s\S]*Scent guide/u);
     assert.match(files[1], /aura-cream-action[^"]*[\s\S]*Show previous featured scent/u);
     assert.match(files[1], /aura-cream-action[^"]*[\s\S]*Show next featured scent/u);
-    assert.match(files[1], /aura-cream-action[^"]*[\s\S]*Shop now/u);
-    assert.match(files[2], /aura-cream-action[^"]*[\s\S]*Shop the collection/u);
+    assert.match(files[1], /aura-cream-action[^"]*[\s\S]*Choose your scent/u);
+    assert.match(files[2], /aura-cream-action[^"]*[\s\S]*Learn how to choose a scent/u);
     assert.match(files[3], /aura-cream-action[^"]*[\s\S]*Add to cart/u);
     assert.match(
       files[3],

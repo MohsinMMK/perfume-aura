@@ -1,13 +1,11 @@
-@import "@fontsource-variable/inter-tight";
-@import "@fontsource/bebas-neue/400.css";
 @import "tailwindcss";
 @import "@perfume-aura/ui/globals.css";
 
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
 
 :root {
-  --aura-font-sans: "Inter Tight Variable", arial, system-ui, sans-serif;
-  --aura-font-display: "Bebas Neue", arial, system-ui, sans-serif;
+  --aura-font-sans: var(--font-inter-tight), arial, system-ui, sans-serif;
+  --aura-font-display: var(--font-bebas-neue), arial, system-ui, sans-serif;
   --aura-gutter: 0.625rem;
   --aura-gutter-lg: 1.25rem;
   --aura-gap: 0.625rem;
@@ -52,6 +50,7 @@
 }
 
 html {
+  overflow-x: clip;
   background: var(--aura-ink);
   scroll-behavior: auto;
 }

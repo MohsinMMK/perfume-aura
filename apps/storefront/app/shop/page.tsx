@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   title: "Shop",
   description: "Explore Perfume Aura scents, sizes, and prices in INR.",
   alternates: { canonical: "/shop" },
+  robots: { index: false, follow: false },
 };
 
 export default async function ShopPage({

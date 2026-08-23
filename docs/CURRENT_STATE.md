@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-23 13:02:05 UTC**
+Last refreshed: **2026-08-23 16:42:00 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -246,7 +246,12 @@ remains monitoring infrastructure.
 
 The 69-product launch listing is live. Sellable public catalog publication,
 checkout approval, customer authentication, and inquiries remain closed.
-`robots.txt` disallows indexing.
+Brand discovery is separated from commerce release: `/`, `/fragrance-guide`,
+`/about`, and `/faq` are the only release-locked sitemap URLs. Public crawling
+is allowed, while preview commerce and incomplete policy/inquiry pages remain
+`noindex` and private account, API, cart, checkout, and order paths stay
+disallowed in `robots.txt`. Product and collection URLs enter the sitemap only
+after the existing public-catalog gate opens.
 `OPS_TWO_FACTOR_REQUIRED` and
 `OPS_STAFF_INVITES_ENABLED` remain false until the complete staff release gate
 passes. Green health never authorizes opening a release flag.
@@ -400,7 +405,7 @@ Next actions:
 3. Approve the operating rules and references for tax, serviceability/courier,
    shipping fee and threshold, returns/cancellations, and support staffing.
 4. Complete owner TOTP/recovery and staff journey acceptance, then separately
-   authorize the documented maintenance, customer-auth, catalog, checkout,
-   inquiry, and indexing activation sequence plus the final low-value live UPI
+   authorize the documented maintenance, customer-auth, catalog, checkout, and
+   inquiry activation sequence plus the final low-value live UPI
    purchase/refund. Until then, keep every commerce and staff-security flag
-   closed.
+   closed; brand/guide discovery does not weaken those gates.

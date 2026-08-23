@@ -13,8 +13,18 @@ import { HomeHero } from "@/components/home-hero";
 import { IngredientAtmosphere } from "@/components/ingredient-atmosphere";
 import { ProductCard } from "@/components/product-card";
 import { getFeaturedProducts } from "@/lib/catalog";
+import { isPublicCatalogEnabled } from "@/lib/catalog-policy";
+import {
+  createHomeStructuredData,
+  serializeJsonLd,
+} from "@/lib/seo";
 
-export const metadata: Metadata = { alternates: { canonical: "/" } };
+export const metadata: Metadata = {
+  title: { absolute: "Perfume Aura | Fragrance house in India" },
+  description:
+    "Discover Perfume Aura, an India-focused fragrance house, and learn how to choose perfume by mood, intensity, occasion, and composition.",
+  alternates: { canonical: "/" },
+};
 
 const processSteps: readonly Readonly<{
   icon: IconSvgElement;
@@ -71,10 +81,17 @@ const editorialPreviews = [
 ] as const;
 
 export default async function HomePage() {
-  const featuredProducts = await getFeaturedProducts();
+  const featuredProducts = isPublicCatalogEnabled()
+    ? await getFeaturedProducts()
+    : [];
+  const structuredData = createHomeStructuredData();
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }}
+      />
       <HomeHero products={featuredProducts} />
 
       <section className="relative min-h-[86svh] overflow-hidden border-b border-dashed border-[color:rgb(245_228_199_/_22%)] bg-[var(--aura-ink)] px-5 py-24 text-[var(--aura-ivory)] sm:px-8 lg:py-36">
@@ -200,8 +217,8 @@ export default async function HomePage() {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-black/65">Find the right direction</p>
             <h2 data-motion-copy className="font-display mt-4 text-[clamp(4.5rem,8vw,8rem)] leading-[0.8]">Start with the feeling</h2>
             <p className="mt-7 text-base leading-7 text-black/70">Choose mood, intensity, and occasion. The finder stays quiet until there is enough complete scent data to make a recommendation worth trusting.</p>
-            <Button render={<Link href="/find-your-scent" />} nativeButton={false} className="mt-8 min-h-16 rounded-[var(--aura-radius)] bg-[var(--aura-ink)] px-8 font-display text-xl text-[var(--aura-ivory)] hover:bg-black">
-              Find your scent <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={1.8} />
+            <Button render={<Link href="/fragrance-guide" />} nativeButton={false} className="mt-8 min-h-16 rounded-[var(--aura-radius)] bg-[var(--aura-ink)] px-8 font-display text-xl text-[var(--aura-ivory)] hover:bg-black">
+              Read the fragrance guide <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={1.8} />
             </Button>
           </div>
         </div>
@@ -219,12 +236,12 @@ export default async function HomePage() {
         </div>
         <div className="mt-14 text-center">
           <Button
-            render={<Link href="/shop" />}
+            render={<Link href="/fragrance-guide" />}
             nativeButton={false}
             size="lg"
             className="aura-cream-action min-h-16 w-[calc(100%-2rem)] max-w-sm justify-between rounded-[var(--aura-radius)] px-8 font-display text-xl tracking-[0.02em] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)]"
           >
-            Shop the collection
+            Learn how to choose a scent
             <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={1.8} aria-hidden="true" />
           </Button>
         </div>

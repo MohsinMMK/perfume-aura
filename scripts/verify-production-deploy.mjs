@@ -11,6 +11,16 @@ import path from "node:path";
 const FULL_SHA = /^[0-9a-f]{40}$/;
 const PUBLIC_SURFACES = new Set(["storefront"]);
 const DEPLOY_TARGETS = new Set(["ops", "storefront", "both"]);
+const REQUIRED_STOREFRONT_ROBOTS_DIRECTIVES = [
+  "Allow: /",
+  "Disallow: /account",
+  "Disallow: /account/",
+  "Disallow: /api/",
+  "Disallow: /cart",
+  "Disallow: /checkout",
+  "Disallow: /order/",
+];
+const STOREFRONT_DISCOVERY_PATHS = ["/", "/fragrance-guide", "/about", "/faq"];
 
 function normalizeCommit(raw) {
   const value = String(raw ?? "")
@@ -86,6 +96,45 @@ export function findStorefrontReleaseCommit(html) {
     /\bdata-perfume-aura-release=["']([0-9a-f]{40})["']/i,
   );
   return match?.[1]?.toLowerCase() ?? null;
+}
+
+export function assertStorefrontDiscoveryFiles({
+  robots,
+  sitemap,
+  publicBase,
+}) {
+  if (robots.status !== 200) {
+    throw new Error(`storefront robots.txt expected 200, got ${robots.status}`);
+  }
+  const robotLines = new Set(
+    robots.text.split(/\r?\n/u).map((line) => line.trim()),
+  );
+  for (const directive of REQUIRED_STOREFRONT_ROBOTS_DIRECTIVES) {
+    if (!robotLines.has(directive)) {
+      throw new Error(`storefront robots.txt missing ${directive}`);
+    }
+  }
+  if (!robotLines.has(`Sitemap: ${publicBase}/sitemap.xml`)) {
+    throw new Error("storefront robots.txt has an invalid sitemap location");
+  }
+
+  if (sitemap.status !== 200) {
+    throw new Error(`storefront sitemap.xml expected 200, got ${sitemap.status}`);
+  }
+  const actualUrls = new Set(
+    [...sitemap.text.matchAll(/<loc>([^<]+)<\/loc>/gu)].map(
+      (match) => match[1],
+    ),
+  );
+  const expectedUrls = new Set(
+    STOREFRONT_DISCOVERY_PATHS.map((pathname) => `${publicBase}${pathname}`),
+  );
+  if (
+    actualUrls.size !== expectedUrls.size ||
+    [...expectedUrls].some((url) => !actualUrls.has(url))
+  ) {
+    throw new Error("storefront sitemap.xml is not the release-locked discovery set");
+  }
 }
 
 /**
@@ -338,13 +387,8 @@ export async function verifyProductionDeploy(options) {
   }
 
   const robots = await fetchStatus(`${publicBase}/robots.txt`, { fetchImpl });
-  if (
-    robots.status !== 200 ||
-    !robots.text.includes("Disallow: /") ||
-    !robots.text.includes(`${publicBase}/sitemap.xml`)
-  ) {
-    throw new Error("storefront robots.txt is not release locked at the apex");
-  }
+  const sitemap = await fetchStatus(`${publicBase}/sitemap.xml`, { fetchImpl });
+  assertStorefrontDiscoveryFiles({ robots, sitemap, publicBase });
 
   const customerAuth = await fetchStatus(
     `${publicBase}/api/customer-auth/get-session`,
@@ -408,9 +452,21 @@ function createFixtureServer(routes) {
       if (typeof robots?.body === "string") {
         robots.body = robots.body.replace("pending/sitemap.xml", `${baseUrl}/sitemap.xml`);
       }
+      const sitemap = routes["/sitemap.xml"];
+      if (typeof sitemap?.body === "string") {
+        sitemap.body = sitemap.body.replaceAll("pending", baseUrl);
+      }
       resolve({ server, baseUrl });
     });
   });
+}
+
+function fixtureRobots(publicBase) {
+  return `User-Agent: *\nAllow: /\nDisallow: /account\nDisallow: /account/\nDisallow: /api/\nDisallow: /cart\nDisallow: /checkout\nDisallow: /order/\nSitemap: ${publicBase}/sitemap.xml\n`;
+}
+
+function fixtureSitemap(publicBase) {
+  return `<urlset>${STOREFRONT_DISCOVERY_PATHS.map((pathname) => `<url><loc>${publicBase}${pathname}</loc></url>`).join("")}</urlset>`;
 }
 
 function successRoutes(commit, staticPath, publicBase = "pending") {
@@ -442,8 +498,9 @@ function successRoutes(commit, staticPath, publicBase = "pending") {
     "/search": { status: 200, body: "search" },
     "/robots.txt": {
       status: 200,
-      body: `User-Agent: *\nDisallow: /\nSitemap: ${publicBase}/sitemap.xml\n`,
+      body: fixtureRobots(publicBase),
     },
+    "/sitemap.xml": { status: 200, body: fixtureSitemap(publicBase) },
     "/api/customer-auth/get-session": {
       status: 404,
       body: JSON.stringify({ error: "Not found." }),
@@ -464,6 +521,43 @@ function successRoutes(commit, staticPath, publicBase = "pending") {
 async function selfTest() {
   const commit = "a".repeat(40);
   const staticPath = "/_next/static/chunks/main-abc.js";
+  const discoveryBase = "https://perfumeaura.com";
+  const validDiscoveryFiles = {
+    publicBase: discoveryBase,
+    robots: { status: 200, text: fixtureRobots(discoveryBase) },
+    sitemap: { status: 200, text: fixtureSitemap(discoveryBase) },
+  };
+
+  assert.doesNotThrow(() =>
+    assertStorefrontDiscoveryFiles(validDiscoveryFiles),
+  );
+  for (const directive of REQUIRED_STOREFRONT_ROBOTS_DIRECTIVES) {
+    assert.throws(
+      () =>
+        assertStorefrontDiscoveryFiles({
+          ...validDiscoveryFiles,
+          robots: {
+            status: 200,
+            text: fixtureRobots(discoveryBase).replace(`${directive}\n`, ""),
+          },
+        }),
+      /robots\.txt missing/u,
+    );
+  }
+  assert.throws(
+    () =>
+      assertStorefrontDiscoveryFiles({
+        ...validDiscoveryFiles,
+        sitemap: {
+          status: 200,
+          text: fixtureSitemap(discoveryBase).replace(
+            `<url><loc>${discoveryBase}/faq</loc></url>`,
+            `<url><loc>${discoveryBase}/shop</loc></url>`,
+          ),
+        },
+      }),
+    /not the release-locked discovery set/u,
+  );
 
   // Unit: auth session shape checks without logging bodies.
   assert.equal(assertAuthSessionOk({ status: 200, text: "null" }), null);
@@ -591,7 +685,7 @@ async function selfTest() {
   const successRoutesFixture = successRoutes(commit, staticPath);
   const success = await createFixtureServer(successRoutesFixture);
   successRoutesFixture["/robots.txt"].body =
-    `User-Agent: *\nDisallow: /\nSitemap: ${success.baseUrl}/sitemap.xml\n`;
+    fixtureRobots(success.baseUrl);
   try {
     const result = await verifyProductionDeploy({
       expectedCommit: commit,
@@ -609,7 +703,7 @@ async function selfTest() {
   const storefrontRoutes = successRoutes(commit, staticPath, "pending");
   const storefront = await createFixtureServer(storefrontRoutes);
   storefrontRoutes["/robots.txt"].body =
-    `User-Agent: *\nDisallow: /\nSitemap: ${storefront.baseUrl}/sitemap.xml\n`;
+    fixtureRobots(storefront.baseUrl);
   try {
     const result = await verifyProductionDeploy({
       expectedCommit: commit,
@@ -627,7 +721,7 @@ async function selfTest() {
   const exactStorefrontRoutes = successRoutes(commit, staticPath, "pending");
   const exactStorefront = await createFixtureServer(exactStorefrontRoutes);
   exactStorefrontRoutes["/robots.txt"].body =
-    `User-Agent: *\nDisallow: /\nSitemap: ${exactStorefront.baseUrl}/sitemap.xml\n`;
+    fixtureRobots(exactStorefront.baseUrl);
   const www = await createFixtureServer({
     "/shop": {
       status: 308,
@@ -655,7 +749,7 @@ async function selfTest() {
     `<html data-perfume-aura-release="${"b".repeat(40)}"><script src="${staticPath}"></script></html>`;
   const staleStorefront = await createFixtureServer(staleStorefrontRoutes);
   staleStorefrontRoutes["/robots.txt"].body =
-    `User-Agent: *\nDisallow: /\nSitemap: ${staleStorefront.baseUrl}/sitemap.xml\n`;
+    fixtureRobots(staleStorefront.baseUrl);
   const staleWww = await createFixtureServer({
     "/shop": {
       status: 308,
@@ -683,7 +777,7 @@ async function selfTest() {
   const redirectStorefrontRoutes = successRoutes(commit, staticPath, "pending");
   const redirectStorefront = await createFixtureServer(redirectStorefrontRoutes);
   redirectStorefrontRoutes["/robots.txt"].body =
-    `User-Agent: *\nDisallow: /\nSitemap: ${redirectStorefront.baseUrl}/sitemap.xml\n`;
+    fixtureRobots(redirectStorefront.baseUrl);
   const badWww = await createFixtureServer({
     "/shop": {
       status: 302,

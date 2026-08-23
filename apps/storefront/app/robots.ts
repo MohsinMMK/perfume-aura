@@ -1,11 +1,14 @@
 import type { MetadataRoute } from "next";
+import { getStorefrontOrigin, privateCrawlerPaths } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
-  const publicRelease = process.env.STOREFRONT_PUBLIC_RELEASE === "true";
   return {
-    rules: publicRelease
-      ? { userAgent: "*", allow: "/", disallow: ["/account/", "/checkout", "/cart", "/order/"] }
-      : { userAgent: "*", disallow: "/" },
-    sitemap: `${process.env.STOREFRONT_URL ?? "https://perfumeaura.com"}/sitemap.xml`,
+    rules: {
+      userAgent: "*",
+      allow: "/",
+      disallow: [...privateCrawlerPaths],
+    },
+    sitemap: `${getStorefrontOrigin()}/sitemap.xml`,
+    host: getStorefrontOrigin(),
   };
 }

@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/product-card";
 import { getStorefrontCollection } from "@/lib/catalog";
+import { isPublicCatalogEnabled } from "@/lib/catalog-policy";
 
 export async function generateMetadata({ params }: Readonly<{ params: Promise<{ slug: string }> }>): Promise<Metadata> {
   const { slug } = await params;
   const collection = await getStorefrontCollection(slug);
-  return collection ? { title: collection.title, description: collection.description, alternates: { canonical: `/collections/${slug}` } } : { title: "Collection unavailable", robots: { index: false, follow: false } };
+  return collection && isPublicCatalogEnabled()
+    ? { title: collection.title, description: collection.description, alternates: { canonical: `/collections/${slug}` } }
+    : { title: collection?.title ?? "Collection unavailable", robots: { index: false, follow: false } };
 }
 
 export default async function CollectionPage({ params }: Readonly<{ params: Promise<{ slug: string }> }>) {
