@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-23 17:29:03 UTC**
+Last refreshed: **2026-08-23 18:47:08 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -260,6 +260,12 @@ is allowed, while preview commerce and incomplete policy/inquiry pages remain
 disallowed in `robots.txt`. Product and collection URLs enter the sitemap only
 after the existing public-catalog gate opens.
 IndexNow accepted all four live discovery URLs with HTTP `202` on 2026-08-23.
+The `perfumeaura.com` Google Search Console domain property is ownership-
+verified through Hostinger-authoritative DNS. Google Search Console accepted
+`https://perfumeaura.com/sitemap.xml` on 2026-08-24 IST (2026-08-23 UTC),
+reported `Success`, and discovered all four release-locked URLs. Keep the DNS
+verification records in place; indexing and coverage remain subject to
+Google's recrawl schedule.
 Fresh 390-by-844 production browser sessions on the home page and fragrance
 guide confirmed canonical metadata, Open Graph metadata, Organization/WebSite
 and Article/Breadcrumb structured data, zero horizontal overflow, and zero
@@ -422,10 +428,9 @@ runtime merge, and exact flags-off production deployment have now completed.
 
 Next actions:
 
-1. Verify the domain in Google Search Console, submit
-   `https://perfumeaura.com/sitemap.xml`, and review indexing/coverage after
-   Google recrawls. This requires the owner's Google account; IndexNow is
-   already submitted for supported engines.
+1. Review Google Search Console indexing and coverage after Google recrawls the
+   successfully submitted four-URL sitemap. Ownership verification, sitemap
+   submission, and IndexNow discovery notification are complete.
 2. Obtain India-counsel clearance and owner-approved catalog facts: unresolved
    mappings, Signature prices, SKUs, costs, opening stock, media, and structured
    scent content. Do not migrate or publish sale data before that gate.
