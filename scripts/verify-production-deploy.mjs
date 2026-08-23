@@ -127,7 +127,9 @@ export function assertStorefrontDiscoveryFiles({
     ),
   );
   const expectedUrls = new Set(
-    STOREFRONT_DISCOVERY_PATHS.map((pathname) => `${publicBase}${pathname}`),
+    STOREFRONT_DISCOVERY_PATHS.map((pathname) =>
+      pathname === "/" ? publicBase : `${publicBase}${pathname}`,
+    ),
   );
   if (
     actualUrls.size !== expectedUrls.size ||
@@ -466,7 +468,7 @@ function fixtureRobots(publicBase) {
 }
 
 function fixtureSitemap(publicBase) {
-  return `<urlset>${STOREFRONT_DISCOVERY_PATHS.map((pathname) => `<url><loc>${publicBase}${pathname}</loc></url>`).join("")}</urlset>`;
+  return `<urlset>${STOREFRONT_DISCOVERY_PATHS.map((pathname) => `<url><loc>${pathname === "/" ? publicBase : `${publicBase}${pathname}`}</loc></url>`).join("")}</urlset>`;
 }
 
 function successRoutes(commit, staticPath, publicBase = "pending") {
