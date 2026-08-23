@@ -65,6 +65,14 @@ unless the separate surface approvals in `docs/COMMERCE.md` are complete.
 The owner UI stores approved PIN codes and evidence-backed commerce settings.
 Deactivation replaces deletion so prior operating decisions remain auditable.
 
+The storefront reads these values through one fail-closed policy projection.
+It emits no shipping, cancellation, or return promise unless both storefront
+release planes, checkout, every approval field, ₹99/₹999, and
+`support@perfumeaura.com` match this register. The implemented customer return
+path also requires a recorded delivery inside the locked seven-day window;
+these controls do not convert pending professional or owner evidence into
+approval.
+
 ## Deterministic catalog intake
 
 Run the planner first:

@@ -112,7 +112,11 @@ Build the verified ZIP for either a routine deployment or emergency recovery:
 
 ```bash
 pnpm check
-TEST_DATABASE_URL='<migrated-disposable-loopback-url>' pnpm test:integration
+PERFUME_AURA_TEST_DB_URL='<migrated-disposable-loopback-url>'
+TEST_DATABASE_URL="$PERFUME_AURA_TEST_DB_URL" \
+  DATABASE_URL="$PERFUME_AURA_TEST_DB_URL" \
+  DATABASE_URL_DIRECT="$PERFUME_AURA_TEST_DB_URL" \
+  pnpm test:integration
 pnpm storefront:pack
 ```
 
@@ -550,9 +554,10 @@ deployment:
 2. Confirm the existing build-only `SENTRY_AUTH_TOKEN` secret is available to
    the trusted main-branch build; never expose it to pull requests from forks
    or through `NEXT_PUBLIC_`.
-3. Run `pnpm check`,
-   `TEST_DATABASE_URL='<migrated-disposable-loopback-url>' pnpm test:integration`,
-   both package commands, and `git diff --check`.
+3. Run `pnpm check`, then run `pnpm test:integration` with
+   `TEST_DATABASE_URL`, `DATABASE_URL`, and `DATABASE_URL_DIRECT` all set to the
+   same migrated disposable loopback URL; run both package commands and
+   `git diff --check`.
 4. Deploy through the existing verified paths and run the exact-SHA production
    verifier plus the full storefront and ops smoke tests.
 5. In a controlled, non-sensitive test route, produce one handled test error

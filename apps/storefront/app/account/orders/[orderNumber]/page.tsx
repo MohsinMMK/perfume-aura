@@ -3,6 +3,8 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Button } from "@perfume-aura/ui/components/button";
+import { CustomerReviewForm } from "@/components/customer-review-form";
+import { CustomerReturnForm } from "@/components/customer-return-form";
 import { createCustomerAuth } from "@/lib/customer-auth";
 import { getCustomerOrder } from "@/lib/customer-orders";
 import { reconcileCustomerOrderPayment } from "@/lib/customer-payment-reconciliation";
@@ -51,6 +53,8 @@ export default async function CustomerOrderPage({
   const order = await getCustomerOrder(session.user.id, orderNumber);
   if (!order) notFound();
   const money = (amountMinor: number) => formatMoney({ currency: "INR", amountMinor });
+  const returnWindowOpen = order.status === "delivered" &&
+    order.shipment?.returnWindowOpen === true;
 
   return <>
     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#79633e]">Order {order.orderNumber}</p>
@@ -64,8 +68,16 @@ export default async function CustomerOrderPage({
         </dl>
         <h2 className="mt-8 font-display text-3xl">Items</h2>
         <ul className="mt-3 divide-y divide-black/15 border-y border-black/15">
-          {order.items.map((item) => <li key={item.sku} className="grid gap-2 py-4 text-sm sm:grid-cols-[1fr_auto]">
-            <span><strong>{item.productName}</strong><span className="mt-1 block text-[#6a6258]">{item.sizeMl} ml · Qty {item.quantity}</span></span>
+          {order.items.map((item) => <li key={item.id} className="grid gap-4 py-4 text-sm sm:grid-cols-[1fr_auto]">
+            <div>
+              <strong>{item.productName}</strong>
+              <span className="mt-1 block text-[#6a6258]">{item.sizeMl} ml · Qty {item.quantity}</span>
+              {order.status === "delivered" && item.fulfilledQuantity === item.quantity ? (
+                item.reviewStatus
+                  ? <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#6a6258]">Review {item.reviewStatus}</p>
+                  : <CustomerReviewForm orderItemId={item.id} productName={item.productName} />
+              ) : null}
+            </div>
             <strong>{money(item.lineTotalAmountMinor)}</strong>
           </li>)}
         </ul>
@@ -87,6 +99,8 @@ export default async function CustomerOrderPage({
         <section className="border border-black/15 p-5"><h2 className="font-display text-2xl">Delivery</h2><address className="mt-3 text-sm not-italic leading-6">{addressLines(order.shippingAddressSnapshot).map((line) => <span key={line} className="block">{line}</span>)}</address></section>
         {order.shipment ? <section className="border border-black/15 p-5"><h2 className="font-display text-2xl">Shipment</h2><p className="mt-3 text-sm capitalize">{order.shipment.status}</p>{order.shipment.courier ? <p className="mt-1 text-sm">{order.shipment.courier}</p> : null}{order.shipment.trackingNumber ? <p className="mt-1 break-all text-sm">Tracking: {order.shipment.trackingNumber}</p> : null}</section> : null}
         {order.refunds.length > 0 ? <section className="border border-black/15 p-5"><h2 className="font-display text-2xl">Refunds</h2>{order.refunds.map((refund) => <p key={`${refund.createdAt.toISOString()}-${refund.amountMinor}`} className="mt-3 text-sm capitalize">{money(refund.amountMinor)} · {refund.status}</p>)}</section> : null}
+        {order.returns.length > 0 ? <section className="border border-black/15 p-5"><h2 className="font-display text-2xl">Return</h2>{order.returns.map((item) => <div key={item.id} className="mt-3 text-sm"><p className="font-semibold capitalize">{item.status}</p><p className="mt-1 text-[#6a6258]">{item.reason}</p><p className="mt-1 text-xs text-[#6a6258]">Requested {item.requestedAt.toLocaleString("en-IN")}</p></div>)}</section> : null}
+        {returnWindowOpen && order.returns.length === 0 ? <CustomerReturnForm orderNumber={order.orderNumber} /> : null}
         <Button render={<Link href="/contact" />} nativeButton={false} variant="outline" className="min-h-12 w-full rounded-none border-black/25 bg-transparent">Contact support</Button>
       </aside>
     </div>

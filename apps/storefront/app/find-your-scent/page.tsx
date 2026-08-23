@@ -1,9 +1,20 @@
 import type { Metadata } from "next";
 import { ScentFinder } from "@/components/scent-finder";
+import { getStorefrontProducts } from "@/lib/catalog";
 
 export const metadata: Metadata = { title: "Find your scent", alternates: { canonical: "/find-your-scent" } };
 
-export default function FindYourScentPage() {
+export default async function FindYourScentPage() {
+  const products = (await getStorefrontProducts())
+    .filter((product) => product.publicationState === "published")
+    .map((product) => ({
+      slug: product.slug,
+      name: product.name,
+      family: product.family,
+      intensity: product.intensity,
+      occasion: product.occasion,
+      notes: product.notes,
+    }));
   return (
     <section className="min-h-[75svh] bg-[var(--aura-ivory)] px-[var(--aura-gutter)] pb-20 pt-28 text-[var(--aura-ink)] lg:px-[var(--aura-gutter-lg)] lg:pt-32">
       <div className="mx-auto max-w-5xl">
@@ -12,7 +23,7 @@ export default function FindYourScentPage() {
         <p className="mt-6 max-w-2xl text-sm leading-6 text-[#5f584f]">
           A short path from mood to scent. The finder stays quiet until there are enough complete scent details to make a useful recommendation.
         </p>
-        <ScentFinder />
+        <ScentFinder products={products} />
       </div>
     </section>
   );

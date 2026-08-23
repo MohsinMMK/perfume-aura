@@ -7,6 +7,7 @@ import {
   eq,
 } from "@perfume-aura/db";
 import { createCustomerAuth } from "@/lib/customer-auth";
+import { isTrustedStorefrontMutation } from "@/lib/customer-request-security";
 
 function digest(token: string): string {
   return createHash("sha256").update(token).digest("hex");
@@ -14,7 +15,10 @@ function digest(token: string): string {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   if (process.env.STOREFRONT_CUSTOMER_AUTH_ENABLED !== "true") {
-    return NextResponse.json({ error: "Customer accounts are not enabled." }, { status: 503 });
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  if (!isTrustedStorefrontMutation(request.headers)) {
+    return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
   }
   try {
     const session = await createCustomerAuth().api.getSession({ headers: request.headers });

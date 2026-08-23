@@ -3,6 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@perfume-aura/ui/components/button";
+import {
+  recommendScentProfiles,
+  type ScentFinderAnswers,
+  type ScentFinderProduct,
+} from "@/lib/scent-finder";
 
 const questions = [
   { key: "mood", prompt: "How should it feel?", options: ["Quiet", "Magnetic", "Radiant"] },
@@ -10,9 +15,12 @@ const questions = [
   { key: "occasion", prompt: "Where will it live?", options: ["Every day", "Evening", "Occasion"] },
 ] as const;
 
-export function ScentFinder() {
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+export function ScentFinder({ products }: Readonly<{ products: readonly ScentFinderProduct[] }>) {
+  const [answers, setAnswers] = useState<Partial<ScentFinderAnswers>>({});
   const complete = questions.every((question) => answers[question.key]);
+  const recommendations = complete
+    ? recommendScentProfiles(products, answers as ScentFinderAnswers)
+    : [];
 
   return (
     <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_24rem]">
@@ -45,12 +53,25 @@ export function ScentFinder() {
       </div>
       <aside className="border border-black/20 bg-[#fbf8f2] p-6 lg:sticky lg:top-28 lg:self-start">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#79633e]">Your result</p>
-        <h2 className="mt-3 font-display text-3xl">{complete ? "Profile captured." : "Choose one from each row."}</h2>
-        <p className="mt-4 text-sm leading-6 text-[#5f584f]">
-          {complete
-            ? "Recommendations will appear when enough scent profile details are available."
-            : "Choose one answer from each row to complete your scent direction."}
-        </p>
+        <h2 className="mt-3 font-display text-3xl">{complete ? recommendations.length ? "Your closest matches." : "No confident match yet." : "Choose one from each row."}</h2>
+        {recommendations.length ? (
+          <ol className="mt-4 flex flex-col gap-4">
+            {recommendations.map((recommendation) => (
+              <li key={recommendation.slug}>
+                <Link href={`/products/${recommendation.slug}`} className="font-display text-2xl underline-offset-4 hover:underline">{recommendation.name}</Link>
+                <ul className="mt-1 flex flex-col gap-1 text-xs leading-5 text-[#5f584f]">
+                  {recommendation.reasons.map((reason) => <li key={reason}>{reason}</li>)}
+                </ul>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="mt-4 text-sm leading-6 text-[#5f584f]">
+            {complete
+              ? "The approved catalog does not yet contain enough matching scent metadata. Browse the collection without a fabricated recommendation."
+              : "Choose one answer from each row to complete your scent direction."}
+          </p>
+        )}
         <Button render={<Link href="/shop" />} nativeButton={false} className="mt-6 min-h-12 w-full rounded-none" disabled={!complete}>
           Explore the collection
         </Button>

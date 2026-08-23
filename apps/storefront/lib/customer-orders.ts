@@ -4,11 +4,14 @@ import {
   commerceOrderItems,
   commerceOrders,
   commerceRefunds,
+  commerceReturns,
   db,
   desc,
   eq,
   paymentAttempts,
+  reviews,
   shipments,
+  sql,
 } from "@perfume-aura/db";
 
 const customerEventLabels = {
@@ -66,15 +69,20 @@ export async function getCustomerOrder(userId: string, orderNumber: string) {
   )).limit(1);
   if (!order) return null;
 
-  const [items, eventRows, shipmentRows, refundRows] = await Promise.all([
+  const [items, eventRows, shipmentRows, refundRows, returnRows] = await Promise.all([
     db.select({
+      id: commerceOrderItems.id,
       productName: commerceOrderItems.productNameSnapshot,
       sku: commerceOrderItems.skuSnapshot,
       sizeMl: commerceOrderItems.sizeMlSnapshot,
       unitPriceAmountMinor: commerceOrderItems.unitPriceAmountMinor,
       quantity: commerceOrderItems.quantity,
+      fulfilledQuantity: commerceOrderItems.fulfilledQuantity,
       lineTotalAmountMinor: commerceOrderItems.lineTotalAmountMinor,
-    }).from(commerceOrderItems).where(eq(commerceOrderItems.orderId, order.id)),
+      reviewStatus: reviews.status,
+    }).from(commerceOrderItems)
+      .leftJoin(reviews, eq(reviews.orderItemId, commerceOrderItems.id))
+      .where(eq(commerceOrderItems.orderId, order.id)),
     db.select({ eventType: commerceOrderEvents.eventType, createdAt: commerceOrderEvents.createdAt })
       .from(commerceOrderEvents).where(eq(commerceOrderEvents.orderId, order.id))
       .orderBy(commerceOrderEvents.createdAt),
@@ -84,6 +92,7 @@ export async function getCustomerOrder(userId: string, orderNumber: string) {
       status: shipments.status,
       shippedAt: shipments.shippedAt,
       deliveredAt: shipments.deliveredAt,
+      returnWindowOpen: sql<boolean>`${shipments.deliveredAt} is not null and ${shipments.deliveredAt} >= now() - interval '7 days'`,
     }).from(shipments).where(eq(shipments.orderId, order.id)).orderBy(desc(shipments.createdAt)).limit(1),
     db.select({
       status: commerceRefunds.status,
@@ -94,6 +103,14 @@ export async function getCustomerOrder(userId: string, orderNumber: string) {
       .innerJoin(paymentAttempts, eq(paymentAttempts.id, commerceRefunds.paymentAttemptId))
       .where(eq(paymentAttempts.orderId, order.id))
       .orderBy(desc(commerceRefunds.createdAt)),
+    db.select({
+      id: commerceReturns.id,
+      status: commerceReturns.status,
+      reason: commerceReturns.reason,
+      requestedAt: commerceReturns.requestedAt,
+    }).from(commerceReturns)
+      .where(eq(commerceReturns.orderId, order.id))
+      .orderBy(desc(commerceReturns.requestedAt)),
   ]);
   return {
     ...order,
@@ -101,6 +118,7 @@ export async function getCustomerOrder(userId: string, orderNumber: string) {
     items,
     shipment: shipmentRows[0] ?? null,
     refunds: refundRows,
+    returns: returnRows,
     timeline: eventRows.flatMap((event) => isCustomerEventType(event.eventType)
       ? [{ type: event.eventType, label: customerEventLabels[event.eventType], createdAt: event.createdAt }]
       : []),

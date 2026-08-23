@@ -13,6 +13,7 @@ import {
 import { AddToCart } from "@/components/add-to-cart";
 import { ProductCard } from "@/components/product-card";
 import { findStorefrontProduct, getStorefrontProducts } from "@/lib/catalog";
+import { loadApprovedCommercePolicy } from "@/lib/commerce-policy";
 import { formatMoney } from "@/lib/money";
 import { loadApprovedProductReviews } from "@/lib/public-catalog";
 
@@ -49,11 +50,18 @@ const productAssurances = [
 
 export default async function ProductPage({ params }: Readonly<{ params: Promise<{ slug: string }> }>) {
   const { slug } = await params;
-  const product = await findStorefrontProduct(slug);
+  const [product, commercePolicy] = await Promise.all([
+    findStorefrontProduct(slug),
+    loadApprovedCommercePolicy(),
+  ]);
   if (!product) notFound();
 
   const firstPrice = product.variants.find((variant) => variant.price)?.price;
-  const relatedProducts = (await getStorefrontProducts()).filter((candidate) => candidate.slug !== product.slug).slice(0, 3);
+  const [allProducts, approvedReviews] = await Promise.all([
+    getStorefrontProducts(),
+    product.publicationState === "published" ? loadApprovedProductReviews(product.id) : Promise.resolve([]),
+  ]);
+  const relatedProducts = allProducts.filter((candidate) => candidate.slug !== product.slug).slice(0, 3);
   const productStructuredData = product.publicationState === "published"
     ? {
         "@context": "https://schema.org",
@@ -70,7 +78,6 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
         }] : []),
       }
     : null;
-  const approvedReviews = product.publicationState === "published" ? await loadApprovedProductReviews(product.id) : [];
   const detailValue = (value: string) => product.publicationState === "published" ? value : "Details coming soon";
 
   return (
@@ -182,7 +189,7 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
             </AccordionItem>
             <AccordionItem value="delivery" className="data-open:bg-black/5">
               <AccordionTrigger className="min-h-16 px-5 font-display text-2xl hover:no-underline">Delivery and returns</AccordionTrigger>
-              <AccordionContent className="px-5 text-black/62">Shipping, cancellation, and return details are not available yet.</AccordionContent>
+              <AccordionContent className="px-5 text-black/62">{commercePolicy ? `Delivery to approved Indian PIN codes takes ${commercePolicy.deliveryEstimate}. ${commercePolicy.cancellationSummary} ${commercePolicy.returnsSummary}` : "Shipping, cancellation, and return details are not available yet."}</AccordionContent>
             </AccordionItem>
           </Accordion>
         </div>

@@ -122,7 +122,7 @@ No requirement marked Proposed represents live behavior.
 | UX-002 | Proposed | Separate cinematic storytelling from conversion-critical surfaces. | Home can use restrained motion; catalog, PDP, cart, and checkout stay legible, fast, and task-focused. |
 | UX-003 | Proposed | Provide catalog navigation suitable for approved launch volume. | Shop and collection routes expose only approved product groups; mobile navigation remains keyboard and screen-reader usable. |
 | FIND-001 | Blocked | Add predictive search only after searchable product data is approved. | Search returns relevant approved products, prices, images, availability, and a full-results path. |
-| FIND-002 | Blocked | Add rule-based scent finder only after scent metadata is complete. | Every recommendation states which approved answers and product properties produced it. |
+| FIND-002 | Blocked | Add rule-based scent finder only after scent metadata is complete. | The implemented finder reads published structured profiles only, explains which answer axes and product properties matched, and returns no recommendation below two matching axes. Completion remains blocked until approved scent metadata and live browser evidence exist. |
 | FIND-003 | Proposed | Filter broad catalogs by useful fragrance attributes. | Available filters include real family, notes, occasion, intensity, size, price, audience, and availability values. |
 
 ### Product detail
@@ -133,7 +133,7 @@ No requirement marked Proposed represents live behavior.
 | PDP-002 | Blocked | Show real purchase facts near primary action. | Selected price, price per ml, availability, quantity, delivery summary, payment methods, and return summary use approved data. |
 | PDP-003 | Blocked | Explain fragrance without copied claims. | Approved family, top/heart/base notes, concentration, intensity, longevity guidance, occasion, usage, and ingredients appear where available. |
 | PDP-004 | Proposed | Keep purchase action available on small screens. | Sticky mobile action reflects current product, size, price, stock state, and cart status without covering content. |
-| PDP-005 | Blocked | Show only verified reviews. | Review is tied to a completed eligible order and moderation state; aggregate counts match displayed records. |
+| PDP-005 | Blocked | Show only verified reviews. | The implemented submission path permits one pending review for a customer-owned delivered, fully fulfilled order item; staff moderation is audited and only approved reviews enter PDP queries. Completion remains blocked until approved catalog publication and the live customer/staff journey are verified. |
 
 ### Cart, checkout, orders, and inventory
 
@@ -142,7 +142,7 @@ No requirement marked Proposed represents live behavior.
 | CART-001 | Proposed | Persist server-authoritative guest carts. | Quantity and current price/availability are revalidated before checkout; client values are never trusted as financial truth. |
 | CART-002 | Proposed | Make empty-cart recovery useful. | Empty cart links to approved products or collections without fabricated recommendations. |
 | CHECK-001 | Accepted | Require a verified customer account when checkout opens. | Visitors may browse and build a cart anonymously, but `/checkout` redirects signed-out visitors to customer sign-in and every new order is linked from the server-verified session. |
-| CHECK-002 | Blocked | Use one authoritative India shipping and return policy. | India-wide serviceability, courier, fees, threshold, delivery estimate, returns, cancellations, tax, and support are approved; PDP, cart, checkout, confirmation, and email render matching policy identifiers and current text. |
+| CHECK-002 | Blocked | Use one authoritative India shipping and return policy. | The implemented public projection remains absent unless both release planes, checkout, every policy approval, ₹99/₹999 values, and the support mailbox match the locked decision. Return creation requires a fully fulfilled delivered order inside seven calendar days. Completion remains blocked until India-wide serviceability, courier, policy, tax, support, and every customer surface are approved and verified. |
 | INV-001 | Proposed | Reserve stock atomically. | Reservation cannot exceed available quantity and is created in a transaction with deterministic lock order. |
 | INV-002 | Proposed | Release abandoned reservations. | Expired, cancelled, and failed checkout reservations release exactly once and produce auditable stock events. |
 | ORD-001 | Proposed | Keep customer order lifecycle separate from invoices. | Order records immutable purchase facts; controlled workflow creates or links financial invoice records. |
@@ -156,7 +156,7 @@ No requirement marked Proposed represents live behavior.
 | PAY-002 | Proposed | Process payment callbacks idempotently. | Authentic duplicate or reordered callbacks cannot create duplicate payment, order, invoice, or stock effects. |
 | PAY-003 | Proposed | Never trust browser payment success alone. | Server verifies provider state before marking order paid. |
 | AUTH-001 | Accepted | Keep owner authentication separate from public customer identity. | Customer routes cannot use or weaken owner-only Better Auth configuration. |
-| AUTH-002 | Blocked | Support launch-scope customer accounts without weakening anonymous browsing and cart creation. | Google is the primary sign-in path with verified email/password recovery and fallback; account creation, sign-in, recovery, privacy, deletion, and authorization are approved and verified; checkout requires a verified customer session. |
+| AUTH-002 | Blocked | Support launch-scope customer accounts without weakening anonymous browsing and cart creation. | Implemented customer mutations require the exact storefront origin and verified session where applicable; disabled routes return `404` before auth/database initialization. Completion remains blocked until Google primary sign-in, verified email/password recovery, privacy, deletion, authorization, and checkout journeys are provider-approved and verified. |
 | TRUST-001 | Blocked | Obtain Indian legal approval for trademark/reference naming before publication. | Exact public reference wording and disclaimer receive counsel approval for every intended surface; designer and inspired-reference names remain disabled on bottle labels and packaging until separate owner approval and India-counsel approval for that surface (COM-ADR-022); no product implies designer affiliation; no designer logo, copied image, copied description, or misleading packaging claim is used. A disclaimer is disclosure only and is not a statutory safe harbor. |
 | TRUST-002 | Accepted | Do not fabricate commerce facts. | No unverified pricing, availability, review, delivery, return, payment, or checkout claim is public. |
 

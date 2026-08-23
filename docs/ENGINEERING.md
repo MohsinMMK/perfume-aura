@@ -162,6 +162,21 @@ serviceability, and separate order/inquiry notification outboxes. Maintenance
 returns aggregate processed/succeeded/retried/mismatched/failed counts; one
 provider failure cannot starve the remainder of its batch.
 
+Customer review and return writes are server-authoritative. Review eligibility
+requires the verified session to own a delivered, fully fulfilled order item;
+the database uniqueness boundary permits one pending moderation record per
+item. Return creation locks the owned delivered order, requires a non-null
+delivered shipment timestamp inside seven calendar days, creates one complete
+order request and item set transactionally, and rejects concurrent duplicates.
+Staff review/return transitions use capability checks, expected-state guards,
+row locks, and audit events. A return cannot become `refunded` until the linked
+order payment state is already fully refunded.
+
+Browser mutations for cart, checkout, delivery profile, order claim, review,
+and return require the exact storefront `Origin`; a cross-site Fetch Metadata
+value is rejected. Disabled customer-auth routes return `404` before importing
+Better Auth or querying Neon.
+
 Checkout compares the complete stored cart set with the complete eligible join
 inside the locked cart transaction. Any missing, duplicated, unpublished,
 unapproved, unstocked, or changed line produces `409 CART_CHANGED`, removes only
@@ -197,7 +212,7 @@ ledger-first inventory API. `drizzle.config.ts` requires
 | Better Auth | `user`, `session`, `account`, `verification`, `rate_limit`, `two_factor` |
 | Staff security | append-only `staff_invitation_events`, `ops_audit_events` |
 | Catalog and inventory | `products`, `product_variants`, approval-gated publications/prices/media, `shipping_serviceability`, `locations`, append-only `stock_movements` |
-| Storefront commerce delivery | payment/refund reconciliation state, typed order events, separate order/inquiry notification outboxes |
+| Storefront commerce delivery | payment/refund reconciliation state, typed order events, review moderation, return lifecycle, separate order/inquiry notification outboxes |
 | Finance | invoices, payments, atomic `document_number_counters` |
 
 ```bash
@@ -235,7 +250,11 @@ Applications import schema, helpers, and Drizzle operators through
 pnpm lint
 pnpm typecheck
 pnpm test:unit
-TEST_DATABASE_URL='<migrated-disposable-loopback-url>' pnpm test:integration
+PERFUME_AURA_TEST_DB_URL='<migrated-disposable-loopback-url>'
+TEST_DATABASE_URL="$PERFUME_AURA_TEST_DB_URL" \
+  DATABASE_URL="$PERFUME_AURA_TEST_DB_URL" \
+  DATABASE_URL_DIRECT="$PERFUME_AURA_TEST_DB_URL" \
+  pnpm test:integration
 pnpm build:storefront
 pnpm build:ops
 pnpm storefront:pack
