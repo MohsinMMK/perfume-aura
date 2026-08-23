@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-23 17:11:32 UTC**
+Last refreshed: **2026-08-23 17:29:03 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -33,22 +33,23 @@ and ignored local environment files.
 ## Exact releases and automation
 
 Both production surfaces run exact source
-`613828984e860b2c311e94384c5a679e9ae45a14`. Ops uses immutable image digest
-`sha256:5d9c7363cd017f17594e40551c40e45245ebc1482af098db372fa7d2a10ad62d`;
+`4746fe1bb70f7cd37d8616729e7bf628699821e4`. Ops uses immutable image digest
+`sha256:7e079713a03d97eb09d5242f2fa63c067b18e57b9c37117da326491b2aeedbd5`;
 the generated storefront branch is exact commit
-`975a30ba82da9dcf7f79af04470d871cdf0cb134`. Workflow run
-[`32653259699`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32653259699)
+`fbcead016ff9f63d218e7d93fa15fdfdea226767`. Workflow run
+[`32653933909`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32653933909)
 passed quality, all disposable-PostgreSQL integration tests, verified
 packaging, immutable image build/push, Tailscale deployment through the
-restricted SSH identity, and generated-branch publication. Its first live
-acceptance snapshot failed after the exact release arrived at production but
-before every HCDN edge returned the new discovery files. After propagation,
-the corrected exact-release verifier passed independently for both surfaces,
-including ops live/ready/unauthenticated-session behavior, storefront release
-locks, the exact four-URL sitemap and crawler policy, real immutable Next
-assets, and the path- and query-preserving `www` redirect. PR #63 corrected the
-verifier's homepage URL expectation to the canonical non-trailing-slash form;
-it did not alter either production runtime.
+restricted SSH identity, generated-branch publication, and exact live
+verification on both surfaces. Independent corrected-verifier acceptance also
+passed both surfaces, including ops live/ready/unauthenticated-session
+behavior, storefront release locks, the exact four-URL sitemap and crawler
+policy, real immutable Next assets, and the path- and query-preserving `www`
+redirect. The preceding SEO workflow run `32653259699` first exposed an HCDN
+propagation window and a homepage sitemap trailing-slash mismatch in the
+verifier; PR #63 corrected that verifier contract, then its normal runtime
+workflow repackaged and deployed the unchanged website behavior as the current
+exact source.
 
 Routine ops deployment is now:
 
@@ -412,7 +413,9 @@ runtime merge, and exact flags-off production deployment have now completed.
   customer-auth, inquiry, or staff-security flag opened.
 - PR #63 corrected only the production verifier's canonical homepage sitemap
   expectation after the live release exposed the trailing-slash mismatch. Its
-  merge remained deployment-free.
+  normal non-Markdown main workflow repackaged, deployed, and exactly verified
+  source `4746fe1bb70f7cd37d8616729e7bf628699821e4` on both surfaces without
+  changing website behavior or opening any release flag.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
   deployment path.
