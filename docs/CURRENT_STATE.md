@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-23 18:47:08 UTC**
+Last refreshed: **2026-08-23 21:43:37 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -50,6 +50,21 @@ propagation window and a homepage sitemap trailing-slash mismatch in the
 verifier; PR #63 corrected that verifier contract, then its normal runtime
 workflow repackaged and deployed the unchanged website behavior as the current
 exact source.
+
+PR #67 merged the dependency modernization and Better Auth 1.7 operations
+identity migration as exact source
+`674a3995a245d98aeec20b54479f4b5550d4accc`. Its protected migration
+changeset correctly deployed neither runtime. Migration `0013_silly_vanisher`
+first passed on expiring isolated Neon branch
+`codex-dependency-modernization-20260824`; production preflight then found one
+credential account, zero unmapped providers, and zero proposed issuer/account
+collisions. The direct-owner production migration advanced the migration count
+from 13 to 14, backfilled issuer `local:credential`, made issuer non-null, and
+created the unique issuer/account identity index. Both restricted runtime grant
+scripts returned zero drift, and no commerce-settings row exists, so the
+application's server-authoritative default remains flags-off. The next action
+is an explicit flags-off deployment of both runtimes from a migration-free
+main commit, followed by exact live acceptance.
 
 Routine ops deployment is now:
 
