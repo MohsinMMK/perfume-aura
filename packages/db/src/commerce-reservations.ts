@@ -1,6 +1,10 @@
 import { and, asc, eq, inArray, lte, sql } from "drizzle-orm";
 import { DomainError } from "./domain-errors";
 import {
+  consumeOilInTransaction,
+  oilDemandForVariant,
+} from "./oil-inventory";
+import {
   productPublications,
   products,
   productVariants,
@@ -367,6 +371,22 @@ export async function consumeCheckoutReservations(input: Readonly<{
         .set({ status: "consumed", releasedAt: now, releaseReason: "order_settled" })
         .where(eq(stockReservations.id, reservation.id));
     }
+    await consumeOilInTransaction(tx, {
+      demands: reservations.map((reservation) => {
+        const variant = variants.find((candidate) => candidate.id === reservation.variantId);
+        if (!variant) {
+          throw new DomainError("NOT_FOUND", "A reserved variant was not found");
+        }
+        return oilDemandForVariant({
+          productId: variant.productId,
+          sizeMl: variant.sizeMl,
+          quantity: reservation.quantity,
+        });
+      }),
+      refType: "commerce_order",
+      refId: input.orderId,
+      idempotencyPrefix: `oil:commerce-order:${input.orderId}`,
+    });
     return { consumedCount: reservations.length, idempotent: false };
   });
 }

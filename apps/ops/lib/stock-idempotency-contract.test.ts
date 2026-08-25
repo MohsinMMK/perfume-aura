@@ -190,7 +190,9 @@ describe("manual stock idempotency contract", () => {
 
     assert.deepEqual(attempted, [
       "/stock",
+      "/stock/oil",
       "/stock/low",
+      "/sales/new",
       "/dashboard",
       "/products",
       "/finance",

@@ -101,12 +101,20 @@ export default async function StockPage({
             Receive inventory and review the movement ledger.
           </p>
         </div>
-        <Link
-          href="/stock/low"
-          className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-        >
-          View low stock →
-        </Link>
+        <div className="flex flex-col items-start gap-1 sm:items-end">
+          <Link
+            href="/stock/oil"
+            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            Oil stock →
+          </Link>
+          <Link
+            href="/stock/low"
+            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            View low stock →
+          </Link>
+        </div>
       </div>
 
       {dbError ? (

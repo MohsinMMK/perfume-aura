@@ -18,7 +18,9 @@ export function revalidateCommittedStockMutation(
 ): void {
   const paths = [
     "/stock",
+    "/stock/oil",
     "/stock/low",
+    "/sales/new",
     "/dashboard",
     "/products",
     "/finance",

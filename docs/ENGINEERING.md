@@ -211,7 +211,7 @@ ledger-first inventory API. `drizzle.config.ts` requires
 |---|---|
 | Better Auth | `user`, `session`, `account`, `verification`, `rate_limit`, `two_factor` |
 | Staff security | append-only `staff_invitation_events`, `ops_audit_events` |
-| Catalog and inventory | `products`, `product_variants`, approval-gated publications/prices/media, `shipping_serviceability`, `locations`, append-only `stock_movements` |
+| Catalog and inventory | `products`, `product_variants`, approval-gated publications/prices/media, `shipping_serviceability`, `locations`, append-only `stock_movements`, concentrate `oil_lots` / append-only `oil_movements`, offline `ops_sales` |
 | Storefront commerce delivery | payment/refund reconciliation state, typed order events, review moderation, return lifecycle, separate order/inquiry notification outboxes |
 | Finance | invoices, payments, atomic `document_number_counters` |
 
@@ -231,6 +231,9 @@ Migration and inventory rules:
 2. Ledger insertion and cached balance updates commit together. Stock never
    goes negative; sales also respect `available = on_hand - qty_reserved`.
    Exact idempotency-key retries return the prior result without applying twice.
+   Finished-bottle sales also consume concentrate from `oil_lots` at 50%
+   of bottle millilitres, treating one 1 kg lot as 1000 ml. Insufficient oil
+   fails the same transaction. `0014_oil_lots` owns that ledger.
 3. Manual receive/adjust requires active product and variant. Fulfillment of an
    already-issued invoice is the deliberate archived-SKU exception.
 4. Migration `0008_phase03_contract` owns validated financial/inventory checks;

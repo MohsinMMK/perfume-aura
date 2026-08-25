@@ -51,7 +51,7 @@ describe("Phase 03 transactional workflows", () => {
       .values({
         productId: product.id,
         sku,
-        sizeMl: options.sizeMl ?? fixtureSequence + 10,
+        sizeMl: options.sizeMl ?? 100,
         costCents: options.costCents ?? 250,
         retailCents: 1_000,
         quantityOnHand: options.quantityOnHand ?? 0,
@@ -62,6 +62,11 @@ describe("Phase 03 transactional workflows", () => {
       })
       .returning({ id: api.productVariants.id });
     assert.ok(variant);
+    await api.receiveOilLot({
+      productId: product.id,
+      kgBottles: 1,
+      idempotencyKey: `oil-${unique}`,
+    });
     return { productId: product.id, variantId: variant.id, sku };
   }
 
