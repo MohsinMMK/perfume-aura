@@ -5,6 +5,10 @@ import { DomainError } from "./domain-errors";
 import { applyMovementInTransaction } from "./inventory";
 import { availableQuantity } from "./inventory-math";
 import {
+  consumeOilInTransaction,
+  oilDemandForVariant,
+} from "./oil-inventory";
+import {
   customers,
   invoiceLines,
   invoices,
@@ -526,6 +530,29 @@ export async function fulfillInvoice(input: {
           "Invoice fulfillment state changed",
         );
       }
+    }
+
+    const variantsById = new Map(
+      lockedVariants.map((variant) => [variant.id, variant]),
+    );
+    for (const line of remainingLines) {
+      const variant = variantsById.get(line.variantId);
+      if (!variant) {
+        throw new DomainError("NOT_FOUND", "One or more invoice variants no longer exist");
+      }
+      await consumeOilInTransaction(tx, {
+        demands: [
+          oilDemandForVariant({
+            productId: variant.productId,
+            sizeMl: variant.sizeMl,
+            quantity: line.remaining,
+          }),
+        ],
+        refType: "invoice",
+        refId: input.invoiceId,
+        userId: input.userId ?? null,
+        idempotencyPrefix: `oil:invoice:${input.invoiceId}:${line.id}`,
+      });
     }
 
     return { fulfilledLines: remainingLines.length, idempotent: false };

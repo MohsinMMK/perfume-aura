@@ -46,11 +46,13 @@ const inventoryNav = [
   { href: "/dashboard", label: "Dashboard", icon: DashboardSquare01Icon, capability: "dashboard.view" },
   { href: "/products", label: "Products", icon: Package01Icon, capability: "catalog.view" },
   { href: "/stock", label: "Stock", icon: WarehouseIcon, capability: "stock.view" },
+  { href: "/stock/oil", label: "Oil stock", icon: WarehouseIcon, capability: "stock.view" },
   { href: "/stock/low", label: "Low stock", icon: Alert02Icon, capability: "stock.view" },
   { href: "/finance", label: "Finance", icon: ChartHistogramIcon, capability: "finance.view" },
 ] as const;
 
 const salesNav = [
+  { href: "/sales/new", label: "New sale", icon: ShoppingBag02Icon, capability: "sales.complete" },
   { href: "/customers", label: "Customers", icon: UserGroupIcon, capability: "customers.view" },
   { href: "/invoices", label: "Invoices", icon: File01Icon, capability: "invoices.view" },
   { href: "/invoices/ar", label: "AR", icon: Invoice01Icon, capability: "finance.view" },
@@ -69,6 +71,7 @@ const commerceNav = [
 
 function isActive(pathname: string, href: string) {
   if (href === "/stock") return pathname === "/stock";
+  if (href === "/stock/oil") return pathname === "/stock/oil" || pathname.startsWith("/stock/oil/");
   if (href === "/invoices") {
     return (
       pathname === "/invoices" ||

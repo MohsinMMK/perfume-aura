@@ -10,7 +10,8 @@ BEGIN;
 
 REVOKE ALL PRIVILEGES ON TABLE
   "two_factor", "staff_invitation_events", "ops_audit_events",
-  "inquiry_notification_outbox", "notification_outbox", "shipping_serviceability"
+  "inquiry_notification_outbox", "notification_outbox", "shipping_serviceability",
+  "oil_lots", "oil_movements", "ops_sales"
 FROM :"runtime_role";
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
@@ -27,8 +28,12 @@ TO :"runtime_role";
 
 -- Immutable event tables permit insertion and readback only. PostgreSQL
 -- triggers independently reject updates/deletes even for a compromised path.
+GRANT SELECT, INSERT, UPDATE ON TABLE
+  "oil_lots"
+TO :"runtime_role";
+
 GRANT SELECT, INSERT ON TABLE
-  "staff_invitation_events", "ops_audit_events"
+  "staff_invitation_events", "ops_audit_events", "oil_movements", "ops_sales"
 TO :"runtime_role";
 
 COMMIT;
@@ -41,7 +46,10 @@ WITH matrix(table_name, allowed) AS (
     ('notification_outbox', ARRAY['SELECT','INSERT','UPDATE']),
     ('shipping_serviceability', ARRAY['SELECT','INSERT','UPDATE']),
     ('staff_invitation_events', ARRAY['SELECT','INSERT']),
-    ('ops_audit_events', ARRAY['SELECT','INSERT'])
+    ('ops_audit_events', ARRAY['SELECT','INSERT']),
+    ('oil_lots', ARRAY['SELECT','INSERT','UPDATE']),
+    ('oil_movements', ARRAY['SELECT','INSERT']),
+    ('ops_sales', ARRAY['SELECT','INSERT'])
 ), privileges(privilege) AS (
   VALUES ('SELECT'), ('INSERT'), ('UPDATE'), ('DELETE'), ('TRUNCATE'),
          ('REFERENCES'), ('TRIGGER')

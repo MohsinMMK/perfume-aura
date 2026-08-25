@@ -11,6 +11,7 @@ BEGIN;
 REVOKE ALL PRIVILEGES ON TABLE
   "storefront_account", "storefront_rate_limit", "storefront_session",
   "storefront_user", "storefront_verification", "storefront_customer_profile",
+  "oil_lots", "oil_movements",
   "commerce_bundle_items",
   "commerce_bundles", "checkout_sessions", "commerce_cart_items",
   "commerce_carts", "commerce_collection_products", "commerce_collections",
@@ -35,7 +36,8 @@ TO :"runtime_role";
 
 GRANT SELECT, INSERT, UPDATE ON TABLE
   "commerce_orders", "commerce_refunds", "payment_attempts",
-  "payment_events", "inquiry_notification_outbox", "notification_outbox", "stock_reservations"
+  "payment_events", "inquiry_notification_outbox", "notification_outbox", "stock_reservations",
+  "oil_lots"
 TO :"runtime_role";
 
 GRANT SELECT ON TABLE
@@ -44,7 +46,7 @@ TO :"runtime_role";
 
 GRANT SELECT, INSERT ON TABLE
   "commerce_order_events", "commerce_order_items", "customer_order_claims",
-  "promotion_redemptions"
+  "promotion_redemptions", "oil_movements"
 TO :"runtime_role";
 
 COMMIT;
@@ -83,6 +85,8 @@ WITH matrix(table_name, allowed) AS (
     ('notification_outbox', ARRAY['SELECT','INSERT','UPDATE']),
     ('shipping_serviceability', ARRAY['SELECT']),
     ('stock_reservations', ARRAY['SELECT','INSERT','UPDATE']),
+    ('oil_lots', ARRAY['SELECT','INSERT','UPDATE']),
+    ('oil_movements', ARRAY['SELECT','INSERT']),
     ('commerce_order_events', ARRAY['SELECT','INSERT']),
     ('commerce_order_items', ARRAY['SELECT','INSERT']),
     ('customer_order_claims', ARRAY['SELECT','INSERT']),

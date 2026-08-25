@@ -219,3 +219,65 @@ export const recordPaymentSchema = z.object({
 });
 
 export type RecordPaymentInput = z.infer<typeof recordPaymentSchema>;
+
+/* ─── Oil lots and guided sale ─── */
+
+export const receiveOilSchema = z.object({
+  idempotencyKey: z.string().uuid(),
+  productId: z.string().uuid("Select a perfume"),
+  kgBottles: z.number().int().positive("Enter whole 1 kg bottles"),
+  note: z.string().max(1000).optional(),
+});
+
+export const saleLineInputSchema = z.object({
+  variantId: z.string().uuid(),
+  quantity: z.number().int().positive("Quantity must be positive"),
+  /** Major INR rupees; omitted uses the SKU retail price. */
+  unitPrice: z.number().min(0).optional(),
+});
+
+export const completeSaleSchema = z
+  .object({
+    idempotencyKey: z.string().uuid(),
+    customerId: z.string().uuid().optional().or(z.literal("")),
+    name: z.string().max(200).optional(),
+    email: z.string().email("Invalid email").max(200).optional().or(z.literal("")),
+    phone: z.string().max(40).optional(),
+    addressLine: z.string().max(300).optional(),
+    city: z.string().max(100).optional(),
+    customerNotes: z.string().max(5000).optional(),
+    notes: z.string().max(5000).optional(),
+    lines: z.array(saleLineInputSchema).min(1, "Add at least one product"),
+    paymentAmount: z.number().min(0).optional(),
+    paymentMethod: paymentMethodSchema.optional(),
+    paymentIdempotencyKey: z.string().uuid().optional(),
+    paidAt: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.customerId && !data.name?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["name"],
+        message: "Enter a customer name or pick an existing customer",
+      });
+    }
+    if (data.paymentAmount && data.paymentAmount > 0) {
+      if (!data.paymentIdempotencyKey) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["paymentIdempotencyKey"],
+          message: "Payment key is required",
+        });
+      }
+      if (!data.paidAt) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["paidAt"],
+          message: "Payment time is required",
+        });
+      }
+    }
+  });
+
+export type ReceiveOilInput = z.infer<typeof receiveOilSchema>;
+export type CompleteSaleInput = z.infer<typeof completeSaleSchema>;

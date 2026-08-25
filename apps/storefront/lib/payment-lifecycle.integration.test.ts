@@ -82,6 +82,12 @@ async function seedPayment(input: Readonly<{
     });
   }
   await db.insert(locations).values({ code: "MAIN", name: "Main" }).onConflictDoNothing();
+  const { receiveOilLot } = await import("@perfume-aura/db");
+  await receiveOilLot({
+    productId: product.id,
+    kgBottles: 1,
+    idempotencyKey: `oil-pay-${suffix}`,
+  });
   return { attemptId: attempt.id, checkoutId: checkout.id, orderId: order.id, providerOrderId, variantId: variant.id };
 }
 

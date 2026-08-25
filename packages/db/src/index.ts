@@ -92,6 +92,36 @@ export {
 } from "./inventory-math";
 
 export {
+  OIL_CONCENTRATION_PERCENT,
+  ML_PER_KG_OIL_BOTTLE,
+  oilMlForBottles,
+  receiveOilMl,
+  remainingOilAfterDelta,
+} from "./oil-math";
+
+export {
+  receiveOilLot,
+  receiveOilLotInTransaction,
+  consumeOilInTransaction,
+  oilDemandForVariant,
+  OilInventoryError,
+  type ReceiveOilLotInput,
+  type ReceiveOilLotResult,
+  type OilDemand,
+  type ConsumeOilInput,
+  type ConsumeOilResult,
+} from "./oil-inventory";
+
+export {
+  completeOpsSale,
+  type SaleCustomerInput,
+  type SaleLineInput,
+  type SalePaymentInput,
+  type CompleteOpsSaleInput,
+  type CompleteOpsSaleResult,
+} from "./sale-workflows";
+
+export {
   lineTotalCents,
   invoiceSubtotalCents,
   invoiceBalanceCents,
@@ -148,6 +178,7 @@ export {
   count,
   desc,
   eq,
+  gt,
   gte,
   ilike,
   inArray,

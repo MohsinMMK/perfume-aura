@@ -68,3 +68,10 @@ export {
   staffInvitationEventTypeEnum,
   type OpsAuditMetadata,
 } from "./ops-security";
+
+export {
+  oilLots,
+  oilMovements,
+  oilMovementTypeEnum,
+  opsSales,
+} from "./oil";

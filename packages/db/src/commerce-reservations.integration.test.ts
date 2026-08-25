@@ -93,6 +93,12 @@ async function seedSellableVariant(quantityOnHand = 10): Promise<Readonly<{
   }).returning({ id: commerceOrders.id });
   assert.ok(order);
   await db.insert(locations).values({ code: "MAIN", name: "Main" }).onConflictDoNothing();
+  const { receiveOilLot } = await import("./oil-inventory");
+  await receiveOilLot({
+    productId: product.id,
+    kgBottles: 1,
+    idempotencyKey: `oil-res-${suffix}`,
+  });
   return { checkoutSessionId: checkout.id, orderId: order.id, variantId: variant.id };
 }
 

@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-23 22:05:37 UTC**
+Last refreshed: **2026-08-25 15:50:00 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -60,7 +60,17 @@ collisions. The direct-owner production migration advanced the migration count
 from 13 to 14, backfilled issuer `local:credential`, made issuer non-null, and
 created the unique issuer/account identity index. Both restricted runtime grant
 scripts returned zero drift, and no commerce-settings row exists, so the
-application's server-authoritative default remains flags-off. PR #68 recorded
+application's server-authoritative default remains flags-off. Fresh 2026-08-25 isolated proof on expiring Neon branch
+`release-0014-oil-lots-20260825` (`br-aged-heart-azqgc9lk`, expires
+2026-08-26 15:44:26 UTC) found production `main` already at migration 15.
+The recorded hash matches `0014_oil_lots`. `oil_lots`, `oil_movements`, and
+`ops_sales` exist and are empty. Login runtime role `perfume_aura_runtime`
+already has the oil grant matrix; isolated reapply of both grant scripts
+returned zero drift. Live app code remains `1c28330` and every commerce flag
+stays closed. PR #70 still owns the ops oil UI and must not publish until its
+migration-blocking main merge is followed by an explicit flags-off deploy.
+
+PR #68 recorded
 the migration gate as migration-free source
 `1c283305d2c1a5889d5cc72dd87da24e58bd54f6`; its explicit flags-off deployment
 and exact production acceptance completed in workflow run `32668717916`.
@@ -449,18 +459,22 @@ runtime merge, and exact flags-off production deployment have now completed.
 
 Next actions:
 
-1. Review Google Search Console indexing and coverage after Google recrawls the
+1. Review and merge PR #70 only after the oil UI review is accepted. Its
+   drizzle files will block runtime publish; follow with an explicit flags-off
+   deploy once `0014` schema/grants (already on production, empty tables) are
+   treated as the completed owner gate. Do not open commerce flags.
+2. Review Google Search Console indexing and coverage after Google recrawls the
    successfully submitted four-URL sitemap. Ownership verification, sitemap
    submission, and IndexNow discovery notification are complete.
-2. Obtain India-counsel clearance and owner-approved catalog facts: unresolved
+3. Obtain India-counsel clearance and owner-approved catalog facts: unresolved
    mappings, Signature prices, SKUs, costs, opening stock, media, and structured
    scent content. Do not migrate or publish sale data before that gate.
-3. Supply and accept the provider identities: Google OAuth production client,
+4. Supply and accept the provider identities: Google OAuth production client,
    Hostinger SMTP sender credentials and delivery proof, and Cashfree merchant
    KYC/UPI-only sandbox credentials, webhooks, transaction TTL, and refunds.
-4. Approve the operating rules and references for tax, serviceability/courier,
+5. Approve the operating rules and references for tax, serviceability/courier,
    shipping fee and threshold, returns/cancellations, and support staffing.
-5. Complete owner TOTP/recovery and staff journey acceptance, then separately
+6. Complete owner TOTP/recovery and staff journey acceptance, then separately
    authorize the documented maintenance, customer-auth, catalog, checkout, and
    inquiry activation sequence plus the final low-value live UPI
    purchase/refund. Until then, keep every commerce and staff-security flag

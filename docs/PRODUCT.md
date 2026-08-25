@@ -17,7 +17,7 @@ Persisted money is integer INR paise; public money uses
 | Area | Routes |
 |---|---|
 | Ops auth | `/login`, `/forgot-password`, `/reset-password`, `/settings/security` |
-| Ops | `/dashboard`, `/products`, `/stock`, `/customers`, `/invoices`, `/payments`, `/finance`, `/commerce/*` |
+| Ops | `/dashboard`, `/products`, `/stock`, `/stock/oil`, `/sales/new`, `/customers`, `/invoices`, `/payments`, `/finance`, `/commerce/*` |
 | Storefront | `/`, `/shop`, `/collections/[slug]`, `/products/[slug]`, `/search`, `/find-your-scent`, `/cart`, `/checkout`, `/account`, `/account/delivery`, `/account/orders`, `/account/orders/[orderNumber]`, legacy `/order/[token]` |
 | Store content | `/about`, `/fragrance-guide`, `/faq`, `/contact`, `/wholesale`, `/shipping`, `/returns`, `/privacy`, `/terms` |
 | Customer boundary | `/account/*`, `/api/customer-auth/*`, `/api/account/*` |
