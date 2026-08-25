@@ -453,16 +453,20 @@ runtime merge, and exact flags-off production deployment have now completed.
   migration-free dispatch deployed and exactly verified source
   `1c283305d2c1a5889d5cc72dd87da24e58bd54f6` on both production surfaces with
   every commerce and staff-security release flag still closed.
+- PR #70 merged the oil lots and guided-sale implementation as source
+  `80e915e3fb1a1ea5eb3d7c560c4affcd5d340543`. Its drizzle changeset correctly
+  blocks automatic runtime publish. Production Neon already has empty `0014`
+  tables and oil grants. This Markdown-only follow-up is the official
+  flags-off dispatch baseline.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
   deployment path.
 
 Next actions:
 
-1. Review and merge PR #70 only after the oil UI review is accepted. Its
-   drizzle files will block runtime publish; follow with an explicit flags-off
-   deploy once `0014` schema/grants (already on production, empty tables) are
-   treated as the completed owner gate. Do not open commerce flags.
+1. Dispatch the official flags-off `ops-pack.yml` deploy for both surfaces from
+   this Markdown-only main commit, then verify exact SHA `80e915e3fb1a1ea5eb3d7c560c4affcd5d340543`
+   on ops and storefront. Do not open commerce flags.
 2. Review Google Search Console indexing and coverage after Google recrawls the
    successfully submitted four-URL sitemap. Ownership verification, sitemap
    submission, and IndexNow discovery notification are complete.
