@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-25 15:50:00 UTC**
+Last refreshed: **2026-08-25 16:30:00 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -33,7 +33,7 @@ and ignored local environment files.
 ## Exact releases and automation
 
 Both production surfaces run exact source
-`1c283305d2c1a5889d5cc72dd87da24e58bd54f6`. Ops uses immutable image digest
+`ab7bef6e0096d9329a08652a6fff7a2eabc186dc`. Ops uses immutable image digest
 `sha256:8794d2c4c62021fa8f9d1cbfdb8c6f436782b6724e6e7b6766052a4811d178f4`;
 the generated storefront branch is exact commit
 `27a8a0c61e7e7b9d2fe3f376734ed2ad0de3ae75`. Workflow run
