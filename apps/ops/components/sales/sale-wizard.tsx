@@ -82,31 +82,37 @@ export function SaleWizard({
   );
 
   const preview = useMemo(() => {
-    const oilByProduct = new Map<
-      string,
-      { productName: string; oilMl: number; remainingOilMl: number }
-    >();
-    let totalCents = 0;
-    const resolved = lines.map((line) => {
+    const resolved = lines.flatMap((line) => {
       const item = catalogById.get(line.variantId);
-      if (!item) return null;
-      const oilMl = item.oilMlPerBottle * line.quantity;
-      const current = oilByProduct.get(item.productId);
-      if (current) current.oilMl += oilMl;
-      else {
-        oilByProduct.set(item.productId, {
-          productName: item.productName,
-          oilMl,
-          remainingOilMl: item.remainingOilMl,
-        });
-      }
-      totalCents += item.retailCents * line.quantity;
-      return { ...item, quantity: line.quantity, oilMl };
+      if (!item) return [];
+      return [
+        {
+          ...item,
+          quantity: line.quantity,
+          oilMl: item.oilMlPerBottle * line.quantity,
+        },
+      ];
     });
+    const oil = [
+      ...resolved
+        .reduce((byProduct, line) => {
+          const current = byProduct.get(line.productId);
+          byProduct.set(line.productId, {
+            productName: line.productName,
+            oilMl: (current?.oilMl ?? 0) + line.oilMl,
+            remainingOilMl: line.remainingOilMl,
+          });
+          return byProduct;
+        }, new Map<string, { productName: string; oilMl: number; remainingOilMl: number }>())
+        .values(),
+    ];
     return {
-      lines: resolved.filter((line) => line !== null),
-      oil: [...oilByProduct.values()],
-      totalCents,
+      lines: resolved,
+      oil,
+      totalCents: resolved.reduce(
+        (total, line) => total + line.retailCents * line.quantity,
+        0,
+      ),
     };
   }, [catalogById, lines]);
 
