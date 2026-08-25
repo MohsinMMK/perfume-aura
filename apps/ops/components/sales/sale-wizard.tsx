@@ -89,7 +89,7 @@ export function SaleWizard({
         {
           ...item,
           quantity: line.quantity,
-          oilMl: item.oilMlPerBottle * line.quantity,
+          oilMl: Math.ceil((item.sizeMl * line.quantity * 50) / 100),
         },
       ];
     });

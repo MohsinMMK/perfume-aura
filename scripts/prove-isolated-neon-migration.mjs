@@ -224,8 +224,8 @@ export async function proveIsolatedNeonMigration(options, deps = {}) {
   const expires = new Date(now().getTime() + options.expiresHours * 3600_000);
   const branchName = `release-${options.migrationTag}-${now()
     .toISOString()
-    .slice(0, 10)
-    .replaceAll("-", "")}`;
+    .slice(0, 15)
+    .replaceAll(/[-:]/g, "")}`;
 
   const request = fetchImpl
     ? fetchImpl
@@ -235,7 +235,6 @@ export async function proveIsolatedNeonMigration(options, deps = {}) {
     endpoints: [{ type: "read_write" }],
     branch: {
       name: branchName,
-      parent_id: undefined,
       expires_at: expires.toISOString(),
     },
   });
