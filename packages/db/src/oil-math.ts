@@ -19,18 +19,14 @@ function assertPositiveInt(value: number, field: string): number {
 /**
  * Oil millilitres consumed by selling `quantity` finished bottles of `sizeMl`.
  * 100 ml at 50% → 50 ml. 50 ml → 25 ml. 30 ml → 15 ml.
+ * Signature 105 ml is not a whole millilitre at 50%; consume the ceiling so
+ * the integer ledger never under-deducts concentrate (105 → 53 ml).
  */
 export function oilMlForBottles(sizeMl: number, quantity: number): number {
   const size = assertPositiveInt(sizeMl, "sizeMl");
   const count = assertPositiveInt(quantity, "quantity");
   const numerator = size * count * OIL_CONCENTRATION_PERCENT;
-  if (numerator % 100 !== 0) {
-    throw new InventoryMathError(
-      `Oil volume for ${size} ml × ${count} is not a whole millilitre at ${OIL_CONCENTRATION_PERCENT}%`,
-      "INVALID_INPUT",
-    );
-  }
-  return numerator / 100;
+  return Math.ceil(numerator / 100);
 }
 
 /** Received oil millilitres for a whole number of 1 kg bottles. */

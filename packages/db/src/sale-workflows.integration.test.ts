@@ -138,4 +138,57 @@ describe("completeOpsSale integration", () => {
         error instanceof DomainError && error.code === "INSUFFICIENT_STOCK",
     );
   });
+
+  it("keeps an explicit zero unit price on a mixed invoice", async () => {
+    const suffix = randomUUID();
+    const [sample] = await db
+      .insert(productVariants)
+      .values({
+        productId,
+        sku: `SALE-SAMPLE-${suffix}`,
+        sizeMl: 30,
+        costCents: 2_000,
+        retailCents: 6_000,
+        quantityOnHand: 2,
+        status: "active",
+      })
+      .returning({ id: productVariants.id });
+    assert.ok(sample);
+    const result = await completeOpsSale({
+      customer: { name: "Staff sample" },
+      lines: [
+        { variantId: sample.id, quantity: 1, unitPriceCents: 0 },
+        { variantId: variant100Id, quantity: 1 },
+      ],
+      idempotencyKey: randomUUID(),
+      now: new Date("2094-03-03T12:00:00.000Z"),
+    });
+    assert.equal(result.totalCents, 14_000);
+    assert.equal(result.oilConsumedMl, 65);
+  });
+
+  it("ceils Signature 105 ml oil demand to 53 ml", async () => {
+    const suffix = randomUUID();
+    const [variant] = await db
+      .insert(productVariants)
+      .values({
+        productId,
+        sku: `SALE-105-${suffix}`,
+        sizeMl: 105,
+        costCents: 8_000,
+        retailCents: 26_000,
+        quantityOnHand: 2,
+        status: "active",
+      })
+      .returning({ id: productVariants.id });
+    assert.ok(variant);
+    const result = await completeOpsSale({
+      customer: { name: "Signature walk-in" },
+      lines: [{ variantId: variant.id, quantity: 1 }],
+      idempotencyKey: randomUUID(),
+      now: new Date("2094-03-04T12:00:00.000Z"),
+    });
+    assert.equal(result.totalCents, 26_000);
+    assert.equal(result.oilConsumedMl, 53);
+  });
 });

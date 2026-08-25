@@ -81,7 +81,7 @@ export const oilMovements = pgTable(
     refType: text("ref_type"),
     refId: text("ref_id"),
     note: text("note"),
-    idempotencyKey: text("idempotency_key").unique(),
+    idempotencyKey: text("idempotency_key"),
     createdBy: text("created_by"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -98,6 +98,9 @@ export const oilMovements = pgTable(
     ),
     index("oil_movements_ref_type_ref_id_idx").on(table.refType, table.refId),
     index("oil_movements_created_at_idx").on(table.createdAt),
+    uniqueIndex("oil_movements_idempotency_key_unique").on(
+      table.idempotencyKey,
+    ),
     check(
       "oil_movements_quantity_check",
       sql`${table.quantityDeltaMl} <> 0 AND ${table.quantityAfterMl} >= 0`,

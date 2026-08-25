@@ -271,6 +271,23 @@ creates no duplicate `(issuer, account_id)` pair. The migration fails closed on
 an unmapped provider or collision, backfills issuer `local:credential`, and
 then makes issuer required with a unique issuer/account identity index.
 
+Migration `0014_oil_lots` is the concentrate ledger boundary: new `oil_lots`,
+append-only `oil_movements`, and offline `ops_sales` tables. Prove it on an
+expiring isolated Neon branch before any owner production apply:
+
+```bash
+NEON_API_KEY='<neon-api-key>' pnpm db:prove-isolated-migration \
+  --ops-role <ops-runtime-role> \
+  --storefront-role <storefront-runtime-role>
+```
+
+The script creates a copy-on-write branch from production, refuses the live
+compute and every pooler/loopback URL, applies pending drizzle migrations, and
+reapplies both grant scripts. Drift queries must return zero rows. Do not run
+the integration suite on that branch. Loopback `TEST_DATABASE_URL` remains the
+only place for `pnpm test:integration`. Production apply still needs a separate
+explicit owner authorization after this proof.
+
 ## Migrations and runtime grants
 
 Apply `packages/db/sql/ops-runtime-grants.sql` with the reviewed role name. The

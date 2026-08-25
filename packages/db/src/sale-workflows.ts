@@ -251,7 +251,7 @@ export async function completeOpsSale(
           );
         }
         const unitPriceCents =
-          line.unitPriceCents === undefined || line.unitPriceCents === 0
+          line.unitPriceCents === undefined
             ? variant.retailCents
             : line.unitPriceCents;
         if (!Number.isInteger(unitPriceCents) || unitPriceCents < 0) {

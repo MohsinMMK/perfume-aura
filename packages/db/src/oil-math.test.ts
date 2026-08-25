@@ -17,6 +17,11 @@ describe("oilMlForBottles", () => {
     assert.equal(oilMlForBottles(30, 1), 15);
   });
 
+  it("ceils Signature 105 ml so the integer ledger never under-consumes", () => {
+    assert.equal(oilMlForBottles(105, 1), 53);
+    assert.equal(oilMlForBottles(105, 2), 105);
+  });
+
   it("rejects non-positive or non-integer inputs", () => {
     assert.throws(() => oilMlForBottles(100, 0), InventoryMathError);
     assert.throws(() => oilMlForBottles(50.5, 1), InventoryMathError);

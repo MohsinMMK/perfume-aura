@@ -232,7 +232,7 @@ Migration and inventory rules:
    goes negative; sales also respect `available = on_hand - qty_reserved`.
    Exact idempotency-key retries return the prior result without applying twice.
    Finished-bottle sales also consume concentrate from `oil_lots` at 50%
-   of bottle millilitres, treating one 1 kg lot as 1000 ml. Insufficient oil
+   of bottle millilitres, treating one 1 kg lot as 1000 ml. Non-whole results ceil so Signature 105 ml consumes 53 ml. Insufficient oil
    fails the same transaction. `0014_oil_lots` owns that ledger.
 3. Manual receive/adjust requires active product and variant. Fulfillment of an
    already-issued invoice is the deliberate archived-SKU exception.
