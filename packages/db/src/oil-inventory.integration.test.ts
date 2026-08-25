@@ -164,4 +164,43 @@ describe("oil inventory integration", () => {
       .where(eq(oilMovements.refId, refId));
     assert.equal(movements.length, 1);
   });
+
+  it("replays a drained lot without asking for more oil", async () => {
+    const suffix = randomUUID();
+    const [product] = await db
+      .insert(products)
+      .values({
+        name: `Oil last ${suffix}`,
+        slug: `oil-last-${suffix}`,
+        status: "active",
+      })
+      .returning({ id: products.id });
+    assert.ok(product);
+    await receiveOilLot({
+      productId: product.id,
+      kgBottles: 1,
+      idempotencyKey: randomUUID(),
+    });
+    const refId = randomUUID();
+    const prefix = `oil:test:${refId}`;
+    const first = await runDomainTransaction((tx) =>
+      consumeOilInTransaction(tx, {
+        demands: [oilDemandForVariant({ productId: product.id, sizeMl: 100, quantity: 20 })],
+        refType: "invoice",
+        refId,
+        idempotencyPrefix: prefix,
+      }),
+    );
+    const replay = await runDomainTransaction((tx) =>
+      consumeOilInTransaction(tx, {
+        demands: [oilDemandForVariant({ productId: product.id, sizeMl: 100, quantity: 20 })],
+        refType: "invoice",
+        refId,
+        idempotencyPrefix: prefix,
+      }),
+    );
+    assert.equal(first.consumedMl, 1000);
+    assert.equal(replay.idempotent, true);
+    assert.equal(replay.consumedMl, 1000);
+  });
 });

@@ -216,32 +216,21 @@ export async function consumeOilInTransaction(
     throw new OilInventoryError("NOT_FOUND", "One or more oil products no longer exist");
   }
 
-  const lots = await tx
-    .select()
-    .from(oilLots)
-    .where(
-      and(inArray(oilLots.productId, productIds), gt(oilLots.remainingQuantityMl, 0)),
-    )
-    .orderBy(asc(oilLots.createdAt), asc(oilLots.id))
-    .for("update");
-
   const prefix = `${input.idempotencyPrefix}:`;
-  const existing = lots.length === 0
-    ? []
-    : await tx
-        .select({
-          lotId: oilMovements.lotId,
-          quantityDeltaMl: oilMovements.quantityDeltaMl,
-          idempotencyKey: oilMovements.idempotencyKey,
-        })
-        .from(oilMovements)
-        .where(
-          and(
-            eq(oilMovements.refType, input.refType),
-            eq(oilMovements.refId, input.refId),
-            eq(oilMovements.type, "sale"),
-          ),
-        );
+  const existing = await tx
+    .select({
+      lotId: oilMovements.lotId,
+      quantityDeltaMl: oilMovements.quantityDeltaMl,
+      idempotencyKey: oilMovements.idempotencyKey,
+    })
+    .from(oilMovements)
+    .where(
+      and(
+        eq(oilMovements.refType, input.refType),
+        eq(oilMovements.refId, input.refId),
+        eq(oilMovements.type, "sale"),
+      ),
+    );
 
   const existingForSale = existing.filter((row) =>
     row.idempotencyKey?.startsWith(prefix),
@@ -256,6 +245,15 @@ export async function consumeOilInTransaction(
       idempotent: true,
     };
   }
+
+  const lots = await tx
+    .select()
+    .from(oilLots)
+    .where(
+      and(inArray(oilLots.productId, productIds), gt(oilLots.remainingQuantityMl, 0)),
+    )
+    .orderBy(asc(oilLots.createdAt), asc(oilLots.id))
+    .for("update");
 
   const lotsByProduct = new Map<string, typeof lots>();
   for (const lot of lots) {

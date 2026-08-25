@@ -246,19 +246,28 @@ export function SaleWizard({
                   label="Name"
                   name="name"
                   required
-                  defaultValue={newCustomer.name}
+                  value={newCustomer.name}
+                  onChange={(value) =>
+                    setNewCustomer((current) => ({ ...current, name: value }))
+                  }
                   error={fieldErrors.name?.[0]}
                 />
                 <FormField
                   label="Phone"
                   name="phone"
-                  defaultValue={newCustomer.phone}
+                  value={newCustomer.phone}
+                  onChange={(value) =>
+                    setNewCustomer((current) => ({ ...current, phone: value }))
+                  }
                   error={fieldErrors.phone?.[0]}
                 />
                 <FormField
                   label="City"
                   name="city"
-                  defaultValue={newCustomer.city}
+                  value={newCustomer.city}
+                  onChange={(value) =>
+                    setNewCustomer((current) => ({ ...current, city: value }))
+                  }
                   error={fieldErrors.city?.[0]}
                 />
               </>
@@ -290,18 +299,17 @@ export function SaleWizard({
                 type="number"
                 min={1}
                 step={1}
-                defaultValue={selectedQuantity}
+                value={selectedQuantity}
+                onChange={(value) => {
+                  const qty = Number(value);
+                  if (Number.isInteger(qty) && qty > 0) setSelectedQuantity(qty);
+                }}
               />
               <Button
                 type="button"
                 variant="outline"
                 className="min-h-11"
                 onClick={() => {
-                  const qtyInput = document.getElementById("quantity") as
-                    | HTMLInputElement
-                    | null;
-                  const qty = Number(qtyInput?.value ?? selectedQuantity);
-                  if (Number.isInteger(qty) && qty > 0) setSelectedQuantity(qty);
                   addLine();
                 }}
               >
@@ -426,23 +434,6 @@ export function SaleWizard({
             className="min-h-11"
             disabled={!canNext}
             onClick={() => {
-              if (step === 0 && customerMode === "new") {
-                const name = (
-                  document.getElementById("name") as HTMLInputElement | null
-                )?.value;
-                const phone = (
-                  document.getElementById("phone") as HTMLInputElement | null
-                )?.value;
-                const city = (
-                  document.getElementById("city") as HTMLInputElement | null
-                )?.value;
-                setNewCustomer({
-                  name: name ?? "",
-                  phone: phone ?? "",
-                  city: city ?? "",
-                });
-                if (!(name ?? "").trim()) return;
-              }
               setError(null);
               setStep((current) => current + 1);
             }}
