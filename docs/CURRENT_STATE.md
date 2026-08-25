@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-25 20:10:00 UTC**
+Last refreshed: **2026-08-25 20:12:00 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -40,12 +40,13 @@ the generated storefront branch is exact commit
 [`32871053573`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32871053573)
 passed quality, all disposable-PostgreSQL integration tests, verified
 packaging, immutable image build/push, Tailscale deployment through the
-restricted SSH identity, generated-branch publication, and exact live
-verification on both surfaces. Fresh independent exact-source acceptance at
-2026-08-25 20:06 UTC also passed
-ops live/ready/unauthenticated-session behavior, storefront release locks, the
-exact four-URL sitemap and crawler policy, real immutable Next assets, and the
-path- and query-preserving `www` redirect. Fresh 1280-by-720 and 390-by-844
+restricted SSH identity, generated-branch publication, exact ops-source live
+verification, and storefront health, discovery, and release-lock checks. Fresh
+independent target-specific acceptance at 2026-08-25 20:06 UTC verified the
+exact ops and storefront source on their owning version endpoints, storefront
+HTML marker, ops live/ready/unauthenticated-session behavior, the exact four-URL
+sitemap and crawler policy, real immutable Next assets, and the path- and
+query-preserving `www` redirect. Fresh 1280-by-720 and 390-by-844
 in-app browser checks at 2026-08-25 20:12 UTC confirmed the production
 storefront hero and responsive header with no root horizontal overflow, failed
 loaded images, or console warnings or errors. An unauthenticated request for
@@ -460,9 +461,11 @@ runtime merge, and exact flags-off production deployment have now completed.
   `80e915e3fb1a1ea5eb3d7c560c4affcd5d340543`. Its drizzle changeset correctly
   blocked automatic runtime publication. Production Neon already had empty
   `0014` tables and oil grants. The subsequent Markdown-only gate merge and
-  explicit dispatch deployed and exactly verified source `ab7bef6` on both
-  production surfaces in workflow run `32871053573` without opening a release
-  flag.
+  explicit dispatch deployed source `ab7bef6` on both production surfaces in
+  workflow run `32871053573`; its ops-target verifier proved the exact ops
+  source and public storefront checks, and a subsequent independent storefront
+  target verifier proved its exact source and `www` redirect. No release flag
+  opened.
 - PR #72 records the resulting exact live source, image digest, generated
   storefront commit, verification evidence, and remaining owner gates. Its
   Markdown-only merge must not publish or deploy either surface.
