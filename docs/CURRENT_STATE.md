@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-25 16:30:00 UTC**
+Last refreshed: **2026-08-25 20:10:00 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -34,20 +34,23 @@ and ignored local environment files.
 
 Both production surfaces run exact source
 `ab7bef6e0096d9329a08652a6fff7a2eabc186dc`. Ops uses immutable image digest
-`sha256:8794d2c4c62021fa8f9d1cbfdb8c6f436782b6724e6e7b6766052a4811d178f4`;
+`sha256:040190b87a168da1f2828ca2ad9165ea454e130e342e29f8268ca71f0ee46dce`;
 the generated storefront branch is exact commit
-`27a8a0c61e7e7b9d2fe3f376734ed2ad0de3ae75`. Workflow run
-[`32668717916`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32668717916)
+`0da1fb70bc35b6d1fe089761a3ccd17743c5c96a`. Workflow run
+[`32871053573`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32871053573)
 passed quality, all disposable-PostgreSQL integration tests, verified
 packaging, immutable image build/push, Tailscale deployment through the
 restricted SSH identity, generated-branch publication, and exact live
-verification on both surfaces. Independent exact-source acceptance also passed
+verification on both surfaces. Fresh independent exact-source acceptance at
+2026-08-25 20:06 UTC also passed
 ops live/ready/unauthenticated-session behavior, storefront release locks, the
 exact four-URL sitemap and crawler policy, real immutable Next assets, and the
-path- and query-preserving `www` redirect. Fresh 1280-by-800 and 390-by-844
-in-app browser checks confirmed the production hero, journey, CTA, and footer,
-with no root horizontal overflow, failed loaded images, or console warnings or
-errors.
+path- and query-preserving `www` redirect. Fresh 1280-by-720 and 390-by-844
+in-app browser checks at 2026-08-25 20:12 UTC confirmed the production
+storefront hero and responsive header with no root horizontal overflow, failed
+loaded images, or console warnings or errors. An unauthenticated request for
+the new `/stock/oil` operations route redirected to the release-preserving
+`/login?next=%2Fstock%2Foil` boundary with no console warnings or errors.
 
 PR #67 merged the dependency modernization and Better Auth 1.7 operations
 identity migration as exact source
@@ -66,9 +69,9 @@ application's server-authoritative default remains flags-off. Fresh 2026-08-25 i
 The recorded hash matches `0014_oil_lots`. `oil_lots`, `oil_movements`, and
 `ops_sales` exist and are empty. Login runtime role `perfume_aura_runtime`
 already has the oil grant matrix; isolated reapply of both grant scripts
-returned zero drift. Live app code remains `1c28330` and every commerce flag
-stays closed. PR #70 still owns the ops oil UI and must not publish until its
-migration-blocking main merge is followed by an explicit flags-off deploy.
+returned zero drift. PR #70 merged the ops oil UI, and the subsequent explicit
+flags-off dispatch deployed exact source `ab7bef6`; every commerce and
+staff-security flag remains closed.
 
 PR #68 recorded
 the migration gate as migration-free source
@@ -455,30 +458,32 @@ runtime merge, and exact flags-off production deployment have now completed.
   every commerce and staff-security release flag still closed.
 - PR #70 merged the oil lots and guided-sale implementation as source
   `80e915e3fb1a1ea5eb3d7c560c4affcd5d340543`. Its drizzle changeset correctly
-  blocks automatic runtime publish. Production Neon already has empty `0014`
-  tables and oil grants. This Markdown-only follow-up is the official
-  flags-off dispatch baseline.
+  blocked automatic runtime publication. Production Neon already had empty
+  `0014` tables and oil grants. The subsequent Markdown-only gate merge and
+  explicit dispatch deployed and exactly verified source `ab7bef6` on both
+  production surfaces in workflow run `32871053573` without opening a release
+  flag.
+- PR #72 records the resulting exact live source, image digest, generated
+  storefront commit, verification evidence, and remaining owner gates. Its
+  Markdown-only merge must not publish or deploy either surface.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - `hostinger-ops-production` is rollback provider state, not the active ops
   deployment path.
 
 Next actions:
 
-1. Dispatch the official flags-off `ops-pack.yml` deploy for both surfaces from
-   this Markdown-only main commit, then verify exact SHA `80e915e3fb1a1ea5eb3d7c560c4affcd5d340543`
-   on ops and storefront. Do not open commerce flags.
-2. Review Google Search Console indexing and coverage after Google recrawls the
+1. Review Google Search Console indexing and coverage after Google recrawls the
    successfully submitted four-URL sitemap. Ownership verification, sitemap
    submission, and IndexNow discovery notification are complete.
-3. Obtain India-counsel clearance and owner-approved catalog facts: unresolved
+2. Obtain India-counsel clearance and owner-approved catalog facts: unresolved
    mappings, Signature prices, SKUs, costs, opening stock, media, and structured
    scent content. Do not migrate or publish sale data before that gate.
-4. Supply and accept the provider identities: Google OAuth production client,
+3. Supply and accept the provider identities: Google OAuth production client,
    Hostinger SMTP sender credentials and delivery proof, and Cashfree merchant
    KYC/UPI-only sandbox credentials, webhooks, transaction TTL, and refunds.
-5. Approve the operating rules and references for tax, serviceability/courier,
+4. Approve the operating rules and references for tax, serviceability/courier,
    shipping fee and threshold, returns/cancellations, and support staffing.
-6. Complete owner TOTP/recovery and staff journey acceptance, then separately
+5. Complete owner TOTP/recovery and staff journey acceptance, then separately
    authorize the documented maintenance, customer-auth, catalog, checkout, and
    inquiry activation sequence plus the final low-value live UPI
    purchase/refund. Until then, keep every commerce and staff-security flag
