@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-25 20:12:00 UTC**
+Last refreshed: **2026-08-26 19:51:50 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -33,25 +33,30 @@ and ignored local environment files.
 ## Exact releases and automation
 
 Both production surfaces run exact source
-`ab7bef6e0096d9329a08652a6fff7a2eabc186dc`. Ops uses immutable image digest
-`sha256:040190b87a168da1f2828ca2ad9165ea454e130e342e29f8268ca71f0ee46dce`;
+`20fe43799c04bbb861c64a1eb1fb8cf91e402d4b`. Ops uses immutable image digest
+`sha256:0de00ff6b8b90ea3892915b9f9589793268ad339b4e10942be036756ff332b62`;
 the generated storefront branch is exact commit
-`0da1fb70bc35b6d1fe089761a3ccd17743c5c96a`. Workflow run
-[`32871053573`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32871053573)
+`74fcf7951cc6636ab86aeca64d4632be09f14856`. Workflow run
+[`33005432017`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33005432017)
 passed quality, all disposable-PostgreSQL integration tests, verified
 packaging, immutable image build/push, Tailscale deployment through the
 restricted SSH identity, generated-branch publication, exact ops-source live
-verification, and storefront health, discovery, and release-lock checks. Fresh
-independent target-specific acceptance at 2026-08-25 20:06 UTC verified the
-exact ops and storefront source on their owning version endpoints, storefront
-HTML marker, ops live/ready/unauthenticated-session behavior, the exact four-URL
-sitemap and crawler policy, real immutable Next assets, and the path- and
-query-preserving `www` redirect. Fresh 1280-by-720 and 390-by-844
-in-app browser checks at 2026-08-25 20:12 UTC confirmed the production
-storefront hero and responsive header with no root horizontal overflow, failed
-loaded images, or console warnings or errors. An unauthenticated request for
-the new `/stock/oil` operations route redirected to the release-preserving
-`/login?next=%2Fstock%2Foil` boundary with no console warnings or errors.
+verification, and exact storefront live verification. Fresh independent
+target-specific acceptance at 2026-08-26 19:51 UTC verified both exact source
+endpoints, a real immutable Next asset, storefront health and release locks,
+and the path- and query-preserving `www` redirect. Fresh 1816-by-1204 and
+390-by-844 clean-browser checks confirmed the self-hosted Inter Tight and
+Londrina faces, responsive navigation and display heading, requested copy
+removals, accessible hidden catalog count, and floating cart with no horizontal
+overflow, failed images, console warnings, or console errors.
+
+PR #73 merged the storefront typography and interaction release. It replaced
+the previous display face with self-hosted Londrina Solid and Londrina Outline,
+kept Inter Tight for body copy including its real italic face, added the
+solid-to-outline desktop navigation wave, placed Account after Cart, made the
+opening-edit heading fluid across viewports, removed the approved homepage and
+shop copy, and converted the cart sheet into an accessible floating popover
+with reduced-motion behavior.
 
 PR #67 merged the dependency modernization and Better Auth 1.7 operations
 identity migration as exact source
