@@ -25,6 +25,7 @@ import {
 } from "@perfume-aura/ui/components/sheet";
 import { compactHeaderScrollY } from "@/lib/header-motion";
 import { useCart } from "./cart-provider";
+import { NavWaveLabel } from "./nav-wave-label";
 
 const navigation = [
   { href: "/shop", label: "Shop" },
@@ -118,28 +119,29 @@ export function SiteHeader({ customerAuthEnabled }: Readonly<{ customerAuthEnabl
             aria-label="Primary navigation"
             aria-hidden={compact ? true : undefined}
             inert={compact}
-            className={`-mr-[var(--aura-gutter)] -mt-[var(--aura-gutter)] hidden min-h-20 w-[min(66vw,58rem)] items-center justify-end gap-14 bg-[var(--aura-ink)]/82 pl-8 pr-2 backdrop-blur-sm transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none lg:-mr-[var(--aura-gutter-lg)] lg:flex ${compact ? "pointer-events-none -translate-y-5 opacity-0" : "pointer-events-auto translate-y-0 opacity-100"}`}
+            className={`-mr-[var(--aura-gutter)] -mt-[var(--aura-gutter)] hidden min-h-20 w-[min(66vw,58rem)] items-center justify-end gap-7 bg-[var(--aura-ink)]/82 pl-8 pr-2 backdrop-blur-sm transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none lg:-mr-[var(--aura-gutter-lg)] lg:flex xl:gap-10 2xl:gap-14 ${compact ? "pointer-events-none -translate-y-5 opacity-0" : "pointer-events-auto translate-y-0 opacity-100"}`}
           >
             {navigation.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 prefetch={item.href === "/shop" ? null : false}
+                aria-label={item.label}
                 aria-current={pathname === item.href || pathname.startsWith(`${item.href}/`) ? "page" : undefined}
-                className="font-display min-h-20 content-center border-b border-transparent text-[clamp(1.6rem,2vw,2rem)] tracking-[0.01em] transition hover:border-[var(--aura-ivory)] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] aria-[current=page]:border-[var(--aura-ivory)]"
+                className="aura-nav-action font-display inline-flex min-h-20 items-center border-b border-transparent text-[clamp(1.6rem,2vw,2rem)] tracking-[0.01em] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] aria-[current=page]:border-[var(--aura-ivory)]"
               >
-                {item.label}
+                <NavWaveLabel label={item.label} />
               </Link>
             ))}
-            {customerAuthEnabled ? <CustomerNavigation /> : <Link href="/account" prefetch={false} aria-label="Customer account" aria-current={pathname.startsWith("/account") ? "page" : undefined} className="grid min-h-20 min-w-12 place-items-center border-b border-transparent transition hover:border-[var(--aura-ivory)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] aria-[current=page]:border-[var(--aura-ivory)]"><HugeiconsIcon icon={UserCircleIcon} strokeWidth={1.7} /></Link>}
             <button
               type="button"
-              className="min-h-20 font-display text-[clamp(1.6rem,2vw,2rem)] tracking-[0.01em]"
+              className="aura-nav-action inline-flex min-h-20 items-center font-display text-[clamp(1.6rem,2vw,2rem)] tracking-[0.01em] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)]"
               aria-label={`Open cart with ${cart?.quantity ?? 0} items`}
               onClick={() => setDrawerOpen(true)}
             >
-              Cart({cart?.quantity ?? 0})
+              <NavWaveLabel label={`Cart(${cart?.quantity ?? 0})`} />
             </button>
+            {customerAuthEnabled ? <CustomerNavigation /> : <Link href="/account" prefetch={false} aria-label="Customer account" aria-current={pathname.startsWith("/account") ? "page" : undefined} className="aura-nav-action inline-flex min-h-20 items-center border-b border-transparent font-display text-[clamp(1.6rem,2vw,2rem)] tracking-[0.01em] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] aria-[current=page]:border-[var(--aura-ivory)]"><NavWaveLabel label="Account" /></Link>}
           </nav>
 
           <div

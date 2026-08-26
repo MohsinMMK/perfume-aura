@@ -98,7 +98,7 @@ export default async function HomePage() {
         <IngredientAtmosphere />
         <div className="relative z-10 mx-auto flex min-h-[62svh] max-w-[66rem] flex-col items-center justify-center text-center">
           <h2 data-motion-copy className="max-w-[17ch] text-[clamp(2.7rem,6vw,6.5rem)] leading-[0.98] tracking-[-0.04em] text-balance">
-            Perfume lives between <span className="font-[var(--font-playfair)] italic text-[var(--aura-brass)]">arrival</span> and memory. Find the composition that feels unmistakably yours.
+            Perfume lives between <span className="italic text-[var(--aura-brass)]">arrival</span> and memory. Find the composition that feels unmistakably yours.
           </h2>
           <p data-motion-copy className="mt-8 max-w-[34rem] text-sm leading-6 text-[color:rgb(245_228_199_/_68%)] sm:text-base">
             Bergamot lifts. Jasmine blooms. Oud and vanilla linger.
@@ -188,7 +188,6 @@ export default async function HomePage() {
                 </text>
               </svg>
             </div>
-            <p className="ml-auto mt-6 max-w-xl text-base leading-7 text-[color:rgb(245_228_199_/_76%)] sm:mt-8 sm:text-lg lg:mt-8">A guided way to move from atmosphere to composition—without needing to know every note by name.</p>
           </div>
 
           <div data-motion-journey-track className="aura-snap-row relative -mx-[var(--aura-gutter)] flex snap-x snap-mandatory gap-[var(--aura-gap)] overflow-x-auto px-[var(--aura-gutter)] pb-3 lg:mx-0 lg:w-max lg:gap-[var(--aura-gap-lg)] lg:overflow-visible lg:px-8 lg:pb-0">
@@ -225,7 +224,7 @@ export default async function HomePage() {
       </section>
 
       <section className="overflow-hidden bg-[var(--aura-ink)] py-20 text-[var(--aura-ivory)] lg:py-28">
-        <h2 className="font-display text-outline whitespace-nowrap px-[var(--aura-gutter)] text-[clamp(6rem,17vw,16rem)] leading-[0.72] lg:px-[var(--aura-gutter-lg)]">The opening edit</h2>
+        <h2 className="font-display text-outline whitespace-nowrap px-[var(--aura-gutter)] text-[clamp(2.2rem,14vw,16rem)] leading-[0.72] lg:px-[var(--aura-gutter-lg)]">The opening edit</h2>
         <div className="relative mx-[var(--aura-gutter)] mt-10 min-h-[36rem] overflow-hidden border-y border-dashed border-[color:var(--aura-rule)] lg:mx-[var(--aura-gutter-lg)] lg:min-h-[44rem]">
           <Image src="/images/hero-bottle-still-life.webp" alt="Three Perfume Aura bottles arranged on a dark stone plinth" fill sizes="100vw" className="object-cover opacity-75" />
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(16,11,6,.92)_0%,rgba(16,11,6,.5)_52%,rgba(16,11,6,.12)_100%)]" />

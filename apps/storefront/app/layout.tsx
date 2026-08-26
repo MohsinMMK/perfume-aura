@@ -8,7 +8,18 @@ import "./globals.css";
 export const dynamic = "force-dynamic";
 
 const interTight = localFont({
-  src: "../node_modules/@fontsource-variable/inter-tight/files/inter-tight-latin-wght-normal.woff2",
+  src: [
+    {
+      path: "../node_modules/@fontsource-variable/inter-tight/files/inter-tight-latin-wght-normal.woff2",
+      weight: "100 900",
+      style: "normal",
+    },
+    {
+      path: "../node_modules/@fontsource-variable/inter-tight/files/inter-tight-latin-wght-italic.woff2",
+      weight: "100 900",
+      style: "italic",
+    },
+  ],
   variable: "--font-inter-tight",
   display: "swap",
   fallback: ["Arial"],
@@ -16,9 +27,19 @@ const interTight = localFont({
   preload: true,
 });
 
-const bebasNeue = localFont({
-  src: "../node_modules/@fontsource/bebas-neue/files/bebas-neue-latin-400-normal.woff2",
-  variable: "--font-bebas-neue",
+const londrinaSolid = localFont({
+  src: "../node_modules/@fontsource/londrina-solid/files/londrina-solid-latin-400-normal.woff2",
+  variable: "--font-londrina-solid",
+  display: "swap",
+  fallback: ["Arial"],
+  adjustFontFallback: "Arial",
+  weight: "400",
+  preload: true,
+});
+
+const londrinaOutline = localFont({
+  src: "../node_modules/@fontsource/londrina-outline/files/londrina-outline-latin-400-normal.woff2",
+  variable: "--font-londrina-outline",
   display: "swap",
   fallback: ["Arial"],
   adjustFontFallback: "Arial",
@@ -75,10 +96,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      className={`${interTight.variable} ${londrinaSolid.variable} ${londrinaOutline.variable}`}
       data-scroll-behavior="auto"
       data-perfume-aura-release={releaseCommit}
     >
-      <body className={`${interTight.variable} ${bebasNeue.variable} min-h-full antialiased`}>
+      <body className="min-h-full antialiased">
         <StorefrontShell>{children}</StorefrontShell>
       </body>
     </html>
