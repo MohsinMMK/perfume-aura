@@ -4,8 +4,13 @@
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
 
 :root {
-  --aura-font-sans: var(--font-inter-tight), arial, system-ui, sans-serif;
-  --aura-font-display: var(--font-bebas-neue), arial, system-ui, sans-serif;
+  --font-sans: var(--font-inter-tight);
+  --font-heading: var(--font-londrina-solid);
+  --font-heading-outline: var(--font-londrina-outline);
+  --aura-font-sans: var(--font-sans), arial, system-ui, sans-serif;
+  --aura-font-display: var(--font-heading), arial, system-ui, sans-serif;
+  --aura-font-display-outline: var(--font-heading-outline),
+    var(--font-heading), arial, system-ui, sans-serif;
   --aura-gutter: 0.625rem;
   --aura-gutter-lg: 1.25rem;
   --aura-gap: 0.625rem;
@@ -71,8 +76,75 @@ body {
 }
 
 .text-outline {
-  color: transparent;
-  -webkit-text-stroke: 1.5px var(--aura-ivory);
+  font-family: var(--aura-font-display-outline);
+  font-weight: 400;
+}
+
+.aura-nav-wave {
+  display: inline-grid;
+  overflow: hidden;
+  padding-block: 0.1em;
+  line-height: 0.9;
+  perspective: 8em;
+}
+
+.aura-nav-wave__face {
+  display: flex;
+  grid-area: 1 / 1;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.aura-nav-wave__face--outline {
+  font-family: var(--aura-font-display-outline);
+}
+
+.aura-nav-wave__glyph {
+  display: inline-block;
+  opacity: 1;
+  transform: translate3d(0, 0, 0) rotateX(0deg);
+  transform-origin: center;
+  transition:
+    transform 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 180ms ease-out;
+  transition-delay: calc(var(--aura-nav-index) * 18ms);
+}
+
+.aura-nav-wave__face--outline .aura-nav-wave__glyph {
+  opacity: 0;
+  transform: translate3d(0, 115%, 0) rotateX(-45deg);
+}
+
+.aura-nav-action:is(:hover, :focus-visible)
+  .aura-nav-wave__face--solid
+  .aura-nav-wave__glyph {
+  opacity: 0;
+  transform: translate3d(0, -115%, 0) rotateX(45deg);
+}
+
+.aura-nav-action:is(:hover, :focus-visible)
+  .aura-nav-wave__face--outline
+  .aura-nav-wave__glyph {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) rotateX(0deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aura-nav-wave__glyph {
+    transition: none;
+  }
+
+  .aura-nav-action:is(:hover, :focus-visible)
+    .aura-nav-wave__face--solid
+    .aura-nav-wave__glyph {
+    transform: none;
+  }
+
+  .aura-nav-action:is(:hover, :focus-visible)
+    .aura-nav-wave__face--outline
+    .aura-nav-wave__glyph {
+    transform: none;
+  }
 }
 
 .aura-dotted-rule {
@@ -91,6 +163,63 @@ body {
   border-color: var(--aura-ivory) !important;
   background-color: var(--aura-ink) !important;
   color: var(--aura-ivory) !important;
+}
+
+.aura-cart-popover[data-side="right"] {
+  inset: auto var(--aura-gutter) auto auto;
+  top: calc(5.5rem + var(--aura-gap));
+  width: calc(100% - (2 * var(--aura-gutter)));
+  height: auto;
+  max-width: 44rem;
+  max-height: calc(100svh - 5.5rem - (2 * var(--aura-gap)));
+  border-radius: 1rem;
+  box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 38%);
+  transform-origin: calc(100% - 4.25rem) 0;
+  transition:
+    opacity 140ms ease-out,
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.aura-cart-popover[data-open] {
+  animation: aura-cart-popover-enter 420ms cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+.aura-cart-popover[data-ending-style] {
+  opacity: 0;
+  transform: translate3d(0, -0.5rem, 0) scale(0.96);
+}
+
+@keyframes aura-cart-popover-enter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -1rem, 0) scale(0.78);
+  }
+
+  72% {
+    opacity: 1;
+    transform: translate3d(0, 0.125rem, 0) scale(1.018);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@media (min-width: 1024px) {
+  .aura-cart-popover[data-side="right"] {
+    right: var(--aura-gutter-lg);
+    top: calc(5.5rem + var(--aura-gap-lg));
+    max-height: calc(100svh - 5.5rem - (2 * var(--aura-gap-lg)));
+    transform-origin: 78% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aura-cart-popover[data-open] {
+    animation: none;
+  }
 }
 
 .aura-header-logo {

@@ -10,8 +10,52 @@ describe("storefront header logo", () => {
     );
 
     assert.match(header, /-mt-\[var\(--aura-gutter\)\][\s\S]*w-\[min\(66vw,58rem\)\]/u);
-    assert.match(header, /items-center justify-end gap-14[\s\S]*pl-8 pr-2/u);
+    assert.match(
+      header,
+      /items-center justify-end gap-7[\s\S]*pl-8 pr-2[\s\S]*2xl:gap-14/u,
+    );
     assert.match(header, /min-h-20[\s\S]*text-\[clamp\(1\.6rem,2vw,2rem\)\]/u);
+  });
+
+  it("rolls every desktop navigation label from solid to outline", async () => {
+    const [header, customerHeader, navLabel, globals] = await Promise.all([
+      readFile(new URL("../components/site-header.tsx", import.meta.url), "utf8"),
+      readFile(
+        new URL("../components/customer-header-navigation.tsx", import.meta.url),
+        "utf8",
+      ),
+      readFile(
+        new URL("../components/nav-wave-label.tsx", import.meta.url),
+        "utf8",
+      ),
+      readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    ]);
+
+    assert.match(header, /<NavWaveLabel label=\{item\.label\} \/>/u);
+    assert.match(header, /<NavWaveLabel label=\{`Cart\(\$\{cart\?\.quantity \?\? 0\}\)`\} \/>/u);
+    assert.match(header, /<NavWaveLabel label="Account" \/>/u);
+    assert.match(customerHeader, /<NavWaveLabel label="Account" \/>/u);
+    assert.match(navLabel, /aura-nav-wave__face--solid/u);
+    assert.match(navLabel, /aura-nav-wave__face--outline/u);
+    assert.match(globals, /transition-delay:\s*calc\(var\(--aura-nav-index\) \* 18ms\)/u);
+    assert.match(globals, /prefers-reduced-motion:\s*reduce/u);
+    assert.doesNotMatch(header, /hover:border-\[var\(--aura-ivory\)\]/u);
+    assert.doesNotMatch(
+      customerHeader,
+      /aura-nav-action[^"\n]*hover:border-\[var\(--aura-ivory\)\]/u,
+    );
+  });
+
+  it("places the desktop account control after the cart", async () => {
+    const header = await readFile(
+      new URL("../components/site-header.tsx", import.meta.url),
+      "utf8",
+    );
+    const cartPosition = header.indexOf("<NavWaveLabel label={`Cart(");
+    const accountPosition = header.indexOf('<NavWaveLabel label="Account" />');
+
+    assert.ok(cartPosition >= 0, "desktop cart label must exist");
+    assert.ok(accountPosition > cartPosition, "desktop account must follow cart");
   });
 
   it("hands the desktop navigation off to descending compact controls", async () => {
@@ -27,6 +71,22 @@ describe("storefront header logo", () => {
     assert.match(
       globals,
       /prefers-reduced-motion: no-preference[\s\S]*aura-compact-controls-enter/u,
+    );
+  });
+
+  it("opens the cart as a floating panel anchored toward its trigger", async () => {
+    const [cartDrawer, globals] = await Promise.all([
+      readFile(new URL("../components/cart-drawer.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    ]);
+
+    assert.match(cartDrawer, /aura-cart-popover/u);
+    assert.match(globals, /\.aura-cart-popover\[data-side="right"\]/u);
+    assert.match(globals, /@keyframes aura-cart-popover-enter/u);
+    assert.match(globals, /transform-origin:\s*78% 0/u);
+    assert.match(
+      globals,
+      /prefers-reduced-motion:\s*reduce[\s\S]*\.aura-cart-popover\[data-open\]/u,
     );
   });
 

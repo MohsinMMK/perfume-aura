@@ -122,7 +122,10 @@ importers:
       '@fontsource-variable/inter-tight':
         specifier: 5.3.0
         version: 5.3.0
-      '@fontsource/bebas-neue':
+      '@fontsource/londrina-outline':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource/londrina-solid':
         specifier: 5.3.0
         version: 5.3.0
       '@hugeicons/core-free-icons':
@@ -967,8 +970,11 @@ packages:
   '@fontsource-variable/inter-tight@5.3.0':
     resolution: {integrity: sha512-ZhZZ29sNZ15P1K+cUt13GeBRYON0akgmNiftshUeDLos7X7zGcRgPzt434879Xhq1QbwlW3M/apBMk7jWabwvA==}
 
-  '@fontsource/bebas-neue@5.3.0':
-    resolution: {integrity: sha512-nCxMEb9Bg9sjNWm9TIOsvHKDMLRUfEZPWpLgYu6m9KavZZVSA/WoHzI5wROwqA+eNwEi/PNBAcB5Co7HA3S0Cw==}
+  '@fontsource/londrina-outline@5.3.0':
+    resolution: {integrity: sha512-/Dw35CxZAU/AIQKlLfahw/FfuPfpbP8yJWF1vscOnyzmxMgbTVI1jw1sxof1lXgY5AHTg8WNN9rmb6Cu8v2Scg==}
+
+  '@fontsource/londrina-solid@5.3.0':
+    resolution: {integrity: sha512-tFmgGjs1jfabUQ1chutoptW31U706uuVsTHVcCvuGKhTGNnwxSkLbfTE6zMgI0IzLJikyG25bVpoMjLGn5NYjQ==}
 
   '@hono/node-server@2.0.10':
     resolution: {integrity: sha512-ZcnNVhKTmyDJeg0UlnZjvM73JBsTAuhrH/J4fjwGOw59PwOW51r4J+p6CsKZWXdKSme4MFqU62CZMOsdDrU4CA==}
@@ -5283,7 +5289,9 @@ snapshots:
 
   '@fontsource-variable/inter-tight@5.3.0': {}
 
-  '@fontsource/bebas-neue@5.3.0': {}
+  '@fontsource/londrina-outline@5.3.0': {}
+
+  '@fontsource/londrina-solid@5.3.0': {}
 
   '@hono/node-server@2.0.10(hono@4.12.34)':
     dependencies:

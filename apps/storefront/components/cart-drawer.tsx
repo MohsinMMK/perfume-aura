@@ -24,7 +24,7 @@ export function CartDrawer() {
 
   return (
     <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-      <SheetContent showCloseButton={false} className="right-[5px]! top-[5px]! bottom-auto! h-auto! max-h-[calc(100svh-10px)]! w-[calc(100%-10px)]! overflow-hidden rounded-[var(--aura-radius)] border-0 bg-[var(--aura-ivory)] text-[var(--aura-ink)] sm:max-w-[44rem]!">
+      <SheetContent showCloseButton={false} className="aura-cart-popover overflow-hidden border-0 bg-[var(--aura-ivory)] text-[var(--aura-ink)]">
         <SheetClose
           render={
             <Button

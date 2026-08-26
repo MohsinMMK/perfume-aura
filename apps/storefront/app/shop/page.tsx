@@ -34,13 +34,9 @@ export default async function ShopPage({
   return (
     <section className="bg-[var(--aura-ink)] px-[var(--aura-gutter)] pb-24 pt-28 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:pb-32 lg:pt-32">
       <div className="mx-auto max-w-[94rem]">
-        <p className="text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-[color:rgb(245_228_199_/_55%)]">The Perfume Aura collection</p>
-        <h1 data-motion-copy className="font-display mt-5 max-w-[10ch] text-[clamp(5rem,13vw,13rem)] leading-[0.72]">
+        <h1 data-motion-copy className="font-display max-w-[10ch] text-[clamp(5rem,13vw,13rem)] leading-[0.72]">
           Scent made <span className="text-outline">for presence</span>
         </h1>
-        <p className="mt-8 max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_60%)]">
-          {products.length} scents across Signature and Inspired listings. Prices, notes, and checkout open only when each edition is complete.
-        </p>
 
         <ShopListingControls
           query={query}

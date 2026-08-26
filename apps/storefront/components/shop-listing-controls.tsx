@@ -365,20 +365,9 @@ export function ShopListingControls({
           </nav>
         </div>
 
-        <p
-          className="hidden shrink-0 text-sm text-[color:rgb(245_228_199_/_55%)] lg:block"
-          role="status"
-          aria-live="polite"
-        >
-          {countLabel}
-        </p>
       </div>
 
-      <p
-        className="mt-4 text-sm text-[color:rgb(245_228_199_/_55%)] lg:hidden"
-        role="status"
-        aria-live="polite"
-      >
+      <p className="sr-only" role="status" aria-live="polite">
         {countLabel}
       </p>
     </div>
