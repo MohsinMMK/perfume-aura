@@ -45,7 +45,7 @@ export function ProductCard({
           src={product.cardImage ?? product.image}
           alt={product.imageAlt}
           fill
-          sizes="(max-width: 1023px) 92vw, 31vw"
+          sizes="(max-width: 1023px) 46vw, 31vw"
           className="product-card-flat object-cover"
         />
         <Image
@@ -53,7 +53,7 @@ export function ProductCard({
           alt=""
           aria-hidden="true"
           fill
-          sizes="(max-width: 1023px) 92vw, 31vw"
+          sizes="(max-width: 1023px) 46vw, 31vw"
           className="product-card-campaign object-cover"
         />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(16,11,6,.22)_0%,transparent_24%,transparent_52%,rgba(16,11,6,.94)_100%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100" />
@@ -95,13 +95,18 @@ export function ProductCard({
         </div>
       </div>
 
-      <div className="product-card-title flex items-start justify-between gap-4 px-1 py-4">
+      <div className="product-card-title flex items-start justify-between gap-4 px-1 py-3 sm:py-4">
         <div className="min-w-0">
-          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[var(--aura-text-muted-on-ink)]">
+          <p className="text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-[var(--aura-text-muted-on-ink)] sm:text-[0.62rem] sm:tracking-[0.14em]">
             {product.eyebrow}
           </p>
-          <h2 className="mt-1 font-display text-2xl tracking-[0.01em] sm:text-3xl">
-            {product.name}
+          <h2 className="mt-1 font-display text-[1.15rem] leading-[0.95] tracking-[0.01em] sm:text-3xl sm:leading-[1]">
+            <Link
+              href={`/products/${product.slug}`}
+              className="line-clamp-2 min-h-[1.9em] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)] sm:min-h-[2em]"
+            >
+              {product.name}
+            </Link>
           </h2>
         </div>
       </div>

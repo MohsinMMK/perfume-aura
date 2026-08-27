@@ -34,6 +34,11 @@ describe("storefront motion contract", () => {
     assert.match(motion, /isDesktop:\s*"\(min-width: 1024px\)"/);
     assert.match(motion, /motionMedia\.revert\(/);
     assert.match(motion, /data-motion-ingredient-drift/);
+    assert.match(motion, /toArray<HTMLElement>\("\[data-motion-product-card\]"/u);
+    assert.doesNotMatch(
+      motion,
+      /data-motion-product-card[\s\S]{0,300}delay:\s*Math\.min\(index/u,
+    );
     assert.match(motion, /element\.dataset\.driftX/);
     assert.match(motion, /element\.dataset\.driftY/);
     assert.match(motion, /pin:\s*true/);

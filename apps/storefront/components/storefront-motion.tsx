@@ -216,11 +216,10 @@ export function StorefrontMotion() {
 
             gsap.utils
               .toArray<HTMLElement>("[data-motion-product-card]", contentRoot)
-              .forEach((element, index) => {
+              .forEach((element) => {
                 gsap.from(element, {
                   y: 56,
                   duration: 0.82,
-                  delay: Math.min(index, 4) * 0.055,
                   ease: "power4.out",
                   scrollTrigger: {
                     trigger: element,
