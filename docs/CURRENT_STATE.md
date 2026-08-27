@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-27 08:23:07 UTC**
+Last refreshed: **2026-08-27 14:35:04 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -32,24 +32,30 @@ and ignored local environment files.
 
 ## Exact releases and automation
 
-Both production surfaces run exact source
+The storefront runs exact source
+`58df582e4cc97ad3ff9b8ede6a953e99f3562270`; ops remains exact source
 `bfad3b2c208a7bfb530b81da38cae801b1386d5a`. Ops uses immutable image digest
 `sha256:5579f30568f2c63a4c5267c4274553a6d5393e2baab1f3bce959c0a0288eb4b9`;
 the generated storefront branch is exact commit
-`e37a223d6783f05be4b28d4f50a94dda708e3760`. Workflow run
-[`33053090981`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33053090981)
+`4206cdd2b66104fab281c1ca71337e67179c3bb5`. Workflow run
+[`33082183511`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33082183511)
 passed quality, all disposable-PostgreSQL integration tests, verified
-packaging, immutable image build/push, Tailscale deployment through the
-restricted SSH identity, generated-branch publication, exact ops-source live
-verification, and exact storefront live verification. Fresh independent
-target-specific acceptance at 2026-08-27 08:23 UTC verified both exact source
-endpoints, a real immutable Next asset, storefront health and release locks,
-and the path- and query-preserving `www` redirect. Fresh 1440-by-900 and
-390-by-844 production browser checks confirmed the floating WhatsApp action,
-the shared `919549549060` WhatsApp destination, the mobile Instagram profile
-and WhatsApp number links, and the responsive navigation with no horizontal
-overflow or console errors. All commerce and staff-security release flags
-remain closed.
+packaging, generated-branch publication, Hostinger auto-deployment, and exact
+storefront live verification; the VPS ops deployment stayed skipped. Fresh
+independent acceptance at 2026-08-27 14:35 UTC verified the exact storefront
+source, a real immutable Next asset, storefront health and release locks, and
+the path- and query-preserving `www` redirect. Fresh 1440-by-900 and
+390-by-844 production browser checks confirmed the two-line shop heading,
+full-width sticky mobile discovery controls, aligned filtered product rows,
+loaded product images, the 48 px mobile add-to-cart target, and zero horizontal
+overflow or console warnings/errors. All commerce and staff-security release
+flags remain closed.
+
+PR #77 merged the responsive shop-discovery release. It added compact animated
+collection, size, sort, and instant-search controls; collection-aware size
+availability; aligned two-column mobile product cards; fixed two-line titles;
+and preserved the labeled mobile add-to-cart action while removing only the
+redundant mobile product link.
 
 PR #75 merged the storefront social-contact release and commerce blocker
 tracker. It added the modern floating WhatsApp action, placed Instagram and
