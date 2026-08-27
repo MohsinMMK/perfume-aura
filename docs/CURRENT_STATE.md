@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-26 19:51:50 UTC**
+Last refreshed: **2026-08-27 08:23:07 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -33,22 +33,29 @@ and ignored local environment files.
 ## Exact releases and automation
 
 Both production surfaces run exact source
-`20fe43799c04bbb861c64a1eb1fb8cf91e402d4b`. Ops uses immutable image digest
-`sha256:0de00ff6b8b90ea3892915b9f9589793268ad339b4e10942be036756ff332b62`;
+`bfad3b2c208a7bfb530b81da38cae801b1386d5a`. Ops uses immutable image digest
+`sha256:5579f30568f2c63a4c5267c4274553a6d5393e2baab1f3bce959c0a0288eb4b9`;
 the generated storefront branch is exact commit
-`74fcf7951cc6636ab86aeca64d4632be09f14856`. Workflow run
-[`33005432017`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33005432017)
+`e37a223d6783f05be4b28d4f50a94dda708e3760`. Workflow run
+[`33053090981`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33053090981)
 passed quality, all disposable-PostgreSQL integration tests, verified
 packaging, immutable image build/push, Tailscale deployment through the
 restricted SSH identity, generated-branch publication, exact ops-source live
 verification, and exact storefront live verification. Fresh independent
-target-specific acceptance at 2026-08-26 19:51 UTC verified both exact source
+target-specific acceptance at 2026-08-27 08:23 UTC verified both exact source
 endpoints, a real immutable Next asset, storefront health and release locks,
-and the path- and query-preserving `www` redirect. Fresh 1816-by-1204 and
-390-by-844 clean-browser checks confirmed the self-hosted Inter Tight and
-Londrina faces, responsive navigation and display heading, requested copy
-removals, accessible hidden catalog count, and floating cart with no horizontal
-overflow, failed images, console warnings, or console errors.
+and the path- and query-preserving `www` redirect. Fresh 1440-by-900 and
+390-by-844 production browser checks confirmed the floating WhatsApp action,
+the shared `919549549060` WhatsApp destination, the mobile Instagram profile
+and WhatsApp number links, and the responsive navigation with no horizontal
+overflow or console errors. All commerce and staff-security release flags
+remain closed.
+
+PR #75 merged the storefront social-contact release and commerce blocker
+tracker. It added the modern floating WhatsApp action, placed Instagram and
+WhatsApp profile links in the mobile menu, recorded the owner-confirmed first
+69-name India-counsel review batch, and kept every legal, catalog, inquiry,
+customer-auth, checkout, and staff-security gate fail-closed.
 
 PR #73 merged the storefront typography and interaction release. It replaced
 the previous display face with self-hosted Londrina Solid and Londrina Outline,
