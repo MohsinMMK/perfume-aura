@@ -34,8 +34,12 @@ export default async function ShopPage({
   return (
     <section className="bg-[var(--aura-ink)] px-[var(--aura-gutter)] pb-24 pt-28 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:pb-32 lg:pt-32">
       <div className="mx-auto max-w-[94rem]">
-        <h1 data-motion-copy className="font-display max-w-[10ch] text-[clamp(5rem,13vw,13rem)] leading-[0.72]">
-          Scent made <span className="text-outline">for presence</span>
+        <h1
+          data-motion-copy
+          className="font-display w-fit max-w-full text-[clamp(2.75rem,13vw,12.25rem)] leading-[0.78]"
+        >
+          <span className="text-outline block whitespace-nowrap">Scent made for</span>
+          <span className="block whitespace-nowrap">presence</span>
         </h1>
 
         <ShopListingControls

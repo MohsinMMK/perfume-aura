@@ -1,20 +1,17 @@
-import {
-  featuredListingSlugs,
-  listingCollections,
-} from "./listing-catalog";
+import { listingCollections } from "./listing-catalog";
 
 export const shopListingSizes = [30, 50, 100, 105] as const;
 export const shopListingSegments = [
   "all",
   "signature",
   "inspired",
-  "featured",
 ] as const;
 export const shopListingSorts = ["catalog", "name-asc", "name-desc"] as const;
 
 export type ShopListingSize = (typeof shopListingSizes)[number];
 export type ShopListingSegment = (typeof shopListingSegments)[number];
 export type ShopListingSort = (typeof shopListingSorts)[number];
+export type ShopListingNameSort = Exclude<ShopListingSort, "catalog">;
 
 export type ShopListingQuery = Readonly<{
   q: string;
@@ -41,9 +38,21 @@ export const emptyShopListingQuery: ShopListingQuery = {
 const shopListingSizeSet = new Set<number>(shopListingSizes);
 const shopListingSegmentSet = new Set<string>(shopListingSegments);
 const shopListingSortSet = new Set<string>(shopListingSorts);
+const shopListingSizesBySegment: Readonly<
+  Record<ShopListingSegment, readonly ShopListingSize[]>
+> = {
+  all: shopListingSizes,
+  signature: [50, 105],
+  inspired: [30, 50, 100],
+};
 
 export function foldShopListingText(value: string): string {
-  return value.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+  return value
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
 }
 
 export function isShopListingSize(value: number): value is ShopListingSize {
@@ -58,6 +67,12 @@ export function isShopListingSegment(
 
 export function isShopListingSort(value: string): value is ShopListingSort {
   return shopListingSortSet.has(value);
+}
+
+export function shopListingSizesForSegment(
+  segment: ShopListingSegment,
+): readonly ShopListingSize[] {
+  return shopListingSizesBySegment[segment];
 }
 
 export function isShopListingQueryActive(query: ShopListingQuery): boolean {
@@ -158,20 +173,23 @@ function searchableText(product: ShopListingRecord): string {
 export function applyShopListingQuery<T extends ShopListingRecord>(
   products: readonly T[],
   query: ShopListingQuery,
-  featuredSlugs: readonly string[] = featuredListingSlugs,
 ): T[] {
-  const featured = new Set(featuredSlugs);
-  const needle = query.q ? foldShopListingText(query.q) : "";
+  const searchTokens = query.q
+    ? foldShopListingText(query.q).split(/\s+/u).filter(Boolean)
+    : [];
   const wantedSizes = new Set(query.sizes);
   const filtered = products.filter((product) => {
-    if (needle && !searchableText(product).includes(needle)) return false;
+    const searchableProductText = searchableText(product);
+    if (
+      searchTokens.length > 0 &&
+      !searchTokens.every((token) => searchableProductText.includes(token))
+    ) {
+      return false;
+    }
     if (
       (query.collection === "signature" || query.collection === "inspired") &&
       product.collectionSlug !== query.collection
     ) {
-      return false;
-    }
-    if (query.collection === "featured" && !featured.has(product.slug)) {
       return false;
     }
     if (
@@ -199,12 +217,10 @@ export function applyShopListingQuery<T extends ShopListingRecord>(
 export function countShopListingSizes(
   products: readonly ShopListingRecord[],
   query: ShopListingQuery,
-  featuredSlugs: readonly string[] = featuredListingSlugs,
 ): Record<ShopListingSize, number> {
   const base = applyShopListingQuery(
     products,
     { ...query, sizes: [], sort: "catalog" },
-    featuredSlugs,
   );
   const counts: Record<ShopListingSize, number> = {
     30: 0,
@@ -225,14 +241,34 @@ export function countShopListingSizes(
   return counts;
 }
 
-export function toggleShopListingSize(
+export function withShopListingSize(
   query: ShopListingQuery,
-  size: ShopListingSize,
+  size?: ShopListingSize,
 ): ShopListingQuery {
   return {
     ...query,
-    sizes: query.sizes.includes(size)
-      ? query.sizes.filter((candidate) => candidate !== size)
-      : uniqueSortedSizes([...query.sizes, size]),
+    sizes: size == null ? [] : [size],
+  };
+}
+
+export function withShopListingSegment(
+  query: ShopListingQuery,
+  collection: ShopListingSegment,
+): ShopListingQuery {
+  const allowedSizes = new Set(shopListingSizesForSegment(collection));
+  return {
+    ...query,
+    collection,
+    sizes: query.sizes.filter((size) => allowedSizes.has(size)),
+  };
+}
+
+export function withShopListingSort(
+  query: ShopListingQuery,
+  sort: ShopListingSort,
+): ShopListingQuery {
+  return {
+    ...query,
+    sort,
   };
 }

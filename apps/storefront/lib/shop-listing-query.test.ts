@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { featuredListingSlugs, loadListedWorkbookProducts } from "./listing-catalog";
+import { loadListedWorkbookProducts } from "./listing-catalog";
 import {
   applyShopListingQuery,
   countShopListingSizes,
@@ -9,7 +9,10 @@ import {
   parseShopListingQuery,
   serializeShopListingQuery,
   shopListingHref,
-  toggleShopListingSize,
+  shopListingSizesForSegment,
+  withShopListingSegment,
+  withShopListingSize,
+  withShopListingSort,
 } from "./shop-listing-query";
 
 describe("shop listing query", () => {
@@ -91,22 +94,13 @@ describe("shop listing query", () => {
         sort: "name-desc",
       },
     );
-    assert.deepEqual(
-      parseShopListingQuery(new URLSearchParams("size=50&size=30&collection=featured")),
-      {
-        q: "",
-        collection: "featured",
-        sizes: [30, 50],
-        sort: "catalog",
-      },
-    );
     assert.deepEqual(parseShopListingQuery({ size: "100,30,40" }).sizes, [30, 100]);
   });
 
   it("ignores invalid collection, size, and sort tokens", () => {
     assert.deepEqual(
       parseShopListingQuery({
-        collection: "woody",
+        collection: "featured",
         size: ["40", "abc"],
         sort: "price-asc",
       }),
@@ -137,7 +131,7 @@ describe("shop listing query", () => {
     );
   });
 
-  it("segments Signature 21, Inspired 48, and Featured 3 without extra products", () => {
+  it("segments Signature 21 and Inspired 48 without extra products", () => {
     const signature = applyShopListingQuery(products, {
       ...emptyShopListingQuery,
       collection: "signature",
@@ -146,25 +140,10 @@ describe("shop listing query", () => {
       ...emptyShopListingQuery,
       collection: "inspired",
     });
-    const featured = applyShopListingQuery(products, {
-      ...emptyShopListingQuery,
-      collection: "featured",
-    });
-
     assert.equal(signature.length, 21);
     assert.equal(inspired.length, 48);
-    assert.equal(featured.length, 3);
-    assert.deepEqual(
-      featured.map((product) => product.slug),
-      products
-        .filter((product) =>
-          (featuredListingSlugs as readonly string[]).includes(product.slug),
-        )
-        .map((product) => product.slug),
-    );
     assert.ok(signature.every((product) => sourceIds.includes(product.id)));
     assert.ok(inspired.every((product) => sourceIds.includes(product.id)));
-    assert.ok(featured.every((product) => sourceIds.includes(product.id)));
     assert.deepEqual(
       signature.map((product) => product.id),
       products
@@ -173,13 +152,20 @@ describe("shop listing query", () => {
     );
   });
 
-  it("searches name and collection label only, folding case and diacritics", () => {
+  it("searches name and collection label with flexible normalized tokens", () => {
     const byName = applyShopListingQuery(products, {
       ...emptyShopListingQuery,
       q: "régent",
     });
     assert.equal(byName.length, 1);
     assert.equal(byName[0]?.slug, "regent-noir");
+
+    const reorderedWords = applyShopListingQuery(products, {
+      ...emptyShopListingQuery,
+      q: "sauvage, dior",
+    });
+    assert.equal(reorderedWords.length, 1);
+    assert.equal(reorderedWords[0]?.slug, "inspired-by-dior-sauvage");
 
     const byLabel = applyShopListingQuery(products, {
       ...emptyShopListingQuery,
@@ -200,6 +186,7 @@ describe("shop listing query", () => {
     });
     assert.equal(summaryLeak.length, 0);
     assert.equal(foldShopListingText("Régent"), "regent");
+    assert.equal(foldShopListingText("Sauvage, Dior"), "sauvage dior");
   });
 
   it("ORs sizes and ANDs size with segment and query", () => {
@@ -240,31 +227,6 @@ describe("shop listing query", () => {
         product.variants.some((variant) => variant.sizeMl === 30 || variant.sizeMl === 105),
       ),
     );
-  });
-
-  it("ANDs Featured with supported and unsupported sizes", () => {
-    const featuredFifty = applyShopListingQuery(products, {
-      ...emptyShopListingQuery,
-      collection: "featured",
-      sizes: [50],
-    });
-    const featuredThirty = applyShopListingQuery(products, {
-      ...emptyShopListingQuery,
-      collection: "featured",
-      sizes: [30],
-    });
-
-    assert.equal(featuredFifty.length, 3);
-    assert.deepEqual(
-      featuredFifty.map((product) => product.slug),
-      [...featuredListingSlugs],
-    );
-    assert.ok(
-      featuredFifty.every((product) =>
-        product.variants.some((variant) => variant.sizeMl === 50),
-      ),
-    );
-    assert.equal(featuredThirty.length, 0);
   });
 
   it("returns an empty list without inventing products", () => {
@@ -322,17 +284,50 @@ describe("shop listing query", () => {
     assert.deepEqual(counts, { 30: 0, 50: 21, 100: 0, 105: 21 });
   });
 
-  it("toggles sizes without disturbing the rest of the query", () => {
-    const next = toggleShopListingSize(
+  it("selects one size without disturbing the rest of the query", () => {
+    const next = withShopListingSize(
       { q: "oud", collection: "inspired", sizes: [30], sort: "name-asc" },
       50,
     );
     assert.deepEqual(next, {
       q: "oud",
       collection: "inspired",
-      sizes: [30, 50],
+      sizes: [50],
       sort: "name-asc",
     });
-    assert.deepEqual(toggleShopListingSize(next, 30).sizes, [50]);
+    assert.deepEqual(withShopListingSize(next).sizes, []);
+  });
+
+  it("shows only sizes offered by the active collection", () => {
+    assert.deepEqual(shopListingSizesForSegment("all"), [30, 50, 100, 105]);
+    assert.deepEqual(shopListingSizesForSegment("signature"), [50, 105]);
+    assert.deepEqual(shopListingSizesForSegment("inspired"), [30, 50, 100]);
+  });
+
+  it("drops incompatible sizes when switching collections", () => {
+    const query = {
+      q: "oud",
+      collection: "all" as const,
+      sizes: [30, 50, 105] as const,
+      sort: "name-asc" as const,
+    };
+
+    assert.deepEqual(withShopListingSegment(query, "signature"), {
+      ...query,
+      collection: "signature",
+      sizes: [50, 105],
+    });
+    assert.deepEqual(withShopListingSegment(query, "inspired"), {
+      ...query,
+      collection: "inspired",
+      sizes: [30, 50],
+    });
+  });
+
+  it("sets and clears the compact sort order", () => {
+    const ascending = withShopListingSort(emptyShopListingQuery, "name-asc");
+    assert.equal(ascending.sort, "name-asc");
+    assert.equal(withShopListingSort(ascending, "catalog").sort, "catalog");
+    assert.equal(withShopListingSort(ascending, "name-desc").sort, "name-desc");
   });
 });
