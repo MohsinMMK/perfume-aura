@@ -165,6 +165,110 @@ body {
   color: var(--aura-ivory) !important;
 }
 
+.aura-whatsapp-action {
+  position: fixed;
+  right: calc(env(safe-area-inset-right, 0px) + var(--aura-gutter));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 5.25rem);
+  z-index: 40;
+  display: grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  place-items: center;
+  color: white;
+  isolation: isolate;
+  touch-action: manipulation;
+}
+
+.aura-whatsapp-label {
+  position: absolute;
+  right: calc(100% - 0.5rem);
+  z-index: -1;
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  border: 1px solid rgb(16 11 6 / 22%);
+  border-radius: 9999px;
+  padding: 0 1.5rem 0 1rem;
+  background: var(--aura-ivory);
+  box-shadow: 0 4px 8px rgb(0 0 0 / 24%);
+  color: var(--aura-ink);
+  font-size: 0.875rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  clip-path: inset(0 0 0 100% round 9999px);
+  transform: translate3d(0.75rem, 0, 0);
+  transition:
+    opacity 160ms ease-out,
+    clip-path 280ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.aura-whatsapp-icon {
+  display: grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  place-items: center;
+  border: 1px solid rgb(16 11 6 / 22%);
+  border-radius: 9999px;
+  background: #25d366;
+  box-shadow: 0 4px 8px rgb(0 0 0 / 28%);
+  transition:
+    transform 240ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 240ms ease-out;
+}
+
+.aura-whatsapp-icon svg {
+  width: 1.9rem;
+  height: 1.9rem;
+}
+
+.aura-whatsapp-action:focus-visible {
+  outline: none;
+}
+
+.aura-whatsapp-action:focus-visible .aura-whatsapp-icon {
+  outline: 2px solid var(--aura-orange);
+  outline-offset: 3px;
+}
+
+.aura-whatsapp-action:active .aura-whatsapp-icon {
+  transform: scale(0.96);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .aura-whatsapp-action:is(:hover, :focus-visible) .aura-whatsapp-label {
+    opacity: 1;
+    clip-path: inset(0 0 0 0 round 9999px);
+    transform: translate3d(0, 0, 0);
+  }
+
+  .aura-whatsapp-action:is(:hover, :focus-visible) .aura-whatsapp-icon {
+    transform: scale(1.045);
+    box-shadow: 0 5px 8px rgb(0 0 0 / 32%);
+  }
+
+  .aura-whatsapp-action:active .aura-whatsapp-icon {
+    transform: scale(0.96);
+  }
+}
+
+@media (min-width: 640px) {
+  .aura-whatsapp-action {
+    right: calc(env(safe-area-inset-right, 0px) + var(--aura-gutter-lg));
+    bottom: calc(env(safe-area-inset-bottom, 0px) + var(--aura-gutter-lg));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aura-whatsapp-label,
+  .aura-whatsapp-icon {
+    transition: none;
+  }
+}
+
 .aura-cart-popover[data-side="right"] {
   inset: auto var(--aura-gutter) auto auto;
   top: calc(5.5rem + var(--aura-gap));
