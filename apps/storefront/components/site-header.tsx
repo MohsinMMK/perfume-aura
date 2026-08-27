@@ -9,9 +9,11 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Menu01Icon,
   Cancel01Icon,
+  InstagramIcon,
   Search01Icon,
   ShoppingBag01Icon,
   UserCircleIcon,
+  WhatsappIcon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@perfume-aura/ui/components/button";
 import {
@@ -24,6 +26,10 @@ import {
   SheetTrigger,
 } from "@perfume-aura/ui/components/sheet";
 import { compactHeaderScrollY } from "@/lib/header-motion";
+import {
+  whatsappContactDisplayNumber,
+  whatsappContactUrl,
+} from "@/lib/whatsapp-contact";
 import { useCart } from "./cart-provider";
 import { NavWaveLabel } from "./nav-wave-label";
 
@@ -221,6 +227,40 @@ export function SiteHeader({ customerAuthEnabled }: Readonly<{ customerAuthEnabl
                     <HugeiconsIcon icon={Search01Icon} strokeWidth={1.7} /> Search
                   </Button>
                   {customerAuthEnabled ? <CustomerNavigation mobile closeMenu={() => setMenuOpen(false)} /> : <Button render={<Link href="/account" prefetch={false} onClick={() => setMenuOpen(false)} />} nativeButton={false} variant="outline" className="min-h-12 rounded-[var(--aura-radius)] border-[color:rgb(16_11_6_/_35%)] bg-transparent text-[var(--aura-ink)] hover:bg-[var(--aura-ink)] hover:text-[var(--aura-ivory)]"><HugeiconsIcon icon={UserCircleIcon} strokeWidth={1.7} /> Account</Button>}
+                </div>
+                <div className="mt-4 border-t border-dashed border-[color:rgb(16_11_6_/_22%)] pt-4">
+                  <a
+                    href="https://www.instagram.com/perfume.aura.hyd/"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Open Perfume Aura on Instagram"
+                    onClick={() => setMenuOpen(false)}
+                    className="group flex min-h-12 items-center justify-between rounded-[var(--aura-radius)] px-3 text-sm font-semibold transition-colors hover:bg-[var(--aura-ink)] hover:text-[var(--aura-ivory)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)]"
+                  >
+                    <span className="flex items-center gap-3">
+                      <HugeiconsIcon icon={InstagramIcon} strokeWidth={1.7} />
+                      Instagram
+                    </span>
+                    <span className="text-xs font-medium text-[var(--aura-text-muted-on-ivory)] transition-colors group-hover:text-[var(--aura-ivory)] group-focus-visible:text-[var(--aura-ink)]">
+                      @perfume.aura.hyd
+                    </span>
+                  </a>
+                  <a
+                    href={whatsappContactUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`Open WhatsApp chat with Perfume Aura at ${whatsappContactDisplayNumber}`}
+                    onClick={() => setMenuOpen(false)}
+                    className="group flex min-h-12 items-center justify-between rounded-[var(--aura-radius)] px-3 text-sm font-semibold transition-colors hover:bg-[var(--aura-ink)] hover:text-[var(--aura-ivory)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)]"
+                  >
+                    <span className="flex items-center gap-3">
+                      <HugeiconsIcon icon={WhatsappIcon} strokeWidth={1.7} />
+                      WhatsApp
+                    </span>
+                    <span className="text-xs font-medium text-[var(--aura-text-muted-on-ivory)] transition-colors group-hover:text-[var(--aura-ivory)] group-focus-visible:text-[var(--aura-ink)]">
+                      {whatsappContactDisplayNumber}
+                    </span>
+                  </a>
                 </div>
               </nav>
             </SheetContent>

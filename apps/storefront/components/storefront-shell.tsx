@@ -14,6 +14,7 @@ import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 import { StorefrontMotion } from "./storefront-motion";
 import { GoogleOneTapPrompt } from "./google-one-tap-prompt";
+import { WhatsAppContactAction } from "./whatsapp-contact-action";
 
 export function StorefrontShell({ children }: Readonly<{ children: ReactNode }>) {
   const loadRemoteCart =
@@ -39,6 +40,7 @@ export function StorefrontShell({ children }: Readonly<{ children: ReactNode }>)
       <SiteHeader customerAuthEnabled={customerAuthEnabled} />
       <main id="main-content">{children}</main>
       <SiteFooter />
+      <WhatsAppContactAction />
       <CartDrawer />
     </CartProvider>
   );

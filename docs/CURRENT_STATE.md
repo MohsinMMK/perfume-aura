@@ -483,9 +483,17 @@ Next actions:
 1. Review Google Search Console indexing and coverage after Google recrawls the
    successfully submitted four-URL sitemap. Ownership verification, sitemap
    submission, and IndexNow discovery notification are complete.
-2. Obtain India-counsel clearance and owner-approved catalog facts: unresolved
-   mappings, Signature prices, SKUs, costs, opening stock, media, and structured
-   scent content. Do not migrate or publish sale data before that gate.
+2. Obtain India-counsel clearance and owner-approved catalog facts: Signature
+   prices, SKUs, costs, opening stock, media, and structured scent content. On
+   2026-08-27 the owner confirmed the 69 currently listed names (48 inspired and
+   21 Signature) as the first counsel-review batch; the other 34 incomplete
+   inspired rows remain unchanged and excluded. B01 preparation includes the
+   [69-name review CSV](review-packets/2026-08-27-b01-69-name-review.csv), exact
+   [legal-surface inventory](review-packets/2026-08-27-b01-legal-surface-inventory.md),
+   frozen catalog digests, and the finding that the live discovery shop exposes
+   48 inspired product links while no customer-facing disclaimer is implemented.
+   Legal approval remains pending. Do not migrate or publish sale data before
+   that gate.
 3. Supply and accept the provider identities: Google OAuth production client,
    Hostinger SMTP sender credentials and delivery proof, and Cashfree merchant
    KYC/UPI-only sandbox credentials, webhooks, transaction TTL, and refunds.

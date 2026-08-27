@@ -2,6 +2,16 @@
 
 Status: **approval pending; every related release gate remains closed**.
 
+B01 preparation started on 27 August 2026. The exact repository surfaces,
+catalog counts, frozen artifact digests, live discovery exposure, missing
+disclaimer finding, and counsel response format are recorded in the
+[`B01 legal-surface inventory`](2026-08-27-b01-legal-surface-inventory.md).
+The owner confirmed the first review batch as the
+[`69-name counsel review CSV`](2026-08-27-b01-69-name-review.csv): 48 inspired
+names and 21 Signature names. The other 34 incomplete inspired rows remain
+unchanged and are excluded from this submission.
+This preparation does not change the pending status or authorize any release.
+
 ## Requested written opinion
 
 Please review the final, customer-visible material supplied with this packet and
@@ -20,6 +30,11 @@ operations catalog controls.
 | Seven-day unopened returns and damaged/wrong-item claims | Pending | Pending |
 | Pre-dispatch cancellation through support | Pending | Pending |
 | Refund timing, support language and records retention | Pending | Pending |
+
+Counsel should return a surface-specific decision using the response fields in
+the B01 inventory. A generic website approval does not identify the exact name,
+copy, placement, packaging, metadata, invoice, email, or advertising material
+reviewed and must not be recorded as clearance for those surfaces.
 
 ## Locked launch operating text for review
 

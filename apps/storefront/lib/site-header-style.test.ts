@@ -58,6 +58,32 @@ describe("storefront header logo", () => {
     assert.ok(accountPosition > cartPosition, "desktop account must follow cart");
   });
 
+  it("links the verified Instagram profile from the mobile navigation menu", async () => {
+    const header = await readFile(
+      new URL("../components/site-header.tsx", import.meta.url),
+      "utf8",
+    );
+
+    assert.match(header, /href="https:\/\/www\.instagram\.com\/perfume\.aura\.hyd\/"/u);
+    assert.match(header, /aria-label="Open Perfume Aura on Instagram"/u);
+    assert.match(header, /target="_blank"/u);
+    assert.match(header, /rel="noreferrer"/u);
+    assert.match(header, /<HugeiconsIcon icon=\{InstagramIcon\}/u);
+    assert.doesNotMatch(header, /utm_source=|igsi=/u);
+  });
+
+  it("links WhatsApp from the mobile menu with the phone number as its identifier", async () => {
+    const header = await readFile(
+      new URL("../components/site-header.tsx", import.meta.url),
+      "utf8",
+    );
+
+    assert.match(header, /href=\{whatsappContactUrl\}/u);
+    assert.match(header, /Open WhatsApp chat with Perfume Aura at/u);
+    assert.match(header, /\{whatsappContactDisplayNumber\}/u);
+    assert.match(header, /<HugeiconsIcon icon=\{WhatsappIcon\}/u);
+  });
+
   it("hands the desktop navigation off to descending compact controls", async () => {
     const [header, globals] = await Promise.all([
       readFile(new URL("../components/site-header.tsx", import.meta.url), "utf8"),

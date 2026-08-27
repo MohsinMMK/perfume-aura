@@ -478,6 +478,7 @@ async function runSelfTests() {
     ["docs/PRODUCT.md", "docs/PRODUCT.md"],
     ["docs/ENGINEERING.md", "docs/ENGINEERING.md"],
     ["docs/OPERATIONS.md", "docs/OPERATIONS.md"],
+    ["docs/BLOCKERS.md", "docs/BLOCKERS.md"],
     ["data/catalog", "data/catalog"],
     ["README.md", "README.md"],
     ["AGENTS.md", "AGENTS.md"],

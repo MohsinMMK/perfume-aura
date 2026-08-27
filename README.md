@@ -31,6 +31,7 @@ flowchart LR
 | Need | Owner |
 |---|---|
 | Live topology, exact releases, blockers, rollback, next actions | [CURRENT_STATE.md](docs/CURRENT_STATE.md) |
+| Dependency-ordered commerce launch blocker tracker | [BLOCKERS.md](docs/BLOCKERS.md) |
 | Users, routes, behavior, release locks | [PRODUCT.md](docs/PRODUCT.md) |
 | Code, stack, data, tests, CI, performance, telemetry privacy | [ENGINEERING.md](docs/ENGINEERING.md) |
 | Hostinger, VPS, DNS, Neon, deploy, recovery | [OPERATIONS.md](docs/OPERATIONS.md) |
