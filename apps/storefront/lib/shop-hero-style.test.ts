@@ -59,7 +59,9 @@ test("mobile shop cards use a compact two-column catalog", async () => {
   ]);
 
   assert.match(styles, /\.aura-product-grid\s*\{\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/u);
-  assert.match(styles, /@media \(max-width: 639px\)[\s\S]*\.product-card-actions\s*\{\s*display: none;/u);
+  assert.match(styles, /@media \(max-width: 639px\)[\s\S]*\.product-card-actions > div\s*\{\s*grid-template-columns: minmax\(0, 1fr\);/u);
+  assert.match(styles, /@media \(max-width: 639px\)[\s\S]*\.product-card-actions a\s*\{\s*display: none;/u);
+  assert.doesNotMatch(styles, /@media \(max-width: 639px\)[\s\S]*\.product-card-actions\s*\{\s*display: none;/u);
   assert.match(card, /sizes="\(max-width: 1023px\) 46vw, 31vw"/u);
   assert.match(card, /className="line-clamp-2 min-h-\[1\.9em\][^"]*sm:min-h-\[2em\]"/u);
 });

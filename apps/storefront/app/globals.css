@@ -499,7 +499,11 @@ body {
 }
 
 @media (max-width: 639px) {
-  .product-card-actions {
+  .product-card-actions > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-card-actions a {
     display: none;
   }
 }
