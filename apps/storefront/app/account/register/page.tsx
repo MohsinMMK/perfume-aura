@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { AccountAuthShell } from "@/components/account-auth-shell";
 import { AccountForm } from "@/components/account-form";
 import {
@@ -14,6 +15,8 @@ export default async function RegisterPage({
   searchParams,
 }: Readonly<{ searchParams: Promise<{ callbackURL?: string }> }>) {
   const enabled = process.env.STOREFRONT_CUSTOMER_AUTH_ENABLED === "true";
+  if (!enabled) notFound();
+
   const callbackURL = normalizeCustomerCallbackURL((await searchParams).callbackURL);
   const signInHref = callbackURL === "/account"
     ? "/account/sign-in"

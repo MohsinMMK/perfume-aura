@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { AccountAuthShell } from "@/components/account-auth-shell";
 import { AccountForm } from "@/components/account-form";
 import { customerAuthProviderReadiness } from "@/lib/customer-auth-policy";
@@ -8,6 +9,7 @@ export const metadata: Metadata = { title: "Account recovery", robots: { index: 
 
 export default function RecoverPage() {
   const enabled = process.env.STOREFRONT_CUSTOMER_AUTH_ENABLED === "true";
+  if (!enabled) notFound();
 
   return (
     <AccountAuthShell

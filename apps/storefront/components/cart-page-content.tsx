@@ -70,7 +70,11 @@ export function CartPageContent() {
         >
           {cart.checkoutEnabled ? "Continue to checkout" : "Checkout not yet available"}
         </Button>
-        <p className="mt-3 text-xs leading-5 text-[var(--aura-text-muted-on-ivory)]">{cart.checkoutBlockReason} No payment will be requested while checkout is closed.</p>
+        {!cart.checkoutEnabled ? (
+          <p className="mt-3 text-xs leading-5 text-[var(--aura-text-muted-on-ivory)]">
+            {cart.checkoutBlockReason} No payment will be requested while checkout is closed.
+          </p>
+        ) : null}
       </aside>
     </div>
   );

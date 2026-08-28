@@ -15,10 +15,11 @@ export function ProductCard({
   const { addItem, loading } = useCart();
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const pricedVariant = product.variants.find((variant) => variant.price);
   const purchasableVariant = product.variants.find(
     (variant) => variant.purchasable && variant.price,
   );
+  const displayedVariant =
+    purchasableVariant ?? product.variants.find((variant) => variant.price);
   const canPurchase = Boolean(purchasableVariant);
 
   async function handleAddToCart() {
@@ -88,13 +89,13 @@ export function ProductCard({
                 <span>
                   {canPurchase
                     ? "Add to cart"
-                    : pricedVariant
+                    : displayedVariant
                       ? "Cart opens soon"
                       : "Price pending"}
                 </span>
-                {pricedVariant?.price ? (
+                {displayedVariant?.price ? (
                   <span className="whitespace-nowrap text-[0.7em] font-sans font-semibold tracking-normal">
-                    {pricedVariant.sizeMl} ml · {formatMoney(pricedVariant.price)}
+                    {displayedVariant.sizeMl} ml · {formatMoney(displayedVariant.price)}
                   </span>
                 ) : null}
               </span>

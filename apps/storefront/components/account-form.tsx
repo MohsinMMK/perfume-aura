@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Button } from "@perfume-aura/ui/components/button";
 import {
   Field,
@@ -79,6 +79,11 @@ export function AccountForm({
   const [verificationEmail, setVerificationEmail] = useState<string | null>(
     null,
   );
+  const verificationPanelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (verificationEmail) verificationPanelRef.current?.focus();
+  }, [verificationEmail]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -169,7 +174,13 @@ export function AccountForm({
 
   if (verificationEmail) {
     return (
-      <div className="grid gap-5" role="status" aria-live="polite">
+      <div
+        ref={verificationPanelRef}
+        tabIndex={-1}
+        className="grid gap-5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ink)]"
+        role="status"
+        aria-live="polite"
+      >
         <div className="border-y border-black/20 py-5">
           <h2 className="text-xl font-semibold">Check your email</h2>
           <p className="mt-2 text-sm leading-6 text-[var(--aura-text-muted-on-ivory)]">
