@@ -6,6 +6,7 @@ import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
 import type { StorefrontProduct } from "@/lib/catalog";
+import { formatMoney } from "@/lib/money";
 import { useCart } from "./cart-provider";
 
 export function ProductCard({
@@ -14,6 +15,7 @@ export function ProductCard({
   const { addItem, loading } = useCart();
   const [actionError, setActionError] = useState<string | null>(null);
 
+  const pricedVariant = product.variants.find((variant) => variant.price);
   const purchasableVariant = product.variants.find(
     (variant) => variant.purchasable && variant.price,
   );
@@ -82,7 +84,20 @@ export function ProductCard({
               }
               className="aura-cream-action pointer-events-auto min-h-12 rounded-[var(--aura-radius)] px-2 font-display text-sm tracking-[0.03em] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)] disabled:cursor-not-allowed sm:px-3 sm:text-base"
             >
-              Add to cart
+              <span className="flex items-center justify-between gap-2">
+                <span>
+                  {canPurchase
+                    ? "Add to cart"
+                    : pricedVariant
+                      ? "Cart opens soon"
+                      : "Price pending"}
+                </span>
+                {pricedVariant?.price ? (
+                  <span className="whitespace-nowrap text-[0.7em] font-sans font-semibold tracking-normal">
+                    {pricedVariant.sizeMl} ml · {formatMoney(pricedVariant.price)}
+                  </span>
+                ) : null}
+              </span>
             </button>
             <Link
               href={`/products/${product.slug}`}

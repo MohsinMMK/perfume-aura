@@ -1,6 +1,8 @@
 export type ReviewedPublicationContent = Readonly<{
   baseNotes: readonly string[] | null;
   contentFields: Readonly<{
+    audience: string | null;
+    concentration: string | null;
     ingredients: string | null;
     intensity: string | null;
     longevityGuidance: string | null;
@@ -9,9 +11,11 @@ export type ReviewedPublicationContent = Readonly<{
     publicName: string | null;
     publicSlug: string | null;
     scentFamily: string | null;
+    season: string | null;
     seoDescription: string | null;
     seoTitle: string | null;
     shortDescription: string | null;
+    sillage: string | null;
     usageInstructions: string | null;
   }>;
   heartNotes: readonly string[] | null;

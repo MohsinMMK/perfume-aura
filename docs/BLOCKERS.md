@@ -85,16 +85,24 @@ fail-closed legal fields contain approved evidence references.
 **Goal:** produce a fully approved, server-authoritative catalog that can be
 imported without guessing product or financial facts.
 
-**Current blocker:** the live 69-product listing is discovery-only. The wider
-launch register still contains incomplete inspired mappings, and the sellable
-rows do not yet have every required approval, price, SKU, cost, stock, media,
-and structured scent fact.
+**Current blocker:** the live 69-product listing is discovery-only. That first
+catalog scope is split into a 48-product fixed-price Inspired preview-cart
+batch and a 21-product price-pending Signature batch in the
+[`B02 catalog intake workbook`](review-packets/2026-08-27-b02-69-product-catalog-intake.xlsx);
+the other 34 inspired rows remain excluded. The 69 rows do not yet have every
+required approval, price, SKU, cost, stock, media, and structured scent fact.
 
-- [ ] Resolve the four family mappings whose exact product or concentration is
-      pending.
-- [ ] Resolve the four explicitly unresolved references.
-- [ ] Obtain owner input for the remaining incomplete inspired rows, or record
-      that they are excluded from launch.
+- [x] Record the four family-pending inspired rows as excluded from the first
+      69-product sellable batch.
+- [x] Record the four explicitly unresolved references as excluded from the
+      first 69-product sellable batch.
+- [x] Record the remaining 26 owner-input inspired rows as excluded from the
+      first 69-product sellable batch.
+- [x] Apply the approved ₹600 / ₹800 / ₹1,400 rates to all 144 Inspired size
+      variants and make only those variants usable in the fail-closed preview
+      cart; production checkout and payment remain closed.
+- [x] Keep every Signature variant price blank and its purchase action disabled
+      until exact per-product prices are approved.
 - [ ] Approve one exact price for each Signature product size.
 - [ ] Supply and approve SKU, cost, opening stock, and reorder level per variant.
 - [ ] Approve product copy, audience, notes, concentration, occasion, longevity,
@@ -111,7 +119,9 @@ digest is accepted by the owner.
 
 **Owner documents:** [`REFERENCE.md`](REFERENCE.md),
 [`COMMERCE.md`](COMMERCE.md), and
-[`COMMERCE_OPERATING_POLICIES.md`](COMMERCE_OPERATING_POLICIES.md).
+[`COMMERCE_OPERATING_POLICIES.md`](COMMERCE_OPERATING_POLICIES.md). Complete
+the [`B02 catalog intake workbook`](review-packets/2026-08-27-b02-69-product-catalog-intake.xlsx)
+before moving reviewed values into the import templates.
 
 ## B03 — Tax, delivery, returns, and support operations
 

@@ -20,9 +20,13 @@ type PublicProductRow = {
   slug: string;
   name: string;
   family: string;
+  audience: string;
+  season: string;
+  concentration: string;
   intensity: string;
   occasion: string;
   longevity: string;
+  sillage: string;
   ingredients: string;
   usage: string;
   summary: string;
@@ -80,9 +84,13 @@ export async function loadPublishedProducts(): Promise<readonly StorefrontProduc
         slug: productPublications.publicSlug,
         name: productPublications.publicName,
         family: productPublications.scentFamily,
+        audience: productPublications.audience,
+        season: productPublications.season,
+        concentration: productPublications.concentration,
         intensity: productPublications.intensity,
         occasion: productPublications.occasion,
         longevity: productPublications.longevityGuidance,
+        sillage: productPublications.sillage,
         ingredients: productPublications.ingredients,
         usage: productPublications.usageInstructions,
         summary: productPublications.shortDescription,
@@ -111,9 +119,13 @@ export async function loadPublishedProducts(): Promise<readonly StorefrontProduc
           sql`${productPublications.publicSlug} IS NOT NULL`,
           sql`${productPublications.publicName} IS NOT NULL`,
           sql`${productPublications.scentFamily} IS NOT NULL`,
+          sql`${productPublications.audience} IS NOT NULL`,
+          sql`${productPublications.season} IS NOT NULL`,
+          sql`${productPublications.concentration} IS NOT NULL`,
           sql`${productPublications.intensity} IS NOT NULL`,
           sql`${productPublications.occasion} IS NOT NULL`,
           sql`${productPublications.longevityGuidance} IS NOT NULL`,
+          sql`${productPublications.sillage} IS NOT NULL`,
           sql`${productPublications.ingredients} IS NOT NULL`,
           sql`${productPublications.usageInstructions} IS NOT NULL`,
           sql`${productPublications.shortDescription} IS NOT NULL`,
@@ -184,9 +196,13 @@ export async function loadPublishedProducts(): Promise<readonly StorefrontProduc
       eyebrow: "Perfume Aura collection",
       collectionSlug: "all",
       family: row.family,
+      audience: row.audience,
+      season: row.season,
+      concentration: row.concentration,
       intensity: row.intensity,
       occasion: row.occasion,
       longevity: row.longevity,
+      sillage: row.sillage,
       ingredients: row.ingredients,
       usage: row.usage,
       summary: row.summary,

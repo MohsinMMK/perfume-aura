@@ -10,7 +10,9 @@ import { Textarea } from "@perfume-aura/ui/components/textarea";
 import { updateCatalogPublicationAction } from "@/lib/commerce";
 
 export type CatalogPublicationInitial = Readonly<{
+  audience: string;
   baseNotes: readonly string[];
+  concentration: string;
   contentApprovalReference: string;
   contentApproved: boolean;
   expectedUpdatedAt: string;
@@ -29,9 +31,11 @@ export type CatalogPublicationInitial = Readonly<{
   publicName: string;
   publicSlug: string;
   scentFamily: string;
+  season: string;
   seoDescription: string;
   seoTitle: string;
   shortDescription: string;
+  sillage: string;
   status: "draft" | "blocked" | "approved" | "published" | "withdrawn";
   topNotes: readonly string[];
   usageInstructions: string;
@@ -74,7 +78,11 @@ export function CatalogPublicationForm({ initial }: Readonly<{ initial: CatalogP
           <Field label="Public name" name="publicName" defaultValue={initial.publicName} required />
           <Field label="Public slug" name="publicSlug" defaultValue={initial.publicSlug} required />
           <Field label="Scent family" name="scentFamily" defaultValue={initial.scentFamily} />
+          <Field label="Audience" name="audience" defaultValue={initial.audience} />
+          <Field label="Season" name="season" defaultValue={initial.season} />
+          <Field label="Concentration" name="concentration" defaultValue={initial.concentration} />
           <Field label="Intensity" name="intensity" defaultValue={initial.intensity} />
+          <Field label="Sillage" name="sillage" defaultValue={initial.sillage} />
           <Field label="Top notes (comma separated)" name="topNotes" defaultValue={initial.topNotes.join(", ")} />
           <Field label="Heart notes (comma separated)" name="heartNotes" defaultValue={initial.heartNotes.join(", ")} />
           <Field label="Base notes (comma separated)" name="baseNotes" defaultValue={initial.baseNotes.join(", ")} />
@@ -84,7 +92,6 @@ export function CatalogPublicationForm({ initial }: Readonly<{ initial: CatalogP
           <TextField label="Longevity guidance" name="longevityGuidance" defaultValue={initial.longevityGuidance} rows={3} />
           <TextField label="Ingredients" name="ingredients" defaultValue={initial.ingredients} rows={3} />
           <TextField label="Usage instructions" name="usageInstructions" defaultValue={initial.usageInstructions} rows={3} />
-          <div className="hidden sm:block" />
           <Field label="SEO title" name="seoTitle" defaultValue={initial.seoTitle} required maxLength={70} />
           <Field label="SEO description" name="seoDescription" defaultValue={initial.seoDescription} required maxLength={170} />
         </CardContent>

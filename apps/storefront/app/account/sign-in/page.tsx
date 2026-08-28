@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AccountAuthShell } from "@/components/account-auth-shell";
 import { AccountForm } from "@/components/account-form";
 import {
   customerAuthProviderReadiness,
@@ -11,13 +12,37 @@ export const metadata: Metadata = { title: "Sign in", robots: { index: false, fo
 
 export default async function SignInPage({
   searchParams,
-}: Readonly<{ searchParams: Promise<{ callbackURL?: string }> }>) {
+}: Readonly<{
+  searchParams: Promise<{ callbackURL?: string; verification?: string }>;
+}>) {
   const enabled = process.env.STOREFRONT_CUSTOMER_AUTH_ENABLED === "true";
-  const callbackURL = normalizeCustomerCallbackURL((await searchParams).callbackURL);
-  return <>
-    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#79633e]">Customer account</p>
-    <h1 className="mt-3 font-display text-6xl sm:text-8xl">Welcome back.</h1>
-    <AccountForm mode="sign-in" enabled={enabled} providers={customerAuthProviderReadiness()} googleClientId={resolveCustomerGoogleClientId()} callbackURL={callbackURL} />
-    <Link href="/account/recover" className="mt-5 inline-flex min-h-11 items-center text-sm underline underline-offset-4">Forgot your password?</Link>
-  </>;
+  const params = await searchParams;
+  const callbackURL = normalizeCustomerCallbackURL(params.callbackURL);
+  const registerHref = callbackURL === "/account"
+    ? "/account/register"
+    : `/account/register?callbackURL=${encodeURIComponent(callbackURL)}`;
+  const checkoutIntent = callbackURL === "/checkout";
+  const notice = params.verification === "required"
+    ? "Verify your email before continuing. We will return you to the page you requested after sign-in."
+    : checkoutIntent
+      ? "Sign in to continue checkout. Your cart is saved."
+      : undefined;
+
+  return (
+    <AccountAuthShell
+      title="Sign in to Perfume Aura"
+      description="Use Google for the quickest return, or continue with the email and password connected to your customer account."
+      supportingText="One customer account keeps checkout, delivery details, and order history connected."
+      footer={<p>New to Perfume Aura? <Link href={registerHref} className="font-semibold text-[var(--aura-ink)] underline underline-offset-4">Create an account</Link>.</p>}
+    >
+      <AccountForm
+        mode="sign-in"
+        enabled={enabled}
+        providers={customerAuthProviderReadiness()}
+        googleClientId={resolveCustomerGoogleClientId()}
+        callbackURL={callbackURL}
+        notice={notice}
+      />
+    </AccountAuthShell>
+  );
 }

@@ -34,10 +34,10 @@ import { useCart } from "./cart-provider";
 import { NavWaveLabel } from "./nav-wave-label";
 
 const navigation = [
-  { href: "/shop", label: "Shop" },
-  { href: "/fragrance-guide", label: "Scent guide" },
-  { href: "/about", label: "About" },
-  { href: "/faq", label: "FAQ" },
+  { href: "/shop", label: "Shop", showCurrent: true },
+  { href: "/fragrance-guide", label: "Scent guide", showCurrent: true },
+  { href: "/about", label: "About", showCurrent: true },
+  { href: "/faq", label: "FAQ", showCurrent: true },
 ] as const;
 
 const CustomerNavigation = dynamic(() =>
@@ -48,6 +48,10 @@ export function SiteHeader({ customerAuthEnabled }: Readonly<{ customerAuthEnabl
   const { cart, setDrawerOpen } = useCart();
   const pathname = usePathname();
   const isHome = pathname === "/";
+  const isFocusedAccountRoute =
+    pathname === "/account/sign-in" ||
+    pathname === "/account/register" ||
+    pathname === "/account/recover";
   const [scrolledPastHero, setScrolledPastHero] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const compact = !isHome || scrolledPastHero;
@@ -129,11 +133,11 @@ export function SiteHeader({ customerAuthEnabled }: Readonly<{ customerAuthEnabl
           >
             {navigation.map((item) => (
               <Link
-                key={item.href}
+                key={item.label}
                 href={item.href}
                 prefetch={item.href === "/shop" ? null : false}
                 aria-label={item.label}
-                aria-current={pathname === item.href || pathname.startsWith(`${item.href}/`) ? "page" : undefined}
+                aria-current={item.showCurrent && (pathname === item.href || pathname.startsWith(`${item.href}/`)) ? "page" : undefined}
                 className="aura-nav-action font-display inline-flex min-h-20 items-center border-b border-transparent text-[clamp(1.6rem,2vw,2rem)] tracking-[0.01em] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] aria-[current=page]:border-[var(--aura-ivory)]"
               >
                 <NavWaveLabel label={item.label} />
@@ -155,18 +159,19 @@ export function SiteHeader({ customerAuthEnabled }: Readonly<{ customerAuthEnabl
             className={`pointer-events-auto flex items-center gap-1.5 lg:absolute lg:right-0 lg:top-0 ${compact ? "aura-compact-controls-enter lg:flex" : "lg:hidden"}`}
           >
             <Button
-              render={<Link href="/fragrance-guide" />}
+              render={<Link href="/shop" />}
               nativeButton={false}
-              className="aura-cream-action min-h-12 rounded-[var(--aura-radius)] px-5 font-display text-base transition-colors max-[359px]:hidden sm:px-7"
+              aria-label={isFocusedAccountRoute ? "Back to the Perfume Aura shop" : undefined}
+              className={`aura-cream-action min-h-12 rounded-[var(--aura-radius)] px-5 font-display text-base transition-colors sm:px-7 ${isFocusedAccountRoute ? "" : "max-[359px]:hidden"}`}
             >
-              Scent guide
+              {isFocusedAccountRoute ? "Back to shop" : "Get scent"}
             </Button>
 
             <Button
               type="button"
               variant="outline"
               size="icon-lg"
-              className="relative min-h-12 min-w-12 rounded-[var(--aura-radius)] border-[color:rgb(245_228_199_/_55%)] bg-[var(--aura-ink)]/90 text-[var(--aura-ivory)] hover:bg-[var(--aura-ivory)] hover:text-[var(--aura-ink)]"
+              className={`relative min-h-12 min-w-12 rounded-[var(--aura-radius)] border-[color:rgb(245_228_199_/_55%)] bg-[var(--aura-ink)]/90 text-[var(--aura-ivory)] hover:bg-[var(--aura-ivory)] hover:text-[var(--aura-ink)] ${isFocusedAccountRoute ? "hidden" : ""}`}
               aria-label={`Open cart with ${cart?.quantity ?? 0} items`}
               onClick={() => setDrawerOpen(true)}
             >
@@ -184,7 +189,7 @@ export function SiteHeader({ customerAuthEnabled }: Readonly<{ customerAuthEnabl
                 <Button
                   variant="outline"
                   size="icon-lg"
-                  className={`min-h-12 min-w-12 rounded-[var(--aura-radius)] border-[color:rgb(245_228_199_/_55%)] bg-[var(--aura-ink)]/90 text-[var(--aura-ivory)] hover:bg-[var(--aura-ivory)] hover:text-[var(--aura-ink)] ${compact ? "inline-flex" : "flex lg:hidden"}`}
+                  className={`min-h-12 min-w-12 rounded-[var(--aura-radius)] border-[color:rgb(245_228_199_/_55%)] bg-[var(--aura-ink)]/90 text-[var(--aura-ivory)] hover:bg-[var(--aura-ivory)] hover:text-[var(--aura-ink)] ${isFocusedAccountRoute ? "hidden" : compact ? "inline-flex" : "flex lg:hidden"}`}
                   aria-label="Open navigation menu"
                 />
               }
@@ -211,10 +216,10 @@ export function SiteHeader({ customerAuthEnabled }: Readonly<{ customerAuthEnabl
               <nav aria-label="Menu navigation" className="grid px-6 py-4">
                 {navigation.map((item, index) => (
                   <Link
-                    key={item.href}
+                    key={item.label}
                     href={item.href}
                     prefetch={false}
-                    aria-current={pathname === item.href || pathname.startsWith(`${item.href}/`) ? "page" : undefined}
+                    aria-current={item.showCurrent && (pathname === item.href || pathname.startsWith(`${item.href}/`)) ? "page" : undefined}
                     onClick={() => setMenuOpen(false)}
                     className="flex min-h-16 items-center justify-between border-b border-dashed border-[color:rgb(16_11_6_/_22%)] font-display text-3xl transition-[padding] hover:pl-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)] aria-[current=page]:pl-2"
                   >

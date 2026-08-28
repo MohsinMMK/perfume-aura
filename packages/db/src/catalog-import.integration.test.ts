@@ -14,7 +14,7 @@ const signingSecret = "catalog-import-test-signing-secret-1234567890";
 let templateRoot = "";
 
 const headers = {
-  products: "product_key,internal_name,internal_slug,brand,category,internal_description,public_name,public_slug,scent_family,top_notes,heart_notes,base_notes,intensity,occasion,longevity_guidance,ingredients,usage_instructions,short_description,long_description,seo_title,seo_description,publication_status,legal_approval_reference,content_approval_reference,media_approval_reference,featured_rank",
+  products: "product_key,internal_name,internal_slug,brand,category,internal_description,public_name,public_slug,scent_family,audience,season,concentration,top_notes,heart_notes,base_notes,intensity,occasion,longevity_guidance,sillage,ingredients,usage_instructions,short_description,long_description,seo_title,seo_description,publication_status,legal_approval_reference,content_approval_reference,media_approval_reference,featured_rank",
   variants: "product_key,sku,size_ml,cost_amount_minor,retail_amount_minor,opening_stock,reorder_level,price_approval_reference,active",
   media: "product_key,kind,storage_key,alt_text,width,height,position,approval_reference",
   serviceability: "postal_code,delhivery_enabled,india_post_enabled,min_business_days,max_business_days,active",
@@ -24,12 +24,17 @@ function csv(values: readonly string[]): string {
   return values.map((value) => /[",\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value).join(",");
 }
 
-async function writeTemplates(openingStock = "5", legalReference = "LEGAL-TEST-2026"): Promise<void> {
+async function writeTemplates(
+  openingStock = "5",
+  legalReference = "LEGAL-TEST-2026",
+  concentration = "eau de parfum",
+): Promise<void> {
   await Promise.all([
     writeFile(join(templateRoot, "catalog-products-review.csv"), `${headers.products}\n${csv([
       "launch-one", "Launch One Internal", "launch-one-internal", "Perfume Aura", "perfume", "Internal record",
-      "Launch One", "launch-one", "woody", "citrus|pepper", "cedar", "amber", "strong", "evening",
-      "Up to eight hours", "Fragrance composition", "External use only", "A composed woody scent.",
+      "Launch One", "launch-one", "woody", "all adults", "all seasons", concentration,
+      "citrus|pepper", "cedar", "amber", "strong", "evening", "Up to eight hours", "moderate",
+      "Fragrance composition", "External use only", "A composed woody scent.",
       "A composed woody scent prepared for the launch catalog.", "Launch One perfume", "Discover Launch One by Perfume Aura.",
       "approved", legalReference, "CONTENT-TEST-2026", "MEDIA-TEST-2026", "0",
     ])}\n`),
@@ -47,8 +52,9 @@ async function writeIdentityConflictTemplates(internalSlug: string): Promise<voi
   await Promise.all([
     writeFile(join(templateRoot, "catalog-products-review.csv"), `${headers.products}\n${csv([
       "different-product-key", "Conflicting Product", internalSlug, "Perfume Aura", "perfume", "Conflicting internal record",
-      "Identity Conflict", "identity-conflict", "woody", "pepper", "cedar", "amber", "strong", "evening",
-      "Up to eight hours", "Fragrance composition", "External use only", "A conflicting product identity.",
+      "Identity Conflict", "identity-conflict", "woody", "all adults", "all seasons", "eau de parfum",
+      "pepper", "cedar", "amber", "strong", "evening", "Up to eight hours", "moderate",
+      "Fragrance composition", "External use only", "A conflicting product identity.",
       "This row must never overwrite an existing product with the same internal slug.", "Identity Conflict perfume", "Identity conflict import safety test.",
       "approved", "LEGAL-CONFLICT-2026", "CONTENT-CONFLICT-2026", "MEDIA-CONFLICT-2026", "0",
     ])}\n`),
@@ -128,6 +134,31 @@ describe("reviewed catalog importer", () => {
       GROUP BY pv.id
     `);
     assert.deepEqual(result.rows[0], { quantity_on_hand: 5, movement_count: "1" });
+    const profile = await pool.query<{
+      audience: string;
+      concentration: string;
+      season: string;
+      sillage: string;
+    }>(`
+      SELECT audience, concentration, season, sillage
+      FROM product_publications pp
+      INNER JOIN products p ON p.id=pp.product_id
+      WHERE p.slug='launch-one-internal'
+    `);
+    assert.deepEqual(profile.rows[0], {
+      audience: "all adults",
+      concentration: "eau de parfum",
+      season: "all seasons",
+      sillage: "moderate",
+    });
+  });
+
+  it("rejects an approved product with an incomplete public scent profile", async () => {
+    await writeTemplates("5", "LEGAL-TEST-2026", "");
+    const invalid = await runImporter(["--dry-run"]);
+    assert.notEqual(invalid.code, 0);
+    assert.match(invalid.stderr, /concentration is required/);
+    await writeTemplates();
   });
 
   it("rejects approval gaps and rolls back a conflicting opening balance", async () => {

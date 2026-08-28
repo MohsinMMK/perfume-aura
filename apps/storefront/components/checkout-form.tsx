@@ -98,7 +98,7 @@ export function CheckoutForm({
   return (
     <form onSubmit={onSubmit} className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1fr_24rem]">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#79633e]">Secure checkout</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#79633e]">Cart · Delivery · UPI</p>
         <h1 className="mt-3 font-display text-6xl sm:text-8xl">Almost yours.</h1>
         {!enabled ? (
           <div id="checkout-gate" role="status" className="mt-7 border border-[var(--aura-brass)] bg-[var(--aura-ivory)] p-4 text-sm leading-6">
@@ -134,12 +134,30 @@ export function CheckoutForm({
       <aside className="border border-black/20 bg-[#fbf8f2] p-6 lg:sticky lg:top-28 lg:self-start">
         <h2 className="font-display text-3xl">Pay by UPI</h2>
         <p className="mt-3 text-sm leading-6 text-[#5f584f]">
-          Cashfree opens a UPI app on mobile or a QR on desktop. Use Google Pay, PhonePe, Paytm, or any UPI app.
+          After delivery details are verified, Cashfree opens the UPI intent or QR options available for your device.
         </p>
+        {cart?.lines.length ? (
+          <ul className="mt-6 grid gap-3 border-t border-black/20 pt-4">
+            {cart.lines.map((line) => (
+              <li key={line.variantId} className="flex items-start justify-between gap-4 text-sm">
+                <span>
+                  <strong className="block font-medium">{line.productName}</strong>
+                  <span className="text-xs text-[#655f57]">{line.sizeMl} ml · Qty {line.quantity}</span>
+                </span>
+                <span className="whitespace-nowrap font-medium">
+                  {formatMoney({
+                    currency: "INR",
+                    amountMinor: line.unitPrice.amountMinor * line.quantity,
+                  })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
         <div className="mt-6 flex justify-between border-t border-black/20 pt-4 text-sm">
           <span>Subtotal</span><strong>{cart ? formatMoney(cart.subtotal) : "—"}</strong>
         </div>
-        <p className="mt-3 text-xs leading-5 text-[#655f57]">Totals are verified before order creation. Cash on delivery is unavailable.</p>
+        <p className="mt-3 text-xs leading-5 text-[#655f57]">Totals are verified before order creation. Available UPI apps depend on Cashfree and the customer’s device. Cash on delivery is unavailable.</p>
         <Button type="submit" className="mt-6 min-h-12 w-full rounded-none" disabled={!enabled || pending || loading} focusableWhenDisabled={pending}>
           {pending ? "Opening UPI…" : "Continue to UPI"}
         </Button>

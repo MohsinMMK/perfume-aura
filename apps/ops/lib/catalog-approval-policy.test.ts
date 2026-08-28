@@ -11,6 +11,8 @@ const reviewedContent: ReviewedPublicationContent = {
   heartNotes: ["cedar"],
   topNotes: ["pepper"],
   contentFields: {
+    audience: "all adults",
+    concentration: "eau de parfum",
     ingredients: "Fragrance composition",
     intensity: "strong",
     longevityGuidance: "Up to eight hours",
@@ -19,9 +21,11 @@ const reviewedContent: ReviewedPublicationContent = {
     publicName: "Launch One",
     publicSlug: "launch-one",
     scentFamily: "woody",
+    season: "all seasons",
     seoDescription: "Discover Launch One by Perfume Aura.",
     seoTitle: "Launch One perfume",
     shortDescription: "A composed woody scent.",
+    sillage: "moderate",
     usageInstructions: "External use only",
   },
 };
@@ -36,6 +40,10 @@ describe("catalog approval reset policy", () => {
     assert.equal(reviewedPublicationContentChanged(reviewedContent, {
       ...reviewedContent,
       topNotes: ["citrus"],
+    }), true);
+    assert.equal(reviewedPublicationContentChanged(reviewedContent, {
+      ...reviewedContent,
+      contentFields: { ...reviewedContent.contentFields, sillage: "strong" },
     }), true);
   });
 
