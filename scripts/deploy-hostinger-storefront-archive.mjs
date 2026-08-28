@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -14,6 +15,8 @@ const EXPECTED_APPLICATION = "@perfume-aura/storefront";
 const EXPECTED_ENTRY_FILE = "apps/storefront/server.js";
 const EXPECTED_NODE_VERSION = 24;
 const BUILD_STATES = new Set(["pending", "running", "completed", "failed"]);
+const CURL_OUTPUT_LIMIT_BYTES = 64 * 1024;
+const CURL_STATUS_MARKER = "__HOSTINGER_HTTP_STATUS__:";
 
 function fail(message) {
   throw new Error(message);
@@ -140,10 +143,133 @@ function encodeRemotePath(relativePath) {
   return segments.map(encodeURIComponent).join("/");
 }
 
+function curlConfigValue(value, name) {
+  const normalized = requiredString(value, name);
+  if (/[\r\n\0]/.test(normalized)) {
+    fail(`${name} contains an unsafe control character`);
+  }
+  return normalized.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
+}
+
+function curlHeaderConfig(headers) {
+  return Object.entries(headers).map(([name, value]) => {
+    if (!/^[A-Za-z0-9-]+$/.test(name)) {
+      fail("Hostinger upload header name is invalid");
+    }
+    const header = curlConfigValue(`${name}: ${value}`, `Hostinger ${name} header`);
+    return `header = "${header}"`;
+  }).join("\n");
+}
+
+function parseCurlTransferOutput(output) {
+  const markerIndex = output.lastIndexOf(`\n${CURL_STATUS_MARKER}`);
+  if (markerIndex === -1) {
+    fail("Hostinger upload transport did not return an HTTP status");
+  }
+  const statusText = output.slice(markerIndex + CURL_STATUS_MARKER.length + 1).trim();
+  if (!/^\d{3}$/.test(statusText)) {
+    fail("Hostinger upload transport returned an invalid HTTP status");
+  }
+  const headerText = output.slice(0, markerIndex);
+  const uploadOffsets = [...headerText.matchAll(/^upload-offset:\s*(\d+)\s*$/gim)];
+  return {
+    status: Number(statusText),
+    uploadOffset: uploadOffsets.at(-1)?.[1] ?? null,
+  };
+}
+
+async function curlTransferRequest({ url, method, headers, archivePath }) {
+  const target = httpsUrl(url, "Hostinger upload target");
+  if (method !== "POST" && method !== "PATCH") {
+    fail("Hostinger upload transport method must be POST or PATCH");
+  }
+  if (method === "PATCH" && archivePath === undefined) {
+    fail("Hostinger archive path is required for the PATCH transfer");
+  }
+
+  const argumentsList = [
+    "--silent",
+    "--show-error",
+    "--connect-timeout",
+    "30",
+    "--max-time",
+    "900",
+    "--proto",
+    "=https",
+    "--request",
+    method,
+    "--output",
+    "/dev/null",
+    "--dump-header",
+    "-",
+    "--write-out",
+    `\n${CURL_STATUS_MARKER}%{http_code}\n`,
+    "--config",
+    "-",
+  ];
+  if (archivePath !== undefined) {
+    argumentsList.push("--data-binary", `@${archivePath}`);
+  }
+  argumentsList.push(target.href);
+
+  const config = `${curlHeaderConfig(headers)}\n`;
+  return new Promise((resolve, reject) => {
+    const curlProcess = spawn("curl", argumentsList, {
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    const outputChunks = [];
+    let outputBytes = 0;
+    let settled = false;
+
+    const rejectOnce = (error) => {
+      if (!settled) {
+        settled = true;
+        reject(error);
+      }
+    };
+
+    curlProcess.stdout.on("data", (chunk) => {
+      outputBytes += chunk.length;
+      if (outputBytes > CURL_OUTPUT_LIMIT_BYTES) {
+        curlProcess.kill();
+        rejectOnce(new Error(`Hostinger archive ${method} transport returned too much output`));
+        return;
+      }
+      outputChunks.push(chunk);
+    });
+    curlProcess.stderr.on("data", () => {
+      // Curl diagnostics can contain signed provider URLs, so they are never emitted.
+    });
+    curlProcess.on("error", (error) => {
+      const code = typeof error.code === "string" ? error.code : "unknown";
+      rejectOnce(new Error(`Hostinger archive ${method} transport could not start (${code})`));
+    });
+    curlProcess.on("close", (code) => {
+      if (settled) return;
+      if (code !== 0) {
+        rejectOnce(new Error(`Hostinger archive ${method} transport failed (curl exit code ${code ?? "unknown"})`));
+        return;
+      }
+      try {
+        const response = parseCurlTransferOutput(Buffer.concat(outputChunks).toString("utf8"));
+        settled = true;
+        resolve(response);
+      } catch (error) {
+        rejectOnce(error instanceof Error ? error : new Error(String(error)));
+      }
+    });
+    curlProcess.stdin.on("error", () => {
+      // A transport failure is reported by curl's exit status without leaking config.
+    });
+    curlProcess.stdin.end(config);
+  });
+}
+
 async function uploadArchive({
-  fetchImpl,
+  requestImpl,
   upload,
-  archive,
+  archiveBytes,
+  archivePath,
   remoteArchivePath,
 }) {
   if (!isPlainObject(upload)) {
@@ -160,11 +286,12 @@ async function uploadArchive({
     "X-Auth-Rest": restAuthKey,
   };
 
-  const createResponse = await fetchImpl(target, {
+  const createResponse = await requestImpl({
+    url: target.href,
     method: "POST",
     headers: {
       ...sharedHeaders,
-      "Upload-Length": String(archive.length),
+      "Upload-Length": String(archiveBytes),
       "Upload-Offset": "0",
     },
   });
@@ -173,20 +300,20 @@ async function uploadArchive({
   }
 
   // Hostinger's file API requires PATCH on the same relative file URL.
-  const uploadResponse = await fetchImpl(target, {
+  const uploadResponse = await requestImpl({
+    url: target.href,
     method: "PATCH",
     headers: {
       ...sharedHeaders,
       "Content-Type": "application/offset+octet-stream",
       "Upload-Offset": "0",
     },
-    body: archive,
+    archivePath,
   });
   if (uploadResponse.status !== 200 && uploadResponse.status !== 204) {
     fail(`Hostinger archive upload failed with HTTP ${uploadResponse.status}`);
   }
-  const uploadedOffset = uploadResponse.headers.get("upload-offset");
-  if (uploadedOffset !== null && uploadedOffset !== String(archive.length)) {
+  if (uploadResponse.uploadOffset !== null && uploadResponse.uploadOffset !== String(archiveBytes)) {
     fail("Hostinger archive upload offset does not match the archive size");
   }
 }
@@ -287,6 +414,7 @@ export async function deployStorefrontArchive({
   pollIntervalMs = DEFAULT_POLL_INTERVAL_MS,
   timeoutMs = DEFAULT_TIMEOUT_MS,
   fetchImpl = fetch,
+  uploadRequestImpl = curlTransferRequest,
   sleepImpl = sleep,
   logger = console.log,
 }) {
@@ -310,7 +438,13 @@ export async function deployStorefrontArchive({
     method: "POST",
     body: { username: account, domain: targetDomain },
   });
-  await uploadArchive({ fetchImpl, upload, archive, remoteArchivePath: remotePath });
+  await uploadArchive({
+    requestImpl: uploadRequestImpl,
+    upload,
+    archiveBytes: archive.length,
+    archivePath,
+    remoteArchivePath: remotePath,
+  });
   logger(`hostinger-storefront-archive-deploy: source=${commit} upload=completed`);
 
   const settingsPath = `${buildPath}/settings/from-archive?archive_path=${encodeURIComponent(remotePath)}`;
@@ -372,8 +506,6 @@ async function runSelfTest() {
         auth_key: "upload-auth-key",
         rest_auth_key: "upload-rest-auth-key",
       }), { status: 200 }),
-      new Response(null, { status: 201, headers: { location: "/ignored-by-hostinger-upload-contract" } }),
-      new Response(null, { status: 204, headers: { "upload-offset": String(archive.length) } }),
       new Response(JSON.stringify({ node_version: 24, available_scripts: ["build", "start"] }), { status: 200 }),
       new Response(JSON.stringify({ uuid: "build-1", state: "pending" }), { status: 200 }),
       new Response(JSON.stringify({ data: [{ uuid: "build-1", state: "running" }] }), { status: 200 }),
@@ -385,6 +517,13 @@ async function runSelfTest() {
       assert.ok(response, "unexpected extra request");
       return response;
     };
+    const transferRequests = [];
+    const fakeUploadRequest = async (request) => {
+      transferRequests.push(request);
+      return transferRequests.length === 1
+        ? { status: 201, uploadOffset: null }
+        : { status: 204, uploadOffset: String(archive.length) };
+    };
     const logLines = [];
     const result = await deployStorefrontArchive({
       archivePath,
@@ -393,20 +532,27 @@ async function runSelfTest() {
       apiToken: "test-token",
       username: "u123456789",
       fetchImpl: fakeFetch,
+      uploadRequestImpl: fakeUploadRequest,
       sleepImpl: async () => {},
       pollIntervalMs: 0,
       timeoutMs: 10_000,
       logger: (line) => logLines.push(line),
     });
     assert.deepEqual(result, { sourceCommit: commit, buildUuid: "build-1" });
-    assert.equal(requests.length, 7);
+    assert.equal(requests.length, 5);
     assert.equal(requests[0].options.headers.Authorization, "Bearer test-token");
-    assert.equal(requests[1].options.headers["Upload-Length"], String(archive.length));
-    assert.equal(requests[2].url, requests[1].url);
-    assert.deepEqual(requests[2].options.body, archive);
-    assert.equal(JSON.parse(requests[4].options.body).source_type, "archive");
+    assert.equal(transferRequests.length, 2);
+    assert.equal(typeof transferRequests[0].url, "string");
+    assert.equal(transferRequests[0].headers["Upload-Length"], String(archive.length));
+    assert.equal(String(transferRequests[1].url), String(transferRequests[0].url));
+    assert.equal(transferRequests[1].archivePath, archivePath);
+    assert.equal(JSON.parse(requests[2].options.body).source_type, "archive");
     assert.ok(logLines.every((line) => !line.includes("test-token") && !line.includes("upload-auth-key")));
     assert.equal(responses.length, 0);
+    assert.deepEqual(
+      parseCurlTransferOutput("HTTP/2 204\r\nupload-offset: 42\r\n\r\n\n__HOSTINGER_HTTP_STATUS__:204\n"),
+      { status: 204, uploadOffset: "42" },
+    );
 
     await assert.rejects(
       deployStorefrontArchive({
