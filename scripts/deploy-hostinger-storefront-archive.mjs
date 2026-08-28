@@ -172,12 +172,8 @@ async function uploadArchive({
     fail(`Hostinger archive upload creation failed with HTTP ${createResponse.status}`);
   }
 
-  const location = createResponse.headers.get("location");
-  const patchTarget = location ? new URL(location, target) : target;
-  if (patchTarget.protocol !== "https:" || patchTarget.origin !== target.origin) {
-    fail("Hostinger upload location changed origin or protocol");
-  }
-  const uploadResponse = await fetchImpl(patchTarget, {
+  // Hostinger's file API requires PATCH on the same relative file URL.
+  const uploadResponse = await fetchImpl(target, {
     method: "PATCH",
     headers: {
       ...sharedHeaders,
@@ -376,7 +372,7 @@ async function runSelfTest() {
         auth_key: "upload-auth-key",
         rest_auth_key: "upload-rest-auth-key",
       }), { status: 200 }),
-      new Response(null, { status: 201, headers: { location: "/perfume-aura-storefront-release.zip?override=true" } }),
+      new Response(null, { status: 201, headers: { location: "/ignored-by-hostinger-upload-contract" } }),
       new Response(null, { status: 204, headers: { "upload-offset": String(archive.length) } }),
       new Response(JSON.stringify({ node_version: 24, available_scripts: ["build", "start"] }), { status: 200 }),
       new Response(JSON.stringify({ uuid: "build-1", state: "pending" }), { status: 200 }),
@@ -406,6 +402,7 @@ async function runSelfTest() {
     assert.equal(requests.length, 7);
     assert.equal(requests[0].options.headers.Authorization, "Bearer test-token");
     assert.equal(requests[1].options.headers["Upload-Length"], String(archive.length));
+    assert.equal(requests[2].url, requests[1].url);
     assert.deepEqual(requests[2].options.body, archive);
     assert.equal(JSON.parse(requests[4].options.body).source_type, "archive");
     assert.ok(logLines.every((line) => !line.includes("test-token") && !line.includes("upload-auth-key")));
