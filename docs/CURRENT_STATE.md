@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-28 10:14:29 UTC**
+Last refreshed: **2026-08-28 15:19:39 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -33,19 +33,18 @@ and ignored local environment files.
 ## Exact releases and automation
 
 The storefront and ops both run exact source
-`0d94d4b324d5683757d55cfa4ce540d530549cce`. Ops uses immutable image digest
-`sha256:fa973b9125f3b1ce9334b5e47ceb89afb9a26606907e349c50524d8647486686`.
+`9dd00abc0ca8fcf647b2ea29633f0ca7d9017742`. Ops uses immutable image digest
+`sha256:1de58cd43a023ca0b45dec0230713583d581fff8e41b5f69a19caafa2d4bedcf`.
 Workflow run
-[`33161060140`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33161060140)
-attempt 2 passed quality, all 101 disposable-PostgreSQL integration tests,
+[`33182832227`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33182832227)
+attempt 3 passed quality, all 101 disposable-PostgreSQL integration tests,
 verified packaging, direct Hostinger archive deployment, immutable VPS ops
-deployment, and both exact live verifiers. Hostinger build
-`01a047d2-564e-704a-91f2-fcd4a4ef8420` completed at 2026-08-28 10:03:13 UTC
-with the reviewed Node 24.x settings and archive
-`perfume-aura-storefront-release.zip`. Independent acceptance then verified
-the exact source on both surfaces, real immutable Next assets, storefront
-health and release locks, ops live/ready and unauthenticated session, and the
-path- and query-preserving `www` redirect.
+deployment, and both exact live verifiers. The storefront archive SHA-256 is
+`f1b54065b94cabe6995e893f20cfcd3a9c8d02a5cc082561aa96aee1265b6894`.
+Independent acceptance verified the exact source on both surfaces, seven
+discovery sitemap URLs, real immutable Next assets, storefront health and
+release locks, ops live/ready and unauthenticated session, a real `404`, and
+the path- and query-preserving `www` redirect.
 
 Fresh 1440-by-900 and 390-by-844 production browser checks confirmed the home
 CTA routing, Inspired-filtered discovery, loaded product imagery, the local
@@ -350,23 +349,31 @@ remains monitoring infrastructure.
 
 The 69-product launch listing is live. Sellable public catalog publication,
 checkout approval, customer authentication, and inquiries remain closed.
-Brand discovery is separated from commerce release: `/`, `/fragrance-guide`,
-`/about`, and `/faq` are the only release-locked sitemap URLs. Public crawling
-is allowed, while preview commerce and incomplete policy/inquiry pages remain
-`noindex` and private account, API, cart, checkout, and order paths stay
-disallowed in `robots.txt`. Product and collection URLs enter the sitemap only
-after the existing public-catalog gate opens.
-IndexNow accepted all four live discovery URLs with HTTP `202` on 2026-08-23.
+Brand discovery is separated from commerce release. The request-time discovery
+sitemap contains exactly `/`, `/fragrance-guide`, `/about`, `/faq`,
+`/guides/perfume-for-hyderabad-weather`, `/guides/fragrance-families`, and
+`/guides/perfume-for-occasions`. Public crawling is allowed, while preview
+commerce and incomplete policy/inquiry pages remain `noindex` and private
+account, API, cart, checkout, and order paths stay disallowed in `robots.txt`.
+Product and collection URLs enter the sitemap only after the existing
+public-catalog gate opens and then only from the approved Neon projection.
+IndexNow accepted all seven materially changed discovery URLs with HTTP `200`
+on 2026-08-28; this confirms submission, not search-engine indexing.
 The `perfumeaura.com` Google Search Console domain property is ownership-
 verified through Hostinger-authoritative DNS. Google Search Console accepted
 `https://perfumeaura.com/sitemap.xml` on 2026-08-24 IST (2026-08-23 UTC),
-reported `Success`, and discovered all four release-locked URLs. Keep the DNS
-verification records in place; indexing and coverage remain subject to
-Google's recrawl schedule.
-Fresh 390-by-844 production browser sessions on the home page and fragrance
-guide confirmed canonical metadata, Open Graph metadata, Organization/WebSite
-and Article/Breadcrumb structured data, zero horizontal overflow, and zero
-console errors or warnings. A throttled live Lighthouse run scored SEO 100,
+reported `Success`, and discovered the original four release-locked URLs. The
+expanded seven-URL sitemap still requires account-side resubmission and URL
+inspection. Keep the DNS verification records in place; indexing and coverage
+remain subject to Google's recrawl schedule.
+Production browser acceptance on all seven discovery URLs covered 360-by-640,
+390-by-844, 844-by-390, 768-by-1024, and 1440-by-900 viewports. All 35 checks
+confirmed `en-IN`, self-canonicals, fitting H1 headings, no document overflow,
+no broken loaded images, and Article schema on the three guide routes. Live
+Googlebot, Bingbot, OAI-SearchBot, GPTBot, ChatGPT-User, Claude-SearchBot,
+Claude-User, ClaudeBot, and Google-Extended probes returned `200` for the
+Hyderabad-weather guide on 2026-08-28. A prior throttled live Lighthouse run
+scored SEO 100,
 accessibility 100, best practices 100, performance 77, and cumulative layout
 shift 0; the remaining performance variance is primarily LCP/network cost and
 does not weaken the crawl or release locks.
@@ -379,7 +386,7 @@ overflow or console errors. Mobile renders the cream `#f5e4c7` wordmark from
 first paint with the bottle SVG absent; tablet and desktop retain the
 full-mark-to-wordmark animation, transparent compact background, and no
 backdrop blur. Fresh ops sessions rendered the login
-surface from exact VPS source `9c9d7b44b3daeb45edf7d8e0900c43c0cede6874`;
+surface from exact VPS source `9dd00abc0ca8fcf647b2ea29633f0ca7d9017742`;
 workflow and independent exact-SHA acceptance passed without changing public
 storefront release locks.
 
@@ -548,6 +555,21 @@ runtime merge, and exact flags-off production deployment have now completed.
   to a no-shell curl process with temporary upload credentials supplied through
   stdin. Workflow run `33161060140` accepted that path and deployed exact source
   `0d94d4b324d5683757d55cfa4ce540d530549cce` to both production surfaces.
+- PR #86 deployed the local and editorial SEO foundation: seven discovery
+  sitemap URLs, three original fragrance guides, `en-IN`, route-specific social
+  metadata, typed business and editorial contracts, privacy-safe discovery
+  analytics, a dynamic fail-closed public-catalog sitemap, approved URL
+  manifests, and public-product schema without premature Offers. PR #87 fixed
+  the 360 px FAQ heading acceptance issue and made the ops verifier require the
+  exact storefront and ops release together. Workflow run `33182832227`
+  attempt 3 completed successfully and deployed exact source
+  `9dd00abc0ca8fcf647b2ea29633f0ca7d9017742` to both surfaces. The verified
+  storefront archive SHA-256 is
+  `f1b54065b94cabe6995e893f20cfcd3a9c8d02a5cc082561aa96aee1265b6894`.
+  Independent `--target both` discovery verification confirmed seven sitemap
+  URLs, the `www` redirect, live and ready ops endpoints, the exact release,
+  real `404` behavior, and a real static asset. No database migration or
+  release flag changed.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - After fresh exact-source, endpoint, provider, and browser acceptance, the
   obsolete `hostinger-storefront-production` and `hostinger-ops-production`
@@ -556,9 +578,15 @@ runtime merge, and exact flags-off production deployment have now completed.
 
 Next actions:
 
-1. Review Google Search Console indexing and coverage after Google recrawls the
-   successfully submitted four-URL sitemap. Ownership verification, sitemap
-   submission, and IndexNow discovery notification are complete.
+1. Confirm the complete public Kondapur NAP record, geo coordinates, hours,
+   category, accessibility/parking facts, store photography, and official
+   profile URLs before shipping the gated location page and Store schema. Gain
+   management access to the existing Google Business Profile without creating
+   a duplicate, then align its name, website, NAP, category, hours, and photos.
+   In Google Search Console, resubmit the expanded seven-URL sitemap and inspect
+   the seven discovery URLs; verify or import the property in Bing Webmaster
+   Tools and submit the same sitemap. IndexNow notification is complete, while
+   Google/Bing indexing and ranking remain external pending outcomes.
 2. Obtain India-counsel clearance and owner-approved catalog facts: exact
    Signature prices, SKUs, costs, opening stock, media, and structured scent
    content. The fixed-price 48-product Inspired cart-preview batch is staged;
