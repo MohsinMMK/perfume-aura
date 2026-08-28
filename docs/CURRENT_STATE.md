@@ -386,7 +386,7 @@ overflow or console errors. Mobile renders the cream `#f5e4c7` wordmark from
 first paint with the bottle SVG absent; tablet and desktop retain the
 full-mark-to-wordmark animation, transparent compact background, and no
 backdrop blur. Fresh ops sessions rendered the login
-surface from exact VPS source `9c9d7b44b3daeb45edf7d8e0900c43c0cede6874`;
+surface from exact VPS source `9dd00abc0ca8fcf647b2ea29633f0ca7d9017742`;
 workflow and independent exact-SHA acceptance passed without changing public
 storefront release locks.
 
