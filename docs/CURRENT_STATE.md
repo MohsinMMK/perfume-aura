@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-28 06:52:52 UTC**
+Last refreshed: **2026-08-28 07:15:12 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -32,23 +32,23 @@ and ignored local environment files.
 
 ## Exact releases and automation
 
-The storefront runs exact source
-`58df582e4cc97ad3ff9b8ede6a953e99f3562270`; ops remains exact source
-`bfad3b2c208a7bfb530b81da38cae801b1386d5a`. Ops uses immutable image digest
-`sha256:5579f30568f2c63a4c5267c4274553a6d5393e2baab1f3bce959c0a0288eb4b9`;
+The storefront and ops both run exact source
+`2c04d1106be8a1a91977224a229e0ed8c8382025`. Ops uses immutable image digest
+`sha256:044a28ce53cf1648a4b6349bb561a8a1985eea1e32c8cf539dfcca9ebffc9700`;
 the generated storefront branch is exact commit
-`4206cdd2b66104fab281c1ca71337e67179c3bb5`. Workflow run
-[`33082183511`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33082183511)
+`54e3331ddb856028f34dc7d6cfeea8e8037d9586`. Explicit flags-off workflow run
+[`33149842602`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33149842602)
 passed quality, all disposable-PostgreSQL integration tests, verified
-packaging, generated-branch publication, Hostinger auto-deployment, and exact
-storefront live verification; the VPS ops deployment stayed skipped. Fresh
-independent acceptance at 2026-08-27 14:35 UTC verified the exact storefront
-source, a real immutable Next asset, storefront health and release locks, and
-the path- and query-preserving `www` redirect. Fresh 1440-by-900 and
-390-by-844 production browser checks confirmed the two-line shop heading,
-full-width sticky mobile discovery controls, aligned filtered product rows,
-loaded product images, the 48 px mobile add-to-cart target, and zero horizontal
-overflow or console warnings/errors. All commerce and staff-security release
+packaging, generated-branch publication, Hostinger auto-deployment, immutable
+VPS ops deployment, and both exact live verifiers. Independent acceptance at
+2026-08-28 07:12 UTC verified the exact source on both surfaces, a real
+immutable Next asset, storefront health and release locks, ops live/ready and
+unauthenticated session, and the path- and query-preserving `www` redirect.
+Fresh 1440-by-900 and 390-by-844 production browser checks confirmed the home
+CTA routing, 48 Inspired and 21 Signature filtered listings, ₹600 / ₹800 /
+₹1,400 Inspired size states, price-pending Signature cards, the customer
+account entry, the separate private operations login, zero horizontal
+overflow, and zero console errors. All commerce and staff-security release
 flags remain closed.
 
 PR #77 merged the responsive shop-discovery release. It added compact animated
@@ -252,8 +252,8 @@ identity only and are not India-counsel clearance. Production Neon was not
 imported or migrated. Inner pages use the wordmark SVG only; the home portal
 keeps the bottle animation.
 
-The 27 August B02 working tree now stages approved fixed prices and a flags-off
-cart preview for the 48 Inspired products: 144 variants use ₹600 / ₹800 /
+The B02 flags-off production release now presents approved fixed prices for the
+48 Inspired products: 144 variants use ₹600 / ₹800 /
 ₹1,400 prices, while all 42 Signature variants remain price-pending and
 non-purchasable. The fixed Inspired prices can appear on the discovery surface,
 but cart mutation remains limited to development or the explicit preview flag.
@@ -262,15 +262,15 @@ and Cashfree UPI sequence without enabling checkout or requesting payment.
 Desktop, portrait mobile, short portrait, and landscape browser checks
 confirmed variant selection, quantity/subtotal recalculation, the Signature
 lock, zero horizontal overflow, and zero current console errors.
-The local homepage keeps `Scent guide` in primary navigation, sends the compact
+The live homepage keeps `Scent guide` in primary navigation, sends the compact
 `Get scent` action to the full shop, and sends the fallback `Choose your scent`
 hero action to the 48-product Inspired-filtered shop while keeping both lower
 fragrance-guide actions on `/fragrance-guide`.
-This is local reviewed preview behavior only; production remains unchanged and
-every commerce and staff-security release flag remains closed.
+Production exposes the approved presentation and prices without enabling cart
+mutation, checkout, payment, customer auth, or any staff-security release flag.
 
-The customer account and private operations sign-in surfaces are also staged
-for a flags-off UX release. Customer sign-in, registration, recovery,
+The customer account and private operations sign-in presentation is also live
+as a flags-off UX release. Customer sign-in, registration, recovery,
 verification, checkout-return, and signed-in account navigation use a focused
 storefront flow, while the operations login explicitly identifies owner and
 invited-staff access. Disabled customer-auth routes still avoid Better Auth and
@@ -288,8 +288,8 @@ gate then advanced the migration count from 15 to 16, added the same four
 columns to the still-empty `product_publications` table, and left
 `commerce_settings` empty. Reapplying both restricted grant scripts returned
 zero table-privilege drift and zero sequence-privilege drift. No catalog data
-was imported and no release flag was opened; an explicit flags-off runtime
-deployment is the next action.
+was imported and no release flag was opened. The subsequent explicit flags-off
+runtime deployment completed in workflow run `33149842602`.
 
 The first live verifier exposed stale HCDN homepage HTML from source
 `917499d7dae04aa04697a7af7fd3d062c029c7f6` because the statically rendered
