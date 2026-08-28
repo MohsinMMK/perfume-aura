@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-28 06:23:56 UTC**
+Last refreshed: **2026-08-28 06:52:52 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -282,9 +282,14 @@ proof on branch `release-0015-catalog-profile-20260828`
 (`br-polished-meadow-azw1tecy`, expires 2026-08-30 00:00:00 UTC). The branch
 advanced from 15 to 16 migrations, added `audience`, `season`, `concentration`,
 and `sillage` to the empty `product_publications` table, and both restricted
-runtime grant scripts returned zero drift. Production remains at its prior
-migration state until the protected source is merged and the direct-owner gate
-is run; automatic runtime deployment must remain blocked until then.
+runtime grant scripts returned zero drift. PR #79 merged the reviewed runtime
+source as `9c88ee66e75de9409ef91d43af55e12b2994506d`. The direct-owner production
+gate then advanced the migration count from 15 to 16, added the same four
+columns to the still-empty `product_publications` table, and left
+`commerce_settings` empty. Reapplying both restricted grant scripts returned
+zero table-privilege drift and zero sequence-privilege drift. No catalog data
+was imported and no release flag was opened; an explicit flags-off runtime
+deployment is the next action.
 
 The first live verifier exposed stale HCDN homepage HTML from source
 `917499d7dae04aa04697a7af7fd3d062c029c7f6` because the statically rendered
