@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import type { StorefrontProduct } from "@/lib/catalog";
 import {
   getStorefrontCollectionSlugs,
   getStorefrontProducts,
@@ -9,33 +10,62 @@ import {
   getStorefrontOrigin,
 } from "@/lib/seo";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = getStorefrontOrigin();
+export const dynamic = "force-dynamic";
+
+export function buildStorefrontSitemap(input: Readonly<{
+  baseUrl: string;
+  publicCatalogEnabled: boolean;
+  publishedProducts?: readonly StorefrontProduct[];
+  collectionSlugs?: readonly string[];
+}>): MetadataRoute.Sitemap {
   const discoveryEntries: MetadataRoute.Sitemap = discoverySitemapEntries.map((entry) => ({
-    url: `${baseUrl}${entry.path}`,
+    url: `${input.baseUrl}${entry.path}`,
     changeFrequency: entry.changeFrequency,
     priority: entry.priority,
   }));
-  if (!isPublicCatalogEnabled()) return discoveryEntries;
-
-  const publishedProducts = (await getStorefrontProducts()).filter(
-    (product) => product.publicationState === "published",
-  );
-  if (publishedProducts.length === 0) return discoveryEntries;
-
+  const publishedProducts = input.publishedProducts ?? [];
+  if (!input.publicCatalogEnabled || publishedProducts.length === 0) {
+    return discoveryEntries;
+  }
   const collectionEntries: MetadataRoute.Sitemap = (
-    await getStorefrontCollectionSlugs()
+    input.collectionSlugs ?? []
   ).map((slug) => ({
-    url: `${baseUrl}/collections/${slug}`,
+    url: `${input.baseUrl}/collections/${slug}`,
     changeFrequency: "weekly",
     priority: 0.8,
   }));
   const productEntries: MetadataRoute.Sitemap = publishedProducts.map(
     (product) => ({
-      url: `${baseUrl}/products/${product.slug}`,
+      url: `${input.baseUrl}/products/${product.slug}`,
+      lastModified: product.updatedAt ?? product.publishedAt ?? undefined,
       changeFrequency: "weekly",
       priority: 0.8,
     }),
   );
-  return [...discoveryEntries, ...collectionEntries, ...productEntries];
+  return [
+    ...discoveryEntries,
+    { url: `${input.baseUrl}/shop`, changeFrequency: "weekly", priority: 0.9 },
+    ...collectionEntries,
+    ...productEntries,
+  ];
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = getStorefrontOrigin();
+  if (!isPublicCatalogEnabled()) {
+    return buildStorefrontSitemap({ baseUrl, publicCatalogEnabled: false });
+  }
+
+  const publishedProducts = (await getStorefrontProducts()).filter(
+    (product) => product.publicationState === "published",
+  );
+  const collectionSlugs = publishedProducts.length > 0
+    ? await getStorefrontCollectionSlugs()
+    : [];
+  return buildStorefrontSitemap({
+    baseUrl,
+    publicCatalogEnabled: true,
+    publishedProducts,
+    collectionSlugs,
+  });
 }

@@ -19,7 +19,7 @@ Persisted money is integer INR paise; public money uses
 | Ops auth | `/login`, `/forgot-password`, `/reset-password`, `/settings/security` |
 | Ops | `/dashboard`, `/products`, `/stock`, `/stock/oil`, `/sales/new`, `/customers`, `/invoices`, `/payments`, `/finance`, `/commerce/*` |
 | Storefront | `/`, `/shop`, `/collections/[slug]`, `/products/[slug]`, `/search`, `/find-your-scent`, `/cart`, `/checkout`, `/account`, `/account/delivery`, `/account/orders`, `/account/orders/[orderNumber]`, legacy `/order/[token]` |
-| Store content | `/about`, `/fragrance-guide`, `/faq`, `/contact`, `/wholesale`, `/shipping`, `/returns`, `/privacy`, `/terms` |
+| Store content | `/about`, `/fragrance-guide`, `/faq`, `/guides/perfume-for-hyderabad-weather`, `/guides/fragrance-families`, `/guides/perfume-for-occasions`, `/contact`, `/wholesale`, `/shipping`, `/returns`, `/privacy`, `/terms` |
 | Customer boundary | `/account/*`, `/api/customer-auth/*`, `/api/account/*` |
 
 ## Commerce release locks
@@ -39,7 +39,8 @@ commerce is fail-closed:
   Neon;
 - cart totals are zero and checkout is blocked while public release is closed;
 - Search discovery is intentionally separate from commerce release. `/`,
-  `/fragrance-guide`, `/about`, and `/faq` are indexable; preview shop,
+  `/fragrance-guide`, `/about`, `/faq`, and the three approved `/guides/*`
+  editorial routes are indexable; preview shop,
   product, collection, search, finder, inquiry, and incomplete-policy pages
   remain `noindex`. `robots.txt` allows public crawling while blocking private
   account, API, cart, checkout, and order paths.

@@ -5,10 +5,12 @@ import {
   parseObservabilitySampleRate,
   redactSensitiveText,
   sanitizeObservabilityUrl,
+  sanitizeReferrerDomain,
   sanitizePostHogCapture,
   sanitizeSentryBreadcrumb,
   sanitizeSentryEvent,
 } from "./observability";
+import { createStorefrontActionProperties } from "./posthog-client";
 
 describe("storefront observability privacy", () => {
   it("removes query strings, fragments, and opaque path tokens", () => {
@@ -17,6 +19,10 @@ describe("storefront observability privacy", () => {
         "https://perfumeaura.com/order/1234567890abcdefghijklmnop?email=buyer@example.com#code",
       ),
       "https://perfumeaura.com/order/[redacted]",
+    );
+    assert.equal(
+      sanitizeReferrerDomain("https://chatgpt.com/c/example?utm_source=private"),
+      "https://chatgpt.com",
     );
   });
 
@@ -33,6 +39,17 @@ describe("storefront observability privacy", () => {
     assert.equal(capture?.properties.$current_url, "https://perfumeaura.com/shop");
     assert.equal(capture?.properties.email, undefined);
     assert.equal(capture?.properties.application, "storefront");
+  });
+
+  it("limits contact conversion events to approved non-personal properties", () => {
+    assert.deepEqual(
+      createStorefrontActionProperties("floating_action", "open_whatsapp"),
+      {
+        application: "storefront",
+        surface: "floating_action",
+        action: "open_whatsapp",
+      },
+    );
   });
 
   it("strips request payloads and direct identifiers from Sentry events", () => {

@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     process.env.STOREFRONT_URL ?? "https://perfumeaura.com",
   ),
   title: {
-    default: "Perfume Aura | Fragrance house in India",
+    default: "Perfume Aura | Perfume store in Kondapur, Hyderabad",
     template: `%s · ${siteName}`,
   },
   description: defaultSiteDescription,
@@ -66,7 +66,7 @@ export const metadata: Metadata = {
     locale: "en_IN",
     url: "/",
     siteName,
-    title: "Perfume Aura | Fragrance house in India",
+    title: "Perfume Aura | Perfume store in Kondapur, Hyderabad",
     description: defaultSiteDescription,
     images: [
       {
@@ -79,7 +79,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Perfume Aura | Fragrance house in India",
+    title: "Perfume Aura | Perfume store in Kondapur, Hyderabad",
     description: defaultSiteDescription,
     images: ["/images/hero-bottle-still-life.webp"],
   },
@@ -95,7 +95,7 @@ export default function RootLayout({
 
   return (
     <html
-      lang="en"
+      lang="en-IN"
       className={`${interTight.variable} ${londrinaSolid.variable} ${londrinaOutline.variable}`}
       data-scroll-behavior="auto"
       data-perfume-aura-release={releaseCommit}

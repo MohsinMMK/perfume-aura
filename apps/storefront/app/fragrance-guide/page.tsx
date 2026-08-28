@@ -20,6 +20,13 @@ export const metadata: Metadata = {
     title: "How to choose a perfume | Perfume Aura",
     description:
       "Choose a perfume by mood, fragrance family, intensity, occasion, and a careful skin test.",
+    images: [{ url: "/images/hero-bottle-still-life.webp", alt: "Perfume Aura bottles arranged on a dark stone plinth" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "How to choose a perfume | Perfume Aura",
+    description: "Choose a perfume by mood, fragrance family, intensity, occasion, and a careful skin test.",
+    images: ["/images/hero-bottle-still-life.webp"],
   },
 };
 
@@ -175,6 +182,25 @@ export default function FragranceGuidePage() {
               <Button render={<Link href="/faq" />} nativeButton={false} className="aura-cream-action min-h-14 rounded-[var(--aura-radius)] px-7 font-display text-lg">
                 Read all answers <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={1.8} />
               </Button>
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="deeper-guides-title" className="bg-[var(--aura-ivory)] px-[var(--aura-gutter)] py-20 text-[var(--aura-ink)] lg:px-[var(--aura-gutter-lg)] lg:py-28">
+          <div className="mx-auto max-w-[82rem]">
+            <h2 id="deeper-guides-title" className="font-display max-w-[12ch] text-[clamp(4rem,8vw,8rem)] leading-[0.78]">Choose with more context</h2>
+            <div className="mt-10 border-y border-dashed border-black/25">
+              {[
+                ["Hyderabad weather", "/guides/perfume-for-hyderabad-weather", "Test fragrance through heat, humidity, monsoon, and air-conditioned settings."],
+                ["Fragrance families", "/guides/fragrance-families", "Understand fresh, floral, woody, amber, oud, gourmand, and perfume notes."],
+                ["Work, weddings, evenings, and gifts", "/guides/perfume-for-occasions", "Match presence to the setting, distance, weather, and person."],
+              ].map(([title, href, copy]) => (
+                <Link key={href} href={href} className="group grid min-h-28 gap-3 border-b border-dashed border-black/25 py-6 last:border-b-0 sm:grid-cols-[1fr_1.2fr_auto] sm:items-center">
+                  <span className="font-display text-3xl">{title}</span>
+                  <span className="text-sm leading-6 text-black/70">{copy}</span>
+                  <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={1.8} className="size-6 transition-transform group-hover:translate-x-1 motion-reduce:transform-none motion-reduce:transition-none" />
+                </Link>
+              ))}
             </div>
           </div>
         </section>

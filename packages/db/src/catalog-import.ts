@@ -14,6 +14,12 @@ const dryRun = process.argv.includes("--dry-run") || !apply;
 
 type CsvRow = Record<string, string>;
 
+export type ApprovedPublicUrlManifest = Readonly<{
+  schemaVersion: 1;
+  mode: "public-catalog";
+  paths: readonly string[];
+}>;
+
 const inputs = {
   products: {
     path: resolve(templateRoot, "catalog-products-review.csv"),
@@ -97,6 +103,20 @@ function deterministicUuid(key: string): string {
   hex[12] = "4";
   hex[16] = ["8", "9", "a", "b"][Number.parseInt(hex[16] ?? "0", 16) % 4] ?? "8";
   return `${hex.slice(0, 8).join("")}-${hex.slice(8, 12).join("")}-${hex.slice(12, 16).join("")}-${hex.slice(16, 20).join("")}-${hex.slice(20).join("")}`;
+}
+
+function createApprovedPublicUrlManifest(
+  products: readonly CsvRow[],
+): ApprovedPublicUrlManifest {
+  const productPaths = products
+    .filter((row) => row.publication_status === "published")
+    .map((row) => `/products/${required(row, "public_slug")}`)
+    .sort((left, right) => left.localeCompare(right));
+  return {
+    schemaVersion: 1,
+    mode: "public-catalog",
+    paths: productPaths.length > 0 ? ["/shop", ...productPaths] : [],
+  };
 }
 
 async function validate() {
@@ -201,7 +221,12 @@ async function validate() {
   const signature = signingSecret && signingSecret.length >= 32
     ? createHmac("sha256", signingSecret).update(digest).digest("hex")
     : null;
-  return { ...canonical, digest, signature };
+  return {
+    ...canonical,
+    digest,
+    signature,
+    approvedPublicUrlManifest: createApprovedPublicUrlManifest(products),
+  };
 }
 
 async function applyPlan(plan: Awaited<ReturnType<typeof validate>>): Promise<void> {
@@ -346,5 +371,5 @@ async function upsertServiceability(client: PoolClient, row: CsvRow): Promise<vo
 }
 
 const plan = await validate();
-process.stdout.write(`${JSON.stringify({ mode: dryRun ? "dry-run" : "apply", digest: plan.digest, signature: plan.signature, counts: { products: plan.products.length, variants: plan.variants.length, media: plan.media.length, serviceability: plan.serviceability.length } })}\n`);
+process.stdout.write(`${JSON.stringify({ mode: dryRun ? "dry-run" : "apply", digest: plan.digest, signature: plan.signature, approvedPublicUrlManifest: plan.approvedPublicUrlManifest, counts: { products: plan.products.length, variants: plan.variants.length, media: plan.media.length, serviceability: plan.serviceability.length } })}\n`);
 if (apply) { await applyPlan(plan); process.stdout.write("Reviewed catalog import committed\n"); }

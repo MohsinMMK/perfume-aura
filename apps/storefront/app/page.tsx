@@ -20,10 +20,23 @@ import {
 } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: { absolute: "Perfume Aura | Fragrance house in India" },
+  title: { absolute: "Perfume Aura | Perfume store in Kondapur, Hyderabad" },
   description:
-    "Discover Perfume Aura, an India-focused fragrance house, and learn how to choose perfume by mood, intensity, occasion, and composition.",
+    "Discover Perfume Aura, a fragrance store in Kondapur, Hyderabad, and learn how to choose perfume by mood, intensity, occasion, and composition.",
   alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: "/",
+    title: "Perfume Aura | Perfume store in Kondapur, Hyderabad",
+    description: "Discover Perfume Aura and choose perfume with practical guidance for Hyderabad and India.",
+    images: [{ url: "/images/hero-bottle-still-life.webp", alt: "Perfume Aura fragrance bottles arranged on a dark stone plinth" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Perfume Aura | Perfume store in Kondapur, Hyderabad",
+    description: "Discover Perfume Aura and choose perfume with practical guidance for Hyderabad and India.",
+    images: ["/images/hero-bottle-still-life.webp"],
+  },
 };
 
 const processSteps: readonly Readonly<{
@@ -93,6 +106,12 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }}
       />
       <HomeHero products={featuredProducts} />
+
+      <section className="border-y border-dashed border-[color:var(--aura-rule)] bg-[var(--aura-ink)] px-[var(--aura-gutter)] py-10 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)]">
+        <p className="mx-auto max-w-[78rem] text-center text-base leading-7 text-[color:rgb(245_228_199_/_76%)] sm:text-lg">
+          Perfume Aura is a fragrance store in Kondapur, Hyderabad, with practical guidance for choosing a scent in the city and across India.
+        </p>
+      </section>
 
       <section className="relative min-h-[86svh] overflow-hidden border-b border-dashed border-[color:rgb(245_228_199_/_22%)] bg-[var(--aura-ink)] px-5 py-24 text-[var(--aura-ivory)] sm:px-8 lg:py-36">
         <IngredientAtmosphere />

@@ -3,6 +3,16 @@ import { sanitizePostHogCapture } from "@/lib/observability";
 
 let postHogPromise: Promise<PostHog | null> | null = null;
 
+export type StorefrontAction = "open_instagram" | "open_whatsapp";
+export type StorefrontActionSurface = "floating_action" | "mobile_menu";
+
+export function createStorefrontActionProperties(
+  surface: StorefrontActionSurface,
+  action: StorefrontAction,
+) {
+  return { application: "storefront", surface, action } as const;
+}
+
 export function getStorefrontPostHog(): Promise<PostHog | null> {
   if (postHogPromise) return postHogPromise;
 
@@ -42,4 +52,16 @@ export function getStorefrontPostHog(): Promise<PostHog | null> {
 export async function resetStorefrontPostHog(): Promise<void> {
   const posthog = await getStorefrontPostHog();
   posthog?.reset();
+}
+
+export function captureStorefrontAction(
+  surface: StorefrontActionSurface,
+  action: StorefrontAction,
+): void {
+  void getStorefrontPostHog().then((posthog) => {
+    posthog?.capture(
+      "storefront_contact_action",
+      createStorefrontActionProperties(surface, action),
+    );
+  });
 }

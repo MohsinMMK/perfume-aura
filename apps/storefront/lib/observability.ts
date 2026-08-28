@@ -4,6 +4,7 @@ import type { CaptureResult, Properties } from "posthog-js";
 const sensitiveKeyPattern =
   /(address|authorization|city|cookie|courier|email|name|password|phone|pin|postal|query|recipient|search|secret|state|token|tracking)/i;
 const urlPropertyPattern = /(current_url|referrer|url)$/i;
+const referrerPropertyPattern = /referrer$/i;
 const opaquePathSegmentPattern =
   /\/(?:[0-9a-f]{8}-[0-9a-f-]{27,}|[A-Za-z0-9_-]{24,})(?=\/|$)/gi;
 
@@ -32,6 +33,14 @@ export function sanitizeObservabilityUrl(value: string): string {
   }
 }
 
+export function sanitizeReferrerDomain(value: string): string {
+  try {
+    return new URL(value).origin;
+  } catch {
+    return "[redacted-referrer]";
+  }
+}
+
 export function redactSensitiveText(value: string): string {
   return value
     .replace(
@@ -48,6 +57,9 @@ function sanitizeProperties(properties: Properties): Properties {
   return Object.fromEntries(
     Object.entries(properties).flatMap(([key, value]) => {
       if (sensitiveKeyPattern.test(key)) return [];
+      if (referrerPropertyPattern.test(key) && typeof value === "string") {
+        return [[key, sanitizeReferrerDomain(value)]];
+      }
       if (urlPropertyPattern.test(key) && typeof value === "string") {
         return [[key, sanitizeObservabilityUrl(value)]];
       }
@@ -128,6 +140,9 @@ export function sanitizeSentryBreadcrumb(
     ? Object.fromEntries(
         Object.entries(breadcrumb.data).flatMap(([key, value]) => {
           if (sensitiveKeyPattern.test(key)) return [];
+          if (referrerPropertyPattern.test(key) && typeof value === "string") {
+            return [[key, sanitizeReferrerDomain(value)]];
+          }
           if (urlPropertyPattern.test(key) && typeof value === "string") {
             return [[key, sanitizeObservabilityUrl(value)]];
           }
