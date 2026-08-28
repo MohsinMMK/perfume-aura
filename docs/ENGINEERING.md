@@ -54,8 +54,8 @@ container for ops; Neon remains the shared managed database.
 | Errors and traces | Official Sentry Next.js SDK with separate storefront and ops projects |
 | Production | Hostinger Business Web App/HCDN for storefront; Hostinger VPS/Caddy for ops; Neon PostgreSQL shared |
 | Ops deploy mechanism | GitHub Actions verified standalone → immutable GHCR image → Tailscale forced SSH → hardened VPS container (`apps/ops/server.js`) |
-| Storefront deploy mechanism | Checksum-verified Hostinger Node.js artifact with `apps/storefront/server.js`; generated-branch publication is supported when provider connectivity and owning gates permit it |
-| Active deploy and rollback state | [`CURRENT_STATE.md`](CURRENT_STATE.md) owns current provider paths, generated branches, releases, and rollback eligibility |
+| Storefront deploy mechanism | Checksum-verified Hostinger Node.js archive with `apps/storefront/server.js`, uploaded and deployed directly by GitHub Actions through the Hostinger API |
+| Active deploy and rollback state | [`CURRENT_STATE.md`](CURRENT_STATE.md) owns current provider paths, releases, and rollback eligibility |
 | Payments | Cashfree Payment Gateway for prepaid INR UPI (server-created orders, signed raw-body webhooks, server status verification, and refunds); no COD checkout |
 | Registrar | GoDaddy; registration/renewal only |
 
@@ -313,9 +313,10 @@ owned by [`OPERATIONS.md`](OPERATIONS.md#owner-recovery-and-break-glass).
 clean standalone artifacts. Runtime-affecting `main` changes publish only the
 surfaces selected by the fail-closed impact classifier. Ops is built as an
 immutable GHCR image from the verified package and deployed through Tailscale
-forced SSH to the VPS. Storefront publication can create the verified
-`hostinger-storefront-production` branch. Provider connectivity, active release
-path, and live-verification eligibility belong only in
+forced SSH to the VPS. Storefront publication uploads the same verified ZIP
+through the Hostinger API, applies the reviewed Node.js settings, polls the
+exact provider build, and then verifies the public release. Provider
+connectivity, active release path, and live-verification eligibility belong only in
 [`CURRENT_STATE.md`](CURRENT_STATE.md).
 
 Markdown-only main changes still run CI and packaging but do not publish or
@@ -329,7 +330,7 @@ requests, main pushes, and the weekly schedule.
 |---|---|---|
 | `pack-storefront-standalone.sh` | `pnpm storefront:pack` | Build, extract-smoke, checksum, and manifest storefront ZIP |
 | `pack-ops-standalone.sh` | `pnpm ops:pack` | Build, extract-smoke, checksum, and manifest ops runtime |
-| `publish-hostinger-ops-branch.sh` | `pnpm ops:publish-branch`, `pnpm storefront:publish-branch` | Publish verified generated trees |
+| `deploy-hostinger-storefront-archive.mjs` | `pnpm storefront:deploy-archive` | Re-verify, upload, configure, deploy, and poll the exact storefront ZIP without a generated Git branch |
 | `verify-production-deploy.mjs` | `pnpm ops:verify-production-deploy` | Verify exact SHA, runtime surfaces, and storefront locks |
 | `verify-commerce-foundation.mjs` | `pnpm commerce:verify`, `pnpm commerce:verify:self-test` | Check catalog/document invariants and negative mutations |
 
