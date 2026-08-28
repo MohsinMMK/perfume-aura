@@ -274,6 +274,69 @@ effective, and the owner accepts the recorded residual risks.
 **Owner documents:** [`COMMERCE.md`](COMMERCE.md),
 [`OPERATIONS.md`](OPERATIONS.md), and [`CURRENT_STATE.md`](CURRENT_STATE.md).
 
+## Deferred SEO and discoverability owner actions
+
+These four actions are intentionally deferred for the owner to complete later.
+They do not indicate a crawlability failure in the deployed discovery site and
+do not authorize any commerce, catalog-publication, customer-auth, checkout,
+inquiry, or staff-security flag change.
+
+| ID | Deferred owner action | Status | Depends on |
+|---|---|---|---|
+| SEO01 | Confirm the complete Kondapur public business record | Deferred | Owner-supplied facts |
+| SEO02 | Recover the existing Google Business Profile | Deferred | SEO01 |
+| SEO03 | Complete Google Search Console and Bing submissions | Deferred | Account access |
+| SEO04 | Approve catalog indexing and Merchant Center readiness | Deferred | B01–B04 and the applicable B07 release gates |
+
+### SEO01 — Confirm the public Kondapur business record
+
+- [ ] Confirm the exact public address, telephone, regular and special hours,
+      latitude/longitude, primary category, accessibility and parking facts,
+      original store photography, and official profile URLs.
+- [ ] Confirm that each fact is suitable for public display and is consistent
+      across the website and controlled profiles.
+
+**Done when:** the complete owner-approved NAP, geo, hours, category, imagery,
+and profile record can be used without guessing. Engineering may then publish
+the gated location page and matching Store structured data.
+
+### SEO02 — Recover the existing Google Business Profile
+
+- [ ] Sign in to the Google account that should manage Perfume Aura and request
+      access to the existing profile; do not create a duplicate listing.
+- [ ] After access and SEO01 approval, align the public name `Perfume Aura`,
+      website `https://perfumeaura.com/`, NAP, category, hours, and photographs.
+
+**Done when:** the existing public profile is owner-controlled and its visible
+facts match the approved website business record.
+
+### SEO03 — Complete Google Search Console and Bing submissions
+
+- [ ] In the verified Google Search Console property, resubmit
+      `https://perfumeaura.com/sitemap.xml` and inspect the seven discovery URLs.
+- [ ] Verify or import `perfumeaura.com` in Bing Webmaster Tools, submit the same
+      sitemap, run Site Scan, and inspect representative discovery URLs.
+- [ ] Record indexing and ranking as external pending outcomes; do not repeatedly
+      resubmit unchanged URLs.
+
+**Done when:** both webmaster platforms accept the current sitemap and the
+account-side inspection evidence is recorded without claiming that submission
+guarantees indexing or ranking.
+
+### SEO04 — Approve catalog indexing and Merchant Center readiness
+
+- [ ] Complete the applicable legal, catalog, price, media, policy, checkout,
+      shipping, returns, tax, support, and payment gates in B01–B04.
+- [ ] Separately authorize the reviewed public-catalog subset and
+      `STOREFRONT_PUBLIC_RELEASE=true`; keep all unrelated release flags closed.
+- [ ] Claim `perfumeaura.com` in the correct Merchant Center account only after
+      approved products are genuinely purchasable and feed, HTML, structured
+      data, cart, and checkout agree.
+
+**Done when:** the exact approved catalog manifest is live and indexable, the
+commerce journey is truthful and accepted, and Merchant Center diagnostics have
+no domain, price, currency, availability, shipping, or returns mismatch.
+
 ## Items that do not currently block commerce launch
 
 - Google Search Console recrawl and coverage changes after the accepted sitemap.
