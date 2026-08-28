@@ -108,9 +108,9 @@ idempotent republish of the exact `main` source, dispatch `ops-pack.yml` with
 `HOSTINGER_STOREFRONT_ARCHIVE_DEPLOY_ENABLED=true` enables the direct provider
 deployment only after the dedicated `HOSTINGER_API_TOKEN` GitHub secret and
 `HOSTINGER_ACCOUNT_USERNAME` repository variable exist. Repository variable
-`HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` enables the live verification
-job after the provider build completes; it does not weaken the
-pre-publish gates.
+`HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` permits the automated archive
+deployment only when its live-verification job is also enabled; it does not
+weaken the pre-publish gates.
 
 Build the verified ZIP for either a routine deployment or emergency recovery:
 
@@ -130,12 +130,14 @@ Other, root `./`, no build command, empty output directory, and entry
 `apps/storefront/server.js`. Set
 `STOREFRONT_URL` and `CUSTOMER_AUTH_URL` to `https://perfumeaura.com`.
 
-The API deployment replaces only the application files and build source. It
-does not replace the existing masked Hostinger environment set. The previous
-upload-sourced app, the most recent accepted verified ZIP, and the fresh
-pre-cutover backup are rollback state; do not reassign the apex, delete a
-recovery path, or copy mutable source identifiers into this runbook. Read
-[`CURRENT_STATE.md`](CURRENT_STATE.md) for current identities.
+The build request submits no environment values. Before accepting a release,
+confirm the required variable names remain configured in Hostinger and prove
+the application through the exact live checks; restore missing values only
+from the owning secret store. The previous upload-sourced app, the most recent
+accepted verified ZIP, and the fresh pre-cutover backup are rollback state; do
+not reassign the apex, delete a recovery path, or copy mutable source
+identifiers into this runbook. Read [`CURRENT_STATE.md`](CURRENT_STATE.md) for
+current identities.
 
 Keep these flags false until their separate gates pass:
 

@@ -598,7 +598,8 @@ jobs:
       github.ref == 'refs/heads/main' &&
       needs.deployment-impact.outputs.publish_storefront == 'true' &&
       needs.deployment-impact.outputs.ops_migration_blocked != 'true' &&
-      vars.HOSTINGER_STOREFRONT_ARCHIVE_DEPLOY_ENABLED == 'true'
+      vars.HOSTINGER_STOREFRONT_ARCHIVE_DEPLOY_ENABLED == 'true' &&
+      vars.HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED == 'true'
     needs:
       - deployment-impact
       - package
