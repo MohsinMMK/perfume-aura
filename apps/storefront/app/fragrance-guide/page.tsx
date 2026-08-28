@@ -198,7 +198,7 @@ export default function FragranceGuidePage() {
                 <Link key={href} href={href} className="group grid min-h-28 gap-3 border-b border-dashed border-black/25 py-6 last:border-b-0 sm:grid-cols-[1fr_1.2fr_auto] sm:items-center">
                   <span className="font-display text-3xl">{title}</span>
                   <span className="text-sm leading-6 text-black/70">{copy}</span>
-                  <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={1.8} className="size-6 transition-transform group-hover:translate-x-1 motion-reduce:transition-none" />
+                  <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={1.8} className="size-6 transition-transform group-hover:translate-x-1 motion-reduce:transform-none motion-reduce:transition-none" />
                 </Link>
               ))}
             </div>
