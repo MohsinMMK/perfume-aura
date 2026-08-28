@@ -59,6 +59,7 @@ export function classifyDeploymentImpact(changedPaths) {
       startsWithAny(changedPath, [
         ".github/workflows/ops-pack.yml",
         "packages/",
+        "scripts/deploy-hostinger-storefront-archive.mjs",
         "scripts/extract-hostinger-ops-zip.py",
         "scripts/verify-hostinger-ops-deploy-tree.mjs",
       ])

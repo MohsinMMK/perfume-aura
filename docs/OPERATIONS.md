@@ -91,21 +91,25 @@ in `CURRENT_STATE.md`.
 
 ## Storefront deployment and recovery
 
-The GitHub-connected generated branch is the routine storefront deployment
-path. The verified ZIP remains an emergency recovery artifact:
+The verified ZIP is both the routine storefront deployment input and the
+emergency recovery artifact. GitHub Actions uploads it directly to Hostinger
+through the official API; Hostinger never builds the monorepo:
 
 ```text
 runtime-affecting main push → CI quality/integration/package
-  → hostinger-storefront-production
-  → Hostinger Node Web App
+  → Hostinger archive upload and reviewed Node.js build settings
+  → Hostinger Node Web App build
   → exact storefront SHA and public-surface verification
 ```
 
-Markdown-only changes do not publish either generated branch. For a controlled
+Markdown-only changes do not deploy either runtime. For a controlled
 idempotent republish of the exact `main` source, dispatch `ops-pack.yml` with
-`deploy_target=storefront`. Set repository variable
+`deploy_target=storefront`. Repository variable
+`HOSTINGER_STOREFRONT_ARCHIVE_DEPLOY_ENABLED=true` enables the direct provider
+deployment only after the dedicated `HOSTINGER_API_TOKEN` GitHub secret and
+`HOSTINGER_ACCOUNT_USERNAME` repository variable exist. Repository variable
 `HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` enables the live verification
-job after Hostinger deploys the generated branch; it does not weaken the
+job after the provider build completes; it does not weaken the
 pre-publish gates.
 
 Build the verified ZIP for either a routine deployment or emergency recovery:
@@ -120,16 +124,18 @@ TEST_DATABASE_URL="$PERFUME_AURA_TEST_DB_URL" \
 pnpm storefront:pack
 ```
 
-Target Hostinger settings: GitHub branch `hostinger-storefront-production`,
-Node 24.x, Framework Other, root `./`, no build command, empty output directory,
-and entry `apps/storefront/server.js`. Set
+The deployment script first asks Hostinger to inspect the uploaded archive,
+then overrides the result with the reviewed contract: Node 24.x, Framework
+Other, root `./`, no build command, empty output directory, and entry
+`apps/storefront/server.js`. Set
 `STOREFRONT_URL` and `CUSTOMER_AUTH_URL` to `https://perfumeaura.com`.
 
-The live Web App is connected only to `hostinger-storefront-production`.
-Preserve its runtime and environment settings. The previous upload-sourced app
-and fresh pre-cutover backup are rollback state; do not reassign the apex,
-delete either recovery path, or copy mutable source identifiers into this
-runbook. Read [`CURRENT_STATE.md`](CURRENT_STATE.md) for current identities.
+The API deployment replaces only the application files and build source. It
+does not replace the existing masked Hostinger environment set. The previous
+upload-sourced app, the most recent accepted verified ZIP, and the fresh
+pre-cutover backup are rollback state; do not reassign the apex, delete a
+recovery path, or copy mutable source identifiers into this runbook. Read
+[`CURRENT_STATE.md`](CURRENT_STATE.md) for current identities.
 
 Keep these flags false until their separate gates pass:
 
@@ -209,11 +215,12 @@ record its result in `CURRENT_STATE.md`.
 
 ## Current outcome
 
-The live app follows only `hostinger-storefront-production` and preserves Node
-24.x, Framework Other, root `./`, empty build/output settings, existing
-environment values, and entry `apps/storefront/server.js`. Each
-runtime-affecting main merge must publish the generated branch, rely on
-Hostinger auto-deployment, and pass exact HCDN and clean-browser verification.
+Each runtime-affecting main merge must deploy the checksum-verified storefront
+archive through the Hostinger API with Node 24.x, Framework Other, root `./`,
+empty build/output settings, existing environment values, and entry
+`apps/storefront/server.js`. It must then pass exact HCDN and clean-browser
+verification. The active release and any temporary migration rollback state
+belong in [`CURRENT_STATE.md`](CURRENT_STATE.md).
 
 ## Ops deployment and recovery
 
@@ -255,11 +262,10 @@ root-owned `/etc/khanect/perfume-aura-ops.env`; deploy automation never sends
 them. Use `pnpm ops:pack` only for artifact recovery.
 
 The old Hostinger ops Web App is off public DNS and retained only as frozen
-rollback state. [`CURRENT_STATE.md`](CURRENT_STATE.md) owns its current
-retention deadline and eligibility. Removal requires explicit authorization and
-fresh exact-SHA VPS acceptance evidence. A rollback restores the captured DNS
-records and verifies the frozen exact source; do not republish or delete it
-casually.
+provider state. [`CURRENT_STATE.md`](CURRENT_STATE.md) owns its current
+retention deadline and eligibility. Retiring its former deployment branch
+requires explicit authorization and fresh exact-SHA VPS acceptance evidence.
+Do not restore its captured DNS records outside an authorized rollback.
 
 Production migrations remain manual direct-owner operations. Reapply restricted
 runtime grants after every schema change.

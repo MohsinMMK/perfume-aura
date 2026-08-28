@@ -1,6 +1,5 @@
-# CI gate, verified standalone packs, VPS ops deployment, and storefront branch publishing.
-# Pure Hostinger monorepo source build (Path G) remains blocked by esbuild EACCES.
-# Hostinger watches the exact prebuilt storefront branch; ZIP remains an emergency fallback.
+# CI gate, verified standalone packs, immutable VPS ops deployment, and direct
+# Hostinger storefront archive deployment. Hostinger never builds the monorepo.
 name: ci-and-ops-artifact
 
 on:
@@ -36,7 +35,6 @@ env:
   EXACT_NODE_VERSION: 24.6.0
   EXACT_NPM_VERSION: 11.5.1
   EXACT_PNPM_VERSION: 10.32.1
-  HOSTINGER_STOREFRONT_BRANCH: hostinger-storefront-production
 
 jobs:
   deployment-impact:
@@ -594,27 +592,26 @@ jobs:
           echo "Database migration files changed. Apply and verify the migration and restricted runtime grants through the documented owner gate before redeploying either runtime." >&2
           exit 1
 
-  publish-hostinger-storefront:
-    name: publish-hostinger-storefront-branch
+  deploy-hostinger-storefront-archive:
+    name: deploy-hostinger-storefront-archive
     if: >-
       github.ref == 'refs/heads/main' &&
       needs.deployment-impact.outputs.publish_storefront == 'true' &&
-      needs.deployment-impact.outputs.ops_migration_blocked != 'true'
+      needs.deployment-impact.outputs.ops_migration_blocked != 'true' &&
+      vars.HOSTINGER_STOREFRONT_ARCHIVE_DEPLOY_ENABLED == 'true'
     needs:
       - deployment-impact
       - package
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     concurrency:
-      group: publish-hostinger-storefront-production
+      group: deploy-hostinger-storefront-production
       cancel-in-progress: false
-    permissions:
-      contents: write
     steps:
-      - name: Checkout scripts only
+      - name: Checkout deployment tooling
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          persist-credentials: true
+          persist-credentials: false
 
       - name: Setup exact Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -633,9 +630,11 @@ jobs:
           name: hostinger-standalone-${{ steps.meta.outputs.short_sha }}
           path: dist-publish
 
-      - name: Re-verify artifact and publish generated branch
+      - name: Re-verify and deploy the exact storefront archive
         env:
-          GIT_TERMINAL_PROMPT: "0"
+          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+          HOSTINGER_ACCOUNT_USERNAME: ${{ vars.HOSTINGER_ACCOUNT_USERNAME }}
+          HOSTINGER_STOREFRONT_DOMAIN: perfumeaura.com
         run: |
           set -euo pipefail
           SHORT_SHA="${GITHUB_SHA:0:12}"
@@ -662,32 +661,21 @@ jobs:
           assert.ok(manifest.archive && manifest.archive.sha256);
           assert.equal(manifest.extractedSmoke, "passed");
           NODE
-
-          TREE="$(mktemp -d "${RUNNER_TEMP}/hostinger-storefront-tree.XXXXXX")"
-          cleanup() {
-            rm -rf -- "$TREE"
-          }
-          trap cleanup EXIT
-
-          python3 scripts/extract-hostinger-ops-zip.py "$ZIP" "$TREE"
-          node scripts/verify-hostinger-ops-deploy-tree.mjs \
-            "$TREE" "$GITHUB_SHA" --surface storefront
-          bash scripts/publish-hostinger-ops-branch.sh \
-            --tree "$TREE" \
-            --commit "$GITHUB_SHA" \
-            --surface storefront \
-            --branch "$HOSTINGER_STOREFRONT_BRANCH" \
-            --remote origin
+          node scripts/deploy-hostinger-storefront-archive.mjs \
+            --archive "$ZIP" \
+            --manifest "$MANIFEST" \
+            --commit "$GITHUB_SHA"
 
   verify-hostinger-storefront:
     name: verify-hostinger-storefront-live
     if: >-
       github.ref == 'refs/heads/main' &&
       needs.deployment-impact.outputs.publish_storefront == 'true' &&
+      vars.HOSTINGER_STOREFRONT_ARCHIVE_DEPLOY_ENABLED == 'true' &&
       vars.HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED == 'true'
     needs:
       - deployment-impact
-      - publish-hostinger-storefront
+      - deploy-hostinger-storefront-archive
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
