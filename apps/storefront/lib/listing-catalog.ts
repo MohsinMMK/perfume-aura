@@ -7,11 +7,17 @@ export const listingCollections = {
     title: "Signature Series",
     description:
       "In-house Perfume Aura names. Composition details and Signature prices will appear when each edition is complete.",
+    seoTitle: "Signature Series",
+    seoDescription: "Perfume Aura Signature Series preview.",
+    updatedAt: null,
   },
   inspired: {
     title: "Inspired collection",
     description:
       "Fixed prices: 30 ml ₹600, 50 ml ₹800, and 100 ml ₹1,400. Composition details will appear when each edition is complete.",
+    seoTitle: "Inspired collection",
+    seoDescription: "Perfume Aura inspired fragrance listing preview.",
+    updatedAt: null,
   },
 } as const;
 
@@ -29,6 +35,7 @@ function toStorefrontVariant(
 ): StorefrontVariant {
   return {
     id: variant.id,
+    sku: null,
     sizeMl: variant.sizeMl,
     price:
       variant.priceMinor == null
@@ -70,6 +77,13 @@ function toStorefrontProduct(
     image: product.image,
     cardImage: product.cardImage,
     imageAlt: product.imageAlt,
+    seoTitle: null,
+    seoDescription: null,
+    publicSku: null,
+    socialImage: product.cardImage,
+    socialImageAlt: product.imageAlt,
+    publishedAt: null,
+    updatedAt: null,
     accent: product.accent,
     publicationState: "listed",
     variants: product.variants.map((variant) =>

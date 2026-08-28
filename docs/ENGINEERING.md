@@ -279,15 +279,32 @@ tests separately with explicitly supplied disposable database URLs.
 
 `apps/storefront/lib/seo.ts` owns the canonical site identity, discovery
 sitemap entries, private crawler paths, and JSON-LD serialization. Keep the
-release-locked sitemap limited to `/`, `/fragrance-guide`, `/about`, and
-`/faq`; published product and collection URLs enter it only through the
-existing public-catalog gate. Placeholder, preview, account, transactional,
-search, and incomplete-policy pages must remain `noindex`.
+release-locked sitemap limited to `/`, `/fragrance-guide`, `/about`, `/faq`,
+`/guides/perfume-for-hyderabad-weather`, `/guides/fragrance-families`, and
+`/guides/perfume-for-occasions`; published product and collection URLs enter it
+only through the existing public-catalog gate. Placeholder, preview, account,
+transactional, search, and incomplete-policy pages must remain `noindex`.
 
-The homepage publishes one Organization/WebSite graph. The fragrance guide
-publishes visible Article and BreadcrumbList data that matches its rendered
-content. Do not add speculative Product, Offer, AggregateRating, FAQ, social,
-address, or contact facts, and do not create scaled keyword pages. Root social
+`apps/storefront/lib/editorial-guides.ts` owns the typed initial guide registry.
+`apps/storefront/lib/public-business.ts` defines the complete owner-verified
+NAP, geo, hours, images, and official-profile contract. Do not instantiate or
+publish its Store schema or location route until every required fact is
+confirmed.
+
+The sitemap route is explicitly request-time dynamic. Public mode never falls
+back to workbook/listing products or collections: an empty approved projection
+means no `/shop` or catalog sitemap URLs, and missing or empty collections
+resolve to `404`. Catalog-import dry runs emit a deterministic
+`approvedPublicUrlManifest` beside the signed digest. The production verifier
+supports `discovery` and `public-catalog` SEO modes; public-catalog mode requires
+that reviewed manifest and crawls every sitemap URL.
+
+The homepage publishes one Organization/WebSite graph. The fragrance guides
+publish visible Article and BreadcrumbList data that matches their rendered
+content. Published product pages may emit Product and BreadcrumbList data, but
+must not emit Offer until online checkout is genuinely available. Do not add
+speculative AggregateRating, FAQ, address, or contact facts, and do not create
+scaled keyword pages. Root social
 metadata uses the verified bottle still life; self-hosted fonts are preloaded
 through `next/font/local` with adjusted fallbacks to protect layout stability.
 
@@ -448,8 +465,10 @@ app/global-error.tsx
   -> captures root React failures and provides an accessible retry surface
 ```
 
-PostHog initializes after page load, captures only page-view/page-leave
-activity, and registers an application discriminator. Broad DOM autocapture,
+PostHog initializes after page load, captures page-view/page-leave activity and
+the allowlisted `storefront_contact_action` event, and registers an application
+discriminator. Contact actions contain only `application`, `surface`, and
+`action`; referral values are reduced to their origin domain. Broad DOM autocapture,
 surveys, experiments, feature flags, exception capture, and session replay
 remain disabled. Sentry captures unhandled failures, sampled traces, and typed
 structured logs. Console capture is intentionally not enabled.

@@ -34,6 +34,10 @@ type PublicProductRow = {
   topNotes: string[];
   heartNotes: string[];
   baseNotes: string[];
+  seoTitle: string;
+  seoDescription: string;
+  publishedAt: Date;
+  updatedAt: Date;
   featuredRank: number | null;
   storageKey: string;
   altText: string;
@@ -44,6 +48,7 @@ type PublicVariantRow = {
   productId: string;
   sizeMl: number;
   amountMinor: number;
+  sku: string;
   available: boolean;
 };
 
@@ -98,6 +103,10 @@ export async function loadPublishedProducts(): Promise<readonly StorefrontProduc
         topNotes: productPublications.topNotes,
         heartNotes: productPublications.heartNotes,
         baseNotes: productPublications.baseNotes,
+        seoTitle: productPublications.seoTitle,
+        seoDescription: productPublications.seoDescription,
+        publishedAt: productPublications.publishedAt,
+        updatedAt: productPublications.updatedAt,
         featuredRank: productPublications.featuredRank,
         storageKey: productMedia.storageKey,
         altText: productMedia.altText,
@@ -133,6 +142,8 @@ export async function loadPublishedProducts(): Promise<readonly StorefrontProduc
           sql`${productPublications.topNotes} IS NOT NULL`,
           sql`${productPublications.heartNotes} IS NOT NULL`,
           sql`${productPublications.baseNotes} IS NOT NULL`,
+          sql`${productPublications.seoTitle} IS NOT NULL`,
+          sql`${productPublications.seoDescription} IS NOT NULL`,
           sql`${productPublications.legalApprovedAt} IS NOT NULL`,
           sql`${productPublications.legalApprovalReference} IS NOT NULL`,
           sql`${productPublications.contentApprovedAt} IS NOT NULL`,
@@ -151,6 +162,7 @@ export async function loadPublishedProducts(): Promise<readonly StorefrontProduc
         productId: productVariants.productId,
         sizeMl: productVariants.sizeMl,
         amountMinor: variantPrices.amountMinor,
+        sku: productVariants.sku,
         available: sql<boolean>`${productVariants.quantityOnHand} - ${productVariants.qtyReserved} > 0`,
       })
       .from(productVariants)
@@ -176,6 +188,7 @@ export async function loadPublishedProducts(): Promise<readonly StorefrontProduc
     const variants = variantsByProduct.get(row.productId) ?? [];
     variants.push({
       id: row.id,
+      sku: row.sku,
       sizeMl: row.sizeMl,
       price: { currency: "INR", amountMinor: row.amountMinor },
       purchasable: row.available,
@@ -210,6 +223,13 @@ export async function loadPublishedProducts(): Promise<readonly StorefrontProduc
       notes: { top: row.topNotes, heart: row.heartNotes, base: row.baseNotes },
       image,
       imageAlt: row.altText,
+      seoTitle: row.seoTitle,
+      seoDescription: row.seoDescription,
+      publicSku: variants[0]?.sku ?? null,
+      socialImage: image,
+      socialImageAlt: row.altText,
+      publishedAt: row.publishedAt,
+      updatedAt: row.updatedAt,
       accent: accentForFamily(row.family),
       publicationState: "published",
       variants,
@@ -221,6 +241,9 @@ export async function loadPublishedProducts(): Promise<readonly StorefrontProduc
 export async function loadPublishedCollection(slug: string): Promise<Readonly<{
   title: string;
   description: string;
+  seoTitle: string;
+  seoDescription: string;
+  updatedAt: Date;
   productIds: readonly string[];
 }> | null> {
   if (!process.env.DATABASE_URL) return null;
@@ -229,6 +252,9 @@ export async function loadPublishedCollection(slug: string): Promise<Readonly<{
       id: commerceCollections.id,
       name: commerceCollections.name,
       description: commerceCollections.description,
+      seoTitle: commerceCollections.seoTitle,
+      seoDescription: commerceCollections.seoDescription,
+      updatedAt: commerceCollections.updatedAt,
       productId: commerceCollectionProducts.productId,
     })
     .from(commerceCollections)
@@ -240,14 +266,19 @@ export async function loadPublishedCollection(slug: string): Promise<Readonly<{
       and(
         eq(commerceCollections.slug, slug),
         eq(commerceCollections.status, "published"),
+        sql`${commerceCollections.seoTitle} IS NOT NULL`,
+        sql`${commerceCollections.seoDescription} IS NOT NULL`,
       ),
     )
     .orderBy(commerceCollectionProducts.position);
   const first = rows[0];
-  if (!first) return null;
+  if (!first || !first.seoTitle || !first.seoDescription) return null;
   return {
     title: first.name,
     description: first.description ?? "",
+    seoTitle: first.seoTitle,
+    seoDescription: first.seoDescription,
+    updatedAt: first.updatedAt,
     productIds: rows.flatMap((row) => (row.productId ? [row.productId] : [])),
   };
 }
@@ -255,9 +286,24 @@ export async function loadPublishedCollection(slug: string): Promise<Readonly<{
 export async function loadPublishedCollectionSlugs(): Promise<readonly string[]> {
   if (!process.env.DATABASE_URL) return [];
   const rows = await db
-    .select({ slug: commerceCollections.slug })
+    .selectDistinct({ slug: commerceCollections.slug })
     .from(commerceCollections)
-    .where(eq(commerceCollections.status, "published"))
+    .innerJoin(
+      commerceCollectionProducts,
+      eq(commerceCollectionProducts.collectionId, commerceCollections.id),
+    )
+    .innerJoin(
+      productPublications,
+      eq(productPublications.productId, commerceCollectionProducts.productId),
+    )
+    .where(
+      and(
+        eq(commerceCollections.status, "published"),
+        eq(productPublications.status, "published"),
+        sql`${commerceCollections.seoTitle} IS NOT NULL`,
+        sql`${commerceCollections.seoDescription} IS NOT NULL`,
+      ),
+    )
     .orderBy(commerceCollections.slug);
   return rows.map((row) => row.slug);
 }

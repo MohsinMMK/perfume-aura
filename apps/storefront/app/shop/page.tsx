@@ -8,12 +8,27 @@ import {
   parseShopListingQuery,
 } from "@/lib/shop-listing-query";
 
-export const metadata: Metadata = {
-  title: "Shop",
-  description: "Explore Perfume Aura scents, sizes, and prices in INR.",
-  alternates: { canonical: "/shop" },
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({
+  searchParams,
+}: Readonly<{
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}>): Promise<Metadata> {
+  const query = parseShopListingQuery(await searchParams);
+  const publicProducts = await getStorefrontProducts();
+  const indexable =
+    process.env.STOREFRONT_PUBLIC_RELEASE === "true" &&
+    publicProducts.some((product) => product.publicationState === "published") &&
+    !isShopListingQueryActive(query);
+  const description = "Explore published Perfume Aura scents, sizes, and fragrance details in India.";
+  return {
+    title: "Shop perfume",
+    description,
+    alternates: { canonical: "/shop" },
+    robots: { index: indexable, follow: indexable },
+    openGraph: { type: "website", url: "/shop", title: "Shop perfume | Perfume Aura", description },
+    twitter: { card: "summary_large_image", title: "Shop perfume | Perfume Aura", description },
+  };
+}
 
 export default async function ShopPage({
   searchParams,

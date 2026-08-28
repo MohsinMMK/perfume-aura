@@ -4,6 +4,7 @@
  * Never logs response bodies or tokens.
  */
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import http from "node:http";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -11,6 +12,7 @@ import path from "node:path";
 const FULL_SHA = /^[0-9a-f]{40}$/;
 const PUBLIC_SURFACES = new Set(["storefront"]);
 const DEPLOY_TARGETS = new Set(["ops", "storefront", "both"]);
+const SEO_MODES = new Set(["discovery", "public-catalog"]);
 const REQUIRED_STOREFRONT_ROBOTS_DIRECTIVES = [
   "Allow: /",
   "Disallow: /account",
@@ -20,7 +22,15 @@ const REQUIRED_STOREFRONT_ROBOTS_DIRECTIVES = [
   "Disallow: /checkout",
   "Disallow: /order/",
 ];
-const STOREFRONT_DISCOVERY_PATHS = ["/", "/fragrance-guide", "/about", "/faq"];
+const STOREFRONT_DISCOVERY_PATHS = [
+  "/",
+  "/fragrance-guide",
+  "/about",
+  "/faq",
+  "/guides/perfume-for-hyderabad-weather",
+  "/guides/fragrance-families",
+  "/guides/perfume-for-occasions",
+];
 
 function normalizeCommit(raw) {
   const value = String(raw ?? "")
@@ -46,6 +56,48 @@ export function normalizeDeployTarget(raw) {
     throw new Error("deploy target must be ops, storefront, or both");
   }
   return value;
+}
+
+export function normalizeSeoMode(raw) {
+  const value = String(raw ?? "discovery").trim().toLowerCase();
+  if (!SEO_MODES.has(value)) {
+    throw new Error("SEO mode must be discovery or public-catalog");
+  }
+  return value;
+}
+
+export function parseApprovedPublicUrlManifest(value) {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value) ||
+    value.schemaVersion !== 1 ||
+    value.mode !== "public-catalog" ||
+    !Array.isArray(value.paths)
+  ) {
+    throw new Error("invalid approved public URL manifest");
+  }
+  const paths = value.paths.map((pathValue) => String(pathValue));
+  if (
+    paths.some(
+      (pathname) =>
+        !pathname.startsWith("/") ||
+        pathname.startsWith("//") ||
+        pathname.includes("?") ||
+        pathname.includes("#") ||
+        pathname !== new URL(pathname, "https://perfumeaura.com").pathname ||
+        (pathname !== "/shop" &&
+          !pathname.startsWith("/products/") &&
+          !pathname.startsWith("/collections/")),
+    ) ||
+    new Set(paths).size !== paths.length
+  ) {
+    throw new Error("approved public URL manifest contains an unsafe or duplicate path");
+  }
+  if (paths[0] !== "/shop") {
+    throw new Error("approved public URL manifest must begin with /shop");
+  }
+  return paths;
 }
 
 function sleep(ms) {
@@ -102,6 +154,7 @@ export function assertStorefrontDiscoveryFiles({
   robots,
   sitemap,
   publicBase,
+  expectedPaths = STOREFRONT_DISCOVERY_PATHS,
 }) {
   if (robots.status !== 200) {
     throw new Error(`storefront robots.txt expected 200, got ${robots.status}`);
@@ -127,7 +180,7 @@ export function assertStorefrontDiscoveryFiles({
     ),
   );
   const expectedUrls = new Set(
-    STOREFRONT_DISCOVERY_PATHS.map((pathname) =>
+    expectedPaths.map((pathname) =>
       pathname === "/" ? publicBase : `${publicBase}${pathname}`,
     ),
   );
@@ -135,7 +188,36 @@ export function assertStorefrontDiscoveryFiles({
     actualUrls.size !== expectedUrls.size ||
     [...expectedUrls].some((url) => !actualUrls.has(url))
   ) {
-    throw new Error("storefront sitemap.xml is not the release-locked discovery set");
+    throw new Error("storefront sitemap.xml does not match the approved SEO manifest");
+  }
+}
+
+export function assertStorefrontSeoPage({ response, publicBase, pathname, seoMode }) {
+  if (response.status !== 200) {
+    throw new Error(`storefront SEO URL ${pathname} expected 200, got ${response.status}`);
+  }
+  const expectedUrl = pathname === "/" ? publicBase : `${publicBase}${pathname}`;
+  const canonicalMatch = response.text.match(/<link\b[^>]*\brel=["']canonical["'][^>]*\bhref=["']([^"']+)["'][^>]*>/iu)
+    ?? response.text.match(/<link\b[^>]*\bhref=["']([^"']+)["'][^>]*\brel=["']canonical["'][^>]*>/iu);
+  if (!canonicalMatch) {
+    throw new Error(`storefront SEO URL ${pathname} is missing a canonical`);
+  }
+  const canonical = new URL(canonicalMatch[1], publicBase).toString().replace(/\/$/u, "");
+  const normalizedExpected = expectedUrl.replace(/\/$/u, "");
+  if (canonical !== normalizedExpected) {
+    throw new Error(`storefront SEO URL ${pathname} is not self-canonical`);
+  }
+  if (/<meta\b[^>]*\bname=["']robots["'][^>]*\bcontent=["'][^"']*noindex/iu.test(response.text)) {
+    throw new Error(`storefront SEO URL ${pathname} is noindexed`);
+  }
+  if (seoMode === "public-catalog" && /details coming soon|not available yet|preview of the|collection is being prepared/iu.test(response.text)) {
+    throw new Error(`storefront SEO URL ${pathname} contains release placeholder content`);
+  }
+  if (pathname.startsWith("/products/") && !/"@type"\s*:\s*"Product"/u.test(response.text)) {
+    throw new Error(`storefront SEO product ${pathname} is missing Product structured data`);
+  }
+  if (pathname.startsWith("/collections/") && !/"@type"\s*:\s*"BreadcrumbList"/u.test(response.text)) {
+    throw new Error(`storefront SEO collection ${pathname} is missing breadcrumb structured data`);
   }
 }
 
@@ -240,12 +322,23 @@ export function assertReleaseLockedCart(response) {
  *   fetchImpl?: typeof fetch,
  *   now?: () => number,
  *   sleepImpl?: (ms: number) => Promise<void>,
+ *   seoMode?: "discovery" | "public-catalog",
+ *   approvedPublicPaths?: readonly string[],
  * }} options
  */
 export async function verifyProductionDeploy(options) {
   const expectedCommit = normalizeCommit(options.expectedCommit);
   const publicSurface = normalizePublicSurface(options.publicSurface);
   const target = normalizeDeployTarget(options.target);
+  const seoMode = normalizeSeoMode(options.seoMode);
+  const approvedPublicPaths = options.approvedPublicPaths ?? [];
+  if (seoMode === "public-catalog" && approvedPublicPaths.length === 0) {
+    throw new Error("public-catalog SEO mode requires a non-empty approved URL manifest");
+  }
+  const expectedSeoPaths = [
+    ...STOREFRONT_DISCOVERY_PATHS,
+    ...(seoMode === "public-catalog" ? approvedPublicPaths : []),
+  ];
   const opsBase = (options.opsBaseUrl ?? "https://app.perfumeaura.com").replace(
     /\/$/,
     "",
@@ -390,7 +483,31 @@ export async function verifyProductionDeploy(options) {
 
   const robots = await fetchStatus(`${publicBase}/robots.txt`, { fetchImpl });
   const sitemap = await fetchStatus(`${publicBase}/sitemap.xml`, { fetchImpl });
-  assertStorefrontDiscoveryFiles({ robots, sitemap, publicBase });
+  assertStorefrontDiscoveryFiles({
+    robots,
+    sitemap,
+    publicBase,
+    expectedPaths: expectedSeoPaths,
+  });
+  const seoResponses = await Promise.all(
+    expectedSeoPaths.map(async (pathname) => ({
+      pathname,
+      response: await fetchStatus(
+        pathname === "/" ? `${publicBase}/` : `${publicBase}${pathname}`,
+        { fetchImpl },
+      ),
+    })),
+  );
+  for (const { pathname, response } of seoResponses) {
+    assertStorefrontSeoPage({ response, publicBase, pathname, seoMode });
+  }
+  const unknownPage = await fetchStatus(
+    `${publicBase}/__perfume_aura_seo_unknown__`,
+    { fetchImpl },
+  );
+  if (unknownPage.status !== 404) {
+    throw new Error(`storefront unknown SEO URL expected 404, got ${unknownPage.status}`);
+  }
 
   const customerAuth = await fetchStatus(
     `${publicBase}/api/customer-auth/get-session`,
@@ -424,6 +541,8 @@ export async function verifyProductionDeploy(options) {
     staticPath: target === "storefront" ? storefrontStaticPath : staticPath,
     target,
     publicSurface,
+    seoMode,
+    seoUrlCount: expectedSeoPaths.length,
   };
 }
 
@@ -450,13 +569,10 @@ function createFixtureServer(routes) {
         throw new Error("failed to bind fixture server");
       }
       const baseUrl = `http://127.0.0.1:${address.port}`;
-      const robots = routes["/robots.txt"];
-      if (typeof robots?.body === "string") {
-        robots.body = robots.body.replace("pending/sitemap.xml", `${baseUrl}/sitemap.xml`);
-      }
-      const sitemap = routes["/sitemap.xml"];
-      if (typeof sitemap?.body === "string") {
-        sitemap.body = sitemap.body.replaceAll("pending", baseUrl);
+      for (const route of Object.values(routes)) {
+        if (typeof route?.body === "string") {
+          route.body = route.body.replaceAll("pending", baseUrl);
+        }
       }
       resolve({ server, baseUrl });
     });
@@ -467,8 +583,8 @@ function fixtureRobots(publicBase) {
   return `User-Agent: *\nAllow: /\nDisallow: /account\nDisallow: /account/\nDisallow: /api/\nDisallow: /cart\nDisallow: /checkout\nDisallow: /order/\nSitemap: ${publicBase}/sitemap.xml\n`;
 }
 
-function fixtureSitemap(publicBase) {
-  return `<urlset>${STOREFRONT_DISCOVERY_PATHS.map((pathname) => `<url><loc>${pathname === "/" ? publicBase : `${publicBase}${pathname}`}</loc></url>`).join("")}</urlset>`;
+function fixtureSitemap(publicBase, paths = STOREFRONT_DISCOVERY_PATHS) {
+  return `<urlset>${paths.map((pathname) => `<url><loc>${pathname === "/" ? publicBase : `${publicBase}${pathname}`}</loc></url>`).join("")}</urlset>`;
 }
 
 function successRoutes(commit, staticPath, publicBase = "pending") {
@@ -492,10 +608,13 @@ function successRoutes(commit, staticPath, publicBase = "pending") {
       body: "null",
     },
     [staticPath]: { status: 200, body: "js" },
-    "/": {
-      status: 200,
-      body: `<html data-perfume-aura-release="${commit}"><script src="${staticPath}"></script></html>`,
-    },
+    ...Object.fromEntries(STOREFRONT_DISCOVERY_PATHS.map((pathname) => [
+      pathname,
+      {
+        status: 200,
+        body: `<html data-perfume-aura-release="${commit}"><head><link rel="canonical" href="${pathname === "/" ? publicBase : `${publicBase}${pathname}`}"></head><script src="${staticPath}"></script></html>`,
+      },
+    ])),
     "/shop": { status: 200, body: "shop" },
     "/search": { status: 200, body: "search" },
     "/robots.txt": {
@@ -558,7 +677,7 @@ async function selfTest() {
           ),
         },
       }),
-    /not the release-locked discovery set/u,
+    /does not match the approved SEO manifest/u,
   );
 
   // Unit: auth session shape checks without logging bodies.
@@ -630,6 +749,21 @@ async function selfTest() {
   assert.throws(
     () => normalizeDeployTarget("invalid"),
     /must be ops, storefront, or both/,
+  );
+  assert.equal(normalizeSeoMode(undefined), "discovery");
+  assert.equal(normalizeSeoMode("public-catalog"), "public-catalog");
+  assert.throws(() => normalizeSeoMode("invalid"), /SEO mode/u);
+  assert.deepEqual(
+    parseApprovedPublicUrlManifest({
+      schemaVersion: 1,
+      mode: "public-catalog",
+      paths: ["/shop", "/products/launch-one"],
+    }),
+    ["/shop", "/products/launch-one"],
+  );
+  assert.throws(
+    () => parseApprovedPublicUrlManifest({ schemaVersion: 1, mode: "public-catalog", paths: ["//unsafe"] }),
+    /unsafe or duplicate/u,
   );
   await assert.rejects(
     () => main([commit, "--target"]),
@@ -1059,7 +1193,7 @@ async function main(argv) {
   }
   if (argv.length < 1) {
     throw new Error(
-      "usage: node scripts/verify-production-deploy.mjs <expected-commit> [--target ops|storefront|both] [--ops-base URL] [--public-base URL] [--www-base URL] [--public-surface storefront] [--timeout-ms N]",
+      "usage: node scripts/verify-production-deploy.mjs <expected-commit> [--target ops|storefront|both] [--ops-base URL] [--public-base URL] [--www-base URL] [--public-surface storefront] [--seo-mode discovery|public-catalog] [--expected-sitemap-manifest PATH] [--timeout-ms N]",
     );
   }
 
@@ -1070,6 +1204,8 @@ async function main(argv) {
   let publicSurface;
   let target;
   let timeoutMs;
+  let seoMode;
+  let expectedSitemapManifestPath;
   function readOptionValue(index, option) {
     const value = argv[index + 1];
     if (value === undefined || value.startsWith("--")) {
@@ -1097,9 +1233,25 @@ async function main(argv) {
     } else if (arg === "--timeout-ms") {
       timeoutMs = Number(readOptionValue(i, arg));
       i += 1;
+    } else if (arg === "--seo-mode") {
+      seoMode = readOptionValue(i, arg);
+      i += 1;
+    } else if (arg === "--expected-sitemap-manifest") {
+      expectedSitemapManifestPath = readOptionValue(i, arg);
+      i += 1;
     } else {
       throw new Error(`unknown argument: ${arg}`);
     }
+  }
+
+  let approvedPublicPaths = [];
+  if (expectedSitemapManifestPath) {
+    const manifest = JSON.parse(
+      await readFile(path.resolve(expectedSitemapManifestPath), "utf8"),
+    );
+    approvedPublicPaths = parseApprovedPublicUrlManifest(
+      manifest.approvedPublicUrlManifest ?? manifest,
+    );
   }
 
   const result = await verifyProductionDeploy({
@@ -1110,9 +1262,11 @@ async function main(argv) {
     publicSurface,
     target,
     timeoutMs,
+    seoMode,
+    approvedPublicPaths,
   });
   console.log(
-    `production-deploy ok target=${result.target} commit=${result.commit} surface=${result.publicSurface} static=${result.staticPath}`,
+    `production-deploy ok target=${result.target} commit=${result.commit} surface=${result.publicSurface} seo_mode=${result.seoMode} seo_urls=${result.seoUrlCount} static=${result.staticPath}`,
   );
 }
 

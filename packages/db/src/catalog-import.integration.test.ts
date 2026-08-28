@@ -109,10 +109,15 @@ describe("reviewed catalog importer", () => {
   it("produces a signed deterministic plan and applies opening stock once", async () => {
     const dryRun = await runImporter(["--dry-run"]);
     assert.equal(dryRun.code, 0, dryRun.stderr);
-    const manifest = JSON.parse(dryRun.stdout.trim()) as { digest: string; signature: string; counts: Record<string, number> };
+    const manifest = JSON.parse(dryRun.stdout.trim()) as { digest: string; signature: string; approvedPublicUrlManifest: { schemaVersion: number; mode: string; paths: string[] }; counts: Record<string, number> };
     assert.match(manifest.digest, /^[a-f0-9]{64}$/);
     assert.match(manifest.signature, /^[a-f0-9]{64}$/);
     assert.deepEqual(manifest.counts, { products: 1, variants: 1, media: 1, serviceability: 1 });
+    assert.deepEqual(manifest.approvedPublicUrlManifest, {
+      schemaVersion: 1,
+      mode: "public-catalog",
+      paths: [],
+    });
 
     const confirmationEnvironment = {
       CONFIRM_CATALOG_IMPORT: "APPLY_REVIEWED_CATALOG",

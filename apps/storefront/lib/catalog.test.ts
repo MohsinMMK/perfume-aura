@@ -4,7 +4,7 @@ import {
   isPreviewCatalogEnabled,
   isPublicCatalogEnabled,
 } from "./catalog-policy";
-import { getFeaturedProducts, getStorefrontCollection, getStorefrontProducts } from "./catalog";
+import { getFeaturedProducts, getStorefrontCollection, getStorefrontCollectionSlugs, getStorefrontProducts } from "./catalog";
 import { readReleaseLockedCart } from "./cart-store";
 
 describe("storefront public release boundary", () => {
@@ -47,6 +47,24 @@ describe("storefront public release boundary", () => {
     } finally {
       if (previous === undefined) delete process.env.STOREFRONT_PUBLIC_RELEASE;
       else process.env.STOREFRONT_PUBLIC_RELEASE = previous;
+    }
+  });
+
+  it("fails public mode closed when no approved database projection exists", async () => {
+    const previousPublicRelease = process.env.STOREFRONT_PUBLIC_RELEASE;
+    const previousDatabaseUrl = process.env.DATABASE_URL;
+    process.env.STOREFRONT_PUBLIC_RELEASE = "true";
+    delete process.env.DATABASE_URL;
+    try {
+      assert.deepEqual(await getStorefrontProducts(), []);
+      assert.deepEqual(await getFeaturedProducts(), []);
+      assert.deepEqual(await getStorefrontCollectionSlugs(), []);
+      assert.equal(await getStorefrontCollection("inspired"), null);
+    } finally {
+      if (previousPublicRelease === undefined) delete process.env.STOREFRONT_PUBLIC_RELEASE;
+      else process.env.STOREFRONT_PUBLIC_RELEASE = previousPublicRelease;
+      if (previousDatabaseUrl === undefined) delete process.env.DATABASE_URL;
+      else process.env.DATABASE_URL = previousDatabaseUrl;
     }
   });
 

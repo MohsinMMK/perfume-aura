@@ -26,6 +26,7 @@ import {
   SheetTrigger,
 } from "@perfume-aura/ui/components/sheet";
 import { compactHeaderScrollY } from "@/lib/header-motion";
+import { captureStorefrontAction } from "@/lib/posthog-client";
 import {
   whatsappContactDisplayNumber,
   whatsappContactUrl,
@@ -220,7 +221,10 @@ export function SiteHeader({ customerAuthEnabled }: Readonly<{ customerAuthEnabl
                     href={item.href}
                     prefetch={false}
                     aria-current={item.showCurrent && (pathname === item.href || pathname.startsWith(`${item.href}/`)) ? "page" : undefined}
-                    onClick={() => setMenuOpen(false)}
+                    onClick={() => {
+                      captureStorefrontAction("mobile_menu", "open_instagram");
+                      setMenuOpen(false);
+                    }}
                     className="flex min-h-16 items-center justify-between border-b border-dashed border-[color:rgb(16_11_6_/_22%)] font-display text-3xl transition-[padding] hover:pl-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)] aria-[current=page]:pl-2"
                   >
                     {item.label}
@@ -239,7 +243,10 @@ export function SiteHeader({ customerAuthEnabled }: Readonly<{ customerAuthEnabl
                     target="_blank"
                     rel="noreferrer"
                     aria-label="Open Perfume Aura on Instagram"
-                    onClick={() => setMenuOpen(false)}
+                    onClick={() => {
+                      captureStorefrontAction("mobile_menu", "open_whatsapp");
+                      setMenuOpen(false);
+                    }}
                     className="group flex min-h-12 items-center justify-between rounded-[var(--aura-radius)] px-3 text-sm font-semibold transition-colors hover:bg-[var(--aura-ink)] hover:text-[var(--aura-ivory)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)]"
                   >
                     <span className="flex items-center gap-3">

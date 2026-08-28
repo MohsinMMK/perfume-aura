@@ -5,8 +5,16 @@ import { AboutBottleStage } from "@/components/about-bottle-stage";
 export const metadata: Metadata = {
   title: "Our story",
   description:
-    "Meet Perfume Aura, an India-focused fragrance house built around expressive presentation and careful, verified product claims.",
+    "Meet Perfume Aura, a fragrance store in Kondapur, Hyderabad, built around expressive presentation and careful, verified product claims.",
   alternates: { canonical: "/about" },
+  openGraph: {
+    type: "website",
+    url: "/about",
+    title: "Our story | Perfume Aura",
+    description: "Meet Perfume Aura, a fragrance store in Kondapur, Hyderabad.",
+    images: [{ url: "/images/hero-bottle-still-life.webp", alt: "Perfume Aura bottles arranged in the studio" }],
+  },
+  twitter: { card: "summary_large_image", title: "Our story | Perfume Aura", description: "Meet Perfume Aura, a fragrance store in Kondapur, Hyderabad.", images: ["/images/hero-bottle-still-life.webp"] },
 };
 
 export default function AboutPage() {
@@ -51,7 +59,7 @@ export default function AboutPage() {
         <div className="mx-auto grid max-w-[94rem] gap-12 lg:grid-cols-[1fr_1fr] lg:items-start">
           <h2 data-motion-copy className="font-display text-[clamp(5.5rem,12vw,12rem)] leading-[0.72]">A focused house for India</h2>
           <div className="space-y-7 pt-4 text-base leading-8 text-[color:rgb(245_228_199_/_62%)]">
-            <p>Perfume Aura is building a fragrance house expressed through black glass, rich product color, and a direct path from mood to scent.</p>
+            <p>Perfume Aura is a fragrance store in Kondapur, Hyderabad, expressed through black glass, rich product color, and a direct path from mood to scent.</p>
             <p>The storefront is a preview of the house taking shape. Product names, performance claims, ingredients, prices, reviews, and policies appear only when they are complete and ready to share.</p>
             <p>The result is intentionally expressive in presentation and conservative in what it claims.</p>
           </div>

@@ -16,6 +16,10 @@ import { findStorefrontProduct, getStorefrontProducts } from "@/lib/catalog";
 import { loadApprovedCommercePolicy } from "@/lib/commerce-policy";
 import { formatMoney } from "@/lib/money";
 import { loadApprovedProductReviews } from "@/lib/public-catalog";
+import {
+  createProductStructuredData,
+  serializeJsonLd,
+} from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -25,12 +29,25 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
   if (!product) return { title: "Product unavailable" };
   const publicRelease = process.env.STOREFRONT_PUBLIC_RELEASE === "true";
   return {
-    title: product.name,
-    description: product.summary,
+    title: product.seoTitle ?? product.name,
+    description: product.seoDescription ?? product.summary,
     alternates: { canonical: `/products/${product.slug}` },
     robots: {
       index: publicRelease && product.publicationState === "published",
       follow: publicRelease && product.publicationState === "published",
+    },
+    openGraph: {
+      type: "website",
+      url: `/products/${product.slug}`,
+      title: product.seoTitle ?? product.name,
+      description: product.seoDescription ?? product.summary,
+      images: [{ url: product.socialImage, alt: product.socialImageAlt }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.seoTitle ?? product.name,
+      description: product.seoDescription ?? product.summary,
+      images: [product.socialImage],
     },
   };
 }
@@ -63,26 +80,20 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
   ]);
   const relatedProducts = allProducts.filter((candidate) => candidate.slug !== product.slug).slice(0, 3);
   const productStructuredData = product.publicationState === "published"
-    ? {
-        "@context": "https://schema.org",
-        "@type": "Product",
+    ? createProductStructuredData({
+        id: product.id,
         name: product.name,
-        image: [new URL(product.image, process.env.STOREFRONT_URL ?? "https://perfumeaura.com").toString()],
-        description: product.summary,
-        offers: product.variants.flatMap((variant) => variant.price ? [{
-          "@type": "Offer",
-          priceCurrency: "INR",
-          price: (variant.price.amountMinor / 100).toFixed(2),
-          availability: variant.purchasable ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-          url: new URL(`/products/${product.slug}`, process.env.STOREFRONT_URL ?? "https://perfumeaura.com").toString(),
-        }] : []),
-      }
+        slug: product.slug,
+        description: product.seoDescription ?? product.summary,
+        image: product.socialImage,
+        publicSku: product.publicSku,
+      })
     : null;
   const detailValue = (value: string) => product.publicationState === "published" ? value : "Details coming soon";
 
   return (
     <>
-      {productStructuredData ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productStructuredData).replaceAll("<", "\\u003c") }} /> : null}
+      {productStructuredData ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(productStructuredData) }} /> : null}
 
       <section className="grid grid-rows-[47svh_auto] bg-[var(--aura-ink)] text-[var(--aura-ivory)] min-[360px]:grid-rows-[50svh_auto] sm:min-h-[100svh] sm:grid-rows-none lg:grid-cols-2 lg:grid-rows-1">
         <div

@@ -203,8 +203,25 @@ curl -sSI 'https://www.perfumeaura.com/shop?probe=1'
 
 The verifier requires the exact storefront version response, the matching
 release marker in ordinary cached HTML, a real Next static asset, release locks,
-and the `www` `308` preserving `/shop?probe=1`. The packaged smoke test
+the exact discovery sitemap, every discovery URL as `200`, self-canonical and
+indexable, real `404` behavior, and the `www` `308` preserving `/shop?probe=1`.
+The packaged smoke test
 separately asserts that the version response uses `cache-control: no-store`.
+
+After a separately authorized catalog publication, verify against the exact
+reviewed dry-run output:
+
+```bash
+node scripts/verify-production-deploy.mjs <40-character-sha> \
+  --target storefront \
+  --public-base https://perfumeaura.com \
+  --seo-mode public-catalog \
+  --expected-sitemap-manifest <reviewed-catalog-dry-run.json> \
+  --timeout-ms 180000
+```
+
+Public-catalog mode refuses an empty or malformed URL manifest and compares the
+live sitemap with the discovery set plus exactly those approved catalog paths.
 
 If exact verification fails, do not automatically roll back, stop plan-wide
 processes, or republish an older source. Inspect the scoped failure. The root

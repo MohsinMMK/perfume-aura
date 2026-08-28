@@ -9,6 +9,7 @@ import {
 
 export type StorefrontVariant = Readonly<{
   id: string;
+  sku: string | null;
   sizeMl: 30 | 50 | 100 | 105;
   price: Money | null;
   purchasable: boolean;
@@ -40,6 +41,13 @@ export type StorefrontProduct = Readonly<{
   image: string;
   cardImage?: string;
   imageAlt: string;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  publicSku: string | null;
+  socialImage: string;
+  socialImageAlt: string;
+  publishedAt: Date | null;
+  updatedAt: Date | null;
   accent: "wine" | "blue" | "blush" | "brass";
   publicationState: "design_preview" | "listed" | "published";
   variants: readonly StorefrontVariant[];
@@ -50,8 +58,7 @@ export async function getStorefrontProducts(): Promise<
 > {
   if (isPublicCatalogEnabled()) {
     const { loadPublishedProducts } = await import("./public-catalog");
-    const published = await loadPublishedProducts();
-    if (published.length > 0) return published;
+    return loadPublishedProducts();
   }
   return loadListedWorkbookProducts();
 }
@@ -64,7 +71,7 @@ export async function getFeaturedProducts(): Promise<
     const published = products.filter(
       (product) => product.publicationState === "published",
     );
-    if (published.length > 0) return published.slice(0, 3);
+    return published.slice(0, 3);
   }
   return loadFeaturedListingProducts();
 }
@@ -97,6 +104,9 @@ export async function findStorefrontVariant(variantId: string): Promise<
 export async function getStorefrontCollection(slug: string): Promise<Readonly<{
   title: string;
   description: string;
+  seoTitle: string;
+  seoDescription: string;
+  updatedAt: Date | null;
   products: readonly StorefrontProduct[];
 }> | null> {
   if (isPublicCatalogEnabled()) {
@@ -105,11 +115,16 @@ export async function getStorefrontCollection(slug: string): Promise<Readonly<{
     if (collection) {
       const products = await getStorefrontProducts();
       const productIds = new Set(collection.productIds);
+      const publishedProducts = products.filter((product) =>
+        productIds.has(product.id),
+      );
+      if (publishedProducts.length === 0) return null;
       return {
         ...collection,
-        products: products.filter((product) => productIds.has(product.id)),
+        products: publishedProducts,
       };
     }
+    return null;
   }
 
   if (!isListingCollectionSlug(slug)) return null;
@@ -123,9 +138,23 @@ export async function getStorefrontCollectionSlugs(): Promise<
   readonly string[]
 > {
   if (isPublicCatalogEnabled()) {
-    const { loadPublishedCollectionSlugs } = await import("./public-catalog");
-    const slugs = await loadPublishedCollectionSlugs();
-    if (slugs.length > 0) return slugs;
+    const { loadPublishedCollection, loadPublishedCollectionSlugs } = await import("./public-catalog");
+    const [candidateSlugs, products] = await Promise.all([
+      loadPublishedCollectionSlugs(),
+      getStorefrontProducts(),
+    ]);
+    const productIds = new Set(products.map((product) => product.id));
+    const collections = await Promise.all(
+      candidateSlugs.map(async (slug) => ({
+        slug,
+        collection: await loadPublishedCollection(slug),
+      })),
+    );
+    return collections.flatMap(({ slug, collection }) =>
+      collection?.productIds.some((productId) => productIds.has(productId))
+        ? [slug]
+        : [],
+    );
   }
   return ["signature", "inspired"];
 }
