@@ -287,7 +287,7 @@ async function uploadArchive({
   };
 
   const createResponse = await requestImpl({
-    url: target,
+    url: target.href,
     method: "POST",
     headers: {
       ...sharedHeaders,
@@ -301,7 +301,7 @@ async function uploadArchive({
 
   // Hostinger's file API requires PATCH on the same relative file URL.
   const uploadResponse = await requestImpl({
-    url: target,
+    url: target.href,
     method: "PATCH",
     headers: {
       ...sharedHeaders,
@@ -542,6 +542,7 @@ async function runSelfTest() {
     assert.equal(requests.length, 5);
     assert.equal(requests[0].options.headers.Authorization, "Bearer test-token");
     assert.equal(transferRequests.length, 2);
+    assert.equal(typeof transferRequests[0].url, "string");
     assert.equal(transferRequests[0].headers["Upload-Length"], String(archive.length));
     assert.equal(String(transferRequests[1].url), String(transferRequests[0].url));
     assert.equal(transferRequests[1].archivePath, archivePath);
