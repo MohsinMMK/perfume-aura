@@ -4,14 +4,14 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-28 07:15:12 UTC**
+Last refreshed: **2026-08-28 10:14:29 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
 
 | Surface | Production state |
 |---|---|
-| `perfumeaura.com` | GitHub-connected Hostinger Node.js Web App and HCDN |
+| `perfumeaura.com` | Hostinger Node.js Web App deployed by verified archive API and HCDN |
 | `www.perfumeaura.com` | Path- and query-preserving `308` to the apex |
 | `app.perfumeaura.com` | VPS container behind Caddy on `194.164.149.3` |
 | `www.app.perfumeaura.com` | Absent from Hostinger DNS and public DNS |
@@ -33,23 +33,30 @@ and ignored local environment files.
 ## Exact releases and automation
 
 The storefront and ops both run exact source
-`2c04d1106be8a1a91977224a229e0ed8c8382025`. Ops uses immutable image digest
-`sha256:044a28ce53cf1648a4b6349bb561a8a1985eea1e32c8cf539dfcca9ebffc9700`;
-the generated storefront branch is exact commit
-`54e3331ddb856028f34dc7d6cfeea8e8037d9586`. Explicit flags-off workflow run
-[`33149842602`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33149842602)
-passed quality, all disposable-PostgreSQL integration tests, verified
-packaging, generated-branch publication, Hostinger auto-deployment, immutable
-VPS ops deployment, and both exact live verifiers. Independent acceptance at
-2026-08-28 07:12 UTC verified the exact source on both surfaces, a real
-immutable Next asset, storefront health and release locks, ops live/ready and
-unauthenticated session, and the path- and query-preserving `www` redirect.
+`0d94d4b324d5683757d55cfa4ce540d530549cce`. Ops uses immutable image digest
+`sha256:fa973b9125f3b1ce9334b5e47ceb89afb9a26606907e349c50524d8647486686`.
+Workflow run
+[`33161060140`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33161060140)
+attempt 2 passed quality, all 101 disposable-PostgreSQL integration tests,
+verified packaging, direct Hostinger archive deployment, immutable VPS ops
+deployment, and both exact live verifiers. Hostinger build
+`01a047d2-564e-704a-91f2-fcd4a4ef8420` completed at 2026-08-28 10:03:13 UTC
+with the reviewed Node 24.x settings and archive
+`perfume-aura-storefront-release.zip`. Independent acceptance then verified
+the exact source on both surfaces, real immutable Next assets, storefront
+health and release locks, ops live/ready and unauthenticated session, and the
+path- and query-preserving `www` redirect.
+
 Fresh 1440-by-900 and 390-by-844 production browser checks confirmed the home
-CTA routing, 48 Inspired and 21 Signature filtered listings, ₹600 / ₹800 /
-₹1,400 Inspired size states, price-pending Signature cards, the customer
-account entry, the separate private operations login, zero horizontal
-overflow, and zero console errors. All commerce and staff-security release
-flags remain closed.
+CTA routing, Inspired-filtered discovery, loaded product imagery, the local
+cart preview and subtotal, the full-shop mobile `Get scent` route, and the
+customer sign-in presentation with its accounts-closed notice. The checked
+surfaces had zero horizontal overflow, zero broken visible images, and zero
+console errors. Customer cart mutation, checkout, payment, authentication, and
+all staff-security release flags remain closed. The obsolete
+`hostinger-storefront-production` and `hostinger-ops-production` remote branches
+were deleted only after this acceptance; the remote repository now contains
+only `main`.
 
 PR #77 merged the responsive shop-discovery release. It added compact animated
 collection, size, sort, and instant-search controls; collection-aware size
@@ -113,14 +120,17 @@ runs as UID/GID `10001`, has a read-only root filesystem, no Docker socket, all
 capabilities dropped, `no-new-privileges`, and limits of 1 CPU, 768 MiB memory,
 and 256 PIDs.
 
-The storefront is a GitHub-connected Hostinger Node.js Web App following
-`hostinger-storefront-production`, with Node `24.x`, Framework Other, root
-`./`, no build command or output directory, and entry
-`apps/storefront/server.js`. Repository variable
-`HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` enables exact live verification
-after the generated branch is published. PR #46 merged as exact source
-`919071a96a229378597a8a1fa513121f10750258`. Its push automatically started
-workflow run
+The storefront is a Hostinger Node.js Web App deployed directly from the
+checksum-verified release archive through the official API, with Node `24.x`,
+Framework Other, root `./`, no build command or output directory, and entry
+`apps/storefront/server.js`. Repository variables
+`HOSTINGER_STOREFRONT_ARCHIVE_DEPLOY_ENABLED=true` and
+`HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` enable the direct deployment
+only when exact live verification is also enabled. The dedicated
+`HOSTINGER_API_TOKEN` secret and `HOSTINGER_ACCOUNT_USERNAME` variable supply
+the provider identity without entering the archive or logs. PR #46 merged as
+exact source `919071a96a229378597a8a1fa513121f10750258`. Its push automatically
+started workflow run
 [`32292518427`](https://github.com/MohsinMMK/perfume-aura/actions/runs/32292518427),
 which passed quality, disposable-PostgreSQL integration, verified packaging,
 generated-branch publication, Hostinger auto-deployment, and exact public
@@ -302,9 +312,11 @@ cacheable.
 
 The old Hostinger managed ops Web App is off the public DNS path and retained
 only as a short rollback target. Its restricted `DATABASE_URL` was updated to
-the rotated credential and a `hostinger-ops-production` redeployment completed
-at 2026-08-14 15:11:17 UTC (`Asia/Kolkata`, UTC+05:30). The successful exact
-public verification in workflow run `31810808329` at
+the rotated credential and its final managed redeployment completed at
+2026-08-14 15:11:17 UTC (`Asia/Kolkata`, UTC+05:30). The historical
+`hostinger-ops-production` branch used for that provider path was deleted after
+the direct storefront and current VPS ops release passed fresh acceptance. The
+successful exact public verification in workflow run `31810808329` at
 2026-08-14 14:47:58 UTC is the DNS-cutover acceptance anchor. Retain the old
 app for exactly 48 hours after that anchor; it is eligible for removal no
 earlier than 2026-08-16 14:47:58 UTC, and only with explicit authorization and
@@ -526,9 +538,21 @@ runtime merge, and exact flags-off production deployment have now completed.
 - PR #72 records the resulting exact live source, image digest, generated
   storefront commit, verification evidence, and remaining owner gates. Its
   Markdown-only merge must not publish or deploy either surface.
+- PR #79 staged the fixed-price Inspired catalog and customer-account
+  presentation flags-off. PRs #80 and #81 recorded the completed migration and
+  exact production acceptance without opening any commerce or staff-security
+  release flag.
+- PR #82 replaced generated-branch storefront publication with direct,
+  checksum-verified Hostinger archive deployment. PR #83 aligned the resumable
+  upload target with the provider contract, and PR #84 moved the binary transfer
+  to a no-shell curl process with temporary upload credentials supplied through
+  stdin. Workflow run `33161060140` accepted that path and deployed exact source
+  `0d94d4b324d5683757d55cfa4ce540d530549cce` to both production surfaces.
 - Markdown-only merges run CI but do not publish either deployment surface.
-- `hostinger-ops-production` is rollback provider state, not the active ops
-  deployment path.
+- After fresh exact-source, endpoint, provider, and browser acceptance, the
+  obsolete `hostinger-storefront-production` and `hostinger-ops-production`
+  branches were deleted. The local checkout and remote repository contain only
+  `main`; routine storefront releases no longer require a provider branch.
 
 Next actions:
 
@@ -548,9 +572,11 @@ Next actions:
    48 inspired product links while no customer-facing disclaimer is implemented.
    Legal approval remains pending. Do not migrate or publish sale data before
    that gate.
-3. Supply and accept the provider identities: Google OAuth production client,
-   Hostinger SMTP sender credentials and delivery proof, and Cashfree merchant
-   KYC/UPI-only sandbox credentials, webhooks, transaction TTL, and refunds.
+3. Rotate the dedicated Hostinger archive-deployment token before its
+   2026-09-28 expiry. Supply and accept the remaining provider identities:
+   Google OAuth production client, Hostinger SMTP sender credentials and
+   delivery proof, and Cashfree merchant KYC/UPI-only sandbox credentials,
+   webhooks, transaction TTL, and refunds.
 4. Approve the operating rules and references for tax, serviceability/courier,
    shipping fee and threshold, returns/cancellations, and support staffing.
 5. Complete owner TOTP/recovery and staff journey acceptance, then separately
