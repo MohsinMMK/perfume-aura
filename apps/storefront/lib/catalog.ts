@@ -21,9 +21,13 @@ export type StorefrontProduct = Readonly<{
   eyebrow: string;
   collectionSlug: string;
   family: string;
+  audience: string;
+  season: string;
+  concentration: string;
   intensity: string;
   occasion: string;
   longevity: string;
+  sillage: string;
   ingredients: string;
   usage: string;
   summary: string;

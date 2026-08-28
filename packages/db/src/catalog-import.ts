@@ -17,7 +17,7 @@ type CsvRow = Record<string, string>;
 const inputs = {
   products: {
     path: resolve(templateRoot, "catalog-products-review.csv"),
-    headers: ["product_key", "internal_name", "internal_slug", "brand", "category", "internal_description", "public_name", "public_slug", "scent_family", "top_notes", "heart_notes", "base_notes", "intensity", "occasion", "longevity_guidance", "ingredients", "usage_instructions", "short_description", "long_description", "seo_title", "seo_description", "publication_status", "legal_approval_reference", "content_approval_reference", "media_approval_reference", "featured_rank"],
+    headers: ["product_key", "internal_name", "internal_slug", "brand", "category", "internal_description", "public_name", "public_slug", "scent_family", "audience", "season", "concentration", "top_notes", "heart_notes", "base_notes", "intensity", "occasion", "longevity_guidance", "sillage", "ingredients", "usage_instructions", "short_description", "long_description", "seo_title", "seo_description", "publication_status", "legal_approval_reference", "content_approval_reference", "media_approval_reference", "featured_rank"],
   },
   variants: {
     path: resolve(templateRoot, "catalog-variants-review.csv"),
@@ -123,6 +123,23 @@ async function validate() {
     const status = required(row, "publication_status");
     assert.ok(statuses.has(status), `invalid publication_status ${status}`);
     if (status === "approved" || status === "published") {
+      for (const field of [
+        "scent_family",
+        "audience",
+        "season",
+        "concentration",
+        "top_notes",
+        "heart_notes",
+        "base_notes",
+        "intensity",
+        "occasion",
+        "longevity_guidance",
+        "sillage",
+        "ingredients",
+        "usage_instructions",
+      ] as const) {
+        required(row, field);
+      }
       required(row, "legal_approval_reference");
       required(row, "content_approval_reference");
       required(row, "media_approval_reference");
@@ -242,10 +259,10 @@ async function upsertProduct(client: PoolClient, row: CsvRow): Promise<string> {
 
 async function upsertPublication(client: PoolClient, productId: string, row: CsvRow): Promise<void> {
   const status = required(row, "publication_status");
-  await client.query(`INSERT INTO product_publications (product_id, public_name, public_slug, scent_family, top_notes, heart_notes, base_notes, intensity, occasion, longevity_guidance, ingredients, usage_instructions, short_description, long_description, seo_title, seo_description, status, legal_approved_at, legal_approval_reference, content_approved_at, content_approval_reference, media_approved_at, media_approval_reference, published_at, featured_rank)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,($17::text)::publication_status,CASE WHEN $18::text IS NULL THEN NULL ELSE now() END,$18,CASE WHEN $19::text IS NULL THEN NULL ELSE now() END,$19,CASE WHEN $20::text IS NULL THEN NULL ELSE now() END,$20,CASE WHEN $17::text='published' THEN now() ELSE NULL END,$21)
-    ON CONFLICT (product_id) DO UPDATE SET public_name=excluded.public_name, public_slug=excluded.public_slug, scent_family=excluded.scent_family, top_notes=excluded.top_notes, heart_notes=excluded.heart_notes, base_notes=excluded.base_notes, intensity=excluded.intensity, occasion=excluded.occasion, longevity_guidance=excluded.longevity_guidance, ingredients=excluded.ingredients, usage_instructions=excluded.usage_instructions, short_description=excluded.short_description, long_description=excluded.long_description, seo_title=excluded.seo_title, seo_description=excluded.seo_description, status=excluded.status, legal_approved_at=excluded.legal_approved_at, legal_approval_reference=excluded.legal_approval_reference, content_approved_at=excluded.content_approved_at, content_approval_reference=excluded.content_approval_reference, media_approved_at=excluded.media_approved_at, media_approval_reference=excluded.media_approval_reference, published_at=excluded.published_at, featured_rank=excluded.featured_rank, updated_at=now()`, [
-      productId, required(row, "public_name"), required(row, "public_slug"), nullable(row.scent_family), notes(row.top_notes), notes(row.heart_notes), notes(row.base_notes), nullable(row.intensity), nullable(row.occasion), nullable(row.longevity_guidance), nullable(row.ingredients), nullable(row.usage_instructions), required(row, "short_description"), required(row, "long_description"), required(row, "seo_title"), required(row, "seo_description"), status, nullable(row.legal_approval_reference), nullable(row.content_approval_reference), nullable(row.media_approval_reference), row.featured_rank ? integer(row, "featured_rank", 0) : null,
+  await client.query(`INSERT INTO product_publications (product_id, public_name, public_slug, scent_family, audience, season, concentration, top_notes, heart_notes, base_notes, intensity, occasion, longevity_guidance, sillage, ingredients, usage_instructions, short_description, long_description, seo_title, seo_description, status, legal_approved_at, legal_approval_reference, content_approved_at, content_approval_reference, media_approved_at, media_approval_reference, published_at, featured_rank)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,($21::text)::publication_status,CASE WHEN $22::text IS NULL THEN NULL ELSE now() END,$22,CASE WHEN $23::text IS NULL THEN NULL ELSE now() END,$23,CASE WHEN $24::text IS NULL THEN NULL ELSE now() END,$24,CASE WHEN $21::text='published' THEN now() ELSE NULL END,$25)
+    ON CONFLICT (product_id) DO UPDATE SET public_name=excluded.public_name, public_slug=excluded.public_slug, scent_family=excluded.scent_family, audience=excluded.audience, season=excluded.season, concentration=excluded.concentration, top_notes=excluded.top_notes, heart_notes=excluded.heart_notes, base_notes=excluded.base_notes, intensity=excluded.intensity, occasion=excluded.occasion, longevity_guidance=excluded.longevity_guidance, sillage=excluded.sillage, ingredients=excluded.ingredients, usage_instructions=excluded.usage_instructions, short_description=excluded.short_description, long_description=excluded.long_description, seo_title=excluded.seo_title, seo_description=excluded.seo_description, status=excluded.status, legal_approved_at=excluded.legal_approved_at, legal_approval_reference=excluded.legal_approval_reference, content_approved_at=excluded.content_approved_at, content_approval_reference=excluded.content_approval_reference, media_approved_at=excluded.media_approved_at, media_approval_reference=excluded.media_approval_reference, published_at=excluded.published_at, featured_rank=excluded.featured_rank, updated_at=now()`, [
+      productId, required(row, "public_name"), required(row, "public_slug"), nullable(row.scent_family), nullable(row.audience), nullable(row.season), nullable(row.concentration), notes(row.top_notes), notes(row.heart_notes), notes(row.base_notes), nullable(row.intensity), nullable(row.occasion), nullable(row.longevity_guidance), nullable(row.sillage), nullable(row.ingredients), nullable(row.usage_instructions), required(row, "short_description"), required(row, "long_description"), required(row, "seo_title"), required(row, "seo_description"), status, nullable(row.legal_approval_reference), nullable(row.content_approval_reference), nullable(row.media_approval_reference), row.featured_rank ? integer(row, "featured_rank", 0) : null,
     ]);
 }
 

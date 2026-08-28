@@ -181,7 +181,7 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
           <Accordion className="mx-auto mt-14 max-w-4xl rounded-none border-black/25">
             <AccordionItem value="profile" className="border-black/20 data-open:bg-black/5">
               <AccordionTrigger className="min-h-16 px-5 font-display text-2xl hover:no-underline">Scent profile</AccordionTrigger>
-              <AccordionContent className="px-5 text-black/62">{product.publicationState === "published" ? `${product.family} · ${product.intensity} · ${product.occasion}. Top: ${product.notes.top.join(", ")}. Heart: ${product.notes.heart.join(", ")}. Base: ${product.notes.base.join(", ")}. ${product.longevity}` : "Scent profile details are coming soon."}</AccordionContent>
+              <AccordionContent className="px-5 text-black/62">{product.publicationState === "published" ? `${product.family} · ${product.concentration} · ${product.intensity}. For ${product.audience}; ${product.occasion}; ${product.season}. Top: ${product.notes.top.join(", ")}. Heart: ${product.notes.heart.join(", ")}. Base: ${product.notes.base.join(", ")}. ${product.longevity} Sillage: ${product.sillage}.` : "Scent profile details are coming soon."}</AccordionContent>
             </AccordionItem>
             <AccordionItem value="ingredients" className="border-black/20 data-open:bg-black/5">
               <AccordionTrigger className="min-h-16 px-5 font-display text-2xl hover:no-underline">Ingredients and usage</AccordionTrigger>

@@ -1,4 +1,5 @@
 import type { StorefrontProduct, StorefrontVariant } from "./catalog";
+import { isPreviewCatalogEnabled } from "./catalog-policy";
 import { listingWorkbookProducts } from "./listing-workbook-data";
 
 export const listingCollections = {
@@ -10,7 +11,7 @@ export const listingCollections = {
   inspired: {
     title: "Inspired collection",
     description:
-      "Perfume Aura fragrances listed with their approved Inspired by references. Composition details will appear when each edition is complete.",
+      "Fixed prices: 30 ml ₹600, 50 ml ₹800, and 100 ml ₹1,400. Composition details will appear when each edition is complete.",
   },
 } as const;
 
@@ -24,6 +25,7 @@ export const featuredListingSlugs = [
 
 function toStorefrontVariant(
   variant: (typeof listingWorkbookProducts)[number]["variants"][number],
+  previewPurchasable: boolean,
 ): StorefrontVariant {
   return {
     id: variant.id,
@@ -32,14 +34,16 @@ function toStorefrontVariant(
       variant.priceMinor == null
         ? null
         : { currency: "INR", amountMinor: variant.priceMinor },
-    purchasable: false,
+    purchasable: previewPurchasable && variant.priceMinor != null,
   };
 }
 
 function toStorefrontProduct(
   product: (typeof listingWorkbookProducts)[number],
+  previewCatalogEnabled: boolean,
 ): StorefrontProduct {
   const isSignature = product.collectionSlug === "signature";
+  const previewPurchasable = previewCatalogEnabled && !isSignature;
   return {
     id: product.id,
     slug: product.slug,
@@ -47,9 +51,13 @@ function toStorefrontProduct(
     eyebrow: isSignature ? "Signature Series" : "Inspired collection",
     collectionSlug: product.collectionSlug,
     family: "Details coming soon",
+    audience: "Details coming soon",
+    season: "Details coming soon",
+    concentration: "Details coming soon",
     intensity: "Details coming soon",
     occasion: "Details coming soon",
     longevity: "Details coming soon",
+    sillage: "Details coming soon",
     ingredients: "Details coming soon",
     usage: "Details coming soon",
     summary: isSignature
@@ -64,16 +72,24 @@ function toStorefrontProduct(
     imageAlt: product.imageAlt,
     accent: product.accent,
     publicationState: "listed",
-    variants: product.variants.map(toStorefrontVariant),
+    variants: product.variants.map((variant) =>
+      toStorefrontVariant(variant, previewPurchasable),
+    ),
   };
 }
 
-export function loadListedWorkbookProducts(): readonly StorefrontProduct[] {
-  return listingWorkbookProducts.map(toStorefrontProduct);
+export function loadListedWorkbookProducts(
+  previewCatalogEnabled = isPreviewCatalogEnabled(),
+): readonly StorefrontProduct[] {
+  return listingWorkbookProducts.map((product) =>
+    toStorefrontProduct(product, previewCatalogEnabled),
+  );
 }
 
-export function loadFeaturedListingProducts(): readonly StorefrontProduct[] {
-  const products = loadListedWorkbookProducts();
+export function loadFeaturedListingProducts(
+  previewCatalogEnabled = isPreviewCatalogEnabled(),
+): readonly StorefrontProduct[] {
+  const products = loadListedWorkbookProducts(previewCatalogEnabled);
   return featuredListingSlugs.flatMap((slug) => {
     const product = products.find((candidate) => candidate.slug === slug);
     return product ? [product] : [];

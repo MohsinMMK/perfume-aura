@@ -54,7 +54,15 @@ export function CartPageContent() {
           <span>Subtotal</span>
           <strong>{formatMoney(cart.subtotal)}</strong>
         </div>
-        <p className="mt-4 text-xs leading-5 text-[var(--aura-text-muted-on-ivory)]">Shipping and tax details are not available yet.</p>
+        <p className="mt-4 text-xs leading-5 text-[var(--aura-text-muted-on-ivory)]">Shipping and tax details are not included in this preview.</p>
+        <div className="mt-5 border-y border-black/20 py-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em]">How checkout will work</p>
+          <ol className="mt-3 grid gap-2 text-sm text-[var(--aura-text-muted-on-ivory)]">
+            <li><strong className="text-[var(--aura-ink)]">1.</strong> Sign in with a verified account.</li>
+            <li><strong className="text-[var(--aura-ink)]">2.</strong> Confirm your delivery address.</li>
+            <li><strong className="text-[var(--aura-ink)]">3.</strong> Complete prepaid UPI in Cashfree.</li>
+          </ol>
+        </div>
         <Button
           render={cart.checkoutEnabled ? <Link href="/checkout" /> : undefined}
           className="mt-6 min-h-12 w-full rounded-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)] focus-visible:ring-0"
@@ -62,7 +70,11 @@ export function CartPageContent() {
         >
           {cart.checkoutEnabled ? "Continue to checkout" : "Checkout not yet available"}
         </Button>
-        <p className="mt-3 text-xs leading-5 text-[var(--aura-text-muted-on-ivory)]">{cart.checkoutBlockReason}</p>
+        {!cart.checkoutEnabled ? (
+          <p className="mt-3 text-xs leading-5 text-[var(--aura-text-muted-on-ivory)]">
+            {cart.checkoutBlockReason} No payment will be requested while checkout is closed.
+          </p>
+        ) : null}
       </aside>
     </div>
   );

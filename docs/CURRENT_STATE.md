@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-27 14:35:04 UTC**
+Last refreshed: **2026-08-28 06:23:56 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -252,6 +252,40 @@ identity only and are not India-counsel clearance. Production Neon was not
 imported or migrated. Inner pages use the wordmark SVG only; the home portal
 keeps the bottle animation.
 
+The 27 August B02 working tree now stages approved fixed prices and a flags-off
+cart preview for the 48 Inspired products: 144 variants use ₹600 / ₹800 /
+₹1,400 prices, while all 42 Signature variants remain price-pending and
+non-purchasable. The fixed Inspired prices can appear on the discovery surface,
+but cart mutation remains limited to development or the explicit preview flag.
+The cart drawer and cart page expose the planned verified account, delivery,
+and Cashfree UPI sequence without enabling checkout or requesting payment.
+Desktop, portrait mobile, short portrait, and landscape browser checks
+confirmed variant selection, quantity/subtotal recalculation, the Signature
+lock, zero horizontal overflow, and zero current console errors.
+The local homepage keeps `Scent guide` in primary navigation, sends the compact
+`Get scent` action to the full shop, and sends the fallback `Choose your scent`
+hero action to the 48-product Inspired-filtered shop while keeping both lower
+fragrance-guide actions on `/fragrance-guide`.
+This is local reviewed preview behavior only; production remains unchanged and
+every commerce and staff-security release flag remains closed.
+
+The customer account and private operations sign-in surfaces are also staged
+for a flags-off UX release. Customer sign-in, registration, recovery,
+verification, checkout-return, and signed-in account navigation use a focused
+storefront flow, while the operations login explicitly identifies owner and
+invited-staff access. Disabled customer-auth routes still avoid Better Auth and
+Neon initialization, and neither customer auth nor staff registration is
+enabled by this presentation change.
+
+Migration `0015_catalog-publication-profile` passed a normal copy-on-write Neon
+proof on branch `release-0015-catalog-profile-20260828`
+(`br-polished-meadow-azw1tecy`, expires 2026-08-30 00:00:00 UTC). The branch
+advanced from 15 to 16 migrations, added `audience`, `season`, `concentration`,
+and `sillage` to the empty `product_publications` table, and both restricted
+runtime grant scripts returned zero drift. Production remains at its prior
+migration state until the protected source is merged and the direct-owner gate
+is run; automatic runtime deployment must remain blocked until then.
+
 The first live verifier exposed stale HCDN homepage HTML from source
 `917499d7dae04aa04697a7af7fd3d062c029c7f6` because the statically rendered
 root advertised a one-year shared-cache lifetime. A scoped cache clear restored
@@ -496,11 +530,13 @@ Next actions:
 1. Review Google Search Console indexing and coverage after Google recrawls the
    successfully submitted four-URL sitemap. Ownership verification, sitemap
    submission, and IndexNow discovery notification are complete.
-2. Obtain India-counsel clearance and owner-approved catalog facts: Signature
-   prices, SKUs, costs, opening stock, media, and structured scent content. On
-   2026-08-27 the owner confirmed the 69 currently listed names (48 inspired and
-   21 Signature) as the first counsel-review batch; the other 34 incomplete
-   inspired rows remain unchanged and excluded. B01 preparation includes the
+2. Obtain India-counsel clearance and owner-approved catalog facts: exact
+   Signature prices, SKUs, costs, opening stock, media, and structured scent
+   content. The fixed-price 48-product Inspired cart-preview batch is staged;
+   the 21 Signature products remain separately price-pending. On 2026-08-27 the
+   owner confirmed all 69 currently listed names as the first counsel-review
+   batch; the other 34 incomplete inspired rows remain unchanged and excluded.
+   B01 preparation includes the
    [69-name review CSV](review-packets/2026-08-27-b01-69-name-review.csv), exact
    [legal-surface inventory](review-packets/2026-08-27-b01-legal-surface-inventory.md),
    frozen catalog digests, and the finding that the live discovery shop exposes

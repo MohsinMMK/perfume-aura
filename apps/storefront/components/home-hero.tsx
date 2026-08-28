@@ -221,10 +221,10 @@ export function HomeHero({
 
           <div ref={ctaRef} className="relative z-30 flex justify-center px-1 py-3 before:absolute before:inset-x-0 before:top-1/2 before:border-t before:border-dashed before:border-white/20 lg:py-5">
             <Button
-              render={<Link href={activeProduct.slug ? `/products/${activeProduct.slug}` : "/fragrance-guide"} />}
+              render={<Link href={activeProduct.slug ? `/products/${activeProduct.slug}` : "/shop?collection=inspired"} />}
               nativeButton={false}
               size="lg"
-              aria-label={activeProduct.slug ? `View scent: ${activeProduct.name}` : "Choose your scent with the fragrance guide"}
+              aria-label={activeProduct.slug ? `View scent: ${activeProduct.name}` : "Shop the Inspired collection"}
               className="aura-cream-action relative z-10 min-h-16 w-full max-w-xs rounded-[var(--aura-radius)] px-8 font-display text-xl tracking-[0.02em] transition-colors"
             >
               {activeProduct.slug ? "View scent" : "Choose your scent"}

@@ -1015,10 +1015,10 @@ async function verifyCommerceFoundation() {
   const decisionIds = decisionRows.map(([id]) => id);
   assert.deepEqual(
     decisionIds,
-    Array.from({ length: 30 }, (_, index) =>
+    Array.from({ length: 31 }, (_, index) =>
       `COM-ADR-${String(index + 1).padStart(3, "0")}`,
     ),
-    "commerce decision IDs must be unique and sequential through COM-ADR-030",
+    "commerce decision IDs must be unique and sequential through COM-ADR-031",
   );
   for (const [id, date, status, decision, reason] of decisionRows) {
     assertCalendarDate(date, `${id} decision date`);
@@ -1060,6 +1060,7 @@ async function verifyCommerceFoundation() {
     ["COM-ADR-028", "Accepted"],
     ["COM-ADR-029", "Accepted"],
     ["COM-ADR-030", "Accepted"],
+    ["COM-ADR-031", "Accepted"],
   ]) {
     assert.equal(
       decisionStatuses.get(id),
@@ -1115,6 +1116,10 @@ async function verifyCommerceFoundation() {
     [
       "COM-ADR-030",
       "Launch India/INR commerce with anonymous browsing and cart creation, required verified customer authentication at checkout, Google as the primary sign-in path with verified email/password fallback, Cashfree prepaid UPI intent/QR (including Google Pay where Cashfree and the customer's device support it), no COD, configurable flat shipping, and manual courier fulfillment.",
+    ],
+    [
+      "COM-ADR-031",
+      "Stage the 48 Inspired products as the first fixed-price cart-preview batch at 30 ml ₹600, 50 ml ₹800, and 100 ml ₹1,400. Keep all 21 Signature products visible but price-pending and non-purchasable until one exact owner-approved price is supplied for each 50 ml and 105 ml variant.",
     ],
   ]);
   for (const [id, , , decision] of decisionRows) {

@@ -14,6 +14,7 @@ import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 import { StorefrontMotion } from "./storefront-motion";
 import { GoogleOneTapPrompt } from "./google-one-tap-prompt";
+import { StorefrontRouteChrome } from "./storefront-route-chrome";
 import { WhatsAppContactAction } from "./whatsapp-contact-action";
 
 export function StorefrontShell({ children }: Readonly<{ children: ReactNode }>) {
@@ -39,8 +40,10 @@ export function StorefrontShell({ children }: Readonly<{ children: ReactNode }>)
       </a>
       <SiteHeader customerAuthEnabled={customerAuthEnabled} />
       <main id="main-content">{children}</main>
-      <SiteFooter />
-      <WhatsAppContactAction />
+      <StorefrontRouteChrome>
+        <SiteFooter />
+        <WhatsAppContactAction />
+      </StorefrontRouteChrome>
       <CartDrawer />
     </CartProvider>
   );

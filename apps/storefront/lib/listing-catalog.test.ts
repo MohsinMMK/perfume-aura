@@ -59,6 +59,36 @@ describe("storefront listing workbook", () => {
     );
   });
 
+  it("makes only fixed-price Inspired variants purchasable in catalog preview", () => {
+    const products = loadListedWorkbookProducts(true);
+    const inspired = products.filter(
+      (product) => product.collectionSlug === "inspired",
+    );
+    const signature = products.filter(
+      (product) => product.collectionSlug === "signature",
+    );
+
+    assert.equal(inspired.length, 48);
+    assert.equal(
+      inspired.flatMap((product) => product.variants).length,
+      144,
+    );
+    assert.ok(
+      inspired.every((product) =>
+        product.variants.every(
+          (variant) => variant.purchasable && variant.price != null,
+        ),
+      ),
+    );
+    assert.ok(
+      signature.every((product) =>
+        product.variants.every(
+          (variant) => !variant.purchasable && variant.price == null,
+        ),
+      ),
+    );
+  });
+
   it("features the three photographed Signature scents", () => {
     assert.deepEqual(
       loadFeaturedListingProducts().map((product) => product.slug),

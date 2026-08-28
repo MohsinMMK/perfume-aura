@@ -32,6 +32,7 @@ function LoginFormInner() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [error, setError] = useState<string | null>(
     searchParams.get("error") === "access-denied"
       ? "Operations access is required."
@@ -91,42 +92,53 @@ function LoginFormInner() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="staff@example.com"
+            placeholder="name@company.com"
+            className="min-h-11"
             aria-invalid={error ? true : undefined}
           />
         </Field>
 
         <Field data-invalid={error ? true : undefined}>
-          <FieldLabel htmlFor="password">Password</FieldLabel>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            minLength={AUTH_PASSWORD_MIN_LENGTH}
-            maxLength={AUTH_PASSWORD_MAX_LENGTH}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            aria-invalid={error ? true : undefined}
-          />
+          <div className="flex items-center justify-between gap-4">
+            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <Link
+              href="/forgot-password"
+              className="inline-flex min-h-11 items-center rounded-md px-2 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
+          <div className="relative">
+            <Input
+              id="password"
+              name="password"
+              type={passwordVisible ? "text" : "password"}
+              autoComplete="current-password"
+              required
+              minLength={AUTH_PASSWORD_MIN_LENGTH}
+              maxLength={AUTH_PASSWORD_MAX_LENGTH}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              className="min-h-11 pr-20"
+              aria-invalid={error ? true : undefined}
+            />
+            <button
+              type="button"
+              aria-label={passwordVisible ? "Hide password" : "Show password"}
+              className="absolute inset-y-0 right-1 min-w-16 rounded-md px-3 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-[-3px]"
+              onClick={() => setPasswordVisible((visible) => !visible)}
+            >
+              {passwordVisible ? "Hide" : "Show"}
+            </button>
+          </div>
         </Field>
 
         {error ? <FieldError>{error}</FieldError> : null}
 
-        <div className="text-right">
-          <Link
-            href="/forgot-password"
-            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-          >
-            Forgot password?
-          </Link>
-        </div>
-
         <Button
           type="submit"
-          className="w-full"
+          className="min-h-11 w-full"
           disabled={pending}
           focusableWhenDisabled={pending}
         >

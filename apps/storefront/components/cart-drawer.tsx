@@ -39,7 +39,7 @@ export function CartDrawer() {
         </SheetClose>
         <SheetHeader className="border-b border-black/15 px-5 py-5 pr-20 sm:px-7 sm:pr-24">
           <SheetTitle className="font-display text-4xl text-[var(--aura-ink)]">
-            Your selection
+            Your cart
           </SheetTitle>
           <SheetDescription className="text-[var(--aura-text-muted-on-ivory)]">
             Price and availability are checked again whenever your cart changes.
@@ -130,16 +130,23 @@ export function CartDrawer() {
                 {cart ? formatMoney(cart.subtotal) : "₹0"}
               </strong>
             </div>
+            <div className="mb-4 grid grid-cols-3 gap-2 border-y border-black/15 py-3 text-center text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-[var(--aura-text-muted-on-ivory)]" aria-label="Checkout steps">
+              <span>1 · Sign in</span>
+              <span>2 · Delivery</span>
+              <span>3 · UPI</span>
+            </div>
             <Button
-              render={<Link href="/cart" />}
+              render={<Link href={cart?.checkoutEnabled ? "/checkout" : "/cart"} />}
               nativeButton={false}
               className="min-h-16 rounded-[var(--aura-radius)] bg-[var(--aura-ink)] font-display text-xl text-[var(--aura-ivory)] hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)] focus-visible:ring-0"
               onClick={() => setDrawerOpen(false)}
             >
-              Review cart
+              {cart?.checkoutEnabled ? "Continue to checkout" : "Review cart"}
             </Button>
             <p className="mt-2 text-xs leading-5 text-[var(--aura-text-muted-on-ivory)]">
-              Online checkout is not available yet.
+              {cart?.checkoutEnabled
+                ? "Sign in, confirm delivery, then choose an available UPI option in Cashfree."
+                : "Online checkout and payment remain closed."}
             </p>
           </SheetFooter>
         ) : null}
