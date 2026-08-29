@@ -5,10 +5,13 @@ Status: prepared for India-counsel review; no legal approval is recorded.
 ## Scope
 
 The owner supplied a replacement catalog containing 94 main-list names and 20
-Signature Series names. The staged discovery projection contains 45 previously
-approved `Inspired by …` title mappings that still identify a replacement row,
-plus all 20 exact Signature names. The remaining 49 main-list rows are blank and
-unlistable until their reference mappings are explicitly approved.
+Signature Series names. The staged discovery projection contains 45
+owner-approved `owner_approved_title_reference` mappings that still identify a
+replacement row, plus all 20 exact Signature names. The other 49 main-list rows
+remain unlistable: 4 are `family_approved_exact_pending`, 1 is `unresolved`, and
+44 are `needs_owner_input`. Keep their public titles and slugs blank until exact
+mapping and counsel review are complete; mapping identity approval is not legal
+approval.
 
 This packet records names and surfaces for review. It does not authorize
 trademark use, a disclaimer, bottle or packaging references, SEO/advertising,
