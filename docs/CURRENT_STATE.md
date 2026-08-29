@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-28 15:19:39 UTC**
+Last refreshed: **2026-08-29 16:22:52 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -33,29 +33,27 @@ and ignored local environment files.
 ## Exact releases and automation
 
 The storefront and ops both run exact source
-`9dd00abc0ca8fcf647b2ea29633f0ca7d9017742`. Ops uses immutable image digest
-`sha256:1de58cd43a023ca0b45dec0230713583d581fff8e41b5f69a19caafa2d4bedcf`.
+`258c121d94428829f48a36e25be2b52c9afee689`. Ops uses immutable image digest
+`sha256:eecd280c5035074ed12441dbb4895c879f81136ea3255283978ea1da2abfbf43`.
 Workflow run
-[`33182832227`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33182832227)
-attempt 3 passed quality, all 101 disposable-PostgreSQL integration tests,
-verified packaging, direct Hostinger archive deployment, immutable VPS ops
-deployment, and both exact live verifiers. The storefront archive SHA-256 is
-`f1b54065b94cabe6995e893f20cfcd3a9c8d02a5cc082561aa96aee1265b6894`.
+[`33262248611`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33262248611)
+passed quality, all 101 disposable-PostgreSQL integration tests, verified
+packaging, direct Hostinger archive deployment, immutable VPS ops deployment,
+and both exact live verifiers. Hostinger build
+`01a04e4f-45e4-70b4-a124-8bb0a4bec612` completed at 2026-08-29 16:17:24 UTC.
 Independent acceptance verified the exact source on both surfaces, seven
-discovery sitemap URLs, real immutable Next assets, storefront health and
+discovery sitemap URLs, a real immutable Next asset, storefront health and
 release locks, ops live/ready and unauthenticated session, a real `404`, and
 the path- and query-preserving `www` redirect.
 
-Fresh 1440-by-900 and 390-by-844 production browser checks confirmed the home
-CTA routing, Inspired-filtered discovery, loaded product imagery, the local
-cart preview and subtotal, the full-shop mobile `Get scent` route, and the
-customer sign-in presentation with its accounts-closed notice. The checked
-surfaces had zero horizontal overflow, zero broken visible images, and zero
-console errors. Customer cart mutation, checkout, payment, authentication, and
-all staff-security release flags remain closed. The obsolete
-`hostinger-storefront-production` and `hostinger-ops-production` remote branches
-were deleted only after this acceptance; the remote repository now contains
-only `main`.
+Fresh 1440-by-900 and 390-by-844 production browser checks confirmed exactly
+65 shop cards: 45 Inspired and 20 Signature. Samples proved the ₹450 and ₹600
+Inspired tiers, Regent Noir at ₹1,200 / ₹2,200, and Oud of Dubai at
+₹1,800 / ₹3,000. Both viewports had zero horizontal overflow and zero console
+errors or warnings. No Neon catalog import or migration occurred, and public
+catalog publication, checkout, payment, customer authentication, inquiries,
+and all staff-security release flags remain closed. The remote repository
+continues to contain only `main`.
 
 PR #77 merged the responsive shop-discovery release. It added compact animated
 collection, size, sort, and instant-search controls; collection-aware size
@@ -251,41 +249,20 @@ mutation routes returned `404` before auth/database initialization; and a
 cross-origin cart mutation returned `403` while the same-origin request reached
 normal validation.
 
-A production `/shop` check after that release shows the 69-product launch
-listing with URL-driven search, Signature / Inspired / Featured segments, size
-filters, and name sort. Incomplete inspired rows such as Heaven Rose remain
-absent. Card hover shows a disabled Add to cart control and a View product
-action; purchase still cannot complete. Checkout, public release, customer
-authentication, and inquiries stay closed. Inspired-by titles are listing
-identity only and are not India-counsel clearance. Production Neon was not
-imported or migrated. Inner pages use the wordmark SVG only; the home portal
-keeps the bottle animation.
+Production `/shop` now shows the replacement 65-product discovery listing with
+URL-driven search, collection and size filters, and name sorting. It contains
+45 owner-approved Inspired title mappings plus all 20 Signature names. The
+other 49 main-list rows remain unlistable pending exact mapping and counsel
+review. Inspired products use the supplied ₹600 / ₹800 / ₹1,400 tier for rows
+1-16 and ₹450 / ₹650 / ₹1,200 for later approved rows. Signature products use
+₹1,200 / ₹2,200 except Oud of Dubai and Visionnaire at ₹1,800 / ₹3,000.
 
-The B02 flags-off production release now presents approved fixed prices for the
-48 Inspired products: 144 variants use ₹600 / ₹800 /
-₹1,400 prices, while all 42 Signature variants remain price-pending and
-non-purchasable. The fixed Inspired prices can appear on the discovery surface,
-but cart mutation remains limited to development or the explicit preview flag.
-The cart drawer and cart page expose the planned verified account, delivery,
-and Cashfree UPI sequence without enabling checkout or requesting payment.
-Desktop, portrait mobile, short portrait, and landscape browser checks
-confirmed variant selection, quantity/subtotal recalculation, the Signature
-lock, zero horizontal overflow, and zero current console errors.
-The live homepage keeps `Scent guide` in primary navigation, sends the compact
-`Get scent` action to the full shop, and sends the fallback `Choose your scent`
-hero action to the 48-product Inspired-filtered shop while keeping both lower
-fragrance-guide actions on `/fragrance-guide`.
-Production exposes the approved presentation and prices without enabling cart
-mutation, checkout, payment, customer auth, or any staff-security release flag.
-
-On 2026-08-29 the owner supplied a replacement catalog: 94 main products and 20
-Signature products with exact size prices. The repository catalog, staged
-65-product discovery projection (45 carried Inspired titles plus 20 Signature
-names), 114-product/322-variant intake workbook, legal-review CSV, documentation,
-tests, and deterministic verifier have been updated locally. This is not a
-production release: the live storefront remains the earlier 69-product state
-described above, Neon has not been imported or migrated, and public catalog,
-checkout, customer-auth, inquiry, and staff-security flags remain closed.
+PR #90 also published the canonical 114-product / 322-variant source files,
+owner source artifacts, B01 legal-review inventory and CSV, and B02 intake
+workbook. These are repository and discovery-presentation changes only:
+Inspired-by title mappings are not India-counsel clearance, production Neon was
+not imported or migrated, and checkout cannot complete. The public-catalog,
+checkout, customer-auth, inquiry, and staff-security gates remain closed.
 
 The customer account and private operations sign-in presentation is also live
 as a flags-off UX release. Customer sign-in, registration, recovery,
@@ -356,8 +333,9 @@ remains monitoring infrastructure.
 
 ## Release locks and acceptance
 
-The 69-product launch listing is live. Sellable public catalog publication,
-checkout approval, customer authentication, and inquiries remain closed.
+The 65-product replacement discovery listing is live. Sellable public catalog
+publication, checkout approval, customer authentication, and inquiries remain
+closed.
 Brand discovery is separated from commerce release. The request-time discovery
 sitemap contains exactly `/`, `/fragrance-guide`, `/about`, `/faq`,
 `/guides/perfume-for-hyderabad-weather`, `/guides/fragrance-families`, and
@@ -394,10 +372,9 @@ Fresh 390 px mobile and 768 px tablet browser sessions showed no horizontal
 overflow or console errors. Mobile renders the cream `#f5e4c7` wordmark from
 first paint with the bottle SVG absent; tablet and desktop retain the
 full-mark-to-wordmark animation, transparent compact background, and no
-backdrop blur. Fresh ops sessions rendered the login
-surface from exact VPS source `9dd00abc0ca8fcf647b2ea29633f0ca7d9017742`;
-workflow and independent exact-SHA acceptance passed without changing public
-storefront release locks.
+backdrop blur. Fresh ops acceptance rendered the login surface from exact VPS
+source `258c121d94428829f48a36e25be2b52c9afee689`; workflow and independent
+exact-SHA acceptance passed without changing public storefront release locks.
 
 The historical Hostinger shared-process incident is no longer on the public
 ops request path, but it remains unresolved provider evidence for the shared
@@ -579,6 +556,12 @@ runtime merge, and exact flags-off production deployment have now completed.
   URLs, the `www` redirect, live and ready ops endpoints, the exact release,
   real `404` behavior, and a real static asset. No database migration or
   release flag changed.
+- PR #90 deployed the owner-supplied replacement catalog as exact source
+  `258c121d94428829f48a36e25be2b52c9afee689`. Workflow run `33262248611`
+  deployed and exactly verified both surfaces. Independent endpoint and browser
+  acceptance confirmed the 45 Inspired / 20 Signature listing, supplied price
+  tiers, no overflow, and no console warnings. No Neon import, migration, or
+  release-flag change occurred.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - After fresh exact-source, endpoint, provider, and browser acceptance, the
   obsolete `hostinger-storefront-production` and `hostinger-ops-production`
@@ -603,8 +586,10 @@ Next actions:
    remain unlistable pending mapping. B01 preparation includes the
    [114-name review CSV](review-packets/2026-08-29-b01-114-name-review.csv),
    [replacement legal-surface inventory](review-packets/2026-08-29-b01-114-name-legal-surface-inventory.md),
-   and frozen catalog digests. Legal approval remains pending. Do not import,
-   migrate, publish, or deploy this replacement catalog before its owning gates.
+   and frozen catalog digests. Legal approval remains pending. The fail-closed
+   discovery projection is deployed, but do not import or migrate the catalog,
+   publish the gated Neon projection, enable checkout, or open any release flag
+   before its owning gates pass.
 3. Rotate the dedicated Hostinger archive-deployment token before its
    2026-09-28 expiry. Supply and accept the remaining provider identities:
    Google OAuth production client, Hostinger SMTP sender credentials and
