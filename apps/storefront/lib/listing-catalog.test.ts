@@ -15,23 +15,28 @@ function parseCsv(text: string): string[][] {
 }
 
 describe("storefront listing workbook", () => {
-  it("lists 20 Signature and 45 Inspired products and hides incomplete rows", () => {
+  it("lists all 114 products across Signature, Inspired, and Unknown", () => {
     const products = loadListedWorkbookProducts();
-    assert.equal(products.length, 65);
+    assert.equal(products.length, 114);
     assert.equal(
       products.filter((product) => product.collectionSlug === "signature").length,
       20,
     );
     assert.equal(
       products.filter((product) => product.collectionSlug === "inspired").length,
-      45,
+      79,
+    );
+    assert.equal(
+      products.filter((product) => product.collectionSlug === "unknown").length,
+      15,
     );
     assert.ok(products.every((product) => product.publicationState === "listed"));
     assert.ok(products.every((product) => product.variants.every((variant) => !variant.purchasable)));
     assert.equal(
-      products.some((product) => /heaven rose|green creed|pawake/i.test(product.name)),
-      false,
+      products.some((product) => product.slug === "inspired-by-creed-green-irish-tweed"),
+      true,
     );
+    assert.ok(products.some((product) => product.slug === "heaven-rose" && product.collectionSlug === "unknown"));
     assert.ok(products.some((product) => product.slug === "inspired-by-louis-vuitton-ombre-nomade"));
     assert.ok(products.some((product) => product.slug === "regent-noir"));
   });
@@ -87,11 +92,17 @@ describe("storefront listing workbook", () => {
       (product) => product.collectionSlug === "signature",
     );
 
-    assert.equal(inspired.length, 45);
+    const unknown = products.filter(
+      (product) => product.collectionSlug === "unknown",
+    );
+
+    assert.equal(inspired.length, 79);
     assert.equal(
       inspired.flatMap((product) => product.variants).length,
-      135,
+      237,
     );
+    assert.equal(unknown.length, 15);
+    assert.equal(unknown.flatMap((product) => product.variants).length, 45);
     assert.ok(
       inspired.every((product) =>
         product.variants.every(
@@ -101,6 +112,13 @@ describe("storefront listing workbook", () => {
     );
     assert.ok(
       signature.every((product) =>
+        product.variants.every(
+          (variant) => variant.purchasable && variant.price != null,
+        ),
+      ),
+    );
+    assert.ok(
+      unknown.every((product) =>
         product.variants.every(
           (variant) => variant.purchasable && variant.price != null,
         ),
@@ -125,11 +143,20 @@ describe("storefront listing workbook", () => {
     const fragranceIndex = header.indexOf("reference_fragrance");
     const mappingIndex = header.indexOf("reference_mapping_status");
     const listed = rows.filter((row) => row[mappingIndex] === "owner_approved_title_reference");
-    assert.equal(listed.length, 45);
+    assert.equal(listed.length, 79);
     for (const row of listed) {
       const expected = inspiredListingTitle(row[brandIndex] ?? "", row[fragranceIndex] ?? "");
       assert.equal(row[nameIndex], expected);
       assert.equal(row[slugIndex], listingSlug(expected));
     }
+  });
+
+  it("keeps temporary Unknown names literal and separate from Inspired mappings", () => {
+    const products = loadListedWorkbookProducts();
+    const unknown = products.filter((product) => product.collectionSlug === "unknown");
+    assert.equal(unknown.length, 15);
+    assert.ok(unknown.some((product) => product.name === "Hugo Boss"));
+    assert.ok(unknown.some((product) => product.name === "Oud Saffron"));
+    assert.ok(unknown.every((product) => !product.name.startsWith("Inspired by ")));
   });
 });

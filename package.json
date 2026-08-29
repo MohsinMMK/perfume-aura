@@ -28,6 +28,7 @@
     "commerce:verify": "node scripts/verify-commerce-foundation.mjs",
     "commerce:verify:self-test": "node scripts/verify-commerce-foundation.mjs --self-test",
     "currency:audit": "pnpm --filter @perfume-aura/db audit:inr",
+    "catalog:reconcile-names": "node scripts/reconcile-catalog-names.mjs && node scripts/generate-listing-workbook-data.mjs",
     "catalog:import": "pnpm --filter @perfume-aura/db catalog:import",
     "db:generate": "pnpm --filter @perfume-aura/db generate",
     "db:migrate": "pnpm --filter @perfume-aura/db migrate",

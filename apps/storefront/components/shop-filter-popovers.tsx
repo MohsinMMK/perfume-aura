@@ -37,6 +37,7 @@ const collectionOptions = [
   { value: "all", label: "All" },
   { value: "signature", label: "Signature" },
   { value: "inspired", label: "Inspired" },
+  { value: "unknown", label: "Unknown" },
 ] as const satisfies readonly Readonly<{
   value: ShopListingSegment;
   label: string;

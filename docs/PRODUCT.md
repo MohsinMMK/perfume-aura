@@ -66,10 +66,12 @@ capability.
 - Main-list rows 17–94: 30 ml ₹450, 50 ml ₹650, 100 ml ₹1,200.
 - Signature scents: 50 ml and 105 ml only, using the exact owner-supplied
   per-product prices recorded in the catalog variants.
-- Storefront listing titles for the 45 carried mapped inspired rows use
-  `Inspired by <brand> <reference>` (COM-ADR-029). That is listing identity,
-  not legal clearance or sale approval. The other 49 inspired rows stay
-  unlistable.
+- Storefront listing titles for all 79 researched Inspired rows use
+  `Inspired by <brand> <reference>` (COM-ADR-029 / 033). The remaining 15
+  main-list rows use their exact supplied names in the temporary `Unknown`
+  collection because no single defensible brand/reference mapping was found.
+  This is listing identity and organization, not legal clearance or sale
+  approval.
 - 10 ml and discovery sets are excluded from public commerce until a separate
   sample format is approved.
 

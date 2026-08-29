@@ -109,7 +109,7 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
             }}
           >
             <div className="absolute inset-0 bg-black/20 backdrop-blur-xl sm:hidden" aria-hidden="true" />
-            <Image src={product.image} alt={product.imageAlt} fill preload sizes="(max-width: 639px) calc(100vw - 0.5rem), (max-width: 1024px) 100vw, 50vw" className="object-contain object-center sm:object-cover" />
+            <Image src={product.image} alt={product.imageAlt} fill loading="eager" fetchPriority="high" sizes="(max-width: 639px) calc(100vw - 0.5rem), (max-width: 1024px) 100vw, 50vw" className="object-contain object-center sm:object-cover" />
           </div>
           <div className="absolute inset-x-3 bottom-2 flex items-center justify-between text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-white drop-shadow-[0_1px_8px_rgba(16,11,6,.9)] sm:inset-x-4 sm:bottom-4 sm:text-[0.58rem] sm:tracking-[0.15em]">
             <span>Perfume Aura</span>
@@ -120,7 +120,7 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
         <div className="flex items-start px-5 sm:items-end sm:px-10 sm:py-12 lg:min-h-[100svh] lg:px-3 lg:pb-3 lg:pt-24 xl:px-5">
           <div className="w-full">
             <div className="lg:text-center">
-              <Link href="/shop" className="inline-flex min-h-11 items-center font-display text-sm text-[color:rgb(245_228_199_/_62%)] underline-offset-8 hover:underline sm:min-h-8 sm:text-lg">Shop / {product.collectionSlug === "signature" ? "Signature" : product.collectionSlug === "inspired" ? "Inspired" : "Collection"}</Link>
+              <Link href="/shop" className="inline-flex min-h-11 items-center font-display text-sm text-[color:rgb(245_228_199_/_62%)] underline-offset-8 hover:underline sm:min-h-8 sm:text-lg">Shop / {product.collectionSlug === "signature" ? "Signature" : product.collectionSlug === "inspired" ? "Inspired" : product.collectionSlug === "unknown" ? "Unknown" : "Collection"}</Link>
               <h1 className="font-display text-[clamp(2.25rem,10vw,2.75rem)] leading-[0.86] text-balance sm:mt-1 sm:text-[clamp(3.6rem,7vw,7.8rem)] sm:leading-[0.77] lg:mx-auto lg:max-w-[8.5ch]">{product.name}</h1>
               <p className="mt-1 hidden max-w-xl text-xs leading-4 text-[color:rgb(245_228_199_/_62%)] min-[360px]:line-clamp-2 sm:mt-3 sm:block sm:text-sm sm:leading-6 lg:mx-auto lg:max-w-[30rem]">{product.summary}</p>
             </div>

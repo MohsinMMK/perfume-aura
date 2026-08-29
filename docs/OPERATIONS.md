@@ -149,8 +149,9 @@ STOREFRONT_CHECKOUT_RELEASE_APPROVED
 STOREFRONT_INQUIRIES_ENABLED
 ```
 
-The staged shop listing of 20 Signature and 45 Inspired-by titles comes from the launch
-workbook and does not require `STOREFRONT_PREVIEW_CATALOG` or
+The staged shop listing of 20 Signature, 79 Inspired-by, and 15 temporary
+Unknown titles comes from the launch workbook; these listings do not require
+`STOREFRONT_PREVIEW_CATALOG` or
 `STOREFRONT_PUBLIC_RELEASE`. Those flags still gate in-memory preview carts and
 Neon-published sellable products. Do not import the launch workbook into
 production Neon or open checkout without a separate authorized gate.

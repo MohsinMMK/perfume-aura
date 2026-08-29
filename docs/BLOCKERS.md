@@ -59,9 +59,10 @@ Preparation completed:
 - [x] Define a surface-specific counsel response format and preserve the
       repository's fail-closed handoff.
 - [x] Record the owner's 29 August 2026 replacement scope in the separate
-      [`114-name review CSV`](review-packets/2026-08-29-b01-114-name-review.csv):
-      45 carried inspired titles and 20 Signature names are staged; the other
-      49 main-list rows remain blank and excluded.
+      [`114-name review CSV`](review-packets/2026-08-29-b01-114-name-review.csv)
+      and reconcile the former 49-name gap in the
+      [`B03 research packet`](review-packets/2026-08-29-b03-49-name-reconciliation.md):
+      79 Inspired, 15 temporary Unknown, and 20 Signature names are staged.
 
 - [ ] Counsel reviews public product names and `Inspired by …` treatment.
 - [ ] Counsel approves exact disclaimer wording and placement.
@@ -90,13 +91,14 @@ imported without guessing product or financial facts.
 discovery-only listing. The replacement
 [`B02 catalog intake workbook`](review-packets/2026-08-29-b02-114-product-catalog-intake.xlsx)
 contains 114 products and all 322 owner-supplied retail prices. Its staged code
-projection contains 45 carried Inspired titles and 20 Signature names; the
-other 49 inspired rows remain unlistable. No replacement row is approved for
+projection contains all 79 researched Inspired titles, 15 temporary Unknown
+titles, and 20 Signature names. No replacement row is approved for
 production import or publication, and SKU, cost, stock, media, structured scent
 facts, and legal approval remain incomplete.
 
-- [x] Record the four family-pending rows, one unresolved row, and 44
-      owner-input rows as unlistable.
+- [x] Research the 49 previously incomplete main-list rows; map 34 to Inspired
+      and place 15 ambiguous/generic names in temporary Unknown without
+      changing their supplied prices.
 - [x] Apply ₹600 / ₹800 / ₹1,400 to main rows 1–16 and
       ₹450 / ₹650 / ₹1,200 to main rows 17–94.
 - [x] Apply every supplied Signature price, including ₹1,800 / ₹3,000 for Oud

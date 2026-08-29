@@ -211,8 +211,9 @@ Status: owner-reviewed mapping register for catalog planning. This file is not p
 - Approved mappings are internal inputs for the future `Inspired by <owner-confirmed reference>` title policy in COM-ADR-017.
 - Evidence URLs and evidence metadata support identity research only. They do not grant trademark permission or approve a disclaimer.
 - `owner_approved_title_reference` records the exact brand/reference string approved for title planning; it does not populate a public title or slug.
-- `family_approved_exact_pending` still needs exact product, flanker, or concentration resolution.
-- `unresolved` and `needs_owner_input` remain fail-closed.
+- `not_applicable_unknown` records the owner's temporary Unknown classification:
+  the literal supplied name is listable, while brand/reference fields remain
+  blank and permanent naming still needs owner review.
 - Evidence metadata fields:
   - `source_type`: `official_brand`, `official_regional`, `retailer`, `archive`, or `evidence_gap`
   - `content_support`:
@@ -228,118 +229,120 @@ Status: owner-reviewed mapping register for catalog planning. This file is not p
 - Official `source_type` rows must use brand-bound audited first-party hosts. Matching is exact hostname equality against the audited host list (no arbitrary subdomain wildcards). Known retailer hosts and unlisted retail hosts cannot be labeled official.
 - Every non-blank original evidence URL and every non-blank effective URL must be globally unique across approved rows. Cross-row reuse of either field fails even when the other field differs.
 - Live HTTP reachability is outside `pnpm commerce:verify`. Content-support values come from dated manual audit, not CI network checks.
-- Audit snapshot for current metadata: 2026-07-30 round-2 manual follow-up after round-1 official-source review (URL/provenance corrections and metadata semantics).
+- Audit snapshot for current metadata: 2026-08-29 reconciliation of all 49
+  formerly incomplete replacement rows, preserving the 2026-07-30 evidence
+  audits for carried mappings.
 - Approved mapping identity tuples `(key, source_name, brand, reference, status, decision)` are digest-attested by `pnpm commerce:verify` and by the locked authority line in [`COMMERCE.md`](COMMERCE.md#approved-mapping-identity-digest-protocol). Changing an approved identity requires a new COM-ADR that cites the replacement digest, deliberate verifier constant + authority-line update, and matching launch-workbook edits in the same change. Verifier cannot stop a total coordinated rewrite of every trust anchor; code review remains the final gate for that class of edit.
 
 ### Current summary
 
-- Main/inspired source rows: 94
-- Owner-approved title references carried to the replacement rows: 45
-- Owner-approved family mappings with exact detail pending: 4
-- Explicitly unresolved: 1 (`main_list:4`, Green Creed)
-- Still needing owner input: 44
+- Main source rows: 94
+- Owner-approved Inspired title references: 79
+- Temporary Unknown collection rows: 15
+- Family/exact mappings still pending: 0
+- Unresolved mapping rows: 0
 - In-house Signature rows with mapping not applicable: 20
-- Evidence gaps on approved rows: 1 (`main_list:37`)
+- Evidence gaps on approved rows: 3 (`main_list:37`, `main_list:74`, `main_list:87`)
 - Strongest-available retailer exceptions: 1 (`main_list:35`)
 
-### Inspired mapping register
+### Main-list mapping register
 
 | Key | Source transcription | Approved/candidate brand | Approved/candidate reference | Mapping state | Evidence URL | Source type | Content support | Audit date | Effective URL | Decision |
 |---|---|---|---|---|---|---|---|---|---|---|
 | main_list:1 | Bvlgari Tygar | Bvlgari | Tygar | owner_approved_title_reference | https://www.bulgari.com/en-us/product/LE-GEMME-TYGAR | official_brand | blocked | 2026-07-30 | — | COM-ADR-021 |
 | main_list:2 | Dior Sauvage | Dior | Sauvage family | owner_approved_title_reference | https://www.dior.com/en_us/beauty/products/sauvage-eau-de-toilette-Y0685240.html | official_brand | blocked | 2026-07-30 | — | COM-ADR-021 |
 | main_list:3 | Louis Vuitton Afternoon Swim | Louis Vuitton | Afternoon Swim | owner_approved_title_reference | https://us.louisvuitton.com/eng-us/products/afternoon-swim-nvprod3630151v/LP0314 | official_brand | blocked | 2026-07-30 | — | COM-ADR-021 |
-| main_list:4 | Green Creed | — | — | unresolved | — | — | — | — | — | COM-ADR-016 |
+| main_list:4 | Green Creed | Creed | Green Irish Tweed | owner_approved_title_reference | https://creedboutique.com/collections/all-fragrances/products/green-irish-tweed | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
 | main_list:5 | Creed Aventus | Creed | Aventus | owner_approved_title_reference | https://creedboutique.com/products/aventus | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
 | main_list:6 | Hawas for Him | Rasasi | Hawas for Him | owner_approved_title_reference | https://store.rasasi.com.sa/en/wlqzamr/p2072824605 | official_regional | confirmed | 2026-07-30 | — | COM-ADR-021 |
 | main_list:7 | Elysium Roja | Roja Parfums | Elysium Pour Homme family | owner_approved_title_reference | https://www.rojaparfums.com/products/elysium-homme-edp | official_brand | confirmed | 2026-07-30 | https://www.rojalondon.com/products/elysium-homme-edp | COM-ADR-021 |
 | main_list:8 | Emporio Armani Stronger With You | Emporio Armani | Stronger With You family | owner_approved_title_reference | https://www.armani.com/en-us/emporio-armani/experience/fragrances-ea/ | official_brand | weak | 2026-07-30 | — | COM-ADR-021 |
 | main_list:9 | Hudson Valley | Gissah | Hudson Valley | owner_approved_title_reference | https://qa.gissah.com/shop/g00031-hudson-valley-200ml-1761 | official_regional | confirmed | 2026-07-30 | — | COM-ADR-021 |
-| main_list:10 | Heaven Rose | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:11 | Gucci Flora | Gucci | Flora family | family_approved_exact_pending | https://www.gucci.com/us/en/ca/beauty/fragrances/fragrances-for-women/gucci-flora-c-fragrances-women-flora-by-gucci | official_brand | blocked | 2026-07-30 | — | COM-ADR-016 |
-| main_list:12 | YSL Y | Yves Saint Laurent | Y family | family_approved_exact_pending | https://www.yslbeauty.com/int/fragrance/fragrance-for-him/y/y--eau-de-parfum/WW-50194YSL.html | official_brand | confirmed | 2026-07-30 | — | COM-ADR-016 |
-| main_list:13 | Rose Elegance | — | — | needs_owner_input | — | — | — | — | — | Pending |
+| main_list:10 | Heaven Rose | — | — | not_applicable_unknown | — | — | — | 2026-08-29 | — | COM-ADR-033 |
+| main_list:11 | Gucci Flora | Gucci | Flora family | owner_approved_title_reference | https://www.gucci.com/us/en/ca/beauty/fragrances/fragrances-for-women/gucci-flora-c-fragrances-women-flora-by-gucci | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:12 | YSL Y | Yves Saint Laurent | Y family | owner_approved_title_reference | https://www.yslbeauty.com/int/the-y-collection/y.html | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:13 | Rose Elegance | — | — | not_applicable_unknown | — | — | — | 2026-08-29 | — | COM-ADR-033 |
 | main_list:14 | Alexandria II | Xerjoff | Alexandria II | owner_approved_title_reference | https://www.xerjoff.com/en-us/products/alexandria-ll-parfum | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
 | main_list:15 | Aurum | Ajmal | Aurum | owner_approved_title_reference | https://en-ae.ajmal.com/aurum-eau-de-parfum | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
 | main_list:16 | Black Afgano | Nasomatto | Black Afgano | owner_approved_title_reference | https://nasomatto.com/products/black-afgano | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
-| main_list:17 | Aqua Di Gio | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:18 | Azzaro Chrome | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:19 | Versace Pour Homme | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:20 | Hugo Boss | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:21 | Polo Sport | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:22 | Bleu de Chanel | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:23 | Prada Luna | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:24 | CK One | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:25 | Rehab Blue | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:26 | Hawas Ice | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:27 | Bvlgari Aqva | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:28 | Polo Blue | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:29 | Cool Water Women | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:30 | Cool Water | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:31 | Bright Crystal | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:32 | CR7 | — | — | needs_owner_input | — | — | — | — | — | Pending |
+| main_list:17 | Aqua Di Gio | Giorgio Armani | Acqua di Giò | owner_approved_title_reference | https://www.giorgioarmanibeauty-usa.com/fragrances/mens-cologne/acqua-di-gio/ | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:18 | Azzaro Chrome | Azzaro | Chrome | owner_approved_title_reference | https://www.azzaro.com/en/fragrances/azzaro-chrome/eau-de-toilette | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:19 | Versace Pour Homme | Versace | Pour Homme | owner_approved_title_reference | https://www.versace.com/us/en/pour-homme/SET_Fragrances_PourHomme.html | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:20 | Hugo Boss | — | — | not_applicable_unknown | — | — | — | 2026-08-29 | — | COM-ADR-033 |
+| main_list:21 | Polo Sport | Ralph Lauren | Polo Sport | owner_approved_title_reference | https://corporate.ralphlauren.com/on/demandware.static/-/Sites-RalphLauren_Corporate-Library/default/dwb49e2771/assets/images/PRESS_RELEASES/Polo%20Est.%2067%20Eau%20De%20Toilette%20Press%20Release.pdf | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:22 | Bleu de Chanel | Chanel | Bleu de Chanel | owner_approved_title_reference | https://www.chanel.com/us/fragrance/men/c/7x1x2x34/bleu-de-chanel/ | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:23 | Prada Luna | Prada | Luna Rossa | owner_approved_title_reference | https://www.prada-beauty.com/fragrance/luna-rossa/luna-rossa-eau-de-toilette/MPL01360.html | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:24 | CK One | Calvin Klein | CK One | owner_approved_title_reference | https://www.calvinklein.us/en/ck-one-spray/10740.html | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:25 | Rehab Blue | Al-Rehab | Blue | owner_approved_title_reference | https://alrehab.com/wp-content/uploads/Catalogues/Alrehab_3ML_1Pcs_Catalogue.pdf | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:26 | Hawas Ice | Rasasi | Hawas Ice | owner_approved_title_reference | https://store.rasasi.com.sa/en/aeezlxd/p330366857 | official_regional | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:27 | Bvlgari Aqva | Bvlgari | Aqva Pour Homme | owner_approved_title_reference | https://www.bulgari.com/pt-br/fragrancias/masculino | official_regional | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:28 | Polo Blue | Ralph Lauren | Polo Blue | owner_approved_title_reference | https://www.ralphlauren.com/men-accessories-fragrance/polo-blue-eau-de-toilette/111518.html | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:29 | Cool Water Women | Davidoff | Cool Water Woman | owner_approved_title_reference | https://www.zinodavidoff.com/fragrances/cool-water-woman-eau-de-toilette-100-ml | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:30 | Cool Water | Davidoff | Cool Water | owner_approved_title_reference | https://www.zinodavidoff.com/fragrances/cool-water-eau-de-toilette-125-ml | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:31 | Bright Crystal | Versace | Bright Crystal | owner_approved_title_reference | https://www.versace.com/us/en/women/accessories/fragrances-body-care/bright-crystal/ | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:32 | CR7 | Cristiano Ronaldo | CR7 | owner_approved_title_reference | https://cristianoronaldo.com/brands | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
 | main_list:33 | Dunhill Icon | Dunhill | Icon | owner_approved_title_reference | https://www.dunhill.com/nl/men/icon | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
 | main_list:34 | Diptyque Tam Dao | Diptyque | Tam Dao family | owner_approved_title_reference | https://us.diptyqueparis.com/en-us/products/eau-de-parfum-tam-dao-tamdaop75cv1 | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
 | main_list:35 | One Million Lucky | Rabanne | 1 Million Lucky | owner_approved_title_reference | https://www.ulta.com/p/1-million-lucky-eau-de-toilette-xlsImpprod18151073 | retailer | confirmed | 2026-07-30 | — | COM-ADR-021 |
-| main_list:36 | CH 212 Men | Carolina Herrera | 212 Men family | family_approved_exact_pending | https://www.carolinaherrera.com/us/en/editorial/fragrance-212-men-parfum | official_brand | confirmed | 2026-07-30 | — | COM-ADR-016 |
+| main_list:36 | CH 212 Men | Carolina Herrera | 212 Men family | owner_approved_title_reference | https://www.carolinaherrera.com/us/en/c/fragrances/fragrances_men/menfragrances_212 | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
 | main_list:37 | 212 VIP Men | Carolina Herrera | 212 VIP Men | owner_approved_title_reference | — | evidence_gap | none | 2026-07-30 | — | COM-ADR-018 |
 | main_list:38 | Azzaro Most Wanted | Azzaro | The Most Wanted | owner_approved_title_reference | https://www.azzaro.com/en/fragrances/azzaro-the-most-wanted | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
-| main_list:39 | JPG Scandal | — | — | needs_owner_input | — | — | — | — | — | Pending |
+| main_list:39 | JPG Scandal | Jean Paul Gaultier | Scandal family | owner_approved_title_reference | https://www.jeanpaulgaultier.com/us/en_US/p/range-scandal/scandal-eau-de-parfum-000000000065176518 | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
 | main_list:40 | Tom Ford Oud Wood | Tom Ford | Oud Wood | owner_approved_title_reference | https://www.tomfordbeauty.com/product/oud-wood-eau-de-parfum | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
 | main_list:41 | I Want Choo | Jimmy Choo | I Want Choo | owner_approved_title_reference | https://us.jimmychoo.com/en/women/beauty/fragrance/i-want-choo-100ml/jimmy-choo-i-want-choo-eau-de-parfum-100ml-J000144607001.html | official_brand | blocked | 2026-07-30 | — | COM-ADR-021 |
 | main_list:42 | Burberry Her | Burberry | Her family | owner_approved_title_reference | https://us.burberry.com/c/burberry-her/ | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
 | main_list:43 | 1 Million | Rabanne | 1 Million | owner_approved_title_reference | https://www.rabanne.com/us/en_US/fragrance/p/1-million-parfum--000000000065156000 | official_brand | weak | 2026-07-30 | — | COM-ADR-018 |
 | main_list:44 | Armani Passione | Giorgio Armani | Sì Passione family | owner_approved_title_reference | https://www.giorgioarmanibeauty-usa.com/fragrances/womens-perfume/si/si-passione-eau-de-parfum/3614271994721.html | official_brand | blocked | 2026-07-30 | — | COM-ADR-021 |
-| main_list:45 | Polo Sport Women | — | — | needs_owner_input | — | — | — | — | — | Pending |
+| main_list:45 | Polo Sport Women | Ralph Lauren | Polo Sport Woman | owner_approved_title_reference | https://investor.ralphlauren.com/static-files/0db4c61d-dd53-49fa-9e3c-2b869481b01f | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
 | main_list:46 | Ultra Male | Jean Paul Gaultier | Ultra Male | owner_approved_title_reference | https://www.jeanpaulgaultier.com/us/en_US/p/range/eau-de-toilette-intense-000000000065119981 | official_brand | weak | 2026-07-30 | — | COM-ADR-021 |
 | main_list:47 | Gucci Bloom | Gucci | Bloom family | owner_approved_title_reference | https://www.gucci.com/us/en/pr/beauty/fragrances/fragrances-for-women/gucci-bloom-100ml-eau-de-parfum-p-488830999990099 | official_brand | blocked | 2026-07-30 | — | COM-ADR-021 |
 | main_list:48 | Flower Bomb | Viktor&Rolf | Flowerbomb | owner_approved_title_reference | https://us.viktor-rolf.com/fragrance/flowerbomb-eau-de-parfum-VKR_002.html | official_brand | blocked | 2026-07-30 | — | COM-ADR-021 |
-| main_list:49 | Coco Chanel | — | — | needs_owner_input | — | — | — | — | — | Pending |
+| main_list:49 | Coco Chanel | Chanel | Coco | owner_approved_title_reference | https://www.chanel.com/us/fragrance/coco/c/7x2x6/ | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
 | main_list:50 | Invictus | Rabanne | Invictus family | owner_approved_title_reference | https://www.rabanne.com/us/en_US/fragrance/p/invictus-miniature--000000000065055745 | official_brand | weak | 2026-07-30 | — | COM-ADR-021 |
 | main_list:51 | YSL Libre | Yves Saint Laurent | Libre family | owner_approved_title_reference | https://www.yslbeauty.com/int/libre.html | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
 | main_list:52 | Erba Pura | Xerjoff | Erba Pura | owner_approved_title_reference | https://www.xerjoff.com/en-de/products/erba-pura-eau-de-parfum | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
-| main_list:53 | Club de Nuit | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:54 | Baccarat Rouge 540 | Maison Francis Kurkdjian | Baccarat Rouge 540 family | family_approved_exact_pending | https://www.franciskurkdjian.com/us-en/landing_page_baccarat-rouge-540.html | official_brand | blocked | 2026-07-30 | — | COM-ADR-018 |
+| main_list:53 | Club de Nuit | Armaf | Club de Nuit family | owner_approved_title_reference | https://armaf.com/ | official_brand | weak | 2026-08-29 | — | COM-ADR-033 |
+| main_list:54 | Baccarat Rouge 540 | Maison Francis Kurkdjian | Baccarat Rouge 540 family | owner_approved_title_reference | https://www.franciskurkdjian.com/us-en/landing_page_baccarat-rouge-540.html | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
 | main_list:55 | Ombre Nomad | Louis Vuitton | Ombre Nomade | owner_approved_title_reference | https://us.louisvuitton.com/eng-us/products/ombre-nomade-nvprod990245v/LP0095 | official_brand | blocked | 2026-07-30 | — | COM-ADR-021 |
 | main_list:56 | Prada Candy | Prada | Candy family | owner_approved_title_reference | https://www.prada-beauty.com/fragrance/candy/candy-eau-de-parfum/MPL01333.html | official_brand | blocked | 2026-07-30 | — | COM-ADR-021 |
 | main_list:57 | Black Orchid | Tom Ford | Black Orchid family | owner_approved_title_reference | https://www.tomfordbeauty.com/products/black-orchid-eau-de-parfum | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
 | main_list:58 | Dior Homme Intense | Dior | Dior Homme Intense | owner_approved_title_reference | https://www.dior.com/en_us/beauty/products/dior-homme-intense-Y0479201.html | official_brand | blocked | 2026-07-30 | — | COM-ADR-021 |
 | main_list:59 | Delina | Parfums de Marly | Delina family | owner_approved_title_reference | https://us.parfums-de-marly.com/products/delina | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
-| main_list:60 | Chocolate Musk | — | — | needs_owner_input | — | — | — | — | — | Pending |
+| main_list:60 | Chocolate Musk | Al-Rehab | Choco Musk | owner_approved_title_reference | https://alrehab.com/wp-content/uploads/Catalogues/Alrehab.pdf | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
 | main_list:61 | One Million Elixir | Rabanne | 1 Million Elixir | owner_approved_title_reference | https://www.rabanne.com/ww/en/fragrance/p/1-million-elixir--000000000065177272 | official_brand | weak | 2026-07-30 | — | COM-ADR-021 |
 | main_list:62 | Narciso For Her | Narciso Rodriguez | for Her family | owner_approved_title_reference | https://www.narcisorodriguezparfums.com/en/fragrances/for-her/ | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
 | main_list:63 | Good Girl | Carolina Herrera | Good Girl family | owner_approved_title_reference | https://www.carolinaherrera.com/us/en/editorial/fragrances-good-girl | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
 | main_list:64 | Black Opium | Yves Saint Laurent | Black Opium family | owner_approved_title_reference | https://www.yslbeautyus.com/fragrance/womens-fragrances/black-opium/black-opium-eau-de-parfum-spray/252YSL.html | official_brand | blocked | 2026-07-30 | — | COM-ADR-021 |
-| main_list:65 | Burberry Weekend | — | — | needs_owner_input | — | — | — | — | — | Pending |
+| main_list:65 | Burberry Weekend | Burberry | Weekend family | owner_approved_title_reference | https://us.burberry.com/burberry-weekend-eau-de-parfum-100ml-p34547061 | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
 | main_list:66 | Terre d'Hermes | Hermès | Terre d'Hermès family | owner_approved_title_reference | https://www.hermes.com/us/en/content/101186-terre-d-hermes/ | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
 | main_list:67 | Tom Ford Tobacco Vanille | Tom Ford | Tobacco Vanille | owner_approved_title_reference | https://www.tomfordbeauty.com/products/tobacco-vanille-eau-de-parfum | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
 | main_list:68 | VS Bombshell | Victoria's Secret | Bombshell family | owner_approved_title_reference | https://www.victoriassecret.com/us/vs/beauty/fragrances-bombshell-shop | official_brand | blocked | 2026-07-30 | — | COM-ADR-021 |
 | main_list:69 | Bvlgari Man in Black | Bvlgari | Man in Black family | owner_approved_title_reference | https://www.bulgari.com/en-us/fragrances/bvlgari-man | official_brand | blocked | 2026-07-30 | — | COM-ADR-021 |
-| main_list:70 | Versace Dylan Blue | — | — | needs_owner_input | — | — | — | — | — | Pending |
+| main_list:70 | Versace Dylan Blue | Versace | Dylan Blue Pour Homme | owner_approved_title_reference | https://www.versace.com/us/en/men/accessories/fragrances-body-care/dylan-blue-pour-homme/dylan-blue-pour-homme-edt-100-ml-blue/R721010-R100MLS_RTU_TU_RNUL__.html | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
 | main_list:71 | Ombre Leather | Tom Ford | Ombré Leather family | owner_approved_title_reference | https://www.tomfordbeauty.com/products/ombre-leather-eau-de-parfum | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
-| main_list:72 | Oud of Aura | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:73 | Arabian Oud | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:74 | CK Escape | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:75 | Leather Noir | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:76 | Amber Al Oud | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:77 | Purple Oud | — | — | needs_owner_input | — | — | — | — | — | Pending |
+| main_list:72 | Oud of Aura | — | — | not_applicable_unknown | — | — | — | 2026-08-29 | — | COM-ADR-033 |
+| main_list:73 | Arabian Oud | — | — | not_applicable_unknown | — | — | — | 2026-08-29 | — | COM-ADR-033 |
+| main_list:74 | CK Escape | Calvin Klein | Escape | owner_approved_title_reference | — | evidence_gap | none | 2026-08-29 | — | COM-ADR-033 |
+| main_list:75 | Leather Noir | — | — | not_applicable_unknown | — | — | — | 2026-08-29 | — | COM-ADR-033 |
+| main_list:76 | Amber Al Oud | — | — | not_applicable_unknown | — | — | — | 2026-08-29 | — | COM-ADR-033 |
+| main_list:77 | Purple Oud | Dior | Purple Oud | owner_approved_title_reference | https://www.dior.com/en_us/beauty/products/purple-oud-Y0786427.html | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
 | main_list:78 | Gucci Guilty | Gucci | Guilty family | owner_approved_title_reference | https://www.gucci.com/us/en/ca/beauty/fragrances/fragrances-for-men/gucci-guilty-for-men-c-fragrances-men-gucci-guilty | official_brand | blocked | 2026-07-30 | — | COM-ADR-021 |
 | main_list:79 | Yara Candy | Lattafa | Yara Candy | owner_approved_title_reference | https://www.lattafa-usa.com/products/yara-candy | official_regional | confirmed | 2026-07-30 | — | COM-ADR-021 |
 | main_list:80 | Khamrah | Lattafa | Khamrah | owner_approved_title_reference | https://lattafa.com/product/khamrah/ | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
-| main_list:81 | White Oud | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:82 | Candy Oud | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:83 | Coffee | — | — | needs_owner_input | — | — | — | — | — | Pending |
+| main_list:81 | White Oud | — | — | not_applicable_unknown | — | — | — | 2026-08-29 | — | COM-ADR-033 |
+| main_list:82 | Candy Oud | — | — | not_applicable_unknown | — | — | — | 2026-08-29 | — | COM-ADR-033 |
+| main_list:83 | Coffee | — | — | not_applicable_unknown | — | — | — | 2026-08-29 | — | COM-ADR-033 |
 | main_list:84 | Wisal | Ajmal | Wisal | owner_approved_title_reference | https://en-ae.ajmal.com/wisal | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |
-| main_list:85 | Oud Mumtaz | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:86 | Khamrah Qahwa | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:87 | CR7 Sport | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:88 | Fawake | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:89 | Dareej | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:90 | Mysore Sandal | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:91 | Sabaya | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:92 | Oud Saffron | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:93 | Areen Al Oud | — | — | needs_owner_input | — | — | — | — | — | Pending |
-| main_list:94 | Imperial Valley | — | — | needs_owner_input | — | — | — | — | — | Pending |
+| main_list:85 | Oud Mumtaz | — | — | not_applicable_unknown | — | — | — | 2026-08-29 | — | COM-ADR-033 |
+| main_list:86 | Khamrah Qahwa | Lattafa | Khamrah Qahwa | owner_approved_title_reference | https://lattafa.com/product/khamrah-qahwa/ | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:87 | CR7 Sport | Cristiano Ronaldo | CR7 Sport | owner_approved_title_reference | — | evidence_gap | none | 2026-08-29 | — | COM-ADR-033 |
+| main_list:88 | Fawake | — | — | not_applicable_unknown | — | — | — | 2026-08-29 | — | COM-ADR-033 |
+| main_list:89 | Dareej | Rasasi | Daarej Pour Homme | owner_approved_title_reference | https://store.rasasi.com.sa/en/dpqdewz/p1037939516 | official_regional | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:90 | Mysore Sandal | — | — | not_applicable_unknown | — | — | — | 2026-08-29 | — | COM-ADR-033 |
+| main_list:91 | Sabaya | Al-Rehab | Sabaya | owner_approved_title_reference | https://alrehab.com/wp-content/uploads/Catalogues/Alrehab_100ML.pdf | official_brand | confirmed | 2026-08-29 | — | COM-ADR-033 |
+| main_list:92 | Oud Saffron | — | — | not_applicable_unknown | — | — | — | 2026-08-29 | — | COM-ADR-033 |
+| main_list:93 | Areen Al Oud | — | — | not_applicable_unknown | — | — | — | 2026-08-29 | — | COM-ADR-033 |
+| main_list:94 | Imperial Valley | Gissah | Imperial Valley | owner_approved_title_reference | https://qa.gissah.com/shop/category/signature-line-13/page/3?order=create_date+desc | official_regional | confirmed | 2026-08-29 | — | COM-ADR-033 |
 
 #### Documented evidence exceptions and gaps
 
@@ -347,6 +350,8 @@ Status: owner-reviewed mapping register for catalog planning. This file is not p
 |---|---|---|---|
 | main_list:35 | Rabanne — `1 Million Lucky` | `retailer` / Ulta URL kept as strongest-available identity support | No durable official Rabanne/manufacturer or archive page established in the 2026-07-30 audit. Retailer page supports identity only; not official proof. |
 | main_list:37 | Carolina Herrera — `212 VIP Men` | `evidence_gap` / no URL | Prior citation used nonexistent `carolinaherreras.com` and a `212 VIP Black` path. Owner mapping stays; durable first-party VIP Men evidence remains outstanding. |
+| main_list:74 | Calvin Klein — `Escape` | `evidence_gap` / no URL | The supplied `CK Escape` string is a strong potential Calvin Klein mapping, but no durable current first-party product URL was found in this pass. The owner-directed Inspired classification is recorded without inventing evidence. |
+| main_list:87 | Cristiano Ronaldo — `CR7 Sport` | `evidence_gap` / no URL | Cristiano Ronaldo's official brand page supports the CR7 fragrance brand but did not expose the exact `CR7 Sport` product. The exact potential mapping is retained without presenting secondary results as first-party proof. |
 
 ### Signature Series identity register
 
@@ -377,7 +382,10 @@ All rows below use the exact owner-supplied replacement names. They never receiv
 
 ### Remaining review buckets
 
-The 44 rows left `needs_owner_input` include new or reindexed names without an owner-approved reference mapping. Resolve them through later explicit decisions; never infer a mapping from spelling similarity or a competitor listing alone.
+All 94 main-list rows are classified. The remaining review work is limited to
+the 3 documented evidence gaps and selecting permanent collection naming for
+the 15 temporary Unknown rows; never invent supporting evidence or infer a
+mapping from spelling similarity alone.
 <!-- reference:mapping-register:end -->
 
 <!-- reference:storefront-design:start -->
