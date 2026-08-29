@@ -109,7 +109,7 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
             }}
           >
             <div className="absolute inset-0 bg-black/20 backdrop-blur-xl sm:hidden" aria-hidden="true" />
-            <Image src={product.image} alt={product.imageAlt} fill loading="eager" sizes="(max-width: 639px) calc(100vw - 0.5rem), (max-width: 1024px) 100vw, 50vw" className="object-contain object-center sm:object-cover" />
+            <Image src={product.image} alt={product.imageAlt} fill loading="eager" fetchPriority="high" sizes="(max-width: 639px) calc(100vw - 0.5rem), (max-width: 1024px) 100vw, 50vw" className="object-contain object-center sm:object-cover" />
           </div>
           <div className="absolute inset-x-3 bottom-2 flex items-center justify-between text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-white drop-shadow-[0_1px_8px_rgba(16,11,6,.9)] sm:inset-x-4 sm:bottom-4 sm:text-[0.58rem] sm:tracking-[0.15em]">
             <span>Perfume Aura</span>

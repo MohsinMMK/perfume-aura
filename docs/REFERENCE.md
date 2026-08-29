@@ -382,7 +382,10 @@ All rows below use the exact owner-supplied replacement names. They never receiv
 
 ### Remaining review buckets
 
-The 44 rows left `needs_owner_input` include new or reindexed names without an owner-approved reference mapping. Resolve them through later explicit decisions; never infer a mapping from spelling similarity or a competitor listing alone.
+All 94 main-list rows are classified. The remaining review work is limited to
+the 3 documented evidence gaps and selecting permanent collection naming for
+the 15 temporary Unknown rows; never invent supporting evidence or infer a
+mapping from spelling similarity alone.
 <!-- reference:mapping-register:end -->
 
 <!-- reference:storefront-design:start -->
