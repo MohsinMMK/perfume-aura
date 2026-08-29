@@ -495,6 +495,7 @@ async function runSelfTests() {
     ["docs/ENGINEERING.md", "docs/ENGINEERING.md"],
     ["docs/OPERATIONS.md", "docs/OPERATIONS.md"],
     ["docs/BLOCKERS.md", "docs/BLOCKERS.md"],
+    ["docs/review-packets", "docs/review-packets"],
     ["data/catalog", "data/catalog"],
     ["README.md", "README.md"],
     ["AGENTS.md", "AGENTS.md"],
@@ -799,19 +800,19 @@ Alternatively, either unfair advantage or conduct contrary to honest practices s
     );
 
     await runAgainst(
-      "unmapped-inspired-title",
+      "unknown-inspired-title",
       async (root) => {
         const launchPath = path.join(root, launchProductPath);
         let launch = await readFile(launchPath, "utf8");
         launch = replaceOnce(
           launch,
-          "main_list:10,main_list,10,Heaven Rose,,,reference_title_pending_mapping,",
-          "main_list:10,main_list,10,Heaven Rose,Inspired by Heaven Rose,inspired-by-heaven-rose,listing_title_recorded,",
-          "unmapped inspired title",
+          "main_list:10,main_list,10,Heaven Rose,Heaven Rose,heaven-rose,owner_directed_temporary_name,",
+          "main_list:10,main_list,10,Heaven Rose,Inspired by Heaven Rose,inspired-by-heaven-rose,owner_directed_temporary_name,",
+          "unknown inspired title",
         );
         await writeFile(launchPath, launch);
       },
-      "public title must remain blank until an approved title reference exists",
+      "Unknown listing must preserve the supplied literal name",
     );
 
     await runAgainst(
