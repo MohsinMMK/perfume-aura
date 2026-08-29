@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-29 16:22:52 UTC**
+Last refreshed: **2026-08-29 17:52:31 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -33,25 +33,26 @@ and ignored local environment files.
 ## Exact releases and automation
 
 The storefront and ops both run exact source
-`258c121d94428829f48a36e25be2b52c9afee689`. Ops uses immutable image digest
-`sha256:eecd280c5035074ed12441dbb4895c879f81136ea3255283978ea1da2abfbf43`.
+`205f8489ab81b1dbf6368acc78b4e0b7b405ba75`. Ops uses immutable image digest
+`sha256:516849648617217cd338d131b29300b33b0efc69f7fccea544f98b88a1777cc8`.
 Workflow run
-[`33262248611`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33262248611)
+[`33266315017`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33266315017)
 passed quality, all 101 disposable-PostgreSQL integration tests, verified
 packaging, direct Hostinger archive deployment, immutable VPS ops deployment,
 and both exact live verifiers. Hostinger build
-`01a04e4f-45e4-70b4-a124-8bb0a4bec612` completed at 2026-08-29 16:17:24 UTC.
+`01a04ea3-3d39-7153-87c7-dad7b3e142bf` completed at 2026-08-29 17:49:17 UTC.
 Independent acceptance verified the exact source on both surfaces, seven
 discovery sitemap URLs, a real immutable Next asset, storefront health and
 release locks, ops live/ready and unauthenticated session, a real `404`, and
 the path- and query-preserving `www` redirect.
 
-Fresh 1440-by-900 and 390-by-844 production browser checks confirmed exactly
-65 shop cards: 45 Inspired and 20 Signature. Samples proved the ₹450 and ₹600
-Inspired tiers, Regent Noir at ₹1,200 / ₹2,200, and Oud of Dubai at
-₹1,800 / ₹3,000. Both viewports had zero horizontal overflow and zero console
-errors or warnings. No Neon catalog import or migration occurred, and public
-catalog publication, checkout, payment, customer authentication, inquiries,
+Fresh production browser acceptance confirmed exactly 114 shop cards: 79
+Inspired, 15 temporary Unknown, and 20 Signature. The Unknown query returned
+exactly 15 cards. Heaven Rose retained its literal name, Unknown breadcrumb,
+and ₹600 / ₹800 / ₹1,400 prices for 30 / 50 / 100 ml; the 1280 px shop and
+product pages had zero horizontal overflow. No Neon catalog import or migration
+occurred, and public catalog publication, checkout, payment, customer
+authentication, inquiries,
 and all staff-security release flags remain closed. The remote repository
 continues to contain only `main`.
 
@@ -249,13 +250,13 @@ mutation routes returned `404` before auth/database initialization; and a
 cross-origin cart mutation returned `403` while the same-origin request reached
 normal validation.
 
-Production `/shop` now shows the replacement 65-product discovery listing with
+Production `/shop` now shows the complete 114-product discovery listing with
 URL-driven search, collection and size filters, and name sorting. It contains
-45 owner-approved Inspired title mappings plus all 20 Signature names. The
-other 49 main-list rows remain unlistable pending exact mapping and counsel
-review. Inspired products use the supplied ₹600 / ₹800 / ₹1,400 tier for rows
-1-16 and ₹450 / ₹650 / ₹1,200 for later approved rows. Signature products use
-₹1,200 / ₹2,200 except Oud of Dubai and Visionnaire at ₹1,800 / ₹3,000.
+79 Inspired mappings, 15 temporary Unknown literal names, and all 20 Signature
+names. Inspired and Unknown main-list products use the supplied
+₹600 / ₹800 / ₹1,400 tier for rows 1-16 and ₹450 / ₹650 / ₹1,200 for rows
+17-94. Signature products use ₹1,200 / ₹2,200 except Oud of Dubai and
+Visionnaire at ₹1,800 / ₹3,000.
 
 PR #90 also published the canonical 114-product / 322-variant source files,
 owner source artifacts, B01 legal-review inventory and CSV, and B02 intake
@@ -333,7 +334,7 @@ remains monitoring infrastructure.
 
 ## Release locks and acceptance
 
-The 65-product replacement discovery listing is live. Sellable public catalog
+The 114-product replacement discovery listing is live. Sellable public catalog
 publication, checkout approval, customer authentication, and inquiries remain
 closed.
 Brand discovery is separated from commerce release. The request-time discovery
@@ -373,7 +374,7 @@ overflow or console errors. Mobile renders the cream `#f5e4c7` wordmark from
 first paint with the bottle SVG absent; tablet and desktop retain the
 full-mark-to-wordmark animation, transparent compact background, and no
 backdrop blur. Fresh ops acceptance rendered the login surface from exact VPS
-source `258c121d94428829f48a36e25be2b52c9afee689`; workflow and independent
+source `205f8489ab81b1dbf6368acc78b4e0b7b405ba75`; workflow and independent
 exact-SHA acceptance passed without changing public storefront release locks.
 
 The historical Hostinger shared-process incident is no longer on the public
@@ -562,6 +563,12 @@ runtime merge, and exact flags-off production deployment have now completed.
   acceptance confirmed the 45 Inspired / 20 Signature listing, supplied price
   tiers, no overflow, and no console warnings. No Neon import, migration, or
   release-flag change occurred.
+- PR #92 reconciled all 49 previously unmapped main-list names into 34
+  additional Inspired mappings and 15 temporary Unknown literal names. It
+  deployed and independently verified exact source
+  `205f8489ab81b1dbf6368acc78b4e0b7b405ba75` on both surfaces in workflow run
+  `33266315017`; production `/shop` now exposes the exact 79 / 15 / 20 split
+  without a Neon import, migration, price change, or release-flag change.
 - Markdown-only merges run CI but do not publish either deployment surface.
 - After fresh exact-source, endpoint, provider, and browser acceptance, the
   obsolete `hostinger-storefront-production` and `hostinger-ops-production`
@@ -580,12 +587,14 @@ Next actions:
    Tools and submit the same sitemap. IndexNow notification is complete, while
    Google/Bing indexing and ranking remain external pending outcomes.
 2. Obtain India-counsel clearance and the remaining owner-approved catalog
-   facts: SKUs, costs, opening stock, media, and structured scent content. All
-   322 retail prices are now owner-supplied. The replacement staged projection
-   contains 45 carried Inspired titles and 20 Signature names; 49 main-list rows
-   remain unlistable pending mapping. B01 preparation includes the
+   facts: permanent collection naming for the 15 temporary Unknown rows, the 3
+   documented evidence gaps, SKUs, costs, opening stock, media, and structured
+   scent content. All 322 retail prices are now owner-supplied. The deployed
+   discovery projection contains 79 Inspired titles, 15 temporary Unknown
+   literal names, and 20 Signature names. B01 preparation includes the
    [114-name review CSV](review-packets/2026-08-29-b01-114-name-review.csv),
    [replacement legal-surface inventory](review-packets/2026-08-29-b01-114-name-legal-surface-inventory.md),
+   [49-name reconciliation packet](review-packets/2026-08-29-b03-49-name-reconciliation.md),
    and frozen catalog digests. Legal approval remains pending. The fail-closed
    discovery projection is deployed, but do not import or migrate the catalog,
    publish the gated Neon projection, enable checkout, or open any release flag
