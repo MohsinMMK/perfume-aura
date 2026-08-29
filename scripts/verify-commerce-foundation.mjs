@@ -52,7 +52,20 @@ const requiredCommerceDocuments = [
 const catalogPath = "data/catalog/perfumes.csv";
 const launchProductPath = "data/catalog/launch-products.csv";
 const launchVariantPath = "data/catalog/launch-variants.csv";
-const sourcePdfPath = "data/catalog/source/Perfume_List_Table.pdf";
+const sourceArtifacts = new Map([
+  [
+    "data/catalog/source/Perfume_Aura_Premium_Segment_2026-08-29.png",
+    "1c6d741ba6231ba5d806cf2044f2bc62d681b0d0c34c6150864ae0abe07fcdcf",
+  ],
+  [
+    "data/catalog/source/Perfume_Aura_Price_List_450_650_1200.pdf",
+    "23f945e637a791cef6078029fd4d69f65e1f99bf05f73f6856e4825c349a133e",
+  ],
+  [
+    "data/catalog/source/Perfume_Aura_Signature_Series_2026-08-29.png",
+    "69cac3ea92827a3baed7274f9f2c1ce92557a3e9a3333f1291a0d102adacb910",
+  ],
+]);
 const expectedHeader = [
   "source_section",
   "source_number",
@@ -170,9 +183,7 @@ const allowedDecisionStatuses = new Set([
   "Superseded",
 ]);
 const expectedSourceDigest =
-  "28dda842ce270d3ad8e085c01432681dfddda3bc9cfdafa35242969958f93ce8";
-const expectedPdfDigest =
-  "cfe8a5c88c08b99baa7b9a57ccab8fd99a0b0f5aafb446ccfcb38015e0aa22c2";
+  "2ad2260ce293b0337bd92b79f98dba8b01631db4409c139590b7df3372c8460a";
 // Canonical approved inspired identities:
 // (key, source_name, brand, reference, status, decision)
 // Update only with a new COM-ADR citing the replacement digest + deliberate identity change.
@@ -180,9 +191,9 @@ const INITIAL_FROZEN_APPROVED_MAPPING_IDENTITY_DIGEST =
   "3701891d6afbaa5c34a7f830749688a420e6498a17d5e19af34b71315db02ded";
 // Current authorized digest. Diverge from INITIAL only when a new COM-ADR cites the replacement.
 const expectedApprovedMappingIdentityDigest =
-  INITIAL_FROZEN_APPROVED_MAPPING_IDENTITY_DIGEST;
+  "c90c911274322b411783f2bbfadd29c8bd62582b573571923df66a86ad2980b3";
 const expectedApprovedMappingIdentityAuthorityLine =
-  "Approved mapping identity digest `3701891d6afbaa5c34a7f830749688a420e6498a17d5e19af34b71315db02ded` authorized by COM-ADR-016, COM-ADR-018, and COM-ADR-021; any replacement digest requires a new COM-ADR row citing that digest before the verifier constant may change.";
+  "Approved mapping identity digest `c90c911274322b411783f2bbfadd29c8bd62582b573571923df66a86ad2980b3` authorized by COM-ADR-032; any replacement digest requires a new COM-ADR row citing that digest before the verifier constant may change.";
 const expectedSection29And30ParaphraseBlock =
   "Cautious paraphrase only:\n\n" +
   "- Section 29 addresses infringement of a **registered** trade mark, including likely confusion or association under the statute's conditions.\n" +
@@ -206,23 +217,9 @@ const requiredComAdr030Supersession =
   /COM-ADR-030 fully replaces COM-ADR-025\. Anonymous browsing and\s+cart creation, separate customer identity, configurable shipping, and manual\s+courier remain; guest checkout, COD, and Apple launch sign-in are no longer\s+selected launch requirements\./;
 const forbiddenLegalContradictionPattern =
   /either unfair advantage or conduct contrary|paragraphs are alternatives|grants legal clearance for public titles|permits reference use on PDP copy|permission to use references on every surface|grants trademark clearance/i;
-const requiredReviewFlags = new Set([
-  "main_list:4",
-  "main_list:11",
-  "main_list:12",
-  "main_list:21",
-  "main_list:22",
-  "main_list:28",
-  "main_list:38",
-  "main_list:40",
-  "main_list:57",
-  "main_list:63",
-  "signature_series:13",
-  "signature_series:14",
-  "signature_series:15",
-]);
-const retailerExceptionKeys = new Set(["main_list:20"]);
-const evidenceGapKeys = new Set(["main_list:22"]);
+const requiredReviewFlags = new Set();
+const retailerExceptionKeys = new Set(["main_list:35"]);
+const evidenceGapKeys = new Set(["main_list:37"]);
 const knownRetailerHostPatterns = [
   /(^|\.)ulta\.com$/i,
   /(^|\.)sephora\.com$/i,
@@ -641,8 +638,8 @@ async function runSelfTests() {
         let register = await readFile(registerPath, "utf8");
         register = replaceOnce(
           register,
-          "| main_list:43 | Tom Ford Vanilla Fatale | Tom Ford | Vanille Fatale | owner_approved_title_reference | https://www.tomfordbeauty.com/products/vanille-fatale-eau-de-parfum | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |",
-          "| main_list:43 | Tom Ford Vanilla Fatale | Tom Ford | Vanille Fatale | owner_approved_title_reference | https://www.tomfordbeauty.com/products/black-orchid-eau-de-parfum | official_brand | confirmed | 2026-07-30 | https://www.tomfordbeauty.com/products/vanille-fatale-unique-effective | COM-ADR-021 |",
+          "| main_list:67 | Tom Ford Tobacco Vanille | Tom Ford | Tobacco Vanille | owner_approved_title_reference | https://www.tomfordbeauty.com/products/tobacco-vanille-eau-de-parfum | official_brand | confirmed | 2026-07-30 | — | COM-ADR-021 |",
+          "| main_list:67 | Tom Ford Tobacco Vanille | Tom Ford | Tobacco Vanille | owner_approved_title_reference | https://www.tomfordbeauty.com/products/black-orchid-eau-de-parfum | official_brand | confirmed | 2026-07-30 | https://www.tomfordbeauty.com/products/tobacco-vanille-unique-effective | COM-ADR-021 |",
           "cross-row original url",
         );
         await writeFile(registerPath, register);
@@ -805,8 +802,8 @@ Alternatively, either unfair advantage or conduct contrary to honest practices s
         let register = await readFile(registerPath, "utf8");
         register = replaceOnce(
           register,
-          "| main_list:22 | VIP 212 Men | Carolina Herrera | 212 VIP Men | owner_approved_title_reference | — | evidence_gap | none | 2026-07-30 | — | COM-ADR-018 |",
-          "| main_list:22 | VIP 212 Men | Carolina Herrera | 212 VIP Men | owner_approved_title_reference | https://www.carolinaherrera.com/us/en/fake-vip | evidence_gap | none | 2026-07-30 | — | COM-ADR-018 |",
+          "| main_list:37 | 212 VIP Men | Carolina Herrera | 212 VIP Men | owner_approved_title_reference | — | evidence_gap | none | 2026-07-30 | — | COM-ADR-018 |",
+          "| main_list:37 | 212 VIP Men | Carolina Herrera | 212 VIP Men | owner_approved_title_reference | https://www.carolinaherrera.com/us/en/fake-vip | evidence_gap | none | 2026-07-30 | — | COM-ADR-018 |",
           "evidence gap url",
         );
         await writeFile(registerPath, register);
@@ -908,7 +905,7 @@ Alternatively, either unfair advantage or conduct contrary to honest practices s
           decisions,
           expectedApprovedMappingIdentityAuthorityLine,
           expectedApprovedMappingIdentityAuthorityLine.replace(
-            INITIAL_FROZEN_APPROVED_MAPPING_IDENTITY_DIGEST,
+            expectedApprovedMappingIdentityDigest,
             newDigest,
           ),
           "authority line digest",
@@ -918,9 +915,18 @@ Alternatively, either unfair advantage or conduct contrary to honest practices s
         let scriptSource = await readFile(scriptPath, "utf8");
         scriptSource = replaceOnce(
           scriptSource,
-          "const expectedApprovedMappingIdentityDigest =\n  INITIAL_FROZEN_APPROVED_MAPPING_IDENTITY_DIGEST;",
+          `const expectedApprovedMappingIdentityDigest =\n  "${expectedApprovedMappingIdentityDigest}";`,
           `const expectedApprovedMappingIdentityDigest =\n  "${newDigest}";`,
           "script digest constant",
+        );
+        scriptSource = replaceOnce(
+          scriptSource,
+          expectedApprovedMappingIdentityAuthorityLine,
+          expectedApprovedMappingIdentityAuthorityLine.replace(
+            expectedApprovedMappingIdentityDigest,
+            newDigest,
+          ),
+          "script authority line constant",
         );
         const patchedScriptPath = path.join(root, "patched-verify-commerce-foundation.mjs");
         await writeFile(patchedScriptPath, scriptSource);
@@ -1015,10 +1021,10 @@ async function verifyCommerceFoundation() {
   const decisionIds = decisionRows.map(([id]) => id);
   assert.deepEqual(
     decisionIds,
-    Array.from({ length: 31 }, (_, index) =>
+    Array.from({ length: 32 }, (_, index) =>
       `COM-ADR-${String(index + 1).padStart(3, "0")}`,
     ),
-    "commerce decision IDs must be unique and sequential through COM-ADR-031",
+    "commerce decision IDs must be unique and sequential through COM-ADR-032",
   );
   for (const [id, date, status, decision, reason] of decisionRows) {
     assertCalendarDate(date, `${id} decision date`);
@@ -1061,6 +1067,7 @@ async function verifyCommerceFoundation() {
     ["COM-ADR-029", "Accepted"],
     ["COM-ADR-030", "Accepted"],
     ["COM-ADR-031", "Accepted"],
+    ["COM-ADR-032", "Accepted"],
   ]) {
     assert.equal(
       decisionStatuses.get(id),
@@ -1121,6 +1128,10 @@ async function verifyCommerceFoundation() {
       "COM-ADR-031",
       "Stage the 48 Inspired products as the first fixed-price cart-preview batch at 30 ml ₹600, 50 ml ₹800, and 100 ml ₹1,400. Keep all 21 Signature products visible but price-pending and non-purchasable until one exact owner-approved price is supplied for each 50 ml and 105 ml variant.",
     ],
+    [
+      "COM-ADR-032",
+      "Replace the active catalog with the exact owner-supplied 2026-08-29 sources: 94 main products and 20 Signature products; price main rows 1–16 at ₹600/₹800/₹1,400 for 30/50/100 ml, main rows 17–94 at ₹450/₹650/₹1,200, and Signature rows at their supplied 50/105 ml prices. Carry forward only previously approved inspired mappings that still identify a replacement row, keep all other inspired titles blank, and keep every legal, import, publication, checkout, and release gate closed.",
+    ],
   ]);
   for (const [id, , , decision] of decisionRows) {
     const expectedDecision = expectedOwnerDecisionStatements.get(id);
@@ -1165,10 +1176,12 @@ async function verifyCommerceFoundation() {
     path.join(repositoryRoot, "docs/REFERENCE.md"),
     "utf8",
   );
-  assert.ok(
-    research.includes(expectedPdfDigest),
-    "research must retain supplied PDF SHA-256",
-  );
+  for (const expectedArtifactDigest of sourceArtifacts.values()) {
+    assert.ok(
+      research.includes(expectedArtifactDigest),
+      `research must retain supplied artifact SHA-256 ${expectedArtifactDigest}`,
+    );
+  }
   assert.ok(
     research.includes(
       "https://www.indiacode.nic.in/show-data?actid=AC_CEN_11_60_00004_199947_1517807323972&orderno=29&sectionId=16814&sectionno=29",
@@ -1221,14 +1234,18 @@ async function verifyCommerceFoundation() {
       /disabled on bottle labels and packaging/i.test(decisions),
     "COM-ADR-022 must record bottle-label disablement policy",
   );
-  const retainedPdfDigest = createHash("sha256")
-    .update(await readFile(path.join(repositoryRoot, sourcePdfPath)))
-    .digest("hex");
-  assert.equal(
-    retainedPdfDigest,
-    expectedPdfDigest,
-    "retained catalog PDF differs from reviewed source",
-  );
+  const retainedArtifactDigests = new Map();
+  for (const [artifactPath, expectedDigest] of sourceArtifacts) {
+    const retainedDigest = createHash("sha256")
+      .update(await readFile(path.join(repositoryRoot, artifactPath)))
+      .digest("hex");
+    assert.equal(
+      retainedDigest,
+      expectedDigest,
+      `${artifactPath} differs from the reviewed source`,
+    );
+    retainedArtifactDigests.set(artifactPath, retainedDigest);
+  }
 
   const referenceMappingDocument = await readFile(
     path.join(repositoryRoot, "docs/REFERENCE.md"),
@@ -1283,22 +1300,22 @@ async function verifyCommerceFoundation() {
     );
   assert.equal(
     referenceMappingRows.length,
-    82,
+    94,
     "reference mapping register must contain every inspired source row",
   );
   assert.deepEqual(
     referenceMappingRows.map(({ key }) => key),
-    Array.from({ length: 82 }, (_, index) => `main_list:${index + 1}`),
+    Array.from({ length: 94 }, (_, index) => `main_list:${index + 1}`),
     "reference mapping register must preserve inspired source order",
   );
   const referenceMappingByKey = new Map(
     referenceMappingRows.map((mapping) => [mapping.key, mapping]),
   );
   for (const [status, expectedCount] of [
-    ["owner_approved_title_reference", 48],
+    ["owner_approved_title_reference", 45],
     ["family_approved_exact_pending", 4],
-    ["unresolved", 4],
-    ["needs_owner_input", 26],
+    ["unresolved", 1],
+    ["needs_owner_input", 44],
   ]) {
     assert.equal(
       referenceMappingRows.filter((mapping) => mapping.status === status)
@@ -1342,6 +1359,10 @@ async function verifyCommerceFoundation() {
       "decisions must retain approved mapping identity digest authority line",
     );
   } else {
+    assert.ok(
+      decisions.includes(expectedApprovedMappingIdentityAuthorityLine),
+      "decisions must retain approved mapping identity digest authority line",
+    );
     const hasReplacementAdr = decisionRows.some(([id, , , decision, reason]) => {
       const sequence = Number(String(id).replace("COM-ADR-", ""));
       return (
@@ -1543,14 +1564,14 @@ async function verifyCommerceFoundation() {
     "evidence_gap keys must match the authorized set exactly",
   );
   assert.equal(
-    referenceMappingByKey.get("main_list:22")?.sourceType,
+    referenceMappingByKey.get("main_list:37")?.sourceType,
     "evidence_gap",
-    "main_list:22 must remain an explicit evidence gap without inventing support",
+    "main_list:37 must remain an explicit evidence gap without inventing support",
   );
   assert.equal(
-    referenceMappingByKey.get("main_list:20")?.sourceType,
+    referenceMappingByKey.get("main_list:35")?.sourceType,
     "retailer",
-    "main_list:20 must remain labeled strongest-available retailer evidence",
+    "main_list:35 must remain labeled strongest-available retailer evidence",
   );
 
   const parsed = parseCsv(
@@ -1572,20 +1593,20 @@ async function verifyCommerceFoundation() {
       ]),
     );
   });
-  assert.equal(rows.length, 103, "commerce catalog must contain 103 source rows");
+  assert.equal(rows.length, 114, "commerce catalog must contain 114 source rows");
 
   const mainRows = rows.filter((row) => row.source_section === "main_list");
   const signatureRows = rows.filter(
     (row) => row.source_section === "signature_series",
   );
-  assert.equal(mainRows.length, 82, "main list must contain 82 rows");
+  assert.equal(mainRows.length, 94, "main list must contain 94 rows");
   assert.equal(
     signatureRows.length,
-    21,
-    "Signature Series must contain 21 rows",
+    20,
+    "Signature Series must contain 20 rows",
   );
-  assertSequential(mainRows, 82, "main_list");
-  assertSequential(signatureRows, 21, "signature_series");
+  assertSequential(mainRows, 94, "main_list");
+  assertSequential(signatureRows, 20, "signature_series");
 
   const sourceKeys = rows.map(
     (row) => `${row.source_section}:${row.source_number}`,
@@ -1637,7 +1658,7 @@ async function verifyCommerceFoundation() {
   assert.equal(
     sourceDigest,
     expectedSourceDigest,
-    "catalog source transcription changed; re-verify against supplied PDF before updating digest",
+    "catalog source transcription changed; re-verify against supplied artifacts before updating digest",
   );
 
   const launchProductParsed = parseCsv(
@@ -1928,8 +1949,8 @@ async function verifyCommerceFoundation() {
   }
   assert.equal(
     approvedPublicNames.size,
-    69,
-    "21 Signature names and 48 mapped Inspired by listing titles must be unique",
+    65,
+    "20 Signature names and 45 mapped Inspired by listing titles must be unique",
   );
 
   const launchVariantParsed = parseCsv(
@@ -1991,33 +2012,36 @@ async function verifyCommerceFoundation() {
     );
     assert.equal(variant.launch_scope, "selected", `${key} must be selected`);
     if (variant.source_key.startsWith("signature_series:")) {
+      const signatureNumber = Number(variant.source_key.split(":")[1]);
+      const premiumSignature = signatureNumber === 13 || signatureNumber === 20;
+      const expectedRetailPriceMinor = new Map([
+        ["50", premiumSignature ? "180000" : "120000"],
+        ["105", premiumSignature ? "300000" : "220000"],
+      ]).get(variant.size_ml);
       assert.equal(
         variant.retail_price_minor,
-        "",
-        `${key} Signature price must remain owner-approved input`,
-      );
-      assert.equal(
-        variant.approval_status,
-        "needs_price_sku_cost_stock",
-        `${key} must remain non-importable until price, SKU, cost, and stock are approved`,
+        expectedRetailPriceMinor,
+        `${key} must retain the supplied Signature retail price in paise`,
       );
     } else {
+      const mainNumber = Number(variant.source_key.split(":")[1]);
+      const premiumMain = mainNumber <= 16;
       const expectedRetailPriceMinor = new Map([
-        ["30", "60000"],
-        ["50", "80000"],
-        ["100", "140000"],
+        ["30", premiumMain ? "60000" : "45000"],
+        ["50", premiumMain ? "80000" : "65000"],
+        ["100", premiumMain ? "140000" : "120000"],
       ]).get(variant.size_ml);
       assert.equal(
         variant.retail_price_minor,
         expectedRetailPriceMinor,
         `${key} must retain the approved standard retail price in paise`,
       );
-      assert.equal(
-        variant.approval_status,
-        "needs_sku_cost_stock",
-        `${key} must remain non-importable until SKU, cost, and stock are approved`,
-      );
     }
+    assert.equal(
+      variant.approval_status,
+      "needs_sku_cost_stock",
+      `${key} must remain non-importable until SKU, cost, and stock are approved`,
+    );
     for (const field of unresolvedVariantFields) {
       assert.equal(variant[field], "", `${key} ${field} must remain unresolved`);
     }
@@ -2027,7 +2051,9 @@ async function verifyCommerceFoundation() {
     `commerce-foundation: ${requiredCommerceDocuments.length} docs, ${rows.length} source rows (${mainRows.length} main, ${signatureRows.length} signature), ${launchProducts.length} launch products, ${launchVariants.length} launch variants, ${requirementIds.length} requirements, ${decisionIds.length} decisions`,
   );
   console.log(`commerce-source-digest: ${sourceDigest}`);
-  console.log(`commerce-pdf-digest: ${retainedPdfDigest}`);
+  for (const [artifactPath, retainedDigest] of retainedArtifactDigests) {
+    console.log(`commerce-source-artifact-digest: ${artifactPath} ${retainedDigest}`);
+  }
   console.log(
     `commerce-approved-mapping-identity-digest: ${approvedMappingIdentityDigest}`,
   );

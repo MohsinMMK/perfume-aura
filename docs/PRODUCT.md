@@ -62,12 +62,13 @@ capability.
 
 ## Catalog and money policy
 
-- Standard scents: 30 ml ₹600, 50 ml ₹800, 100 ml ₹1,400.
-- Signature scents: 50 ml and 105 ml only, with explicit owner-approved INR
-  prices required per product.
-- Storefront listing titles for the 48 mapped inspired rows use
+- Premium Segment rows 1–16: 30 ml ₹600, 50 ml ₹800, 100 ml ₹1,400.
+- Main-list rows 17–94: 30 ml ₹450, 50 ml ₹650, 100 ml ₹1,200.
+- Signature scents: 50 ml and 105 ml only, using the exact owner-supplied
+  per-product prices recorded in the catalog variants.
+- Storefront listing titles for the 45 carried mapped inspired rows use
   `Inspired by <brand> <reference>` (COM-ADR-029). That is listing identity,
-  not legal clearance or sale approval. The 34 incomplete inspired rows stay
+  not legal clearance or sale approval. The other 49 inspired rows stay
   unlistable.
 - 10 ml and discovery sets are excluded from public commerce until a separate
   sample format is approved.

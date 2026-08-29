@@ -6,7 +6,7 @@ export const listingCollections = {
   signature: {
     title: "Signature Series",
     description:
-      "In-house Perfume Aura names. Composition details and Signature prices will appear when each edition is complete.",
+      "In-house Perfume Aura names with owner-supplied size pricing. Composition details will appear when each edition is complete.",
     seoTitle: "Signature Series",
     seoDescription: "Perfume Aura Signature Series preview.",
     updatedAt: null,
@@ -14,7 +14,7 @@ export const listingCollections = {
   inspired: {
     title: "Inspired collection",
     description:
-      "Fixed prices: 30 ml ₹600, 50 ml ₹800, and 100 ml ₹1,400. Composition details will appear when each edition is complete.",
+      "Owner-supplied size pricing is shown for each fragrance. Composition details will appear when each edition is complete.",
     seoTitle: "Inspired collection",
     seoDescription: "Perfume Aura inspired fragrance listing preview.",
     updatedAt: null,
@@ -50,7 +50,7 @@ function toStorefrontProduct(
   previewCatalogEnabled: boolean,
 ): StorefrontProduct {
   const isSignature = product.collectionSlug === "signature";
-  const previewPurchasable = previewCatalogEnabled && !isSignature;
+  const previewPurchasable = previewCatalogEnabled;
   return {
     id: product.id,
     slug: product.slug,
@@ -71,7 +71,7 @@ function toStorefrontProduct(
       ? "A Perfume Aura Signature scent. Composition details will appear when this edition is complete."
       : "A Perfume Aura fragrance listed with its approved Inspired by reference. Composition details will appear when this edition is complete.",
     story: isSignature
-      ? `${product.name} is part of the Signature Series. Notes, intensity, and Signature prices are not published yet.`
+      ? `${product.name} is part of the Signature Series. Notes and intensity are not published yet.`
       : `${product.name} is a Perfume Aura fragrance. The reference name identifies the scent it is inspired by and does not mean designer affiliation.`,
     notes: { top: [], heart: [], base: [] },
     image: product.image,

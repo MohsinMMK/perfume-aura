@@ -30,15 +30,15 @@ describe("storefront public release boundary", () => {
     );
   });
 
-  it("serves the 69-product listing workbook without a public-release flag", async () => {
+  it("serves the 65-product listing workbook without a public-release flag", async () => {
     const previous = process.env.STOREFRONT_PUBLIC_RELEASE;
     delete process.env.STOREFRONT_PUBLIC_RELEASE;
     try {
       const products = await getStorefrontProducts();
       const inspired = await getStorefrontCollection("inspired");
       const featured = await getFeaturedProducts();
-      assert.equal(products.length, 69);
-      assert.equal(inspired?.products.length, 48);
+      assert.equal(products.length, 65);
+      assert.equal(inspired?.products.length, 45);
       assert.equal(featured.length, 3);
       assert.equal(
         products.some((product) => product.slug === "standard-preview-1"),
