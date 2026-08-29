@@ -43,8 +43,8 @@ always last.
 reference-fragrance treatment for every intended surface.
 
 **Current blocker:** the India-counsel review packet is still pending. B01
-preparation started on 27 August 2026 with an exact
-[`legal-surface inventory`](review-packets/2026-08-27-b01-legal-surface-inventory.md).
+preparation was refreshed on 29 August 2026 for the replacement catalog with an
+exact [`114-name legal-surface inventory`](review-packets/2026-08-29-b01-114-name-legal-surface-inventory.md).
 Inspired listing titles remain planning identity only; they are not trademark
 clearance or permission to use references on labels or packaging.
 
@@ -52,16 +52,16 @@ Preparation completed:
 
 - [x] Inventory the customer-visible, metadata, policy, packaging, invoice,
       email, inquiry, review, advertising, and social surfaces requiring review.
-- [x] Freeze the current catalog artifacts by SHA-256 and record exact scope
+- [x] Freeze the replacement catalog artifacts by SHA-256 and record exact scope
       counts without modifying catalog approval state.
 - [x] Confirm that 48 inspired product links are already visible on the live
       discovery shop and that no customer-facing disclaimer is implemented.
 - [x] Define a surface-specific counsel response format and preserve the
       repository's fail-closed handoff.
-- [x] Record the owner's 27 August 2026 scope decision: submit the separate
-      [`69-name review CSV`](review-packets/2026-08-27-b01-69-name-review.csv)
-      as the first counsel batch and leave the other 34 inspired rows unchanged
-      and excluded.
+- [x] Record the owner's 29 August 2026 replacement scope in the separate
+      [`114-name review CSV`](review-packets/2026-08-29-b01-114-name-review.csv):
+      45 carried inspired titles and 20 Signature names are staged; the other
+      49 main-list rows remain blank and excluded.
 
 - [ ] Counsel reviews public product names and `Inspired by …` treatment.
 - [ ] Counsel approves exact disclaimer wording and placement.
@@ -77,7 +77,8 @@ fail-closed legal fields contain approved evidence references.
 
 **Owner documents:**
 [`India counsel review packet`](review-packets/2026-08-20-india-counsel-commerce-review.md),
-[`69-name counsel review CSV`](review-packets/2026-08-27-b01-69-name-review.csv),
+[`114-name counsel review CSV`](review-packets/2026-08-29-b01-114-name-review.csv),
+[`114-name legal-surface inventory`](review-packets/2026-08-29-b01-114-name-legal-surface-inventory.md),
 [`COMMERCE.md`](COMMERCE.md), and [`REFERENCE.md`](REFERENCE.md).
 
 ## B02 — Approved sellable catalog
@@ -85,25 +86,23 @@ fail-closed legal fields contain approved evidence references.
 **Goal:** produce a fully approved, server-authoritative catalog that can be
 imported without guessing product or financial facts.
 
-**Current blocker:** the live 69-product listing is discovery-only. That first
-catalog scope is split into a 48-product fixed-price Inspired preview-cart
-batch and a 21-product price-pending Signature batch in the
-[`B02 catalog intake workbook`](review-packets/2026-08-27-b02-69-product-catalog-intake.xlsx);
-the other 34 inspired rows remain excluded. The 69 rows do not yet have every
-required approval, price, SKU, cost, stock, media, and structured scent fact.
+**Current blocker:** production still serves the earlier 69-product
+discovery-only listing. The replacement
+[`B02 catalog intake workbook`](review-packets/2026-08-29-b02-114-product-catalog-intake.xlsx)
+contains 114 products and all 322 owner-supplied retail prices. Its staged code
+projection contains 45 carried Inspired titles and 20 Signature names; the
+other 49 inspired rows remain unlistable. No replacement row is approved for
+production import or publication, and SKU, cost, stock, media, structured scent
+facts, and legal approval remain incomplete.
 
-- [x] Record the four family-pending inspired rows as excluded from the first
-      69-product sellable batch.
-- [x] Record the four explicitly unresolved references as excluded from the
-      first 69-product sellable batch.
-- [x] Record the remaining 26 owner-input inspired rows as excluded from the
-      first 69-product sellable batch.
-- [x] Apply the approved ₹600 / ₹800 / ₹1,400 rates to all 144 Inspired size
-      variants and make only those variants usable in the fail-closed preview
-      cart; production checkout and payment remain closed.
-- [x] Keep every Signature variant price blank and its purchase action disabled
-      until exact per-product prices are approved.
-- [ ] Approve one exact price for each Signature product size.
+- [x] Record the four family-pending rows, one unresolved row, and 44
+      owner-input rows as unlistable.
+- [x] Apply ₹600 / ₹800 / ₹1,400 to main rows 1–16 and
+      ₹450 / ₹650 / ₹1,200 to main rows 17–94.
+- [x] Apply every supplied Signature price, including ₹1,800 / ₹3,000 for Oud
+      of Dubai and Visionnaire.
+- [x] Keep preview-cart access behind the existing preview boundary and keep
+      production checkout, payment, import, publication, and release flags closed.
 - [ ] Supply and approve SKU, cost, opening stock, and reorder level per variant.
 - [ ] Approve product copy, audience, notes, concentration, occasion, longevity,
       sillage, ingredients, and usage claims.
@@ -120,7 +119,7 @@ digest is accepted by the owner.
 **Owner documents:** [`REFERENCE.md`](REFERENCE.md),
 [`COMMERCE.md`](COMMERCE.md), and
 [`COMMERCE_OPERATING_POLICIES.md`](COMMERCE_OPERATING_POLICIES.md). Complete
-the [`B02 catalog intake workbook`](review-packets/2026-08-27-b02-69-product-catalog-intake.xlsx)
+the [`B02 catalog intake workbook`](review-packets/2026-08-29-b02-114-product-catalog-intake.xlsx)
 before moving reviewed values into the import templates.
 
 ## B03 — Tax, delivery, returns, and support operations

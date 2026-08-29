@@ -2,14 +2,14 @@
 
 Status: **approval pending; every related release gate remains closed**.
 
-B01 preparation started on 27 August 2026. The exact repository surfaces,
+B01 preparation was refreshed for the replacement catalog on 29 August 2026. The exact repository surfaces,
 catalog counts, frozen artifact digests, live discovery exposure, missing
 disclaimer finding, and counsel response format are recorded in the
-[`B01 legal-surface inventory`](2026-08-27-b01-legal-surface-inventory.md).
-The owner confirmed the first review batch as the
-[`69-name counsel review CSV`](2026-08-27-b01-69-name-review.csv): 48 inspired
-names and 21 Signature names. The other 34 incomplete inspired rows remain
-unchanged and are excluded from this submission.
+[`replacement B01 legal-surface inventory`](2026-08-29-b01-114-name-legal-surface-inventory.md).
+The current [`114-name counsel review CSV`](2026-08-29-b01-114-name-review.csv)
+contains the replacement 94-row main list and 20 Signature names. Forty-five
+carried inspired titles and all 20 Signature names are staged for review; the
+other 49 main-list titles remain blank and excluded from publication.
 This preparation does not change the pending status or authorize any release.
 
 ## Requested written opinion

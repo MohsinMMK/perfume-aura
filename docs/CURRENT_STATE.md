@@ -278,6 +278,15 @@ fragrance-guide actions on `/fragrance-guide`.
 Production exposes the approved presentation and prices without enabling cart
 mutation, checkout, payment, customer auth, or any staff-security release flag.
 
+On 2026-08-29 the owner supplied a replacement catalog: 94 main products and 20
+Signature products with exact size prices. The repository catalog, staged
+65-product discovery projection (45 carried Inspired titles plus 20 Signature
+names), 114-product/322-variant intake workbook, legal-review CSV, documentation,
+tests, and deterministic verifier have been updated locally. This is not a
+production release: the live storefront remains the earlier 69-product state
+described above, Neon has not been imported or migrated, and public catalog,
+checkout, customer-auth, inquiry, and staff-security flags remain closed.
+
 The customer account and private operations sign-in presentation is also live
 as a flags-off UX release. Customer sign-in, registration, recovery,
 verification, checkout-return, and signed-in account navigation use a focused
@@ -587,19 +596,15 @@ Next actions:
    the seven discovery URLs; verify or import the property in Bing Webmaster
    Tools and submit the same sitemap. IndexNow notification is complete, while
    Google/Bing indexing and ranking remain external pending outcomes.
-2. Obtain India-counsel clearance and owner-approved catalog facts: exact
-   Signature prices, SKUs, costs, opening stock, media, and structured scent
-   content. The fixed-price 48-product Inspired cart-preview batch is staged;
-   the 21 Signature products remain separately price-pending. On 2026-08-27 the
-   owner confirmed all 69 currently listed names as the first counsel-review
-   batch; the other 34 incomplete inspired rows remain unchanged and excluded.
-   B01 preparation includes the
-   [69-name review CSV](review-packets/2026-08-27-b01-69-name-review.csv), exact
-   [legal-surface inventory](review-packets/2026-08-27-b01-legal-surface-inventory.md),
-   frozen catalog digests, and the finding that the live discovery shop exposes
-   48 inspired product links while no customer-facing disclaimer is implemented.
-   Legal approval remains pending. Do not migrate or publish sale data before
-   that gate.
+2. Obtain India-counsel clearance and the remaining owner-approved catalog
+   facts: SKUs, costs, opening stock, media, and structured scent content. All
+   322 retail prices are now owner-supplied. The replacement staged projection
+   contains 45 carried Inspired titles and 20 Signature names; 49 main-list rows
+   remain unlistable pending mapping. B01 preparation includes the
+   [114-name review CSV](review-packets/2026-08-29-b01-114-name-review.csv),
+   [replacement legal-surface inventory](review-packets/2026-08-29-b01-114-name-legal-surface-inventory.md),
+   and frozen catalog digests. Legal approval remains pending. Do not import,
+   migrate, publish, or deploy this replacement catalog before its owning gates.
 3. Rotate the dedicated Hostinger archive-deployment token before its
    2026-09-28 expiry. Supply and accept the remaining provider identities:
    Google OAuth production client, Hostinger SMTP sender credentials and

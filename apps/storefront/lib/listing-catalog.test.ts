@@ -15,16 +15,16 @@ function parseCsv(text: string): string[][] {
 }
 
 describe("storefront listing workbook", () => {
-  it("lists 21 Signature and 48 Inspired products and hides incomplete rows", () => {
+  it("lists 20 Signature and 45 Inspired products and hides incomplete rows", () => {
     const products = loadListedWorkbookProducts();
-    assert.equal(products.length, 69);
+    assert.equal(products.length, 65);
     assert.equal(
       products.filter((product) => product.collectionSlug === "signature").length,
-      21,
+      20,
     );
     assert.equal(
       products.filter((product) => product.collectionSlug === "inspired").length,
-      48,
+      45,
     );
     assert.ok(products.every((product) => product.publicationState === "listed"));
     assert.ok(products.every((product) => product.variants.every((variant) => !variant.purchasable)));
@@ -36,30 +36,49 @@ describe("storefront listing workbook", () => {
     assert.ok(products.some((product) => product.slug === "regent-noir"));
   });
 
-  it("keeps Signature unpriced and Standard sizes at the approved INR amounts", () => {
+  it("uses the owner-supplied INR amounts across all price tiers", () => {
     const products = loadListedWorkbookProducts();
     const signature = products.find((product) => product.slug === "regent-noir");
-    const inspired = products.find((product) => product.slug === "inspired-by-bvlgari-tygar");
+    const premiumSignature = products.find((product) => product.slug === "oud-of-dubai");
+    const premiumMain = products.find((product) => product.slug === "inspired-by-bvlgari-tygar");
+    const standardMain = products.find((product) => product.slug === "inspired-by-dunhill-icon");
     assert.ok(signature);
-    assert.ok(inspired);
+    assert.ok(premiumSignature);
+    assert.ok(premiumMain);
+    assert.ok(standardMain);
     assert.deepEqual(
       signature.variants.map((variant) => [variant.sizeMl, variant.price]),
       [
-        [50, null],
-        [105, null],
+        [50, { currency: "INR", amountMinor: 120_000 }],
+        [105, { currency: "INR", amountMinor: 220_000 }],
       ],
     );
     assert.deepEqual(
-      inspired.variants.map((variant) => [variant.sizeMl, variant.price?.amountMinor]),
+      premiumSignature.variants.map((variant) => [variant.sizeMl, variant.price?.amountMinor]),
+      [
+        [50, 180_000],
+        [105, 300_000],
+      ],
+    );
+    assert.deepEqual(
+      premiumMain.variants.map((variant) => [variant.sizeMl, variant.price?.amountMinor]),
       [
         [30, 60_000],
         [50, 80_000],
         [100, 140_000],
       ],
     );
+    assert.deepEqual(
+      standardMain.variants.map((variant) => [variant.sizeMl, variant.price?.amountMinor]),
+      [
+        [30, 45_000],
+        [50, 65_000],
+        [100, 120_000],
+      ],
+    );
   });
 
-  it("makes only fixed-price Inspired variants purchasable in catalog preview", () => {
+  it("makes all supplied-price variants purchasable in catalog preview", () => {
     const products = loadListedWorkbookProducts(true);
     const inspired = products.filter(
       (product) => product.collectionSlug === "inspired",
@@ -68,10 +87,10 @@ describe("storefront listing workbook", () => {
       (product) => product.collectionSlug === "signature",
     );
 
-    assert.equal(inspired.length, 48);
+    assert.equal(inspired.length, 45);
     assert.equal(
       inspired.flatMap((product) => product.variants).length,
-      144,
+      135,
     );
     assert.ok(
       inspired.every((product) =>
@@ -83,7 +102,7 @@ describe("storefront listing workbook", () => {
     assert.ok(
       signature.every((product) =>
         product.variants.every(
-          (variant) => !variant.purchasable && variant.price == null,
+          (variant) => variant.purchasable && variant.price != null,
         ),
       ),
     );
@@ -106,7 +125,7 @@ describe("storefront listing workbook", () => {
     const fragranceIndex = header.indexOf("reference_fragrance");
     const mappingIndex = header.indexOf("reference_mapping_status");
     const listed = rows.filter((row) => row[mappingIndex] === "owner_approved_title_reference");
-    assert.equal(listed.length, 48);
+    assert.equal(listed.length, 45);
     for (const row of listed) {
       const expected = inspiredListingTitle(row[brandIndex] ?? "", row[fragranceIndex] ?? "");
       assert.equal(row[nameIndex], expected);
