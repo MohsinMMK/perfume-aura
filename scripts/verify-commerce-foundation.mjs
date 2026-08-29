@@ -191,9 +191,9 @@ const INITIAL_FROZEN_APPROVED_MAPPING_IDENTITY_DIGEST =
   "3701891d6afbaa5c34a7f830749688a420e6498a17d5e19af34b71315db02ded";
 // Current authorized digest. Diverge from INITIAL only when a new COM-ADR cites the replacement.
 const expectedApprovedMappingIdentityDigest =
-  "c90c911274322b411783f2bbfadd29c8bd62582b573571923df66a86ad2980b3";
+  "e248eed86501021ef5b2719aa1db335173c08c531473f1d9a047a02bbc03e864";
 const expectedApprovedMappingIdentityAuthorityLine =
-  "Approved mapping identity digest `c90c911274322b411783f2bbfadd29c8bd62582b573571923df66a86ad2980b3` authorized by COM-ADR-032; any replacement digest requires a new COM-ADR row citing that digest before the verifier constant may change.";
+  "Approved mapping identity digest `e248eed86501021ef5b2719aa1db335173c08c531473f1d9a047a02bbc03e864` authorized by COM-ADR-033; any replacement digest requires a new COM-ADR row citing that digest before the verifier constant may change.";
 const expectedSection29And30ParaphraseBlock =
   "Cautious paraphrase only:\n\n" +
   "- Section 29 addresses infringement of a **registered** trade mark, including likely confusion or association under the statute's conditions.\n" +
@@ -219,7 +219,11 @@ const forbiddenLegalContradictionPattern =
   /either unfair advantage or conduct contrary|paragraphs are alternatives|grants legal clearance for public titles|permits reference use on PDP copy|permission to use references on every surface|grants trademark clearance/i;
 const requiredReviewFlags = new Set();
 const retailerExceptionKeys = new Set(["main_list:35"]);
-const evidenceGapKeys = new Set(["main_list:37"]);
+const evidenceGapKeys = new Set([
+  "main_list:37",
+  "main_list:74",
+  "main_list:87",
+]);
 const knownRetailerHostPatterns = [
   /(^|\.)ulta\.com$/i,
   /(^|\.)sephora\.com$/i,
@@ -233,11 +237,17 @@ const forbiddenEvidenceHostPatterns = [/(^|\.)carolinaherreras\.com$/i];
 const officialHostsByBrand = new Map([
   ["Ahmed Al Maghribi", ["www.ahmedalmaghribi.us"]],
   ["Ajmal", ["en-ae.ajmal.com"]],
+  ["Al-Rehab", ["alrehab.com"]],
+  ["Armaf", ["armaf.com"]],
   ["Azzaro", ["www.azzaro.com"]],
   ["Burberry", ["us.burberry.com"]],
   ["Bvlgari", ["www.bulgari.com"]],
+  ["Calvin Klein", ["www.calvinklein.us"]],
   ["Carolina Herrera", ["www.carolinaherrera.com"]],
+  ["Chanel", ["www.chanel.com"]],
   ["Creed", ["creedboutique.com"]],
+  ["Cristiano Ronaldo", ["cristianoronaldo.com"]],
+  ["Davidoff", ["www.zinodavidoff.com"]],
   ["Dior", ["www.dior.com"]],
   ["Diptyque", ["us.diptyqueparis.com"]],
   ["Dunhill", ["www.dunhill.com"]],
@@ -256,9 +266,18 @@ const officialHostsByBrand = new Map([
   ["Parfums de Marly", ["us.parfums-de-marly.com"]],
   ["Prada", ["www.prada-beauty.com"]],
   ["Rabanne", ["www.rabanne.com"]],
+  [
+    "Ralph Lauren",
+    [
+      "www.ralphlauren.com",
+      "corporate.ralphlauren.com",
+      "investor.ralphlauren.com",
+    ],
+  ],
   ["Rasasi", ["store.rasasi.com.sa"]],
   ["Roja Parfums", ["www.rojaparfums.com", "www.rojalondon.com"]],
   ["Tom Ford", ["www.tomfordbeauty.com"]],
+  ["Versace", ["www.versace.com"]],
   ["Victoria's Secret", ["www.victoriassecret.com"]],
   ["Viktor&Rolf", ["us.viktor-rolf.com"]],
   ["Xerjoff", ["www.xerjoff.com"]],
@@ -1021,10 +1040,10 @@ async function verifyCommerceFoundation() {
   const decisionIds = decisionRows.map(([id]) => id);
   assert.deepEqual(
     decisionIds,
-    Array.from({ length: 32 }, (_, index) =>
+    Array.from({ length: 33 }, (_, index) =>
       `COM-ADR-${String(index + 1).padStart(3, "0")}`,
     ),
-    "commerce decision IDs must be unique and sequential through COM-ADR-032",
+    "commerce decision IDs must be unique and sequential through COM-ADR-033",
   );
   for (const [id, date, status, decision, reason] of decisionRows) {
     assertCalendarDate(date, `${id} decision date`);
@@ -1068,6 +1087,7 @@ async function verifyCommerceFoundation() {
     ["COM-ADR-030", "Accepted"],
     ["COM-ADR-031", "Accepted"],
     ["COM-ADR-032", "Accepted"],
+    ["COM-ADR-033", "Accepted"],
   ]) {
     assert.equal(
       decisionStatuses.get(id),
@@ -1131,6 +1151,10 @@ async function verifyCommerceFoundation() {
     [
       "COM-ADR-032",
       "Replace the active catalog with the exact owner-supplied 2026-08-29 sources: 94 main products and 20 Signature products; price main rows 1–16 at ₹600/₹800/₹1,400 for 30/50/100 ml, main rows 17–94 at ₹450/₹650/₹1,200, and Signature rows at their supplied 50/105 ml prices. Carry forward only previously approved inspired mappings that still identify a replacement row, keep all other inspired titles blank, and keep every legal, import, publication, checkout, and release gate closed.",
+    ],
+    [
+      "COM-ADR-033",
+      "Research the 49 replacement main-list rows without storefront titles; map 34 rows with a defensible or owner-directed potential brand/reference to Inspired, place the remaining 15 generic, brand-only, conflicting, multi-brand, or non-exact names in a temporary `Unknown` collection using their supplied literal names, and expose all 114 products without changing any supplied price.",
     ],
   ]);
   for (const [id, , , decision] of decisionRows) {
@@ -1301,21 +1325,19 @@ async function verifyCommerceFoundation() {
   assert.equal(
     referenceMappingRows.length,
     94,
-    "reference mapping register must contain every inspired source row",
+    "reference mapping register must contain every main-list source row",
   );
   assert.deepEqual(
     referenceMappingRows.map(({ key }) => key),
     Array.from({ length: 94 }, (_, index) => `main_list:${index + 1}`),
-    "reference mapping register must preserve inspired source order",
+    "reference mapping register must preserve main-list source order",
   );
   const referenceMappingByKey = new Map(
     referenceMappingRows.map((mapping) => [mapping.key, mapping]),
   );
   for (const [status, expectedCount] of [
-    ["owner_approved_title_reference", 45],
-    ["family_approved_exact_pending", 4],
-    ["unresolved", 1],
-    ["needs_owner_input", 44],
+    ["owner_approved_title_reference", 79],
+    ["not_applicable_unknown", 15],
   ]) {
     assert.equal(
       referenceMappingRows.filter((mapping) => mapping.status === status)
@@ -1435,6 +1457,41 @@ async function verifyCommerceFoundation() {
     const approved =
       status === "owner_approved_title_reference" ||
       status === "family_approved_exact_pending";
+    if (status === "not_applicable_unknown") {
+      assert.equal(brand, "", `${key} Unknown mapping brand must be blank`);
+      assert.equal(
+        fragrance,
+        "",
+        `${key} Unknown mapping reference must be blank`,
+      );
+      assert.equal(
+        evidenceUrl,
+        "",
+        `${key} Unknown mapping evidence URL must be blank`,
+      );
+      assert.equal(
+        sourceType,
+        "",
+        `${key} Unknown mapping source type must be blank`,
+      );
+      assert.equal(
+        contentSupport,
+        "",
+        `${key} Unknown mapping content support must be blank`,
+      );
+      assertCalendarDate(auditDate, `${key} Unknown classification audit date`);
+      assert.equal(
+        effectiveUrl,
+        "",
+        `${key} Unknown mapping effective URL must be blank`,
+      );
+      assert.equal(
+        mapping.decision,
+        "COM-ADR-033",
+        `${key} Unknown classification must cite COM-ADR-033`,
+      );
+      continue;
+    }
     if (!approved) {
       assert.equal(
         evidenceUrl,
@@ -1629,10 +1686,16 @@ async function verifyCommerceFoundation() {
     assert.equal(row.image_status, "missing", `${key} image must remain missing`);
 
     if (row.source_section === "main_list") {
+      const mapping = referenceMappingByKey.get(key);
+      assert.ok(mapping, `${key} must exist in the main-list mapping register`);
+      const expectedClassification =
+        mapping.status === "not_applicable_unknown"
+          ? "unknown_collection"
+          : "inspired_collection";
       assert.equal(
         row.classification_status,
-        "unconfirmed",
-        `${key} first-section classification must remain unconfirmed`,
+        expectedClassification,
+        `${key} source classification must match the reviewed mapping register`,
       );
     } else {
       assert.equal(
@@ -1703,10 +1766,14 @@ async function verifyCommerceFoundation() {
     "usage_instructions",
   ];
   const allowedMappingDecisions = new Map([
-    ["owner_approved_title_reference", new Set(["COM-ADR-018", "COM-ADR-021"])],
+    [
+      "owner_approved_title_reference",
+      new Set(["COM-ADR-018", "COM-ADR-021", "COM-ADR-033"]),
+    ],
     ["family_approved_exact_pending", new Set(["COM-ADR-016", "COM-ADR-018"])],
     ["unresolved", new Set(["COM-ADR-016", "COM-ADR-018", "COM-ADR-020"])],
     ["needs_owner_input", new Set(["Pending"])],
+    ["not_applicable_unknown", new Set(["COM-ADR-033"])],
   ]);
   const approvedPublicNames = new Set();
   const approvedPublicNameSlugs = new Set();
@@ -1750,6 +1817,8 @@ async function verifyCommerceFoundation() {
     }
 
     if (source.source_section === "main_list") {
+      const mappingReview = referenceMappingByKey.get(key);
+      assert.ok(mappingReview, `${key} must exist in reference mapping register`);
       if (product.reference_mapping_status === "owner_approved_title_reference") {
         const expectedTitle = inspiredListingTitle(
           product.reference_brand,
@@ -1771,6 +1840,24 @@ async function verifyCommerceFoundation() {
           "listing_title_recorded",
           `${key} mapped listing title state changed`,
         );
+      } else if (
+        product.reference_mapping_status === "not_applicable_unknown"
+      ) {
+        assert.equal(
+          product.public_name,
+          source.source_name,
+          `${key} Unknown listing must preserve the supplied literal name`,
+        );
+        assert.equal(
+          product.public_name_slug,
+          listingSlug(source.source_name),
+          `${key} Unknown slug must match the supplied literal name`,
+        );
+        assert.equal(
+          product.name_approval_status,
+          "owner_directed_temporary_name",
+          `${key} Unknown name state changed`,
+        );
       } else {
         assert.equal(
           product.public_name,
@@ -1790,32 +1877,44 @@ async function verifyCommerceFoundation() {
       }
       assert.equal(
         product.collection,
-        "inspired_collection",
+        mappingReview.status === "not_applicable_unknown"
+          ? "unknown_collection"
+          : "inspired_collection",
         `${key} collection changed`,
       );
       assert.equal(
         product.identity_type,
-        "inspired_fragrance",
+        mappingReview.status === "not_applicable_unknown"
+          ? "unclassified_fragrance"
+          : "inspired_fragrance",
         `${key} identity changed`,
       );
       assert.equal(
         product.source_name_review_status,
-        requiredReviewFlags.has(key) ? "ambiguity_unresolved" : "not_flagged",
+        mappingReview.status === "not_applicable_unknown"
+          ? "research_reconciled_unknown"
+          : mappingReview.decision === "COM-ADR-033"
+            ? "research_reconciled"
+            : requiredReviewFlags.has(key)
+              ? "ambiguity_unresolved"
+              : "not_flagged",
         `${key} source-name review state changed`,
       );
       assert.equal(
         product.reference_display_status,
-        "planned_public_pending_review",
+        mappingReview.status === "not_applicable_unknown"
+          ? "not_applicable"
+          : "planned_public_pending_review",
         `${key} public reference intent must remain pending legal review`,
       );
       assert.equal(
         product.legal_review_status,
-        "india_counsel_pending",
+        mappingReview.status === "not_applicable_unknown"
+          ? "trademark_clearance_pending"
+          : "india_counsel_pending",
         `${key} legal review must remain pending`,
       );
 
-      const mappingReview = referenceMappingByKey.get(key);
-      assert.ok(mappingReview, `${key} must exist in reference mapping register`);
       assert.equal(
         mappingReview.sourceName,
         product.source_name,
@@ -1949,8 +2048,8 @@ async function verifyCommerceFoundation() {
   }
   assert.equal(
     approvedPublicNames.size,
-    65,
-    "20 Signature names and 45 mapped Inspired by listing titles must be unique",
+    114,
+    "20 Signature, 79 Inspired, and 15 Unknown listing names must be unique",
   );
 
   const launchVariantParsed = parseCsv(

@@ -5,6 +5,7 @@ export const shopListingSegments = [
   "all",
   "signature",
   "inspired",
+  "unknown",
 ] as const;
 export const shopListingSorts = ["catalog", "name-asc", "name-desc"] as const;
 
@@ -44,6 +45,7 @@ const shopListingSizesBySegment: Readonly<
   all: shopListingSizes,
   signature: [50, 105],
   inspired: [30, 50, 100],
+  unknown: [30, 50, 100],
 };
 
 export function foldShopListingText(value: string): string {
@@ -187,7 +189,7 @@ export function applyShopListingQuery<T extends ShopListingRecord>(
       return false;
     }
     if (
-      (query.collection === "signature" || query.collection === "inspired") &&
+      query.collection !== "all" &&
       product.collectionSlug !== query.collection
     ) {
       return false;

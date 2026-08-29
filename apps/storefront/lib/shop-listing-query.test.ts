@@ -24,7 +24,7 @@ describe("shop listing query", () => {
     assert.deepEqual(parseShopListingQuery(new URLSearchParams()), emptyShopListingQuery);
   });
 
-  it("treats empty and whitespace-only q as no query and keeps 65 products", () => {
+  it("treats empty and whitespace-only q as no query and keeps 114 products", () => {
     assert.deepEqual(parseShopListingQuery({ q: "" }), emptyShopListingQuery);
     assert.deepEqual(parseShopListingQuery({ q: "   " }), emptyShopListingQuery);
     assert.deepEqual(
@@ -37,11 +37,11 @@ describe("shop listing query", () => {
     );
     assert.equal(
       applyShopListingQuery(products, parseShopListingQuery({ q: "" })).length,
-      65,
+      114,
     );
     assert.equal(
       applyShopListingQuery(products, parseShopListingQuery({ q: "   " })).length,
-      65,
+      114,
     );
   });
 
@@ -122,16 +122,16 @@ describe("shop listing query", () => {
     );
   });
 
-  it("keeps the unfiltered 65-product catalog order", () => {
+  it("keeps the unfiltered 114-product catalog order", () => {
     const visible = applyShopListingQuery(products, emptyShopListingQuery);
-    assert.equal(visible.length, 65);
+    assert.equal(visible.length, 114);
     assert.deepEqual(
       visible.map((product) => product.id),
       sourceIds,
     );
   });
 
-  it("segments Signature 20 and Inspired 45 without extra products", () => {
+  it("segments Signature 20, Inspired 79, and Unknown 15 without extra products", () => {
     const signature = applyShopListingQuery(products, {
       ...emptyShopListingQuery,
       collection: "signature",
@@ -140,10 +140,16 @@ describe("shop listing query", () => {
       ...emptyShopListingQuery,
       collection: "inspired",
     });
+    const unknown = applyShopListingQuery(products, {
+      ...emptyShopListingQuery,
+      collection: "unknown",
+    });
     assert.equal(signature.length, 20);
-    assert.equal(inspired.length, 45);
+    assert.equal(inspired.length, 79);
+    assert.equal(unknown.length, 15);
     assert.ok(signature.every((product) => sourceIds.includes(product.id)));
     assert.ok(inspired.every((product) => sourceIds.includes(product.id)));
+    assert.ok(unknown.every((product) => sourceIds.includes(product.id)));
     assert.deepEqual(
       signature.map((product) => product.id),
       products
@@ -215,9 +221,9 @@ describe("shop listing query", () => {
       collection: "inspired",
     });
 
-    assert.equal(thirty.length, 45);
-    assert.ok(thirty.every((product) => product.collectionSlug === "inspired"));
-    assert.equal(mixed.length, 65);
+    assert.equal(thirty.length, 94);
+    assert.ok(thirty.every((product) => product.collectionSlug !== "signature"));
+    assert.equal(mixed.length, 114);
     assert.equal(signatureThirty.length, 0);
     assert.equal(named.length, 1);
     assert.equal(named[0]?.slug, "regent-noir");
@@ -302,6 +308,7 @@ describe("shop listing query", () => {
     assert.deepEqual(shopListingSizesForSegment("all"), [30, 50, 100, 105]);
     assert.deepEqual(shopListingSizesForSegment("signature"), [50, 105]);
     assert.deepEqual(shopListingSizesForSegment("inspired"), [30, 50, 100]);
+    assert.deepEqual(shopListingSizesForSegment("unknown"), [30, 50, 100]);
   });
 
   it("drops incompatible sizes when switching collections", () => {
@@ -320,6 +327,11 @@ describe("shop listing query", () => {
     assert.deepEqual(withShopListingSegment(query, "inspired"), {
       ...query,
       collection: "inspired",
+      sizes: [30, 50],
+    });
+    assert.deepEqual(withShopListingSegment(query, "unknown"), {
+      ...query,
+      collection: "unknown",
       sizes: [30, 50],
     });
   });

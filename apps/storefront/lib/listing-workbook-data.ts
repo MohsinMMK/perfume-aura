@@ -9,7 +9,7 @@ export type ListingWorkbookProduct = Readonly<{
   sourceKey: string;
   slug: string;
   name: string;
-  collectionSlug: "signature" | "inspired";
+  collectionSlug: "signature" | "inspired" | "unknown";
   image: string;
   cardImage: string;
   imageAlt: string;
@@ -57,7 +57,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Dior Sauvage",
-    "accent": "brass",
+    "accent": "blue",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -86,7 +86,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Louis Vuitton Afternoon Swim",
-    "accent": "blue",
+    "accent": "wine",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -101,6 +101,35 @@ export const listingWorkbookProducts = [
       },
       {
         "id": "main_list:3:100",
+        "sizeMl": 100,
+        "priceMinor": 140000
+      }
+    ]
+  },
+  {
+    "id": "main_list:4",
+    "sourceKey": "main_list:4",
+    "slug": "inspired-by-creed-green-irish-tweed",
+    "name": "Inspired by Creed Green Irish Tweed",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Creed Green Irish Tweed",
+    "accent": "blush",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:4:30",
+        "sizeMl": 30,
+        "priceMinor": 60000
+      },
+      {
+        "id": "main_list:4:50",
+        "sizeMl": 50,
+        "priceMinor": 80000
+      },
+      {
+        "id": "main_list:4:100",
         "sizeMl": 100,
         "priceMinor": 140000
       }
@@ -144,7 +173,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Rasasi Hawas for Him",
-    "accent": "brass",
+    "accent": "blue",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -173,7 +202,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Roja Parfums Elysium Pour Homme",
-    "accent": "brass",
+    "accent": "wine",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -202,7 +231,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Emporio Armani Stronger With You",
-    "accent": "brass",
+    "accent": "blush",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -252,6 +281,122 @@ export const listingWorkbookProducts = [
     ]
   },
   {
+    "id": "main_list:10",
+    "sourceKey": "main_list:10",
+    "slug": "heaven-rose",
+    "name": "Heaven Rose",
+    "collectionSlug": "unknown",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Heaven Rose",
+    "accent": "blue",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:10:30",
+        "sizeMl": 30,
+        "priceMinor": 60000
+      },
+      {
+        "id": "main_list:10:50",
+        "sizeMl": 50,
+        "priceMinor": 80000
+      },
+      {
+        "id": "main_list:10:100",
+        "sizeMl": 100,
+        "priceMinor": 140000
+      }
+    ]
+  },
+  {
+    "id": "main_list:11",
+    "sourceKey": "main_list:11",
+    "slug": "inspired-by-gucci-flora",
+    "name": "Inspired by Gucci Flora",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Gucci Flora",
+    "accent": "wine",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:11:30",
+        "sizeMl": 30,
+        "priceMinor": 60000
+      },
+      {
+        "id": "main_list:11:50",
+        "sizeMl": 50,
+        "priceMinor": 80000
+      },
+      {
+        "id": "main_list:11:100",
+        "sizeMl": 100,
+        "priceMinor": 140000
+      }
+    ]
+  },
+  {
+    "id": "main_list:12",
+    "sourceKey": "main_list:12",
+    "slug": "inspired-by-yves-saint-laurent-y",
+    "name": "Inspired by Yves Saint Laurent Y",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Yves Saint Laurent Y",
+    "accent": "blush",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:12:30",
+        "sizeMl": 30,
+        "priceMinor": 60000
+      },
+      {
+        "id": "main_list:12:50",
+        "sizeMl": 50,
+        "priceMinor": 80000
+      },
+      {
+        "id": "main_list:12:100",
+        "sizeMl": 100,
+        "priceMinor": 140000
+      }
+    ]
+  },
+  {
+    "id": "main_list:13",
+    "sourceKey": "main_list:13",
+    "slug": "rose-elegance",
+    "name": "Rose Elegance",
+    "collectionSlug": "unknown",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Rose Elegance",
+    "accent": "brass",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:13:30",
+        "sizeMl": 30,
+        "priceMinor": 60000
+      },
+      {
+        "id": "main_list:13:50",
+        "sizeMl": 50,
+        "priceMinor": 80000
+      },
+      {
+        "id": "main_list:13:100",
+        "sizeMl": 100,
+        "priceMinor": 140000
+      }
+    ]
+  },
+  {
     "id": "main_list:14",
     "sourceKey": "main_list:14",
     "slug": "inspired-by-xerjoff-alexandria-ii",
@@ -260,7 +405,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Xerjoff Alexandria II",
-    "accent": "brass",
+    "accent": "blue",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -289,7 +434,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Ajmal Aurum",
-    "accent": "brass",
+    "accent": "wine",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -318,7 +463,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Nasomatto Black Afgano",
-    "accent": "wine",
+    "accent": "blush",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -335,6 +480,470 @@ export const listingWorkbookProducts = [
         "id": "main_list:16:100",
         "sizeMl": 100,
         "priceMinor": 140000
+      }
+    ]
+  },
+  {
+    "id": "main_list:17",
+    "sourceKey": "main_list:17",
+    "slug": "inspired-by-giorgio-armani-acqua-di-gio",
+    "name": "Inspired by Giorgio Armani Acqua di Giò",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Giorgio Armani Acqua di Giò",
+    "accent": "brass",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:17:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:17:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:17:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:18",
+    "sourceKey": "main_list:18",
+    "slug": "inspired-by-azzaro-chrome",
+    "name": "Inspired by Azzaro Chrome",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Azzaro Chrome",
+    "accent": "blue",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:18:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:18:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:18:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:19",
+    "sourceKey": "main_list:19",
+    "slug": "inspired-by-versace-pour-homme",
+    "name": "Inspired by Versace Pour Homme",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Versace Pour Homme",
+    "accent": "wine",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:19:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:19:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:19:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:20",
+    "sourceKey": "main_list:20",
+    "slug": "hugo-boss",
+    "name": "Hugo Boss",
+    "collectionSlug": "unknown",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Hugo Boss",
+    "accent": "blush",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:20:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:20:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:20:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:21",
+    "sourceKey": "main_list:21",
+    "slug": "inspired-by-ralph-lauren-polo-sport",
+    "name": "Inspired by Ralph Lauren Polo Sport",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Ralph Lauren Polo Sport",
+    "accent": "brass",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:21:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:21:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:21:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:22",
+    "sourceKey": "main_list:22",
+    "slug": "inspired-by-chanel-bleu-de-chanel",
+    "name": "Inspired by Chanel Bleu de Chanel",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Chanel Bleu de Chanel",
+    "accent": "blue",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:22:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:22:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:22:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:23",
+    "sourceKey": "main_list:23",
+    "slug": "inspired-by-prada-luna-rossa",
+    "name": "Inspired by Prada Luna Rossa",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Prada Luna Rossa",
+    "accent": "wine",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:23:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:23:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:23:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:24",
+    "sourceKey": "main_list:24",
+    "slug": "inspired-by-calvin-klein-ck-one",
+    "name": "Inspired by Calvin Klein CK One",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Calvin Klein CK One",
+    "accent": "blush",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:24:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:24:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:24:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:25",
+    "sourceKey": "main_list:25",
+    "slug": "inspired-by-al-rehab-blue",
+    "name": "Inspired by Al-Rehab Blue",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Al-Rehab Blue",
+    "accent": "brass",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:25:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:25:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:25:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:26",
+    "sourceKey": "main_list:26",
+    "slug": "inspired-by-rasasi-hawas-ice",
+    "name": "Inspired by Rasasi Hawas Ice",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Rasasi Hawas Ice",
+    "accent": "blue",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:26:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:26:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:26:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:27",
+    "sourceKey": "main_list:27",
+    "slug": "inspired-by-bvlgari-aqva-pour-homme",
+    "name": "Inspired by Bvlgari Aqva Pour Homme",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Bvlgari Aqva Pour Homme",
+    "accent": "wine",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:27:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:27:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:27:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:28",
+    "sourceKey": "main_list:28",
+    "slug": "inspired-by-ralph-lauren-polo-blue",
+    "name": "Inspired by Ralph Lauren Polo Blue",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Ralph Lauren Polo Blue",
+    "accent": "blush",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:28:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:28:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:28:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:29",
+    "sourceKey": "main_list:29",
+    "slug": "inspired-by-davidoff-cool-water-woman",
+    "name": "Inspired by Davidoff Cool Water Woman",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Davidoff Cool Water Woman",
+    "accent": "brass",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:29:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:29:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:29:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:30",
+    "sourceKey": "main_list:30",
+    "slug": "inspired-by-davidoff-cool-water",
+    "name": "Inspired by Davidoff Cool Water",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Davidoff Cool Water",
+    "accent": "blue",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:30:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:30:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:30:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:31",
+    "sourceKey": "main_list:31",
+    "slug": "inspired-by-versace-bright-crystal",
+    "name": "Inspired by Versace Bright Crystal",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Versace Bright Crystal",
+    "accent": "wine",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:31:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:31:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:31:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:32",
+    "sourceKey": "main_list:32",
+    "slug": "inspired-by-cristiano-ronaldo-cr7",
+    "name": "Inspired by Cristiano Ronaldo CR7",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Cristiano Ronaldo CR7",
+    "accent": "blush",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:32:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:32:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:32:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
       }
     ]
   },
@@ -376,7 +985,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Diptyque Tam Dao",
-    "accent": "brass",
+    "accent": "blue",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -405,7 +1014,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Rabanne 1 Million Lucky",
-    "accent": "brass",
+    "accent": "wine",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -426,6 +1035,35 @@ export const listingWorkbookProducts = [
     ]
   },
   {
+    "id": "main_list:36",
+    "sourceKey": "main_list:36",
+    "slug": "inspired-by-carolina-herrera-212-men",
+    "name": "Inspired by Carolina Herrera 212 Men",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Carolina Herrera 212 Men",
+    "accent": "blush",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:36:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:36:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:36:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
     "id": "main_list:37",
     "sourceKey": "main_list:37",
     "slug": "inspired-by-carolina-herrera-212-vip-men",
@@ -434,7 +1072,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Carolina Herrera 212 VIP Men",
-    "accent": "blush",
+    "accent": "brass",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -463,7 +1101,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Azzaro The Most Wanted",
-    "accent": "brass",
+    "accent": "blue",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -484,6 +1122,35 @@ export const listingWorkbookProducts = [
     ]
   },
   {
+    "id": "main_list:39",
+    "sourceKey": "main_list:39",
+    "slug": "inspired-by-jean-paul-gaultier-scandal",
+    "name": "Inspired by Jean Paul Gaultier Scandal",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Jean Paul Gaultier Scandal",
+    "accent": "wine",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:39:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:39:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:39:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
     "id": "main_list:40",
     "sourceKey": "main_list:40",
     "slug": "inspired-by-tom-ford-oud-wood",
@@ -492,7 +1159,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Tom Ford Oud Wood",
-    "accent": "wine",
+    "accent": "blush",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -550,7 +1217,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Burberry Her",
-    "accent": "blush",
+    "accent": "blue",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -579,7 +1246,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Rabanne 1 Million",
-    "accent": "brass",
+    "accent": "wine",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -608,7 +1275,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Giorgio Armani Sì Passione",
-    "accent": "brass",
+    "accent": "blush",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -629,6 +1296,35 @@ export const listingWorkbookProducts = [
     ]
   },
   {
+    "id": "main_list:45",
+    "sourceKey": "main_list:45",
+    "slug": "inspired-by-ralph-lauren-polo-sport-woman",
+    "name": "Inspired by Ralph Lauren Polo Sport Woman",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Ralph Lauren Polo Sport Woman",
+    "accent": "brass",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:45:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:45:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:45:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
     "id": "main_list:46",
     "sourceKey": "main_list:46",
     "slug": "inspired-by-jean-paul-gaultier-ultra-male",
@@ -637,7 +1333,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Jean Paul Gaultier Ultra Male",
-    "accent": "brass",
+    "accent": "blue",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -666,7 +1362,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Gucci Bloom",
-    "accent": "blush",
+    "accent": "wine",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -716,6 +1412,35 @@ export const listingWorkbookProducts = [
     ]
   },
   {
+    "id": "main_list:49",
+    "sourceKey": "main_list:49",
+    "slug": "inspired-by-chanel-coco",
+    "name": "Inspired by Chanel Coco",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Chanel Coco",
+    "accent": "brass",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:49:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:49:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:49:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
     "id": "main_list:50",
     "sourceKey": "main_list:50",
     "slug": "inspired-by-rabanne-invictus",
@@ -724,7 +1449,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Rabanne Invictus",
-    "accent": "brass",
+    "accent": "blue",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -753,7 +1478,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Yves Saint Laurent Libre",
-    "accent": "brass",
+    "accent": "wine",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -782,7 +1507,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Xerjoff Erba Pura",
-    "accent": "brass",
+    "accent": "blush",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -797,6 +1522,64 @@ export const listingWorkbookProducts = [
       },
       {
         "id": "main_list:52:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:53",
+    "sourceKey": "main_list:53",
+    "slug": "inspired-by-armaf-club-de-nuit",
+    "name": "Inspired by Armaf Club de Nuit",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Armaf Club de Nuit",
+    "accent": "brass",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:53:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:53:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:53:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:54",
+    "sourceKey": "main_list:54",
+    "slug": "inspired-by-maison-francis-kurkdjian-baccarat-rouge-540",
+    "name": "Inspired by Maison Francis Kurkdjian Baccarat Rouge 540",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Maison Francis Kurkdjian Baccarat Rouge 540",
+    "accent": "blue",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:54:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:54:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:54:100",
         "sizeMl": 100,
         "priceMinor": 120000
       }
@@ -869,7 +1652,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Tom Ford Black Orchid",
-    "accent": "wine",
+    "accent": "brass",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -898,7 +1681,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Dior Homme Intense",
-    "accent": "brass",
+    "accent": "blue",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -927,7 +1710,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Parfums de Marly Delina",
-    "accent": "blush",
+    "accent": "wine",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -942,6 +1725,35 @@ export const listingWorkbookProducts = [
       },
       {
         "id": "main_list:59:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:60",
+    "sourceKey": "main_list:60",
+    "slug": "inspired-by-al-rehab-choco-musk",
+    "name": "Inspired by Al-Rehab Choco Musk",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Al-Rehab Choco Musk",
+    "accent": "blush",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:60:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:60:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:60:100",
         "sizeMl": 100,
         "priceMinor": 120000
       }
@@ -985,7 +1797,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Narciso Rodriguez for Her",
-    "accent": "blush",
+    "accent": "blue",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1014,7 +1826,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Carolina Herrera Good Girl",
-    "accent": "blush",
+    "accent": "wine",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1043,7 +1855,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Yves Saint Laurent Black Opium",
-    "accent": "wine",
+    "accent": "blush",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1064,6 +1876,35 @@ export const listingWorkbookProducts = [
     ]
   },
   {
+    "id": "main_list:65",
+    "sourceKey": "main_list:65",
+    "slug": "inspired-by-burberry-weekend",
+    "name": "Inspired by Burberry Weekend",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Burberry Weekend",
+    "accent": "brass",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:65:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:65:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:65:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
     "id": "main_list:66",
     "sourceKey": "main_list:66",
     "slug": "inspired-by-hermes-terre-dhermes",
@@ -1072,7 +1913,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Hermès Terre d'Hermès",
-    "accent": "blush",
+    "accent": "blue",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1130,7 +1971,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Victoria's Secret Bombshell",
-    "accent": "brass",
+    "accent": "blush",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1159,7 +2000,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Bvlgari Man in Black",
-    "accent": "wine",
+    "accent": "brass",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1174,6 +2015,35 @@ export const listingWorkbookProducts = [
       },
       {
         "id": "main_list:69:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:70",
+    "sourceKey": "main_list:70",
+    "slug": "inspired-by-versace-dylan-blue-pour-homme",
+    "name": "Inspired by Versace Dylan Blue Pour Homme",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Versace Dylan Blue Pour Homme",
+    "accent": "blue",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:70:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:70:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:70:100",
         "sizeMl": 100,
         "priceMinor": 120000
       }
@@ -1209,6 +2079,180 @@ export const listingWorkbookProducts = [
     ]
   },
   {
+    "id": "main_list:72",
+    "sourceKey": "main_list:72",
+    "slug": "oud-of-aura",
+    "name": "Oud of Aura",
+    "collectionSlug": "unknown",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Oud of Aura",
+    "accent": "blush",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:72:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:72:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:72:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:73",
+    "sourceKey": "main_list:73",
+    "slug": "arabian-oud",
+    "name": "Arabian Oud",
+    "collectionSlug": "unknown",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Arabian Oud",
+    "accent": "brass",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:73:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:73:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:73:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:74",
+    "sourceKey": "main_list:74",
+    "slug": "inspired-by-calvin-klein-escape",
+    "name": "Inspired by Calvin Klein Escape",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Calvin Klein Escape",
+    "accent": "blue",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:74:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:74:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:74:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:75",
+    "sourceKey": "main_list:75",
+    "slug": "leather-noir",
+    "name": "Leather Noir",
+    "collectionSlug": "unknown",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Leather Noir",
+    "accent": "wine",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:75:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:75:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:75:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:76",
+    "sourceKey": "main_list:76",
+    "slug": "amber-al-oud",
+    "name": "Amber Al Oud",
+    "collectionSlug": "unknown",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Amber Al Oud",
+    "accent": "blush",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:76:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:76:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:76:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:77",
+    "sourceKey": "main_list:77",
+    "slug": "inspired-by-dior-purple-oud",
+    "name": "Inspired by Dior Purple Oud",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Dior Purple Oud",
+    "accent": "brass",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:77:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:77:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:77:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
     "id": "main_list:78",
     "sourceKey": "main_list:78",
     "slug": "inspired-by-gucci-guilty",
@@ -1217,7 +2261,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Gucci Guilty",
-    "accent": "brass",
+    "accent": "blue",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1246,7 +2290,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Lattafa Yara Candy",
-    "accent": "blush",
+    "accent": "wine",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1275,7 +2319,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Lattafa Khamrah",
-    "accent": "brass",
+    "accent": "blush",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1296,6 +2340,93 @@ export const listingWorkbookProducts = [
     ]
   },
   {
+    "id": "main_list:81",
+    "sourceKey": "main_list:81",
+    "slug": "white-oud",
+    "name": "White Oud",
+    "collectionSlug": "unknown",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for White Oud",
+    "accent": "brass",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:81:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:81:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:81:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:82",
+    "sourceKey": "main_list:82",
+    "slug": "candy-oud",
+    "name": "Candy Oud",
+    "collectionSlug": "unknown",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Candy Oud",
+    "accent": "blue",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:82:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:82:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:82:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:83",
+    "sourceKey": "main_list:83",
+    "slug": "coffee",
+    "name": "Coffee",
+    "collectionSlug": "unknown",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Coffee",
+    "accent": "wine",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:83:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:83:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:83:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
     "id": "main_list:84",
     "sourceKey": "main_list:84",
     "slug": "inspired-by-ajmal-wisal",
@@ -1304,7 +2435,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Inspired by Ajmal Wisal",
-    "accent": "brass",
+    "accent": "blush",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1319,6 +2450,296 @@ export const listingWorkbookProducts = [
       },
       {
         "id": "main_list:84:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:85",
+    "sourceKey": "main_list:85",
+    "slug": "oud-mumtaz",
+    "name": "Oud Mumtaz",
+    "collectionSlug": "unknown",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Oud Mumtaz",
+    "accent": "brass",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:85:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:85:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:85:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:86",
+    "sourceKey": "main_list:86",
+    "slug": "inspired-by-lattafa-khamrah-qahwa",
+    "name": "Inspired by Lattafa Khamrah Qahwa",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Lattafa Khamrah Qahwa",
+    "accent": "blue",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:86:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:86:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:86:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:87",
+    "sourceKey": "main_list:87",
+    "slug": "inspired-by-cristiano-ronaldo-cr7-sport",
+    "name": "Inspired by Cristiano Ronaldo CR7 Sport",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Cristiano Ronaldo CR7 Sport",
+    "accent": "wine",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:87:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:87:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:87:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:88",
+    "sourceKey": "main_list:88",
+    "slug": "fawake",
+    "name": "Fawake",
+    "collectionSlug": "unknown",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Fawake",
+    "accent": "blush",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:88:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:88:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:88:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:89",
+    "sourceKey": "main_list:89",
+    "slug": "inspired-by-rasasi-daarej-pour-homme",
+    "name": "Inspired by Rasasi Daarej Pour Homme",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Rasasi Daarej Pour Homme",
+    "accent": "brass",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:89:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:89:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:89:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:90",
+    "sourceKey": "main_list:90",
+    "slug": "mysore-sandal",
+    "name": "Mysore Sandal",
+    "collectionSlug": "unknown",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Mysore Sandal",
+    "accent": "blue",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:90:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:90:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:90:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:91",
+    "sourceKey": "main_list:91",
+    "slug": "inspired-by-al-rehab-sabaya",
+    "name": "Inspired by Al-Rehab Sabaya",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Al-Rehab Sabaya",
+    "accent": "wine",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:91:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:91:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:91:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:92",
+    "sourceKey": "main_list:92",
+    "slug": "oud-saffron",
+    "name": "Oud Saffron",
+    "collectionSlug": "unknown",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Oud Saffron",
+    "accent": "blush",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:92:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:92:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:92:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:93",
+    "sourceKey": "main_list:93",
+    "slug": "areen-al-oud",
+    "name": "Areen Al Oud",
+    "collectionSlug": "unknown",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Areen Al Oud",
+    "accent": "brass",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:93:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:93:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:93:100",
+        "sizeMl": 100,
+        "priceMinor": 120000
+      }
+    ]
+  },
+  {
+    "id": "main_list:94",
+    "sourceKey": "main_list:94",
+    "slug": "inspired-by-gissah-imperial-valley",
+    "name": "Inspired by Gissah Imperial Valley",
+    "collectionSlug": "inspired",
+    "image": "/images/bottle-50ml.webp",
+    "cardImage": "/images/bottle-50ml.webp",
+    "imageAlt": "Perfume Aura house bottle for Inspired by Gissah Imperial Valley",
+    "accent": "blue",
+    "hasCampaignMedia": false,
+    "variants": [
+      {
+        "id": "main_list:94:30",
+        "sizeMl": 30,
+        "priceMinor": 45000
+      },
+      {
+        "id": "main_list:94:50",
+        "sizeMl": 50,
+        "priceMinor": 65000
+      },
+      {
+        "id": "main_list:94:100",
         "sizeMl": 100,
         "priceMinor": 120000
       }
@@ -1357,7 +2778,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Velour Venom",
-    "accent": "brass",
+    "accent": "blue",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1405,7 +2826,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Kingdom Elixir",
-    "accent": "brass",
+    "accent": "blush",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1453,7 +2874,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Crimson Elixir",
-    "accent": "wine",
+    "accent": "blue",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1477,7 +2898,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Eternal Athena",
-    "accent": "brass",
+    "accent": "wine",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1525,7 +2946,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Sahara Bloom",
-    "accent": "blush",
+    "accent": "brass",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1549,7 +2970,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Zayan Prestige",
-    "accent": "brass",
+    "accent": "blue",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1597,7 +3018,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Desert Crown Oud",
-    "accent": "wine",
+    "accent": "blush",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1621,7 +3042,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Oud of Dubai",
-    "accent": "wine",
+    "accent": "brass",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1645,7 +3066,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Royal Stabler",
-    "accent": "wine",
+    "accent": "blue",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1669,7 +3090,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Velvet Petal",
-    "accent": "blush",
+    "accent": "wine",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1693,7 +3114,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Rouge Lumina",
-    "accent": "brass",
+    "accent": "blush",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1741,7 +3162,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Rose Valeria",
-    "accent": "blush",
+    "accent": "blue",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1765,7 +3186,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Celestial Ember",
-    "accent": "brass",
+    "accent": "wine",
     "hasCampaignMedia": false,
     "variants": [
       {
@@ -1789,7 +3210,7 @@ export const listingWorkbookProducts = [
     "image": "/images/bottle-50ml.webp",
     "cardImage": "/images/bottle-50ml.webp",
     "imageAlt": "Perfume Aura house bottle for Visionnaire",
-    "accent": "brass",
+    "accent": "blush",
     "hasCampaignMedia": false,
     "variants": [
       {

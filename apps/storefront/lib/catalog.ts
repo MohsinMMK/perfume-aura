@@ -156,5 +156,5 @@ export async function getStorefrontCollectionSlugs(): Promise<
         : [],
     );
   }
-  return ["signature", "inspired"];
+  return ["signature", "inspired", "unknown"];
 }

@@ -19,6 +19,14 @@ export const listingCollections = {
     seoDescription: "Perfume Aura inspired fragrance listing preview.",
     updatedAt: null,
   },
+  unknown: {
+    title: "Unknown",
+    description:
+      "Temporary catalog names for fragrances without one defensible brand reference. Owner-supplied size pricing is unchanged while permanent naming is reviewed.",
+    seoTitle: "Unknown fragrance collection",
+    seoDescription: "Perfume Aura temporary fragrance-name listing preview.",
+    updatedAt: null,
+  },
 } as const;
 
 export type ListingCollectionSlug = keyof typeof listingCollections;
@@ -50,12 +58,17 @@ function toStorefrontProduct(
   previewCatalogEnabled: boolean,
 ): StorefrontProduct {
   const isSignature = product.collectionSlug === "signature";
+  const isUnknown = product.collectionSlug === "unknown";
   const previewPurchasable = previewCatalogEnabled;
   return {
     id: product.id,
     slug: product.slug,
     name: product.name,
-    eyebrow: isSignature ? "Signature Series" : "Inspired collection",
+    eyebrow: isSignature
+      ? "Signature Series"
+      : isUnknown
+        ? "Unknown"
+        : "Inspired collection",
     collectionSlug: product.collectionSlug,
     family: "Details coming soon",
     audience: "Details coming soon",
@@ -69,10 +82,14 @@ function toStorefrontProduct(
     usage: "Details coming soon",
     summary: isSignature
       ? "A Perfume Aura Signature scent. Composition details will appear when this edition is complete."
-      : "A Perfume Aura fragrance listed with its approved Inspired by reference. Composition details will appear when this edition is complete.",
+      : isUnknown
+        ? "A temporary literal catalog name with owner-supplied pricing. Brand and composition details remain under review."
+        : "A Perfume Aura fragrance listed with its approved Inspired by reference. Composition details will appear when this edition is complete.",
     story: isSignature
       ? `${product.name} is part of the Signature Series. Notes and intensity are not published yet.`
-      : `${product.name} is a Perfume Aura fragrance. The reference name identifies the scent it is inspired by and does not mean designer affiliation.`,
+      : isUnknown
+        ? `${product.name} is temporarily grouped in Unknown because no single brand or fragrance reference could be mapped reliably.`
+        : `${product.name} is a Perfume Aura fragrance. The reference name identifies the scent it is inspired by and does not mean designer affiliation.`,
     notes: { top: [], heart: [], base: [] },
     image: product.image,
     cardImage: product.cardImage,
@@ -113,5 +130,5 @@ export function loadFeaturedListingProducts(
 export function isListingCollectionSlug(
   slug: string,
 ): slug is ListingCollectionSlug {
-  return slug === "signature" || slug === "inspired";
+  return slug === "signature" || slug === "inspired" || slug === "unknown";
 }
