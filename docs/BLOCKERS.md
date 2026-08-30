@@ -54,7 +54,7 @@ Preparation completed:
       email, inquiry, review, advertising, and social surfaces requiring review.
 - [x] Freeze the replacement catalog artifacts by SHA-256 and record exact scope
       counts without modifying catalog approval state.
-- [x] Confirm that 48 inspired product links are already visible on the live
+- [x] Confirm that 79 inspired product links are already visible on the live
       discovery shop and that no customer-facing disclaimer is implemented.
 - [x] Define a surface-specific counsel response format and preserve the
       repository's fail-closed handoff.
@@ -87,14 +87,13 @@ fail-closed legal fields contain approved evidence references.
 **Goal:** produce a fully approved, server-authoritative catalog that can be
 imported without guessing product or financial facts.
 
-**Current blocker:** production still serves the earlier 69-product
-discovery-only listing. The replacement
+**Current blocker:** production serves the 114-product discovery-only
+projection, but no row is approved for sellable import or public commerce. The
 [`B02 catalog intake workbook`](review-packets/2026-08-29-b02-114-product-catalog-intake.xlsx)
 contains 114 products and all 322 owner-supplied retail prices. Its staged code
 projection contains all 79 researched Inspired titles, 15 temporary Unknown
-titles, and 20 Signature names. No replacement row is approved for
-production import or publication, and SKU, cost, stock, media, structured scent
-facts, and legal approval remain incomplete.
+titles, and 20 Signature names. SKU, cost, stock, media, structured scent facts,
+and legal approval remain incomplete.
 
 - [x] Research the 49 previously incomplete main-list rows; map 34 to Inspired
       and place 15 ambiguous/generic names in temporary Unknown without

@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-30 16:35:05 UTC**
+Last refreshed: **2026-08-30 22:27:07 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -33,20 +33,38 @@ and ignored local environment files.
 ## Exact releases and automation
 
 The storefront runs exact source
-`4212ebb73993e7221421d1e0d5193ec994f7e8e5`; ops remains exact source
+`778e4dbba2e1ed667d3652319825a61d6c515c74`; ops remains exact source
 `66f9e2c44872c599b9a8b926ecbe75c90c33469d`. Ops uses immutable image digest
 `sha256:a7b1ab5de6d447f014fb3fabdef6f8ccd9af06866dd30772a10e35d1823a79eb`.
 Storefront workflow run
-[`33322322489`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33322322489)
-attempt 2 passed quality, all 101 disposable-PostgreSQL integration tests,
-verified packaging, direct Hostinger archive deployment, and exact live
-verification. The first immutable-archive upload attempt ended with curl exit
-28 before a provider response; retrying only the failed deployment path
-succeeded. Hostinger build `01a05383-203b-7378-aed4-5f92169e2062` completed at
-2026-08-30 16:32:09 UTC. The VPS ops deployment correctly stayed skipped.
+[`33338378664`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33338378664)
+passed quality, all 101 disposable-PostgreSQL integration tests, verified
+packaging, direct Hostinger archive deployment, and exact live verification.
+Hostinger build `01a054be-f9dc-72ef-a61b-b7f4ffeea71a` completed at
+2026-08-30 22:18:07 UTC. The VPS ops deployment correctly stayed skipped.
 Independent exact-source acceptance verified seven discovery sitemap URLs, a
 real immutable Next asset, storefront health and release locks, and the path-
 and query-preserving `www` redirect.
+
+PR #98 merged the storefront product-imagery and motion release. Signature
+shop cards now use the clear-glass Signature bottle on their own dark solid
+background, while Inspired and Unknown cards share the matte-black bottle
+composition. Desktop cards use a restrained hover reveal; touch layouts use
+viewport activation while scrolling, with the bottle scaling away from the
+title and purchase controls instead of overlapping them. Filters expose clear
+dropdown chevrons, horizontal carousels retain vertical page scrolling, and
+menu dismissal restores keyboard focus. Homepage bottle motion and the About
+sequence are finite and visibility-aware, while reduced motion disables
+observers, progress effects, and transforms.
+
+Fresh production browser acceptance at 390 by 844 and 1280 by 900 confirmed
+mobile scroll activation, desktop hover, the distinct 79 Inspired and 20
+Signature card sets, loaded product imagery, aligned card grids, unobstructed
+titles and purchase controls, finite homepage and About motion, the mobile
+product sticky-purchase handoff, zero horizontal overflow, and zero console
+errors or warnings. Reduced-motion acceptance kept product transforms static
+and the About stage on its initial frame. No database migration, catalog
+import, price change, release-flag change, or ops runtime deployment occurred.
 
 PR #96 merged the homepage Signature Series hero release. It places the final
 transparent clear-glass bottle with natural perfume liquid in the second slide,
