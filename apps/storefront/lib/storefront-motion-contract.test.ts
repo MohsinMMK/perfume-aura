@@ -31,10 +31,24 @@ describe("storefront motion contract", () => {
     assert.match(motion, /gsap\.matchMedia\(/);
     assert.match(motion, /allowMotion:\s*"\(prefers-reduced-motion: no-preference\)"/);
     assert.match(motion, /reduceMotion:\s*"\(prefers-reduced-motion: reduce\)"/);
+    assert.match(motion, /isMobile:\s*"\(max-width: 639px\)"/);
     assert.match(motion, /isDesktop:\s*"\(min-width: 1024px\)"/);
     assert.match(motion, /motionMedia\.revert\(/);
     assert.match(motion, /data-motion-ingredient-drift/);
-    assert.match(motion, /toArray<HTMLElement>\("\[data-motion-product-card\]"/u);
+    assert.match(
+      motion,
+      /toArray<HTMLElement>\(\s*"\[data-motion-product-card\]"/u,
+    );
+    assert.match(motion, /groupElementsByOffsetTop\(cards\)/u);
+    assert.match(motion, /const rowTop = Math\.round\(element\.offsetTop\)/u);
+    assert.match(
+      motion,
+      /scrollTrigger:\s*\{\s*trigger,\s*start:\s*"top 91%"/u,
+    );
+    assert.match(
+      motion,
+      /filter\(\(element\) => !griddedProductCards\.has\(element\)\)/u,
+    );
     assert.doesNotMatch(
       motion,
       /data-motion-product-card[\s\S]{0,300}delay:\s*Math\.min\(index/u,
@@ -44,6 +58,10 @@ describe("storefront motion contract", () => {
     assert.match(motion, /pin:\s*true/);
     assert.match(motion, /containerAnimation:\s*horizontalTween/);
     assert.match(motion, /anticipatePin:\s*1/);
+    assert.match(motion, /"\[data-product-sticky-top\]"/u);
+    assert.match(motion, /"\[data-product-sticky-bottom\]"/u);
+    assert.match(motion, /trigger: productHero,[\s\S]*start: "bottom top",[\s\S]*end: "\+=64",[\s\S]*scrub: 0\.35/u);
+    assert.match(motion, /start: "bottom top-=1"[\s\S]*onLeaveBack/u);
     assert.doesNotMatch(motion, /data-motion-trust/);
     assert.doesNotMatch(motion, /data-motion-rule/);
     assert.doesNotMatch(motion, /clipPath/);

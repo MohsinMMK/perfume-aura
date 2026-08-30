@@ -90,12 +90,17 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
       })
     : null;
   const detailValue = (value: string) => product.publicationState === "published" ? value : "Details coming soon";
+  const inspiredByPrefix = "Inspired by ";
+  const inspiredReferenceName =
+    product.collectionSlug === "inspired" && product.name.startsWith(inspiredByPrefix)
+      ? product.name.slice(inspiredByPrefix.length)
+      : null;
 
   return (
     <>
       {productStructuredData ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(productStructuredData) }} /> : null}
 
-      <section className="grid grid-rows-[47svh_auto] bg-[var(--aura-ink)] text-[var(--aura-ivory)] min-[360px]:grid-rows-[50svh_auto] sm:min-h-[100svh] sm:grid-rows-none lg:grid-cols-2 lg:grid-rows-1">
+      <section data-product-hero className="aura-product-hero grid bg-[var(--aura-ink)] text-[var(--aura-ivory)] sm:min-h-[100svh] sm:grid-rows-none lg:grid-cols-2 lg:grid-rows-1">
         <div
           data-product-gallery
           className="relative h-full overflow-hidden bg-[var(--aura-ink)] sm:h-auto sm:min-h-[52svh] lg:min-h-[100svh]"
@@ -117,16 +122,23 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
           </div>
         </div>
 
-        <div className="flex items-start px-5 sm:items-end sm:px-10 sm:py-12 lg:min-h-[100svh] lg:px-3 lg:pb-3 lg:pt-24 xl:px-5">
-          <div className="w-full">
+        <div className="aura-product-info-panel flex min-h-0 items-stretch px-5 sm:items-end sm:px-10 sm:py-12 lg:min-h-[100svh] lg:px-3 lg:pb-3 lg:pt-24 xl:px-5">
+          <div className="flex min-h-0 w-full flex-col">
             <div className="lg:text-center">
-              <Link href="/shop" className="inline-flex min-h-11 items-center font-display text-sm text-[color:rgb(245_228_199_/_62%)] underline-offset-8 hover:underline sm:min-h-8 sm:text-lg">Shop / {product.collectionSlug === "signature" ? "Signature" : product.collectionSlug === "inspired" ? "Inspired" : product.collectionSlug === "unknown" ? "Unknown" : "Collection"}</Link>
-              <h1 className="font-display text-[clamp(2.25rem,10vw,2.75rem)] leading-[0.86] text-balance sm:mt-1 sm:text-[clamp(3.6rem,7vw,7.8rem)] sm:leading-[0.77] lg:mx-auto lg:max-w-[8.5ch]">{product.name}</h1>
-              <p className="mt-1 hidden max-w-xl text-xs leading-4 text-[color:rgb(245_228_199_/_62%)] min-[360px]:line-clamp-2 sm:mt-3 sm:block sm:text-sm sm:leading-6 lg:mx-auto lg:max-w-[30rem]">{product.summary}</p>
+              <Link href="/shop" className="aura-product-breadcrumb inline-flex min-h-11 items-center font-display text-sm text-[color:rgb(245_228_199_/_62%)] underline-offset-8 hover:underline sm:min-h-8 sm:text-lg">Shop / {product.collectionSlug === "signature" ? "Signature" : product.collectionSlug === "inspired" ? "Inspired" : product.collectionSlug === "unknown" ? "Unknown" : "Collection"}</Link>
+              <h1 className="aura-product-title font-display mt-2 text-[clamp(2.25rem,10vw,2.75rem)] leading-[0.86] text-balance sm:mt-1 sm:text-[clamp(3.6rem,7vw,7.8rem)] sm:leading-[0.77] lg:mx-auto lg:max-w-[8.5ch]">
+                {inspiredReferenceName ? (
+                  <>
+                    <span className="text-outline whitespace-nowrap">Inspired by</span>{" "}
+                    <span>{inspiredReferenceName}</span>
+                  </>
+                ) : product.name}
+              </h1>
+              <p className="aura-product-summary mt-2 hidden max-w-xl text-xs leading-4 text-[color:rgb(245_228_199_/_62%)] min-[360px]:line-clamp-2 sm:mt-3 sm:block sm:text-sm sm:leading-6 lg:mx-auto lg:max-w-[30rem]">{product.summary}</p>
             </div>
-            <p className="font-display mt-1 text-2xl sm:mt-4 sm:text-4xl lg:mt-5 lg:px-2">{firstPrice ? `From ${formatMoney(firstPrice)}` : "Price not available yet"}</p>
+            <p className="font-display mt-3 text-2xl sm:mt-4 sm:text-4xl lg:mt-5 lg:px-2">{firstPrice ? `From ${formatMoney(firstPrice)}` : "Price not available yet"}</p>
 
-            <div className="mt-1 grid grid-cols-2 gap-[var(--aura-gap)] sm:mt-5 lg:mt-6">
+            <div className="aura-product-purchase-grid mt-3 grid min-h-0 flex-1 grid-cols-2 gap-[var(--aura-gap)] sm:mt-5 sm:flex-none lg:mt-6">
               <div className="hidden min-h-28 flex-col justify-between rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] p-4 sm:flex lg:min-h-40 lg:p-5">
                 <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-[var(--aura-text-muted-on-ink)]">Scent profile</p>
                 <p className="font-display mt-3 text-[1.35rem] leading-none sm:mt-4 sm:text-2xl lg:text-[2rem]">{detailValue(product.family)}</p>
@@ -151,20 +163,20 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
         </div>
       </section>
 
-      <section className="grid gap-[var(--aura-gap)] bg-[var(--aura-ink)] px-5 pb-10 pt-20 text-[var(--aura-ivory)] sm:hidden">
-        <p className="text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-[var(--aura-text-muted-on-ink)]">Product details</p>
-        <p className="max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_68%)]">{product.summary}</p>
-        <div className="grid grid-cols-2 gap-[var(--aura-gap)]">
-          <div className="flex min-h-24 flex-col justify-between rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] p-3">
-            <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-[var(--aura-text-muted-on-ink)]">Scent profile</p>
-            <p className="font-display mt-3 text-[1.35rem] leading-none">{detailValue(product.family)}</p>
-          </div>
-          <div className="flex min-h-24 flex-col justify-between rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] p-3">
-            <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-[var(--aura-text-muted-on-ink)]">Made for</p>
-            <p className="font-display mt-3 text-[1.35rem] leading-none">{detailValue(product.occasion)}</p>
+      <section data-mobile-product-chapter className="relative bg-[var(--aura-ink)] pt-5 text-[var(--aura-ivory)] sm:hidden">
+        <div className="px-5 pb-3">
+          <div className="grid grid-cols-2 gap-[var(--aura-gap)]">
+            <div className="flex min-h-24 flex-col justify-between rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] p-3">
+              <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-[var(--aura-text-muted-on-ink)]">Scent profile</p>
+              <p className="font-display mt-3 text-[1.35rem] leading-none">{detailValue(product.family)}</p>
+            </div>
+            <div className="flex min-h-24 flex-col justify-between rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] p-3">
+              <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-[var(--aura-text-muted-on-ink)]">Made for</p>
+              <p className="font-display mt-3 text-[1.35rem] leading-none">{detailValue(product.occasion)}</p>
+            </div>
           </div>
         </div>
-        <div className="grid min-h-24 grid-cols-3 overflow-hidden rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] text-center">
+        <div className="mx-5 mb-10 grid min-h-24 grid-cols-3 overflow-hidden rounded-[var(--aura-radius)] border border-[color:var(--aura-rule)] text-center">
           {productAssurances.map(([icon, label]) => (
             <div key={label} className="grid place-items-center border-r border-[color:var(--aura-rule)] px-2 py-3 last:border-r-0">
               <HugeiconsIcon icon={icon} strokeWidth={1.5} className="size-6" />
@@ -174,7 +186,7 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
         </div>
       </section>
 
-      <section className="relative min-h-[92svh] overflow-hidden border-y border-dashed border-[color:var(--aura-rule)] bg-[var(--aura-ink)] px-[var(--aura-gutter)] py-24 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:py-36">
+      <section className="relative min-h-[92svh] overflow-hidden bg-[var(--aura-ink)] px-[var(--aura-gutter)] py-24 text-[var(--aura-ivory)] sm:border-y sm:border-dashed sm:border-[color:var(--aura-rule)] lg:px-[var(--aura-gutter-lg)] lg:py-36">
         <div className="pointer-events-none absolute -right-12 top-[22%] h-[28rem] w-[22rem] rotate-6 overflow-hidden rounded-[1.25rem] opacity-55 lg:right-[8%]" aria-hidden="true">
           <Image data-motion-parallax src="/images/bottle-detail.webp" alt="" fill sizes="22rem" className="object-cover" />
         </div>

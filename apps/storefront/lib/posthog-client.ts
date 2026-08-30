@@ -4,7 +4,10 @@ import { sanitizePostHogCapture } from "@/lib/observability";
 let postHogPromise: Promise<PostHog | null> | null = null;
 
 export type StorefrontAction = "open_instagram" | "open_whatsapp";
-export type StorefrontActionSurface = "floating_action" | "mobile_menu";
+export type StorefrontActionSurface =
+  | "floating_action"
+  | "mobile_menu"
+  | "product_purchase";
 
 export function createStorefrontActionProperties(
   surface: StorefrontActionSurface,

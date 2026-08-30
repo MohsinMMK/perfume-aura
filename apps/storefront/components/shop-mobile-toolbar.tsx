@@ -16,6 +16,7 @@ import { cn } from "@perfume-aura/ui/lib/utils";
 import { ShopFilterPopovers } from "@/components/shop-filter-popovers";
 import {
   shopListingHref,
+  type ShopListingBrandOption,
   type ShopListingQuery,
   type ShopListingSize,
 } from "@/lib/shop-listing-query";
@@ -25,9 +26,11 @@ const instantSearchDelayMs = 220;
 export function ShopMobileToolbar({
   query,
   sizeCounts,
+  brandOptions,
 }: Readonly<{
   query: ShopListingQuery;
   sizeCounts: Readonly<Record<ShopListingSize, number>>;
+  brandOptions: readonly ShopListingBrandOption[];
 }>) {
   const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
@@ -111,6 +114,7 @@ export function ShopMobileToolbar({
       className="relative isolate h-11"
       data-mobile-shop-toolbar
       data-pinned={pinned ? "true" : "false"}
+      data-search-open={searchOpen ? "true" : "false"}
     >
       <div
         aria-hidden="true"
@@ -123,13 +127,16 @@ export function ShopMobileToolbar({
         aria-hidden={searchOpen}
         inert={searchOpen}
         className={cn(
-          "relative z-10 grid h-11 grid-cols-[repeat(3,minmax(0,1fr))_2.75rem] items-center gap-1.5 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none",
-          searchOpen
-            ? "pointer-events-none -translate-y-1 opacity-0"
-            : "translate-y-0 opacity-100",
+          "aura-mobile-search-controls relative z-10 grid h-11 grid-cols-[1.2fr_.9fr_.9fr_.8fr_2.75rem] items-center gap-1.5",
+          searchOpen && "pointer-events-none",
         )}
       >
-        <ShopFilterPopovers query={query} sizeCounts={sizeCounts} compact />
+        <ShopFilterPopovers
+          query={query}
+          sizeCounts={sizeCounts}
+          brandOptions={brandOptions}
+          compact
+        />
         <Button
           ref={searchTriggerRef}
           type="button"
@@ -148,7 +155,11 @@ export function ShopMobileToolbar({
               : "bg-transparent hover:border-[var(--aura-ivory)] hover:bg-transparent hover:text-[var(--aura-ivory)]",
           )}
         >
-          <HugeiconsIcon icon={Search01Icon} strokeWidth={1.8} />
+          <HugeiconsIcon
+            icon={Search01Icon}
+            strokeWidth={1.8}
+            className="aura-mobile-search-trigger-icon"
+          />
         </Button>
       </div>
 
@@ -157,14 +168,10 @@ export function ShopMobileToolbar({
         aria-label="Search the catalog"
         aria-hidden={!searchOpen}
         inert={!searchOpen}
+        data-open={searchOpen ? "true" : "false"}
         onSubmit={submitSearch}
         onKeyDown={handleSearchKeyDown}
-        className={cn(
-          "absolute inset-0 z-10 flex h-11 origin-right items-stretch transition-[opacity,transform,visibility] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none",
-          searchOpen
-            ? "visible scale-x-100 opacity-100"
-            : "pointer-events-none invisible scale-x-95 opacity-0",
-        )}
+        className="aura-mobile-search-form absolute inset-0 z-10 flex h-11 origin-right items-stretch"
       >
         <label htmlFor="shop-mobile-search" className="sr-only">
           Search the catalog
@@ -178,13 +185,13 @@ export function ShopMobileToolbar({
           placeholder="Search perfumes"
           autoComplete="off"
           enterKeyHint="search"
-          className="h-11 min-w-0 flex-1 rounded-l-[var(--aura-radius)] border border-r-0 border-[color:var(--aura-rule)] bg-[var(--aura-ink)] px-3 text-base text-[var(--aura-ivory)] outline-none placeholder:text-[var(--aura-text-muted-on-ink)] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)]"
+          className="aura-mobile-search-field h-11 min-w-0 flex-1 rounded-l-[var(--aura-radius)] border border-r-0 border-[color:var(--aura-rule)] bg-[var(--aura-ink)] px-3 text-base text-[var(--aura-ivory)] outline-none placeholder:text-[var(--aura-text-muted-on-ink)] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)]"
         />
         <Button
           type="submit"
           size="icon"
           aria-label="Apply search"
-          className="aura-cream-action min-h-11 min-w-11 rounded-none focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)]"
+          className="aura-mobile-search-submit aura-cream-action min-h-11 min-w-11 rounded-none focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)]"
         >
           <HugeiconsIcon icon={Search01Icon} strokeWidth={1.8} />
         </Button>
@@ -194,7 +201,7 @@ export function ShopMobileToolbar({
           size="icon"
           aria-label="Close search"
           onClick={closeSearch}
-          className="min-h-11 min-w-11 rounded-l-none rounded-r-[var(--aura-radius)] border-[color:var(--aura-rule)] bg-[var(--aura-ink)] text-[var(--aura-ivory)] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)]"
+          className="aura-mobile-search-close min-h-11 min-w-11 rounded-l-none rounded-r-[var(--aura-radius)] border-[color:var(--aura-rule)] bg-[var(--aura-ink)] text-[var(--aura-ivory)] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)]"
         >
           <HugeiconsIcon icon={Cancel01Icon} strokeWidth={1.8} />
         </Button>

@@ -19,6 +19,7 @@ type PublicProductRow = {
   id: string;
   slug: string;
   name: string;
+  brand: string | null;
   family: string;
   audience: string;
   season: string;
@@ -88,6 +89,7 @@ export async function loadPublishedProducts(): Promise<readonly StorefrontProduc
         id: products.id,
         slug: productPublications.publicSlug,
         name: productPublications.publicName,
+        brand: products.brand,
         family: productPublications.scentFamily,
         audience: productPublications.audience,
         season: productPublications.season,
@@ -206,6 +208,7 @@ export async function loadPublishedProducts(): Promise<readonly StorefrontProduc
       id: row.id,
       slug: row.slug,
       name: row.name,
+      brand: row.brand,
       eyebrow: "Perfume Aura collection",
       collectionSlug: "all",
       family: row.family,

@@ -19,6 +19,7 @@ export type StorefrontProduct = Readonly<{
   id: string;
   slug: string;
   name: string;
+  brand: string | null;
   eyebrow: string;
   collectionSlug: string;
   family: string;

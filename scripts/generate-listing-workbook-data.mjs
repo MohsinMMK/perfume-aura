@@ -83,6 +83,7 @@ const outputProducts = products.map((product) => {
     sourceKey: product.source_key,
     slug: product.public_name_slug,
     name: product.public_name,
+    brand: product.reference_brand || null,
     collectionSlug,
     image: campaign?.[0] ?? "/images/bottle-50ml.webp",
     cardImage: campaign?.[1] ?? "/images/bottle-50ml.webp",
@@ -93,7 +94,7 @@ const outputProducts = products.map((product) => {
   };
 });
 
-const output = `export type ListingWorkbookVariant = Readonly<{\n  id: string;\n  sizeMl: 30 | 50 | 100 | 105;\n  priceMinor: number | null;\n}>;\n\nexport type ListingWorkbookProduct = Readonly<{\n  id: string;\n  sourceKey: string;\n  slug: string;\n  name: string;\n  collectionSlug: \"signature\" | \"inspired\" | \"unknown\";\n  image: string;\n  cardImage: string;\n  imageAlt: string;\n  accent: \"wine\" | \"blue\" | \"blush\" | \"brass\";\n  hasCampaignMedia: boolean;\n  variants: readonly ListingWorkbookVariant[];\n}>;\n\nexport const listingWorkbookProducts = ${JSON.stringify(outputProducts, null, 2)} as const satisfies readonly ListingWorkbookProduct[];\n`;
+const output = `export type ListingWorkbookVariant = Readonly<{\n  id: string;\n  sizeMl: 30 | 50 | 100 | 105;\n  priceMinor: number | null;\n}>;\n\nexport type ListingWorkbookProduct = Readonly<{\n  id: string;\n  sourceKey: string;\n  slug: string;\n  name: string;\n  brand: string | null;\n  collectionSlug: \"signature\" | \"inspired\" | \"unknown\";\n  image: string;\n  cardImage: string;\n  imageAlt: string;\n  accent: \"wine\" | \"blue\" | \"blush\" | \"brass\";\n  hasCampaignMedia: boolean;\n  variants: readonly ListingWorkbookVariant[];\n}>;\n\nexport const listingWorkbookProducts = ${JSON.stringify(outputProducts, null, 2)} as const satisfies readonly ListingWorkbookProduct[];\n`;
 
 await writeFile(path.join(repositoryRoot, "apps/storefront/lib/listing-workbook-data.ts"), output);
 console.log(`Generated ${outputProducts.length} listing products.`);

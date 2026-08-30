@@ -13,10 +13,16 @@ export type ShopListingSize = (typeof shopListingSizes)[number];
 export type ShopListingSegment = (typeof shopListingSegments)[number];
 export type ShopListingSort = (typeof shopListingSorts)[number];
 export type ShopListingNameSort = Exclude<ShopListingSort, "catalog">;
+export type ShopListingBrandOption = Readonly<{
+  value: string;
+  label: string;
+  count: number;
+}>;
 
 export type ShopListingQuery = Readonly<{
   q: string;
   collection: ShopListingSegment;
+  brand: string;
   sizes: readonly ShopListingSize[];
   sort: ShopListingSort;
 }>;
@@ -24,6 +30,7 @@ export type ShopListingQuery = Readonly<{
 export type ShopListingRecord = Readonly<{
   slug: string;
   name: string;
+  brand: string | null;
   eyebrow: string;
   collectionSlug: string;
   variants: readonly Readonly<{ sizeMl: number }>[];
@@ -32,6 +39,7 @@ export type ShopListingRecord = Readonly<{
 export const emptyShopListingQuery: ShopListingQuery = {
   q: "",
   collection: "all",
+  brand: "",
   sizes: [],
   sort: "catalog",
 };
@@ -81,6 +89,7 @@ export function isShopListingQueryActive(query: ShopListingQuery): boolean {
   return (
     query.q.length > 0 ||
     query.collection !== "all" ||
+    query.brand.length > 0 ||
     query.sizes.length > 0 ||
     query.sort !== "catalog"
   );
@@ -111,6 +120,15 @@ function parseSizeToken(value: string): ShopListingSize | undefined {
   return isShopListingSize(parsed) ? parsed : undefined;
 }
 
+export function shopListingBrandSlug(brand: string): string {
+  return foldShopListingText(brand).replace(/\s+/gu, "-");
+}
+
+function parseBrandToken(value: string): string {
+  const trimmed = value.trim();
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(trimmed) ? trimmed : "";
+}
+
 export function parseShopListingQuery(
   input:
     | URLSearchParams
@@ -123,6 +141,7 @@ export function parseShopListingQuery(
   const collection = isShopListingSegment(collectionValue)
     ? collectionValue
     : "all";
+  const brand = parseBrandToken(params.get("brand") ?? "");
   const sortValue = params.get("sort")?.trim() ?? "catalog";
   const sort = isShopListingSort(sortValue) ? sortValue : "catalog";
   const sizes = uniqueSortedSizes(
@@ -135,7 +154,7 @@ export function parseShopListingQuery(
       }),
   );
 
-  return { q, collection, sizes, sort };
+  return { q, collection, brand, sizes, sort };
 }
 
 export function serializeShopListingQuery(
@@ -144,6 +163,7 @@ export function serializeShopListingQuery(
   const params = new URLSearchParams();
   if (query.q) params.set("q", query.q);
   if (query.collection !== "all") params.set("collection", query.collection);
+  if (query.brand) params.set("brand", query.brand);
   for (const size of uniqueSortedSizes(query.sizes)) {
     params.append("size", String(size));
   }
@@ -166,7 +186,12 @@ export function collectionTitleForSlug(slug: string): string | undefined {
 }
 
 function searchableText(product: ShopListingRecord): string {
-  return [product.name, product.eyebrow, collectionTitleForSlug(product.collectionSlug)]
+  return [
+    product.name,
+    product.brand,
+    product.eyebrow,
+    collectionTitleForSlug(product.collectionSlug),
+  ]
     .filter((value): value is string => Boolean(value))
     .map(foldShopListingText)
     .join(" ");
@@ -191,6 +216,12 @@ export function applyShopListingQuery<T extends ShopListingRecord>(
     if (
       query.collection !== "all" &&
       product.collectionSlug !== query.collection
+    ) {
+      return false;
+    }
+    if (
+      query.brand &&
+      (product.brand == null || shopListingBrandSlug(product.brand) !== query.brand)
     ) {
       return false;
     }
@@ -243,6 +274,31 @@ export function countShopListingSizes(
   return counts;
 }
 
+export function listShopListingBrands(
+  products: readonly ShopListingRecord[],
+  query: ShopListingQuery,
+): readonly ShopListingBrandOption[] {
+  const labelsByValue = new Map<string, string>();
+  for (const product of products) {
+    if (!product.brand) continue;
+    const value = shopListingBrandSlug(product.brand);
+    if (value && !labelsByValue.has(value)) labelsByValue.set(value, product.brand);
+  }
+
+  return [...labelsByValue]
+    .map(([value, label]) => ({
+      value,
+      label,
+      count: applyShopListingQuery(products, {
+        ...query,
+        collection: "all",
+        brand: value,
+        sort: "catalog",
+      }).length,
+    }))
+    .sort((left, right) => left.label.localeCompare(right.label, "en"));
+}
+
 export function withShopListingSize(
   query: ShopListingQuery,
   size?: ShopListingSize,
@@ -261,7 +317,20 @@ export function withShopListingSegment(
   return {
     ...query,
     collection,
+    brand:
+      collection === "all" || collection === "inspired" ? query.brand : "",
     sizes: query.sizes.filter((size) => allowedSizes.has(size)),
+  };
+}
+
+export function withShopListingBrand(
+  query: ShopListingQuery,
+  brand = "",
+): ShopListingQuery {
+  return {
+    ...query,
+    collection: brand ? "all" : query.collection,
+    brand,
   };
 }
 

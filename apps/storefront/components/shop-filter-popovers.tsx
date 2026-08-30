@@ -5,6 +5,7 @@ import {
   GridViewIcon,
   RulerIcon,
   Sorting01Icon,
+  Tag01Icon,
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -22,16 +23,18 @@ import { cn } from "@perfume-aura/ui/lib/utils";
 import {
   shopListingHref,
   shopListingSizesForSegment,
+  withShopListingBrand,
   withShopListingSegment,
   withShopListingSize,
   withShopListingSort,
   type ShopListingQuery,
+  type ShopListingBrandOption,
   type ShopListingSegment,
   type ShopListingSize,
   type ShopListingSort,
 } from "@/lib/shop-listing-query";
 
-type FilterMenu = "collection" | "size" | "sort";
+type FilterMenu = "collection" | "brand" | "size" | "sort";
 
 const collectionOptions = [
   { value: "all", label: "All" },
@@ -54,6 +57,7 @@ const sortOptions = [
 
 const triggerClassName =
   "shop-chip min-h-12 rounded-[var(--aura-radius)] px-3 font-display text-base leading-none focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[var(--aura-ivory)]";
+const menuScrollDismissDistancePx = 20;
 
 const idleTriggerClassName =
   "border-[color:var(--aura-rule)] bg-transparent text-[var(--aura-ivory)] hover:border-[var(--aura-ivory)] hover:bg-transparent hover:text-[var(--aura-ivory)]";
@@ -113,10 +117,12 @@ function FilterPanel({
 export function ShopFilterPopovers({
   query,
   sizeCounts,
+  brandOptions,
   compact = false,
 }: Readonly<{
   query: ShopListingQuery;
   sizeCounts: Readonly<Record<ShopListingSize, number>>;
+  brandOptions: readonly ShopListingBrandOption[];
   compact?: boolean;
 }>) {
   const [openMenu, setOpenMenu] = useState<FilterMenu | null>(null);
@@ -124,11 +130,16 @@ export function ShopFilterPopovers({
   const activeTriggerRef = useRef<HTMLButtonElement | null>(null);
   const menuBaseId = useId();
   const collectionMenuId = `${menuBaseId}-collection`;
+  const brandMenuId = `${menuBaseId}-brand`;
   const sizeMenuId = `${menuBaseId}-size`;
   const sortMenuId = `${menuBaseId}-sort`;
   const selectedCollection =
     collectionOptions.find((option) => option.value === query.collection) ??
     collectionOptions[0];
+  const selectedBrand = brandOptions.find(
+    (option) => option.value === query.brand,
+  );
+  const brandLabel = compact ? "Brand" : selectedBrand?.label ?? "Brands";
   const hasSelectedSize = query.sizes.length > 0;
   const selectedSize = query.sizes.length === 1 ? query.sizes[0] : undefined;
   const sizeLabel =
@@ -144,6 +155,7 @@ export function ShopFilterPopovers({
 
   useEffect(() => {
     if (openMenu == null) return;
+    const openingScrollY = window.scrollY;
 
     function handlePointerDown(event: PointerEvent): void {
       if (event.target instanceof Node && rootRef.current?.contains(event.target)) {
@@ -159,11 +171,23 @@ export function ShopFilterPopovers({
       activeTriggerRef.current?.focus();
     }
 
+    function handleScroll(): void {
+      if (
+        Math.abs(window.scrollY - openingScrollY) <
+        menuScrollDismissDistancePx
+      ) {
+        return;
+      }
+      setOpenMenu(null);
+    }
+
     document.addEventListener("pointerdown", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("scroll", handleScroll);
     };
   }, [openMenu]);
 
@@ -189,7 +213,7 @@ export function ShopFilterPopovers({
       )}
       aria-label="Shop filters"
     >
-      <div className="relative">
+      <div className={cn("relative", compact && "min-w-0")}>
         <Button
           type="button"
           variant="outline"
@@ -200,11 +224,13 @@ export function ShopFilterPopovers({
           className={cn(
             triggerClassName,
             "aura-cream-action",
-            compact && "min-h-11 w-full px-2 text-sm max-[359px]:px-1 max-[359px]:text-xs [&_[data-icon=inline-start]]:hidden",
+            compact && "min-h-11 w-full px-1.5 text-xs max-[359px]:px-1 [&_[data-icon=inline-start]]:hidden [&_[data-icon=inline-end]]:hidden",
           )}
         >
           <HugeiconsIcon icon={GridViewIcon} strokeWidth={1.8} data-icon="inline-start" />
-          {selectedCollection.label}
+          <span className={cn(compact && "truncate")}>
+            {selectedCollection.label}
+          </span>
           <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={1.8} data-icon="inline-end" />
         </Button>
         <FilterPanel
@@ -232,7 +258,71 @@ export function ShopFilterPopovers({
         </FilterPanel>
       </div>
 
-      <div className="relative">
+      <div className={cn("relative", compact && "min-w-0")}>
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          aria-label={
+            selectedBrand ? `Brand, ${selectedBrand.label}` : "Choose a brand"
+          }
+          aria-expanded={openMenu === "brand"}
+          aria-controls={brandMenuId}
+          onClick={(event) => toggleMenu("brand", event)}
+          className={cn(
+            triggerClassName,
+            query.brand ? "aura-cream-action" : idleTriggerClassName,
+            compact && "min-h-11 w-full px-1.5 text-xs max-[359px]:px-1 [&_[data-icon=inline-start]]:hidden [&_[data-icon=inline-end]]:hidden",
+          )}
+        >
+          <HugeiconsIcon icon={Tag01Icon} strokeWidth={1.8} data-icon="inline-start" />
+          <span className="truncate">{brandLabel}</span>
+          <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={1.8} data-icon="inline-end" />
+        </Button>
+        <FilterPanel
+          id={brandMenuId}
+          label={`Choose a brand from ${brandOptions.length} available brands`}
+          open={openMenu === "brand"}
+          className={cn(
+            "max-h-[min(28rem,62vh)] w-[min(18rem,calc(100vw-2*var(--aura-gutter)))] overflow-y-auto overscroll-contain",
+            compact && "-left-16",
+          )}
+        >
+          <Link
+            href={shopListingHref(withShopListingBrand(query))}
+            aria-current={!query.brand ? "true" : undefined}
+            tabIndex={openMenu === "brand" ? undefined : -1}
+            onClick={closeMenus}
+            className={optionClassName(!query.brand)}
+          >
+            All brands
+            <ActiveTick visible={!query.brand} />
+          </Link>
+          {brandOptions.map((option) => {
+            const selected = query.brand === option.value;
+            return (
+              <Link
+                key={option.value}
+                href={shopListingHref(withShopListingBrand(query, option.value))}
+                aria-current={selected ? "true" : undefined}
+                tabIndex={openMenu === "brand" ? undefined : -1}
+                onClick={closeMenus}
+                className={optionClassName(selected)}
+              >
+                <span className="truncate">{option.label}</span>
+                <span className="flex shrink-0 items-center gap-2">
+                  <span className="font-sans text-xs font-medium normal-case opacity-65">
+                    {option.count}
+                  </span>
+                  <ActiveTick visible={selected} />
+                </span>
+              </Link>
+            );
+          })}
+        </FilterPanel>
+      </div>
+
+      <div className={cn("relative", compact && "min-w-0")}>
         <Button
           type="button"
           variant="outline"
@@ -243,11 +333,11 @@ export function ShopFilterPopovers({
           className={cn(
             triggerClassName,
             hasSelectedSize ? "aura-cream-action" : idleTriggerClassName,
-            compact && "min-h-11 w-full px-2 text-sm max-[359px]:px-1 max-[359px]:text-xs [&_[data-icon=inline-start]]:hidden",
+            compact && "min-h-11 w-full px-1.5 text-xs max-[359px]:px-1 [&_[data-icon=inline-start]]:hidden [&_[data-icon=inline-end]]:hidden",
           )}
         >
           <HugeiconsIcon icon={RulerIcon} strokeWidth={1.8} data-icon="inline-start" />
-          {sizeLabel}
+          <span className={cn(compact && "truncate")}>{sizeLabel}</span>
           <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={1.8} data-icon="inline-end" />
         </Button>
         <FilterPanel
@@ -290,7 +380,7 @@ export function ShopFilterPopovers({
         </FilterPanel>
       </div>
 
-      <div className="relative">
+      <div className={cn("relative", compact && "min-w-0")}>
         <Button
           type="button"
           variant="outline"
@@ -301,18 +391,18 @@ export function ShopFilterPopovers({
           className={cn(
             triggerClassName,
             query.sort === "catalog" ? idleTriggerClassName : "aura-cream-action",
-            compact && "min-h-11 w-full px-2 text-sm max-[359px]:px-1 max-[359px]:text-xs [&_[data-icon=inline-start]]:hidden",
+            compact && "min-h-11 w-full px-1.5 text-xs max-[359px]:px-1 [&_[data-icon=inline-start]]:hidden [&_[data-icon=inline-end]]:hidden",
           )}
         >
           <HugeiconsIcon icon={Sorting01Icon} strokeWidth={1.8} data-icon="inline-start" />
-          {sortLabel}
+          <span className={cn(compact && "truncate")}>{sortLabel}</span>
           <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={1.8} data-icon="inline-end" />
         </Button>
         <FilterPanel
           id={sortMenuId}
           label="Choose a sort order"
           open={openMenu === "sort"}
-          className="w-40"
+          className={cn("w-40", compact && "right-0 left-auto")}
         >
           {sortOptions.map((option) => {
             const selected = query.sort === option.value;

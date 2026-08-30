@@ -2,6 +2,7 @@ import { ShopFilterPopovers } from "@/components/shop-filter-popovers";
 import { ShopMobileToolbar } from "@/components/shop-mobile-toolbar";
 import {
   countShopListingSizes,
+  listShopListingBrands,
   type ShopListingQuery,
   type ShopListingRecord,
 } from "@/lib/shop-listing-query";
@@ -16,6 +17,7 @@ export function ShopListingControls({
   products: readonly ShopListingRecord[];
 }>) {
   const sizeCounts = countShopListingSizes(products, query);
+  const brandOptions = listShopListingBrands(products, query);
   const countLabel = `${resultCount} ${resultCount === 1 ? "scent" : "scents"}${
     query.q ? ` for “${query.q}”` : ""
   }`;
@@ -26,7 +28,11 @@ export function ShopListingControls({
       className="sticky top-[5.5rem] z-40 -mx-[var(--aura-gutter)] mt-8 mb-6 bg-[var(--aura-ink)] px-[var(--aura-gutter)] py-1 sm:static sm:mx-0 sm:mt-10 sm:bg-transparent sm:px-0 sm:py-0 lg:mt-12"
     >
       <div className="sm:hidden">
-        <ShopMobileToolbar query={query} sizeCounts={sizeCounts} />
+        <ShopMobileToolbar
+          query={query}
+          sizeCounts={sizeCounts}
+          brandOptions={brandOptions}
+        />
       </div>
 
       <div className="hidden flex-col gap-3 sm:flex lg:flex-row lg:items-center lg:gap-[var(--aura-gap)]">
@@ -47,6 +53,9 @@ export function ShopListingControls({
           />
           {query.collection !== "all" ? (
             <input type="hidden" name="collection" value={query.collection} />
+          ) : null}
+          {query.brand ? (
+            <input type="hidden" name="brand" value={query.brand} />
           ) : null}
           {query.sizes.map((size) => (
             <input key={size} type="hidden" name="size" value={size} />
@@ -74,7 +83,11 @@ export function ShopListingControls({
           </button>
         </form>
 
-        <ShopFilterPopovers query={query} sizeCounts={sizeCounts} />
+        <ShopFilterPopovers
+          query={query}
+          sizeCounts={sizeCounts}
+          brandOptions={brandOptions}
+        />
       </div>
 
       <p className="sr-only" role="status" aria-live="polite">

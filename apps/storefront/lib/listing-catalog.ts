@@ -64,6 +64,7 @@ function toStorefrontProduct(
     id: product.id,
     slug: product.slug,
     name: product.name,
+    brand: product.brand,
     eyebrow: isSignature
       ? "Signature Series"
       : isUnknown
