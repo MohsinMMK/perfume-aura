@@ -24,7 +24,14 @@ export function isTrustedStorefrontMutation(
   const configuredStorefrontUrl = environment.STOREFRONT_URL?.trim();
   if (configuredStorefrontUrl) {
     try {
-      expectedOrigin = new URL(configuredStorefrontUrl).origin;
+      const configuredUrl = new URL(configuredStorefrontUrl);
+      if (
+        environment.NODE_ENV === "production" &&
+        configuredUrl.protocol !== "https:"
+      ) {
+        return false;
+      }
+      expectedOrigin = configuredUrl.origin;
     } catch {
       return false;
     }

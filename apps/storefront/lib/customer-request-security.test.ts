@@ -34,6 +34,10 @@ describe("storefront mutation origin", () => {
       origin: "https://perfumeaura.com",
       "sec-fetch-site": "same-origin",
     }), { ...production, STOREFRONT_URL: "not-a-url" }), false);
+    assert.equal(isTrustedStorefrontMutation(new Headers({
+      origin: "http://perfumeaura.com",
+      "sec-fetch-site": "same-origin",
+    }), { ...production, STOREFRONT_URL: "http://perfumeaura.com" }), false);
   });
 
   it("allows local storefront mutations without enabling customer auth", () => {

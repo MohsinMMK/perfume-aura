@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { createPortal } from "react-dom";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowDown01Icon,
@@ -95,7 +95,7 @@ export function ProductCard({
       ? product.name.slice(inspiredByPrefix.length)
       : null;
 
-  function releaseSizeMenuPointerFocus(force = false) {
+  const releaseSizeMenuPointerFocus = useCallback((force = false) => {
     if (sizeMenuFocusReleaseTimer.current) {
       clearTimeout(sizeMenuFocusReleaseTimer.current);
     }
@@ -123,7 +123,29 @@ export function ProductCard({
       blurPointerFocus();
       sizeMenuFocusReleaseTimer.current = null;
     }, 160);
-  }
+  }, []);
+
+  const handleSizeMenuOpenChange = useCallback((open: boolean) => {
+    setSizeMenuOpen(open);
+    if (cardLinkReleaseTimer.current) {
+      clearTimeout(cardLinkReleaseTimer.current);
+      cardLinkReleaseTimer.current = null;
+    }
+    if (open) {
+      setCardLinkSuppressed(true);
+      return;
+    }
+
+    cardLinkReleaseTimer.current = setTimeout(() => {
+      setCardLinkSuppressed(false);
+      cardLinkReleaseTimer.current = null;
+    }, cardLinkReleaseDelayMs);
+    if (sizeMenuSelectionCloseTimer.current) {
+      clearTimeout(sizeMenuSelectionCloseTimer.current);
+      sizeMenuSelectionCloseTimer.current = null;
+    }
+    releaseSizeMenuPointerFocus();
+  }, [releaseSizeMenuPointerFocus]);
 
   useEffect(() => {
     return () => {
@@ -167,7 +189,7 @@ export function ProductCard({
 
       if (!sizeMenuDismissTimer.current) {
         sizeMenuDismissTimer.current = setTimeout(() => {
-          setSizeMenuOpen(false);
+          handleSizeMenuOpenChange(false);
           releaseSizeMenuPointerFocus(true);
           sizeMenuDismissTimer.current = null;
         }, sizeMenuDismissDelayMs);
@@ -181,7 +203,7 @@ export function ProductCard({
       ) {
         return;
       }
-      setSizeMenuOpen(false);
+      handleSizeMenuOpenChange(false);
       releaseSizeMenuPointerFocus(true);
     }
 
@@ -193,14 +215,14 @@ export function ProductCard({
       ) {
         return;
       }
-      setSizeMenuOpen(false);
+      handleSizeMenuOpenChange(false);
       releaseSizeMenuPointerFocus(true);
     }
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
       event.preventDefault();
-      setSizeMenuOpen(false);
+      handleSizeMenuOpenChange(false);
       sizeMenuTriggerElement.current?.focus();
     }
 
@@ -218,7 +240,18 @@ export function ProductCard({
         sizeMenuDismissTimer.current = null;
       }
     };
-  }, [sizeMenuOpen]);
+  }, [handleSizeMenuOpenChange, releaseSizeMenuPointerFocus, sizeMenuOpen]);
+
+  useEffect(() => {
+    if (!sizeMenuOpen) return;
+    const focusFrame = requestAnimationFrame(() => {
+      sizeMenuElement.current
+        ?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')
+        ?.focus({ preventScroll: true });
+    });
+
+    return () => cancelAnimationFrame(focusFrame);
+  }, [selectedVariantId, sizeMenuOpen]);
 
   async function handleAddToCart() {
     if (!canPurchase || !selectedVariant) return;
@@ -233,28 +266,6 @@ export function ProductCard({
         error instanceof Error ? error.message : "Unable to update the cart.",
       );
     }
-  }
-
-  function handleSizeMenuOpenChange(open: boolean) {
-    setSizeMenuOpen(open);
-    if (cardLinkReleaseTimer.current) {
-      clearTimeout(cardLinkReleaseTimer.current);
-      cardLinkReleaseTimer.current = null;
-    }
-    if (open) {
-      setCardLinkSuppressed(true);
-      return;
-    }
-
-    cardLinkReleaseTimer.current = setTimeout(() => {
-      setCardLinkSuppressed(false);
-      cardLinkReleaseTimer.current = null;
-    }, cardLinkReleaseDelayMs);
-    if (sizeMenuSelectionCloseTimer.current) {
-      clearTimeout(sizeMenuSelectionCloseTimer.current);
-      sizeMenuSelectionCloseTimer.current = null;
-    }
-    releaseSizeMenuPointerFocus();
   }
 
   function toggleSizeMenu() {
