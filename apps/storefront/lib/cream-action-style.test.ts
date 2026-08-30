@@ -43,14 +43,18 @@ describe("cream action design contract", () => {
     assert.match(files[0], /render=\{<Link href="\/shop" \/>\}[\s\S]*Get scent/u);
     assert.match(files[1], /aura-cream-action[^"]*[\s\S]*Show previous featured scent/u);
     assert.match(files[1], /aura-cream-action[^"]*[\s\S]*Show next featured scent/u);
-    assert.match(files[1], /aura-cream-action[^"]*[\s\S]*Choose your scent/u);
     assert.match(
       files[1],
-      /render=\{<Link href=\{activeProduct\.slug \? `\/products\/\$\{activeProduct\.slug\}` : "\/shop\?collection=inspired"\} \/>\}/u,
+      /const activeCtaLabel =[\s\S]*activeProduct\.ctaLabel \?\?[\s\S]*"Choose your scent"/u,
     );
     assert.match(
       files[1],
-      /aria-label=\{activeProduct\.slug \? `View scent: \$\{activeProduct\.name\}` : "Shop the Inspired collection"\}/u,
+      /aura-cream-action[^"]*[\s\S]*\{activeCtaLabel\}/u,
+    );
+    assert.match(files[1], /render=\{<Link href=\{activeHref\} \/>\}/u);
+    assert.match(
+      files[1],
+      /aria-label=\{[\s\S]*activeProduct\.slug[\s\S]*`View scent: \$\{activeProduct\.name\}`[\s\S]*activeProduct\.href[\s\S]*`Explore collection: \$\{activeProduct\.name\}`[\s\S]*"Shop the Inspired collection"/u,
     );
     assert.match(files[2], /aura-cream-action[^"]*[\s\S]*Learn how to choose a scent/u);
     assert.match(files[3], /aura-cream-action[^"]*[\s\S]*Add to cart/u);

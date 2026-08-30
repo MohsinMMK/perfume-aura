@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { type TouchEvent, useEffect, useRef, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowLeft01Icon,
   ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@perfume-aura/ui/components/button";
+import { cn } from "@perfume-aura/ui/lib/utils";
 import { attachContinuousMotionGuard } from "@/lib/continuous-motion";
 
 type HeroProduct = Readonly<{
@@ -17,36 +18,47 @@ type HeroProduct = Readonly<{
   image: string;
   imageAlt: string;
   floating?: boolean;
+  floatingScaleClassName?: string;
+  href?: string;
+  ctaLabel?: string;
 }>;
 
 const fallbackProduct: HeroProduct = {
   slug: "",
-  name: "Perfume Aura Elixir",
+  name: "Inspired Series",
   image: "/images/perfume-aura-100ml-floating-clean.webp",
-  imageAlt: "Perfume Aura matte black 100 ml bottle with gold details",
+  imageAlt:
+    "Perfume Aura Inspired Series matte black 100 ml bottle with gold details",
   floating: true,
+};
+
+const signatureSeriesProduct: HeroProduct = {
+  slug: "",
+  name: "Signature Series",
+  image: "/images/signature-series-100ml-floating-natural.png",
+  imageAlt:
+    "Perfume Aura Signature Series clear glass 100 ml bottle with gold details",
+  floating: true,
+  floatingScaleClassName:
+    "rotate-[5deg] scale-[1.02] sm:scale-[1.12] lg:scale-[1.2]",
+  href: "/shop?collection=signature",
+  ctaLabel: "Explore Signature Series",
 };
 
 const fallbackSlides: readonly HeroProduct[] = [
   fallbackProduct,
-  {
-    slug: "",
-    name: "Tidal composition",
-    image: "/images/azure-tides-50ml.webp",
-    imageAlt: "Perfume Aura black bottle arranged with sculpted blue glass",
-  },
-  {
-    slug: "",
-    name: "Petal composition",
-    image: "/images/petalia-noir-50ml.webp",
-    imageAlt: "Perfume Aura black bottle arranged with a soft rose glass form",
-  },
+  signatureSeriesProduct,
 ];
+
+const heroSwipeThreshold = 48;
 
 export function HomeHero({
   products,
 }: Readonly<{ products: readonly HeroProduct[] }>) {
-  const slides = products.length > 0 ? [fallbackProduct, ...products] : fallbackSlides;
+  const slides =
+    products.length > 0
+      ? [fallbackProduct, signatureSeriesProduct, ...products]
+      : fallbackSlides;
   const [activeIndex, setActiveIndex] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
@@ -54,8 +66,17 @@ export function HomeHero({
   const nameRef = useRef<HTMLSpanElement>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
+  const touchStartRef = useRef<Readonly<{ x: number; y: number }> | null>(null);
   const activeProduct = slides[activeIndex] ?? fallbackProduct;
   const canRotate = slides.length > 1;
+  const activeHref =
+    activeProduct.href ??
+    (activeProduct.slug
+      ? `/products/${activeProduct.slug}`
+      : "/shop?collection=inspired");
+  const activeCtaLabel =
+    activeProduct.ctaLabel ??
+    (activeProduct.slug ? "View scent" : "Choose your scent");
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -154,6 +175,38 @@ export function HomeHero({
     );
   }
 
+  function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
+    if (!canRotate) return;
+    const touch = event.touches.item(0);
+    if (!touch) return;
+
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }
+
+  function handleTouchEnd(event: TouchEvent<HTMLDivElement>) {
+    const touchStart = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!touchStart || !canRotate) return;
+
+    const touch = event.changedTouches.item(0);
+    if (!touch) return;
+
+    const deltaX = touch.clientX - touchStart.x;
+    const deltaY = touch.clientY - touchStart.y;
+    if (
+      Math.abs(deltaX) < heroSwipeThreshold ||
+      Math.abs(deltaX) <= Math.abs(deltaY)
+    ) {
+      return;
+    }
+
+    rotate(deltaX < 0 ? 1 : -1);
+  }
+
+  function handleTouchCancel() {
+    touchStartRef.current = null;
+  }
+
   return (
     <section ref={sectionRef} className="aura-hero relative min-h-[100svh] overflow-hidden bg-[var(--aura-ink)] text-[var(--aura-ivory)]">
       <div
@@ -181,7 +234,11 @@ export function HomeHero({
 
           <div
             ref={mediaRef}
-            className={`relative mx-auto min-h-0 w-full max-w-[47rem] ${activeProduct.floating ? "overflow-visible" : "overflow-hidden"}`}
+            data-testid="hero-product-media"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchCancel}
+            className={`relative mx-auto min-h-0 w-full max-w-[47rem] touch-pan-y ${activeProduct.floating ? "overflow-visible" : "overflow-hidden"}`}
           >
             <div ref={imageRef} key={activeProduct.image} className="absolute inset-0">
               <Image
@@ -190,7 +247,14 @@ export function HomeHero({
                 fill
                 preload
                 sizes="(max-width: 768px) 100vw, 46rem"
-                className={`z-10 object-contain object-center ${activeProduct.floating ? "aura-hero-bottle-float scale-[.82] drop-shadow-[0_1.4rem_1.2rem_rgba(0,0,0,.34)] sm:scale-[.86] lg:scale-[.9]" : ""}`}
+                className={cn(
+                  "z-10 object-contain object-center",
+                  activeProduct.floating &&
+                    "aura-hero-bottle-float drop-shadow-[0_1.4rem_1.2rem_rgba(0,0,0,.34)]",
+                  activeProduct.floating &&
+                    (activeProduct.floatingScaleClassName ??
+                      "scale-[.82] sm:scale-[.86] lg:scale-[.9]"),
+                )}
               />
             </div>
             {activeProduct.floating ? null : (
@@ -221,13 +285,19 @@ export function HomeHero({
 
           <div ref={ctaRef} className="relative z-30 flex justify-center px-1 py-3 before:absolute before:inset-x-0 before:top-1/2 before:border-t before:border-dashed before:border-white/20 lg:py-5">
             <Button
-              render={<Link href={activeProduct.slug ? `/products/${activeProduct.slug}` : "/shop?collection=inspired"} />}
+              render={<Link href={activeHref} />}
               nativeButton={false}
               size="lg"
-              aria-label={activeProduct.slug ? `View scent: ${activeProduct.name}` : "Shop the Inspired collection"}
+              aria-label={
+                activeProduct.slug
+                  ? `View scent: ${activeProduct.name}`
+                  : activeProduct.href
+                    ? `Explore collection: ${activeProduct.name}`
+                    : "Shop the Inspired collection"
+              }
               className="aura-cream-action relative z-10 min-h-16 w-full max-w-xs rounded-[var(--aura-radius)] px-8 font-display text-xl tracking-[0.02em] transition-colors"
             >
-              {activeProduct.slug ? "View scent" : "Choose your scent"}
+              {activeCtaLabel}
             </Button>
           </div>
         </div>

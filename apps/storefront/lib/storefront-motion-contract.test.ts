@@ -73,11 +73,39 @@ describe("storefront motion contract", () => {
     assert.match(hero, /attachContinuousMotionGuard\(media, pulse\)/);
     assert.match(hero, /y:\s*-20/);
     assert.match(hero, /y:\s*20/);
+    assert.match(hero, /cn\(/);
     assert.match(hero, /floating \? "overflow-visible" : "overflow-hidden"/);
     assert.match(hero, /perfume-aura-100ml-floating-clean\.webp/);
+    assert.match(
+      hero,
+      /const fallbackProduct:[\s\S]*name: "Inspired Series",[\s\S]*imageAlt:[\s\S]*"Perfume Aura Inspired Series matte black 100 ml bottle with gold details"/u,
+    );
+    assert.match(
+      hero,
+      /const signatureSeriesProduct:[\s\S]*name: "Signature Series",[\s\S]*image: "\/images\/signature-series-100ml-floating-natural\.png",[\s\S]*floating: true,[\s\S]*floatingScaleClassName:[\s\S]*rotate-\[5deg\][\s\S]*href: "\/shop\?collection=signature"/u,
+    );
+    assert.match(
+      hero,
+      /\[fallbackProduct, signatureSeriesProduct, \.\.\.products\]/u,
+    );
+    assert.match(
+      hero,
+      /const fallbackSlides:[\s\S]*\[\s*fallbackProduct,\s*signatureSeriesProduct,/u,
+    );
+    assert.doesNotMatch(hero, /Tidal composition|Petal composition/u);
+    assert.doesNotMatch(hero, /azure-tides-50ml|petalia-noir-50ml/u);
     assert.doesNotMatch(hero, /perfume-aura-100ml-floating\.png/);
     assert.match(hero, /Show previous featured scent/);
     assert.match(hero, /Show next featured scent/);
+    assert.match(hero, /const heroSwipeThreshold = 48/);
+    assert.match(hero, /onTouchStart=\{handleTouchStart\}/);
+    assert.match(hero, /onTouchEnd=\{handleTouchEnd\}/);
+    assert.match(hero, /onTouchCancel=\{handleTouchCancel\}/);
+    assert.match(hero, /touch-pan-y/);
+    assert.match(
+      hero,
+      /Math\.abs\(deltaX\) <= Math\.abs\(deltaY\)[\s\S]*rotate\(deltaX < 0 \? 1 : -1\)/u,
+    );
     assert.match(hero, /data-testid="hero-scent-name"[^>]*shrink-0 px-3 text-center[^>]*text-\[var\(--aura-ivory\)\]/u);
     assert.match(hero, /aria-hidden="true" className="h-px flex-1 border-t border-dashed border-white\/20 sm:hidden"/u);
     assert.doesNotMatch(hero, /filter:\s*"blur/);
