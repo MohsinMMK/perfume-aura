@@ -21,6 +21,8 @@
   --aura-graphite: #100b06;
   --aura-brass: #be8d3f;
   --aura-brass-soft: #be8d3f;
+  --aura-card-inspired: #625844;
+  --aura-card-signature: #2a1117;
   --aura-ivory: #f5e4c7;
   --aura-paper: #f5e4c7;
   --aura-orange: #f15726;
@@ -554,6 +556,11 @@ body {
   transform-origin: center center;
 }
 
+.product-card-collection-image {
+  transform: translate3d(0, 0, 0) scale(1);
+  transition: transform 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .product-card-campaign {
   clip-path: inset(100% 0 0 0);
   transform: scale(1.08);
@@ -569,6 +576,12 @@ body {
 
 .product-card-title {
   transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.product-card-actions {
+  transition:
+    opacity 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 380ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .aura-product-grid {
@@ -588,9 +601,6 @@ body {
   .product-card-actions {
     opacity: 0;
     transform: translateY(1.5rem);
-    transition:
-      opacity 300ms cubic-bezier(0.16, 1, 0.3, 1),
-      transform 380ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .product-card-actions button {
@@ -601,6 +611,11 @@ body {
   [data-motion-product-card]:focus-within .product-card-campaign {
     clip-path: inset(0 0 0 0);
     transform: scale(1);
+  }
+
+  [data-motion-product-card]:hover .product-card-collection-image,
+  [data-motion-product-card]:focus-within .product-card-collection-image {
+    transform: translate3d(0, -8%, 0) scale(0.86);
   }
 
   [data-motion-product-card]:hover .product-card-actions,
@@ -636,6 +651,10 @@ body {
 }
 
 @media (hover: none), (pointer: coarse) {
+  .product-card-collection-image {
+    transform: translate3d(0, -6%, 0) scale(0.9);
+  }
+
   .product-card-actions {
     opacity: 1;
     transform: none;
@@ -651,7 +670,122 @@ body {
   }
 }
 
+@media (max-width: 639px) {
+  html[data-mobile-product-cards="ready"] .product-card-collection-image {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  html[data-mobile-product-cards="ready"] .product-card-actions {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+
+  html[data-mobile-product-cards="ready"] .product-card-actions button {
+    pointer-events: none;
+  }
+
+  html[data-mobile-product-cards="ready"]
+    [data-motion-product-card]:is(
+      [data-mobile-active="true"],
+      :focus-within
+    )
+    .product-card-campaign {
+    clip-path: inset(0 0 0 0);
+    transform: scale(1);
+  }
+
+  html[data-mobile-product-cards="ready"]
+    [data-motion-product-card]:is(
+      [data-mobile-active="true"],
+      :focus-within
+    )
+    .product-card-collection-image {
+    transform: translate3d(0, -8%, 0) scale(0.86);
+  }
+
+  html[data-mobile-product-cards="ready"]
+    [data-motion-product-card]:is(
+      [data-mobile-active="true"],
+      :focus-within
+    )
+    .product-card-actions {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  html[data-mobile-product-cards="ready"]
+    [data-motion-product-card]:is(
+      [data-mobile-active="true"],
+      :focus-within
+    )
+    .product-card-actions button {
+    pointer-events: auto;
+  }
+
+  html[data-mobile-product-cards="ready"]
+    [data-motion-product-card]:is(
+      [data-mobile-active="true"],
+      :focus-within
+    )
+    .product-card-overlay-scrim,
+  html[data-mobile-product-cards="ready"]
+    [data-motion-product-card]:is(
+      [data-mobile-active="true"],
+      :focus-within
+    )
+    .product-card-overlay-title {
+    opacity: 1;
+  }
+
+  html[data-mobile-product-cards="ready"]
+    [data-motion-product-card]:is(
+      [data-mobile-active="true"],
+      :focus-within
+    )
+    .product-card-preview-badge {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 639px) {
+  html[data-mobile-product-cards="ready"]
+    [data-motion-product-card]:is(
+      [data-mobile-active="true"],
+      :focus-within
+    )
+    .product-card-collection-image {
+    transform: translate3d(0, -4%, 0) scale(0.6);
+  }
+}
+
+@media (max-width: 460px) {
+  html[data-mobile-product-cards="ready"]
+    [data-motion-product-card]:is(
+      [data-mobile-active="true"],
+      :focus-within
+    )
+    .product-card-collection-image {
+    transform: translate3d(0, -5%, 0) scale(0.52);
+  }
+}
+
+@media (max-width: 359px) {
+  html[data-mobile-product-cards="ready"]
+    [data-motion-product-card]:is(
+      [data-mobile-active="true"],
+      :focus-within
+    )
+    .product-card-collection-image {
+    transform: translate3d(0, -8%, 0) scale(0.4);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .product-card-collection-image,
+  .product-card-campaign,
+  .product-card-actions,
+  .product-card-title,
+  .product-card-actions button,
   .product-card-add-icon {
     transition: none;
   }

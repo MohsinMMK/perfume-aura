@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Menu01Icon,
@@ -55,22 +55,46 @@ export function SiteHeader({ customerAuthEnabled }: Readonly<{ customerAuthEnabl
     pathname === "/account/recover";
   const [scrolledPastHero, setScrolledPastHero] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const desktopNavigationRef = useRef<HTMLElement>(null);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const restoreCompactControlFocusRef = useRef(false);
   const compact = !isHome || scrolledPastHero;
 
   useEffect(() => {
     if (!isHome) return;
-    const update = () =>
-      setScrolledPastHero(
-        window.scrollY > compactHeaderScrollY(window.innerWidth),
-      );
+    let updateFrame: number | null = null;
+    const update = () => {
+      updateFrame = null;
+      const nextScrolledPastHero =
+        window.scrollY > compactHeaderScrollY(window.innerWidth);
+      if (
+        nextScrolledPastHero &&
+        document.activeElement instanceof Node &&
+        desktopNavigationRef.current?.contains(document.activeElement)
+      ) {
+        restoreCompactControlFocusRef.current = true;
+      }
+      setScrolledPastHero(nextScrolledPastHero);
+    };
+    const scheduleUpdate = () => {
+      if (updateFrame !== null) return;
+      updateFrame = window.requestAnimationFrame(update);
+    };
     update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
     return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
+      if (updateFrame !== null) window.cancelAnimationFrame(updateFrame);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
     };
   }, [isHome]);
+
+  useLayoutEffect(() => {
+    if (!compact || !restoreCompactControlFocusRef.current) return;
+    restoreCompactControlFocusRef.current = false;
+    menuTriggerRef.current?.focus({ preventScroll: true });
+  }, [compact]);
 
   return (
     <header
@@ -127,6 +151,7 @@ export function SiteHeader({ customerAuthEnabled }: Readonly<{ customerAuthEnabl
 
         <div className="pointer-events-none relative flex items-start justify-end">
           <nav
+            ref={desktopNavigationRef}
             aria-label="Primary navigation"
             aria-hidden={compact ? true : undefined}
             inert={compact}
@@ -188,6 +213,7 @@ export function SiteHeader({ customerAuthEnabled }: Readonly<{ customerAuthEnabl
             <SheetTrigger
               render={
                 <Button
+                  ref={menuTriggerRef}
                   variant="outline"
                   size="icon-lg"
                   className={`min-h-12 min-w-12 rounded-[var(--aura-radius)] border-[color:rgb(245_228_199_/_55%)] bg-[var(--aura-ink)]/90 text-[var(--aura-ivory)] hover:bg-[var(--aura-ivory)] hover:text-[var(--aura-ink)] ${isFocusedAccountRoute ? "hidden" : compact ? "inline-flex" : "flex lg:hidden"}`}

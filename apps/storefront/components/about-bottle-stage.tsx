@@ -17,6 +17,7 @@ const frames = [
     alt: "Perfume Aura bottles arranged in the studio",
   },
 ] as const;
+const frameTransitionIntervalMs = 1500;
 
 export function AboutBottleStage() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -24,6 +25,7 @@ export function AboutBottleStage() {
   useEffect(() => {
     const motion = window.matchMedia("(prefers-reduced-motion: no-preference)");
     let timer: number | undefined;
+    let completedTransitions = 0;
     const stop = () => {
       if (timer !== undefined) {
         window.clearInterval(timer);
@@ -32,18 +34,26 @@ export function AboutBottleStage() {
     };
     const syncMotionPreference = () => {
       stop();
-      if (motion.matches) {
+      if (
+        motion.matches &&
+        !document.hidden &&
+        completedTransitions < frames.length - 1
+      ) {
         timer = window.setInterval(() => {
           setActiveIndex((current) => (current + 1) % frames.length);
-        }, 2200);
+          completedTransitions += 1;
+          if (completedTransitions >= frames.length - 1) stop();
+        }, frameTransitionIntervalMs);
       }
     };
 
     syncMotionPreference();
     motion.addEventListener("change", syncMotionPreference);
+    document.addEventListener("visibilitychange", syncMotionPreference);
     return () => {
       stop();
       motion.removeEventListener("change", syncMotionPreference);
+      document.removeEventListener("visibilitychange", syncMotionPreference);
     };
   }, []);
 

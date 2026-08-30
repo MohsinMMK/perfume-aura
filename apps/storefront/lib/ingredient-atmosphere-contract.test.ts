@@ -35,6 +35,9 @@ test("the homepage uses lightweight interactive perfumery ingredient cutouts", a
   assert.match(component, /requestAnimationFrame\(render\)/);
   assert.match(component, /prefers-reduced-motion: reduce/);
   assert.match(component, /cancelAnimationFrame\(state\.frame\)/);
+  assert.match(component, /const resetImmediately/);
+  assert.match(component, /state\.layer\.style\.removeProperty\("transform"\)/);
+  assert.match(component, /motionStates\.forEach\(resetImmediately\)/);
   assert.match(homepage, /<IngredientAtmosphere\s*\/>/);
   assert.doesNotMatch(homepage, /OudVolumetricModel/);
 });

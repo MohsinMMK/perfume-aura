@@ -71,7 +71,13 @@ export default async function ShopPage({
           </div>
         ) : visible.length ? (
           <div className="aura-product-grid grid gap-[var(--aura-gap)] lg:gap-[var(--aura-gap-lg)]">
-            {visible.map((product) => <ProductCard key={product.id} product={product} />)}
+            {visible.map((product, index) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                eagerImageLoading={index < 3}
+              />
+            ))}
           </div>
         ) : (
           <div className="mt-4 border border-dashed border-[color:var(--aura-rule)] p-12 text-center">

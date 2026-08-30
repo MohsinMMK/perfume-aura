@@ -123,6 +123,20 @@ export function IngredientAtmosphere() {
       requestRender(state);
     };
 
+    const resetImmediately = (state: (typeof motionStates)[number]) => {
+      if (state.frame !== null) {
+        window.cancelAnimationFrame(state.frame);
+        state.frame = null;
+      }
+      state.currentX = 0;
+      state.currentY = 0;
+      state.targetX = 0;
+      state.targetY = 0;
+      state.currentScale = 1;
+      state.targetScale = 1;
+      state.layer.style.removeProperty("transform");
+    };
+
     const removePointerListeners = motionStates.map((state) => {
       const handlePointerMove = (event: PointerEvent) => {
         if (reducedMotion.matches || !precisePointer.matches) return;
@@ -145,7 +159,7 @@ export function IngredientAtmosphere() {
 
     const handleMotionPreferenceChange = () => {
       if (reducedMotion.matches || !precisePointer.matches) {
-        motionStates.forEach(settle);
+        motionStates.forEach(resetImmediately);
       }
     };
 

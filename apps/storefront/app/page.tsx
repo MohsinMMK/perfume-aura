@@ -154,7 +154,12 @@ export default async function HomePage() {
             </div>
           ) : (
             <div>
-              <div className="aura-snap-row -mx-[var(--aura-gutter)] flex snap-x snap-mandatory gap-[var(--aura-gap)] overflow-x-auto px-[var(--aura-gutter)] pb-3 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-[var(--aura-gap-lg)] lg:overflow-visible lg:px-0 lg:pb-0">
+              <div
+                role="region"
+                aria-label="Editorial perfume previews"
+                tabIndex={0}
+                className="aura-snap-row -mx-[var(--aura-gutter)] flex snap-x snap-mandatory gap-[var(--aura-gap)] overflow-x-auto px-[var(--aura-gutter)] pb-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-[var(--aura-gap-lg)] lg:overflow-visible lg:px-0 lg:pb-0"
+              >
                 {editorialPreviews.map((preview, index) => (
                   <figure key={preview.title} data-motion-product-card className={`relative min-h-[32rem] w-[88vw] shrink-0 snap-center overflow-hidden rounded-[var(--aura-radius)] sm:w-[70vw] lg:w-auto lg:min-w-0 ${preview.color}`}>
                     <Image
@@ -209,7 +214,13 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div data-motion-journey-track className="aura-snap-row relative -mx-[var(--aura-gutter)] flex snap-x snap-mandatory gap-[var(--aura-gap)] overflow-x-auto px-[var(--aura-gutter)] pb-3 lg:mx-0 lg:w-max lg:gap-[var(--aura-gap-lg)] lg:overflow-visible lg:px-8 lg:pb-0">
+          <div
+            data-motion-journey-track
+            role="region"
+            aria-label="Why Perfume Aura"
+            tabIndex={0}
+            className="aura-snap-row relative -mx-[var(--aura-gutter)] flex snap-x snap-mandatory gap-[var(--aura-gap)] overflow-x-auto px-[var(--aura-gutter)] pb-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] lg:mx-0 lg:w-max lg:gap-[var(--aura-gap-lg)] lg:overflow-visible lg:px-8 lg:pb-0"
+          >
             {processSteps.map((step, index) => (
               <article data-motion-stage key={step.number} className={`relative min-h-[24rem] w-[88vw] shrink-0 snap-center overflow-hidden rounded-[var(--aura-radius)] p-6 sm:min-h-[28rem] sm:w-[70vw] lg:min-h-[26rem] lg:w-[48vw] ${index === 0 ? "bg-[var(--aura-brass)] text-[var(--aura-ink)]" : index === 1 ? "bg-[var(--aura-orange)] text-[var(--aura-ink)]" : "bg-[var(--aura-red)] text-white"}`}>
                 <div className="flex items-start justify-between">

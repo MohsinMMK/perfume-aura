@@ -10,7 +10,6 @@ import {
 } from "@hugeicons/core-free-icons";
 import { Button } from "@perfume-aura/ui/components/button";
 import { cn } from "@perfume-aura/ui/lib/utils";
-import { attachContinuousMotionGuard } from "@/lib/continuous-motion";
 
 type HeroProduct = Readonly<{
   slug: string;
@@ -113,10 +112,9 @@ export function HomeHero({
 
   useEffect(() => {
     const section = sectionRef.current;
-    const media = mediaRef.current;
     const image = imageRef.current;
     const name = nameRef.current;
-    if (!section || !media || !image || !name) return;
+    if (!section || !image || !name) return;
     let active = true;
     let cleanup = () => {};
 
@@ -146,18 +144,15 @@ export function HomeHero({
         const pulse = gsap.timeline({ delay: 0.72 });
         pulse
           .to(image, {
-            y: -20,
-            duration: 1.4,
+            y: -12,
+            duration: 1,
             ease: "sine.inOut",
           })
           .to(image, {
-            y: 20,
-            duration: 2.8,
-            repeat: -1,
-            yoyo: true,
+            y: 0,
+            duration: 1.2,
             ease: "sine.inOut",
           });
-        return attachContinuousMotionGuard(media, pulse);
       });
 
       cleanup = () => motionMedia.revert();
@@ -238,7 +233,7 @@ export function HomeHero({
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchCancel}
-            className={`relative mx-auto min-h-0 w-full max-w-[47rem] touch-pan-y ${activeProduct.floating ? "overflow-visible" : "overflow-hidden"}`}
+            className={`relative mx-auto min-h-0 w-full max-w-[47rem] [touch-action:pan-y_pinch-zoom] ${activeProduct.floating ? "overflow-visible" : "overflow-hidden"}`}
           >
             <div ref={imageRef} key={activeProduct.image} className="absolute inset-0">
               <Image
