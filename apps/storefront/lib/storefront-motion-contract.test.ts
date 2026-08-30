@@ -21,9 +21,11 @@ describe("storefront motion contract", () => {
   });
 
   it("owns reduced-motion and desktop journey through live matchMedia", async () => {
-    const [motion, hero, home, globals] = await Promise.all([
+    const [motion, shell, hero, aboutStage, home, globals] = await Promise.all([
       readStorefront("../components/storefront-motion.tsx"),
+      readStorefront("../components/storefront-shell.tsx"),
       readStorefront("../components/home-hero.tsx"),
+      readStorefront("../components/about-bottle-stage.tsx"),
       readStorefront("../app/page.tsx"),
       readStorefront("../app/globals.css"),
     ]);
@@ -34,6 +36,53 @@ describe("storefront motion contract", () => {
     assert.match(motion, /isMobile:\s*"\(max-width: 639px\)"/);
     assert.match(motion, /isDesktop:\s*"\(min-width: 1024px\)"/);
     assert.match(motion, /motionMedia\.revert\(/);
+    assert.match(
+      motion,
+      /const mobileProductCardQuery = "\(max-width: 639px\)";/u,
+    );
+    assert.match(
+      motion,
+      /const reducedMotionMedia = window\.matchMedia\([\s\S]*"\(prefers-reduced-motion: reduce\)"/u,
+    );
+    assert.match(
+      motion,
+      /!mobileCardMedia\.matches \|\|[\s\S]*reducedMotionMedia\.matches \|\|[\s\S]*!\("IntersectionObserver" in window\)/u,
+    );
+    assert.match(
+      motion,
+      /reducedMotionMedia\.addEventListener\([\s\S]*"change",[\s\S]*scheduleMobileCardObserverRefresh/u,
+    );
+    assert.match(
+      motion,
+      /reducedMotionMedia\.removeEventListener\([\s\S]*"change",[\s\S]*scheduleMobileCardObserverRefresh/u,
+    );
+    assert.match(
+      motion,
+      /const mobileProductCardRevealRootMargin = "-49% 0px -49% 0px";/u,
+    );
+    assert.match(
+      motion,
+      /new IntersectionObserver\([\s\S]*intersectionRatio >=[\s\S]*mobileProductCardRevealThreshold/u,
+    );
+    assert.match(
+      motion,
+      /rootMargin: mobileProductCardRevealRootMargin,[\s\S]*threshold: mobileProductCardRevealThreshold/u,
+    );
+    assert.match(motion, /pageRoot\.dataset\.mobileProductCards = "ready";/u);
+    assert.match(
+      motion,
+      /new IntersectionObserver\([\s\S]*entries\.forEach\([\s\S]*pageRoot\.dataset\.mobileProductCards = "ready";/u,
+    );
+    assert.match(motion, /card\.dataset\.mobileActive = "false";/u);
+    assert.match(motion, /new MutationObserver\(/u);
+    assert.match(
+      motion,
+      /cardGridObserver\.observe\(contentRoot, \{ childList: true, subtree: true \}\)/u,
+    );
+    assert.match(motion, /cardObserver\?\.disconnect\(\)/u);
+    assert.match(motion, /const searchParamsKey = useSearchParams\(\)\.toString\(\)/u);
+    assert.match(motion, /\[pathname, searchParamsKey\]/u);
+    assert.match(shell, /<Suspense fallback=\{null\}>[\s\S]*<StorefrontMotion \/>/u);
     assert.match(motion, /data-motion-ingredient-drift/);
     assert.match(
       motion,
@@ -70,9 +119,10 @@ describe("storefront motion contract", () => {
     assert.match(hero, /gsap\.matchMedia\(/);
     assert.match(hero, /prefers-reduced-motion: no-preference/);
     assert.doesNotMatch(hero, /headingRef/);
-    assert.match(hero, /attachContinuousMotionGuard\(media, pulse\)/);
-    assert.match(hero, /y:\s*-20/);
-    assert.match(hero, /y:\s*20/);
+    assert.doesNotMatch(hero, /attachContinuousMotionGuard/);
+    assert.match(hero, /y:\s*-12/);
+    assert.match(hero, /duration:\s*1\.2/);
+    assert.doesNotMatch(hero, /repeat:\s*-1/);
     assert.match(hero, /cn\(/);
     assert.match(hero, /floating \? "overflow-visible" : "overflow-hidden"/);
     assert.match(hero, /perfume-aura-100ml-floating-clean\.webp/);
@@ -101,7 +151,7 @@ describe("storefront motion contract", () => {
     assert.match(hero, /onTouchStart=\{handleTouchStart\}/);
     assert.match(hero, /onTouchEnd=\{handleTouchEnd\}/);
     assert.match(hero, /onTouchCancel=\{handleTouchCancel\}/);
-    assert.match(hero, /touch-pan-y/);
+    assert.match(hero, /\[touch-action:pan-y_pinch-zoom\]/);
     assert.match(
       hero,
       /Math\.abs\(deltaX\) <= Math\.abs\(deltaY\)[\s\S]*rotate\(deltaX < 0 \? 1 : -1\)/u,
@@ -111,6 +161,12 @@ describe("storefront motion contract", () => {
     assert.doesNotMatch(hero, /filter:\s*"blur/);
     assert.doesNotMatch(hero, /setInterval|autoplay/i);
 
+    assert.match(aboutStage, /const frameTransitionIntervalMs = 1500/u);
+    assert.match(aboutStage, /completedTransitions < frames\.length - 1/u);
+    assert.match(aboutStage, /document\.hidden/u);
+    assert.match(aboutStage, /document\.addEventListener\("visibilitychange"/u);
+    assert.match(aboutStage, /document\.removeEventListener\("visibilitychange"/u);
+
     assert.match(home, /data-motion-journey-pin/);
     assert.match(home, /lg:justify-start[\s\S]*lg:pt-20/);
     assert.match(home, /data-motion-journey-heading/);
@@ -119,6 +175,7 @@ describe("storefront motion contract", () => {
     assert.match(home, /lg:min-h-\[26rem\]/);
     assert.match(home, /aura-snap-row/);
     assert.match(home, /snap-x snap-mandatory/);
+    assert.match(home, /role="region"[\s\S]*aria-label="Why Perfume Aura"[\s\S]*tabIndex=\{0\}/u);
     assert.match(home, /render=\{<Link href="\/fragrance-guide" \/>\}[\s\S]*aura-cream-action[\s\S]*Learn how to choose a scent/u);
     assert.doesNotMatch(home, /Learn how to choose a scent[\s\S]*underline underline-offset-8/u);
     assert.match(globals, /\[data-motion-journey-track\]/);
@@ -150,6 +207,11 @@ describe("storefront motion contract", () => {
       /window\.scrollY > compactHeaderScrollY\(window\.innerWidth\)/,
     );
     assert.match(motion, /compactHeaderScrollY\(window\.innerWidth\)/);
+    assert.match(header, /window\.requestAnimationFrame\(update\)/u);
+    assert.match(header, /window\.cancelAnimationFrame\(updateFrame\)/u);
+    assert.match(header, /desktopNavigationRef\.current\?\.contains\(document\.activeElement\)/u);
+    assert.match(header, /restoreCompactControlFocusRef\.current = true/u);
+    assert.match(header, /menuTriggerRef\.current\?\.focus\(\{ preventScroll: true \}\)/u);
     assert.match(continuous, /visibilitychange/);
     assert.match(continuous, /mouseenter/);
     assert.match(continuous, /focusin/);

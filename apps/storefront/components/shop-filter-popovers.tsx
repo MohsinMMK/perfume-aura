@@ -82,6 +82,21 @@ function ActiveTick({ visible }: Readonly<{ visible: boolean }>) {
   ) : null;
 }
 
+function FilterChevron({ open }: Readonly<{ open: boolean }>) {
+  return (
+    <HugeiconsIcon
+      icon={ArrowDown01Icon}
+      strokeWidth={2}
+      data-filter-chevron
+      className={cn(
+        "size-2.5 shrink-0 opacity-70 transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none max-[359px]:size-2",
+        open && "rotate-180",
+      )}
+      aria-hidden="true"
+    />
+  );
+}
+
 function FilterPanel({
   id,
   label,
@@ -178,7 +193,17 @@ export function ShopFilterPopovers({
       ) {
         return;
       }
+      const activeElement = document.activeElement;
+      const restoreTriggerFocus =
+        activeElement instanceof Node &&
+        activeElement !== activeTriggerRef.current &&
+        Boolean(rootRef.current?.contains(activeElement));
       setOpenMenu(null);
+      if (restoreTriggerFocus) {
+        window.requestAnimationFrame(() =>
+          activeTriggerRef.current?.focus({ preventScroll: true }),
+        );
+      }
     }
 
     document.addEventListener("pointerdown", handlePointerDown);
@@ -224,14 +249,14 @@ export function ShopFilterPopovers({
           className={cn(
             triggerClassName,
             "aura-cream-action",
-            compact && "min-h-11 w-full px-1.5 text-xs max-[359px]:px-1 [&_[data-icon=inline-start]]:hidden [&_[data-icon=inline-end]]:hidden",
+            compact && "min-h-11 w-full gap-0.5 px-1 text-[0.68rem] max-[359px]:px-0.5 max-[359px]:text-[0.625rem] [&_[data-icon=inline-start]]:hidden",
           )}
         >
           <HugeiconsIcon icon={GridViewIcon} strokeWidth={1.8} data-icon="inline-start" />
           <span className={cn(compact && "truncate")}>
             {selectedCollection.label}
           </span>
-          <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={1.8} data-icon="inline-end" />
+          <FilterChevron open={openMenu === "collection"} />
         </Button>
         <FilterPanel
           id={collectionMenuId}
@@ -272,12 +297,12 @@ export function ShopFilterPopovers({
           className={cn(
             triggerClassName,
             query.brand ? "aura-cream-action" : idleTriggerClassName,
-            compact && "min-h-11 w-full px-1.5 text-xs max-[359px]:px-1 [&_[data-icon=inline-start]]:hidden [&_[data-icon=inline-end]]:hidden",
+            compact && "min-h-11 w-full gap-0.5 px-1 text-[0.68rem] max-[359px]:px-0.5 max-[359px]:text-[0.625rem] [&_[data-icon=inline-start]]:hidden",
           )}
         >
           <HugeiconsIcon icon={Tag01Icon} strokeWidth={1.8} data-icon="inline-start" />
           <span className="truncate">{brandLabel}</span>
-          <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={1.8} data-icon="inline-end" />
+          <FilterChevron open={openMenu === "brand"} />
         </Button>
         <FilterPanel
           id={brandMenuId}
@@ -333,12 +358,12 @@ export function ShopFilterPopovers({
           className={cn(
             triggerClassName,
             hasSelectedSize ? "aura-cream-action" : idleTriggerClassName,
-            compact && "min-h-11 w-full px-1.5 text-xs max-[359px]:px-1 [&_[data-icon=inline-start]]:hidden [&_[data-icon=inline-end]]:hidden",
+            compact && "min-h-11 w-full gap-0.5 px-1 text-[0.68rem] max-[359px]:px-0.5 max-[359px]:text-[0.625rem] [&_[data-icon=inline-start]]:hidden",
           )}
         >
           <HugeiconsIcon icon={RulerIcon} strokeWidth={1.8} data-icon="inline-start" />
           <span className={cn(compact && "truncate")}>{sizeLabel}</span>
-          <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={1.8} data-icon="inline-end" />
+          <FilterChevron open={openMenu === "size"} />
         </Button>
         <FilterPanel
           id={sizeMenuId}
@@ -391,12 +416,12 @@ export function ShopFilterPopovers({
           className={cn(
             triggerClassName,
             query.sort === "catalog" ? idleTriggerClassName : "aura-cream-action",
-            compact && "min-h-11 w-full px-1.5 text-xs max-[359px]:px-1 [&_[data-icon=inline-start]]:hidden [&_[data-icon=inline-end]]:hidden",
+            compact && "min-h-11 w-full gap-0.5 px-1 text-[0.68rem] max-[359px]:px-0.5 max-[359px]:text-[0.625rem] [&_[data-icon=inline-start]]:hidden",
           )}
         >
           <HugeiconsIcon icon={Sorting01Icon} strokeWidth={1.8} data-icon="inline-start" />
           <span className={cn(compact && "truncate")}>{sortLabel}</span>
-          <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={1.8} data-icon="inline-end" />
+          <FilterChevron open={openMenu === "sort"} />
         </Button>
         <FilterPanel
           id={sortMenuId}

@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { attachContinuousMotionGuard } from "@/lib/continuous-motion";
 import { compactHeaderScrollY } from "@/lib/header-motion";
 
 const historyScrollStateKey = "__perfumeAuraScroll";
+const mobileProductCardQuery = "(max-width: 639px)";
+const mobileProductCardRevealRootMargin = "-49% 0px -49% 0px";
+const mobileProductCardRevealThreshold = 0;
 
 type HistoryScrollPosition = Readonly<{
   x: number;
@@ -44,6 +47,7 @@ export function StorefrontMotion() {
     position: HistoryScrollPosition;
   }> | null>(null);
   const pathname = usePathname();
+  const searchParamsKey = useSearchParams().toString();
 
   useEffect(() => {
     const previousScrollRestoration = window.history.scrollRestoration;
@@ -114,6 +118,107 @@ export function StorefrontMotion() {
     window.scrollTo({ top: 0, left: 0 });
     root.style.scrollBehavior = previousScrollBehavior;
   }, [pathname, popstateRevision]);
+
+  useEffect(() => {
+    const contentRoot = document.getElementById("main-content");
+    if (!contentRoot) return;
+
+    const pageRoot = document.documentElement;
+    const mobileCardMedia = window.matchMedia(mobileProductCardQuery);
+    const reducedMotionMedia = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    );
+    let cardObserver: IntersectionObserver | null = null;
+    let refreshFrame: number | null = null;
+
+    const clearMobileCardState = () => {
+      contentRoot
+        .querySelectorAll<HTMLElement>(
+          ".aura-product-grid [data-motion-product-card]",
+        )
+        .forEach((card) => delete card.dataset.mobileActive);
+      delete pageRoot.dataset.mobileProductCards;
+    };
+
+    const connectMobileCardObserver = () => {
+      refreshFrame = null;
+      cardObserver?.disconnect();
+      cardObserver = null;
+      clearMobileCardState();
+
+      if (
+        !mobileCardMedia.matches ||
+        reducedMotionMedia.matches ||
+        !("IntersectionObserver" in window)
+      ) {
+        return;
+      }
+
+      const productCards = Array.from(
+        contentRoot.querySelectorAll<HTMLElement>(
+          ".aura-product-grid [data-motion-product-card]",
+        ),
+      );
+      if (productCards.length === 0) return;
+
+      cardObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!(entry.target instanceof HTMLElement)) return;
+            entry.target.dataset.mobileActive =
+              entry.isIntersecting &&
+              entry.intersectionRatio >= mobileProductCardRevealThreshold
+                ? "true"
+                : "false";
+          });
+          pageRoot.dataset.mobileProductCards = "ready";
+        },
+        {
+          rootMargin: mobileProductCardRevealRootMargin,
+          threshold: mobileProductCardRevealThreshold,
+        },
+      );
+
+      productCards.forEach((card) => {
+        card.dataset.mobileActive = "false";
+        cardObserver?.observe(card);
+      });
+    };
+
+    const scheduleMobileCardObserverRefresh = () => {
+      if (refreshFrame !== null) return;
+      refreshFrame = window.requestAnimationFrame(connectMobileCardObserver);
+    };
+
+    const cardGridObserver = new MutationObserver(
+      scheduleMobileCardObserverRefresh,
+    );
+    cardGridObserver.observe(contentRoot, { childList: true, subtree: true });
+    mobileCardMedia.addEventListener(
+      "change",
+      scheduleMobileCardObserverRefresh,
+    );
+    reducedMotionMedia.addEventListener(
+      "change",
+      scheduleMobileCardObserverRefresh,
+    );
+    connectMobileCardObserver();
+
+    return () => {
+      if (refreshFrame !== null) window.cancelAnimationFrame(refreshFrame);
+      cardObserver?.disconnect();
+      cardGridObserver.disconnect();
+      mobileCardMedia.removeEventListener(
+        "change",
+        scheduleMobileCardObserverRefresh,
+      );
+      reducedMotionMedia.removeEventListener(
+        "change",
+        scheduleMobileCardObserverRefresh,
+      );
+      clearMobileCardState();
+    };
+  }, [pathname, searchParamsKey]);
 
   useEffect(() => {
     let active = true;
@@ -544,12 +649,12 @@ export function StorefrontMotion() {
       active = false;
       cleanup();
     };
-  }, [pathname]);
+  }, [pathname, searchParamsKey]);
 
   return (
     <div
       ref={progressRef}
-      className="pointer-events-none fixed inset-x-0 top-0 z-[80] h-[3px] origin-left bg-[var(--aura-orange)]"
+      className="pointer-events-none fixed inset-x-0 top-0 z-[80] h-[3px] origin-left scale-x-0 bg-[var(--aura-orange)] motion-reduce:hidden"
       aria-hidden="true"
     />
   );

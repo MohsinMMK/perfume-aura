@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import {
   isPreviewCatalogEnabled,
   isPublicCatalogEnabled,
@@ -30,7 +30,9 @@ export function StorefrontShell({ children }: Readonly<{ children: ReactNode }>)
       initialCart={loadRemoteCart ? null : readReleaseLockedCart()}
       loadRemoteCart={loadRemoteCart}
     >
-      <StorefrontMotion />
+      <Suspense fallback={null}>
+        <StorefrontMotion />
+      </Suspense>
       {googleClientId ? <GoogleOneTapPrompt clientId={googleClientId} /> : null}
       <a
         href="#main-content"

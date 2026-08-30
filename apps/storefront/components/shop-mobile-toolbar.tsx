@@ -127,7 +127,7 @@ export function ShopMobileToolbar({
         aria-hidden={searchOpen}
         inert={searchOpen}
         className={cn(
-          "aura-mobile-search-controls relative z-10 grid h-11 grid-cols-[1.2fr_.9fr_.9fr_.8fr_2.75rem] items-center gap-1.5",
+          "aura-mobile-search-controls relative z-10 grid h-11 grid-cols-[1.35fr_.9fr_.78fr_.77fr_2.75rem] items-center gap-1.5",
           searchOpen && "pointer-events-none",
         )}
       >

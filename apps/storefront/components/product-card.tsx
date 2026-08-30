@@ -22,6 +22,8 @@ const sizeMenuScrollDismissDistancePx = 32;
 const sizeMenuSelectionCloseDelayMs = 0;
 const cardLinkReleaseDelayMs = 260;
 const inspiredByPrefix = "Inspired by ";
+const inspiredUnknownCardImage = "/images/inspired-unknown-shop-card.webp";
+const signatureSeriesCardImage = "/images/signature-series-shop-card.webp";
 const sizeMenuWidthPx = 224;
 const sizeMenuViewportGutterPx = 12;
 
@@ -51,7 +53,11 @@ function distanceFromRectangle(
 
 export function ProductCard({
   product,
-}: Readonly<{ product: StorefrontProduct }>) {
+  eagerImageLoading = false,
+}: Readonly<{
+  product: StorefrontProduct;
+  eagerImageLoading?: boolean;
+}>) {
   const { addItem, loading } = useCart();
   const [actionError, setActionError] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
@@ -94,6 +100,26 @@ export function ProductCard({
     product.name.startsWith(inspiredByPrefix)
       ? product.name.slice(inspiredByPrefix.length)
       : null;
+  const isSignatureSeries = product.collectionSlug === "signature";
+  const isInspiredOrUnknown =
+    product.collectionSlug === "inspired" ||
+    product.collectionSlug === "unknown";
+  const usesCollectionCardImage = isSignatureSeries || isInspiredOrUnknown;
+  const cardStageBackgroundClass = isSignatureSeries
+    ? "bg-[var(--aura-card-signature)]"
+    : isInspiredOrUnknown
+      ? "bg-[var(--aura-card-inspired)]"
+      : "bg-[var(--aura-brass)]";
+  const cardImage = isSignatureSeries
+    ? signatureSeriesCardImage
+    : isInspiredOrUnknown
+      ? inspiredUnknownCardImage
+      : (product.cardImage ?? product.image);
+  const cardImageAlt = isSignatureSeries
+    ? "Perfume Aura Signature Series clear glass bottle with gold details"
+    : isInspiredOrUnknown
+      ? "Perfume Aura matte black bottle with gold details"
+      : product.imageAlt;
 
   const releaseSizeMenuPointerFocus = useCallback((force = false) => {
     if (sizeMenuFocusReleaseTimer.current) {
@@ -203,8 +229,17 @@ export function ProductCard({
       ) {
         return;
       }
+      const restoreTriggerFocus =
+        document.activeElement instanceof Node &&
+        Boolean(sizeMenuElement.current?.contains(document.activeElement));
       handleSizeMenuOpenChange(false);
-      releaseSizeMenuPointerFocus(true);
+      if (restoreTriggerFocus) {
+        window.requestAnimationFrame(() =>
+          sizeMenuTriggerElement.current?.focus({ preventScroll: true }),
+        );
+      } else {
+        releaseSizeMenuPointerFocus(true);
+      }
     }
 
     function handlePointerDown(event: PointerEvent) {
@@ -292,7 +327,7 @@ export function ProductCard({
     handleSizeMenuOpenChange(true);
   }
 
-  function scheduleSizeMenuClose() {
+  function scheduleSizeMenuClose(restoreTriggerFocus: boolean) {
     if (sizeMenuSelectionCloseTimer.current) {
       clearTimeout(sizeMenuSelectionCloseTimer.current);
     }
@@ -302,14 +337,22 @@ export function ProductCard({
     sizeMenuSelectionCloseTimer.current = setTimeout(() => {
       sizeMenuSelectionCloseTimer.current = null;
       handleSizeMenuOpenChange(false);
+      if (restoreTriggerFocus) {
+        window.requestAnimationFrame(() =>
+          sizeMenuTriggerElement.current?.focus({ preventScroll: true }),
+        );
+      }
     }, sizeMenuSelectionCloseDelayMs);
   }
 
-  function handleVariantSelection(variantId: string) {
+  function handleVariantSelection(
+    variantId: string,
+    restoreTriggerFocus: boolean,
+  ) {
     setSelectedVariantId(variantId);
     setActionError(null);
     setAdded(false);
-    scheduleSizeMenuClose();
+    scheduleSizeMenuClose(restoreTriggerFocus);
   }
 
   return (
@@ -318,28 +361,33 @@ export function ProductCard({
       data-motion-product-card
       className="group min-w-0 text-[var(--aura-ivory)]"
     >
-      <div className="product-card-stage relative aspect-[5/8] overflow-hidden rounded-[var(--aura-radius)] bg-[var(--aura-brass)]">
+      <div
+        className={`product-card-stage relative aspect-[5/8] overflow-hidden rounded-[var(--aura-radius)] ${cardStageBackgroundClass}`}
+      >
         <span
           aria-hidden="true"
           className="pointer-events-none absolute inset-[4px] z-30 rounded-[calc(var(--aura-radius)-4px)] border border-dashed border-[color:var(--aura-rule)]"
         />
         <Image
-          src={product.cardImage ?? product.image}
-          alt={product.imageAlt}
+          src={cardImage}
+          alt={cardImageAlt}
           fill
+          loading={eagerImageLoading ? "eager" : "lazy"}
           sizes="(max-width: 1023px) 46vw, 31vw"
-          className="product-card-flat object-cover"
+          className={`product-card-flat object-cover ${usesCollectionCardImage ? "product-card-collection-image" : ""}`}
         />
-        <Image
-          src={product.image}
-          alt=""
-          aria-hidden="true"
-          fill
-          sizes="(max-width: 1023px) 46vw, 31vw"
-          className="product-card-campaign object-cover"
-        />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(16,11,6,.22)_0%,transparent_24%,transparent_52%,rgba(16,11,6,.94)_100%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100" />
-        <p className="pointer-events-none absolute inset-x-4 top-5 z-10 text-center font-display text-[clamp(2.1rem,4vw,4.5rem)] leading-[0.86] tracking-[-0.02em] text-[var(--aura-ivory)] opacity-0 drop-shadow-[0_2px_16px_rgba(16,11,6,.35)] transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
+        {usesCollectionCardImage ? null : (
+          <Image
+            src={product.image}
+            alt=""
+            aria-hidden="true"
+            fill
+            sizes="(max-width: 1023px) 46vw, 31vw"
+            className="product-card-campaign object-cover"
+          />
+        )}
+        <div className="product-card-overlay-scrim absolute inset-0 bg-[linear-gradient(180deg,rgba(16,11,6,.22)_0%,transparent_24%,transparent_52%,rgba(16,11,6,.94)_100%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100 motion-reduce:transition-none" />
+        <p className="product-card-overlay-title pointer-events-none absolute inset-x-3 top-3 z-10 line-clamp-3 text-center font-display text-[clamp(1rem,4.2vw,1.25rem)] leading-[0.88] tracking-[-0.02em] text-[var(--aura-ivory)] opacity-0 drop-shadow-[0_2px_16px_rgba(16,11,6,.35)] transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100 motion-reduce:transition-none sm:inset-x-4 sm:top-5 sm:line-clamp-none sm:text-[clamp(1.5rem,2.4vw,2.75rem)]">
           {inspiredReferenceName ? (
             <>
               <span className="text-outline whitespace-nowrap">Inspired by</span>{" "}
@@ -348,7 +396,7 @@ export function ProductCard({
           ) : product.name}
         </p>
         {product.publicationState === "design_preview" ? (
-          <span className="absolute left-3 top-3 z-10 border border-[color:var(--aura-rule)] bg-[var(--aura-ink)]/78 px-2.5 py-1.5 text-[0.56rem] font-semibold uppercase tracking-[0.14em] text-[var(--aura-ivory)] group-hover:opacity-0 group-focus-within:opacity-0">
+          <span className="product-card-preview-badge absolute left-3 top-3 z-10 border border-[color:var(--aura-rule)] bg-[var(--aura-ink)]/78 px-2.5 py-1.5 text-[0.56rem] font-semibold uppercase tracking-[0.14em] text-[var(--aura-ivory)] group-hover:opacity-0 group-focus-within:opacity-0">
             Preview
           </span>
         ) : null}
@@ -358,8 +406,8 @@ export function ProductCard({
           aria-label={`View ${product.name}`}
         />
 
-        <div className="product-card-actions pointer-events-none absolute inset-x-0 bottom-0 z-20 p-3 sm:p-4">
-          <div className="flex flex-col gap-1.5">
+        <div className="product-card-actions pointer-events-none absolute inset-x-0 bottom-0 z-20 p-2 sm:p-4">
+          <div className="flex flex-col gap-1 sm:gap-1.5">
             <Button
               onClick={handleAddToCart}
               disabled={!canPurchase || loading}
@@ -444,7 +492,9 @@ export function ProductCard({
                         type="button"
                         disabled={!variant.price}
                         aria-pressed={selectedVariant?.id === variant.id}
-                        onClick={() => handleVariantSelection(variant.id)}
+                        onClick={(event) =>
+                          handleVariantSelection(variant.id, event.detail === 0)
+                        }
                         aria-label={`${variant.sizeMl} ml${variant.price ? `, ${formatMoney(variant.price)}` : ", price pending"}`}
                         className="flex min-h-11 w-full items-center justify-between rounded-[var(--aura-radius)] border border-transparent px-3 font-sans text-xs font-semibold uppercase tracking-[0.08em] text-[var(--aura-ink)] hover:bg-[color:rgb(16_11_6_/_8%)] hover:text-[var(--aura-ink)] aria-pressed:border-[var(--aura-ink)] aria-pressed:bg-[var(--aura-ink)] aria-pressed:text-[var(--aura-ivory)] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--aura-ink)] disabled:cursor-not-allowed disabled:opacity-45"
                       >
