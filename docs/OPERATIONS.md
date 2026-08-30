@@ -375,7 +375,7 @@ https://app.perfumeaura.com/api/auth/get-session
 ```
 
 Also verify a real static asset, the authenticated owner journey when
-authorized, storefront locks, discovery `robots.txt`, the four canonical
+authorized, storefront locks, discovery `robots.txt`, the seven canonical
 release-locked sitemap URLs, homepage and fragrance-guide metadata/JSON-LD,
 `noindex` on preview commerce routes, and both DNS requirements. After an exact
 storefront release passes live acceptance, notify IndexNow from the deployed
