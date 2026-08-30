@@ -12,6 +12,21 @@ type HistoryScrollPosition = Readonly<{
   y: number;
 }>;
 
+function groupElementsByOffsetTop(
+  elements: readonly HTMLElement[],
+): HTMLElement[][] {
+  const rows = new Map<number, HTMLElement[]>();
+
+  elements.forEach((element) => {
+    const rowTop = Math.round(element.offsetTop);
+    const row = rows.get(rowTop);
+    if (row) row.push(element);
+    else rows.set(rowTop, [element]);
+  });
+
+  return Array.from(rows.values());
+}
+
 function readHistoryScrollPosition(state: unknown): HistoryScrollPosition | null {
   if (!state || typeof state !== "object") return null;
   const position = (state as Record<string, unknown>)[historyScrollStateKey];
@@ -116,12 +131,63 @@ export function StorefrontMotion() {
             allowMotion: "(prefers-reduced-motion: no-preference)",
             reduceMotion: "(prefers-reduced-motion: reduce)",
             showExpandedLogo: "(min-width: 640px)",
+            isMobile: "(max-width: 639px)",
             isDesktop: "(min-width: 1024px)",
           },
           (context) => {
+            const contentRoot = document.getElementById("main-content") ?? document;
+            const productHero = contentRoot.querySelector<HTMLElement>(
+              "[data-product-hero]",
+            );
+            const productStickyTop = contentRoot.querySelector<HTMLElement>(
+              "[data-product-sticky-top]",
+            );
+            const productStickyBottom = contentRoot.querySelector<HTMLElement>(
+              "[data-product-sticky-bottom]",
+            );
+
+            if (
+              context.conditions?.isMobile &&
+              productHero &&
+              productStickyTop &&
+              productStickyBottom
+            ) {
+              const stickyBars = [productStickyTop, productStickyBottom];
+              gsap.set(stickyBars, { autoAlpha: 0 });
+
+              if (context.conditions.allowMotion) {
+                gsap.timeline({
+                  scrollTrigger: {
+                    trigger: productHero,
+                    start: "bottom top",
+                    end: "+=64",
+                    scrub: 0.35,
+                  },
+                })
+                  .fromTo(
+                    productStickyTop,
+                    { autoAlpha: 0, y: -18 },
+                    { autoAlpha: 1, y: 0, duration: 1, ease: "power4.out" },
+                    0,
+                  )
+                  .fromTo(
+                    productStickyBottom,
+                    { autoAlpha: 0, y: 24 },
+                    { autoAlpha: 1, y: 0, duration: 1, ease: "power4.out" },
+                    0,
+                  );
+              } else {
+                ScrollTrigger.create({
+                  trigger: productHero,
+                  start: "bottom top-=1",
+                  onEnter: () => gsap.set(stickyBars, { autoAlpha: 1 }),
+                  onLeaveBack: () => gsap.set(stickyBars, { autoAlpha: 0 }),
+                });
+              }
+            }
+
             if (!context.conditions?.allowMotion) return;
 
-            const contentRoot = document.getElementById("main-content") ?? document;
             const headerLogo = document.querySelector<HTMLElement>("[data-header-logo]");
             const headerLogoIcon = headerLogo?.querySelector<HTMLElement>(
               "[data-header-logo-icon]",
@@ -214,8 +280,40 @@ export function StorefrontMotion() {
                 });
               });
 
+            const productCards = gsap.utils.toArray<HTMLElement>(
+              "[data-motion-product-card]",
+              contentRoot,
+            );
+            const griddedProductCards = new Set<HTMLElement>();
+
             gsap.utils
-              .toArray<HTMLElement>("[data-motion-product-card]", contentRoot)
+              .toArray<HTMLElement>(".aura-product-grid", contentRoot)
+              .forEach((grid) => {
+                const cards = gsap.utils.toArray<HTMLElement>(
+                  "[data-motion-product-card]",
+                  grid,
+                );
+                cards.forEach((card) => griddedProductCards.add(card));
+
+                groupElementsByOffsetTop(cards).forEach((row) => {
+                  const trigger = row[0];
+                  if (!trigger) return;
+
+                  gsap.from(row, {
+                    y: 56,
+                    duration: 0.82,
+                    ease: "power4.out",
+                    scrollTrigger: {
+                      trigger,
+                      start: "top 91%",
+                      once: true,
+                    },
+                  });
+                });
+              });
+
+            productCards
+              .filter((element) => !griddedProductCards.has(element))
               .forEach((element) => {
                 gsap.from(element, {
                   y: 56,

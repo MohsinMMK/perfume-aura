@@ -6,10 +6,13 @@ import {
   countShopListingSizes,
   emptyShopListingQuery,
   foldShopListingText,
+  listShopListingBrands,
   parseShopListingQuery,
   serializeShopListingQuery,
+  shopListingBrandSlug,
   shopListingHref,
   shopListingSizesForSegment,
+  withShopListingBrand,
   withShopListingSegment,
   withShopListingSize,
   withShopListingSort,
@@ -64,12 +67,14 @@ describe("shop listing query", () => {
     const query = {
       q: "rose",
       collection: "inspired" as const,
+      brand: "dior",
       sizes: [30, 50] as const,
       sort: "name-asc" as const,
     };
     assert.deepEqual(parseShopListingQuery(serializeShopListingQuery(query)), {
       q: "rose",
       collection: "inspired",
+      brand: "dior",
       sizes: [30, 50],
       sort: "name-asc",
     });
@@ -79,17 +84,19 @@ describe("shop listing query", () => {
     );
   });
 
-  it("parses q, exclusive collection, repeated sizes, and sort", () => {
+  it("parses q, collection, brand, repeated sizes, and sort", () => {
     assert.deepEqual(
       parseShopListingQuery({
         q: "  Noir  ",
         collection: "signature",
+        brand: "tom-ford",
         size: ["30", "105"],
         sort: "name-desc",
       }),
       {
         q: "Noir",
         collection: "signature",
+        brand: "tom-ford",
         sizes: [30, 105],
         sort: "name-desc",
       },
@@ -97,10 +104,11 @@ describe("shop listing query", () => {
     assert.deepEqual(parseShopListingQuery({ size: "100,30,40" }).sizes, [30, 100]);
   });
 
-  it("ignores invalid collection, size, and sort tokens", () => {
+  it("ignores invalid collection, brand, size, and sort tokens", () => {
     assert.deepEqual(
       parseShopListingQuery({
         collection: "featured",
+        brand: "Tom Ford",
         size: ["40", "abc"],
         sort: "price-asc",
       }),
@@ -115,10 +123,11 @@ describe("shop listing query", () => {
       shopListingHref({
         q: "rose",
         collection: "inspired",
+        brand: "dior",
         sizes: [50, 30],
         sort: "name-asc",
       }),
-      "/shop?q=rose&collection=inspired&size=30&size=50&sort=name-asc",
+      "/shop?q=rose&collection=inspired&brand=dior&size=30&size=50&sort=name-asc",
     );
   });
 
@@ -193,6 +202,38 @@ describe("shop listing query", () => {
     assert.equal(summaryLeak.length, 0);
     assert.equal(foldShopListingText("Régent"), "regent");
     assert.equal(foldShopListingText("Sauvage, Dior"), "sauvage dior");
+  });
+
+  it("inventories 39 verified brands and preserves their exact display names", () => {
+    const brands = listShopListingBrands(products, emptyShopListingQuery);
+    assert.equal(brands.length, 39);
+    assert.deepEqual(brands[0], { value: "ajmal", label: "Ajmal", count: 2 });
+    assert.deepEqual(
+      brands.find((brand) => brand.value === "hermes"),
+      { value: "hermes", label: "Hermès", count: 1 },
+    );
+    assert.deepEqual(
+      brands.find((brand) => brand.value === "tom-ford"),
+      { value: "tom-ford", label: "Tom Ford", count: 4 },
+    );
+    assert.equal(shopListingBrandSlug("Viktor&Rolf"), "viktor-rolf");
+  });
+
+  it("filters one brand and composes it with search and size", () => {
+    const tomFord = applyShopListingQuery(products, {
+      ...emptyShopListingQuery,
+      brand: "tom-ford",
+    });
+    const oudWood = applyShopListingQuery(products, {
+      ...emptyShopListingQuery,
+      q: "oud wood",
+      brand: "tom-ford",
+      sizes: [50],
+    });
+    assert.equal(tomFord.length, 4);
+    assert.ok(tomFord.every((product) => product.brand === "Tom Ford"));
+    assert.equal(oudWood.length, 1);
+    assert.equal(oudWood[0]?.slug, "inspired-by-tom-ford-oud-wood");
   });
 
   it("ORs sizes and ANDs size with segment and query", () => {
@@ -292,12 +333,19 @@ describe("shop listing query", () => {
 
   it("selects one size without disturbing the rest of the query", () => {
     const next = withShopListingSize(
-      { q: "oud", collection: "inspired", sizes: [30], sort: "name-asc" },
+      {
+        q: "oud",
+        collection: "inspired",
+        brand: "tom-ford",
+        sizes: [30],
+        sort: "name-asc",
+      },
       50,
     );
     assert.deepEqual(next, {
       q: "oud",
       collection: "inspired",
+      brand: "tom-ford",
       sizes: [50],
       sort: "name-asc",
     });
@@ -315,6 +363,7 @@ describe("shop listing query", () => {
     const query = {
       q: "oud",
       collection: "all" as const,
+      brand: "tom-ford",
       sizes: [30, 50, 105] as const,
       sort: "name-asc" as const,
     };
@@ -322,6 +371,7 @@ describe("shop listing query", () => {
     assert.deepEqual(withShopListingSegment(query, "signature"), {
       ...query,
       collection: "signature",
+      brand: "",
       sizes: [50, 105],
     });
     assert.deepEqual(withShopListingSegment(query, "inspired"), {
@@ -332,8 +382,22 @@ describe("shop listing query", () => {
     assert.deepEqual(withShopListingSegment(query, "unknown"), {
       ...query,
       collection: "unknown",
+      brand: "",
       sizes: [30, 50],
     });
+  });
+
+  it("selects and clears a brand without retaining a conflicting collection", () => {
+    const selected = withShopListingBrand(
+      { ...emptyShopListingQuery, collection: "unknown" },
+      "dior",
+    );
+    assert.deepEqual(selected, {
+      ...emptyShopListingQuery,
+      collection: "all",
+      brand: "dior",
+    });
+    assert.equal(withShopListingBrand(selected).brand, "");
   });
 
   it("sets and clears the compact sort order", () => {

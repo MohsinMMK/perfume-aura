@@ -41,6 +41,7 @@ export default async function ShopPage({
   const facetProducts = products.map((product) => ({
     slug: product.slug,
     name: product.name,
+    brand: product.brand,
     eyebrow: product.eyebrow,
     collectionSlug: product.collectionSlug,
     variants: product.variants.map((variant) => ({ sizeMl: variant.sizeMl })),

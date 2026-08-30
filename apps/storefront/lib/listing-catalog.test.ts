@@ -158,5 +158,18 @@ describe("storefront listing workbook", () => {
     assert.ok(unknown.some((product) => product.name === "Hugo Boss"));
     assert.ok(unknown.some((product) => product.name === "Oud Saffron"));
     assert.ok(unknown.every((product) => !product.name.startsWith("Inspired by ")));
+    assert.ok(unknown.every((product) => product.brand == null));
+  });
+
+  it("carries only the 39 owner-recorded reference brands into listing data", () => {
+    const products = loadListedWorkbookProducts();
+    const branded = products.filter((product) => product.brand != null);
+    assert.equal(branded.length, 79);
+    assert.equal(new Set(branded.map((product) => product.brand)).size, 39);
+    assert.ok(
+      products
+        .filter((product) => product.collectionSlug !== "inspired")
+        .every((product) => product.brand == null),
+    );
   });
 });
