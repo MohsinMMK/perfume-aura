@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-30 12:44:43 UTC**
+Last refreshed: **2026-08-30 16:35:05 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -32,9 +32,33 @@ and ignored local environment files.
 
 ## Exact releases and automation
 
-The storefront and ops both run exact source
+The storefront runs exact source
+`4212ebb73993e7221421d1e0d5193ec994f7e8e5`; ops remains exact source
 `66f9e2c44872c599b9a8b926ecbe75c90c33469d`. Ops uses immutable image digest
 `sha256:a7b1ab5de6d447f014fb3fabdef6f8ccd9af06866dd30772a10e35d1823a79eb`.
+Storefront workflow run
+[`33322322489`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33322322489)
+attempt 2 passed quality, all 101 disposable-PostgreSQL integration tests,
+verified packaging, direct Hostinger archive deployment, and exact live
+verification. The first immutable-archive upload attempt ended with curl exit
+28 before a provider response; retrying only the failed deployment path
+succeeded. Hostinger build `01a05383-203b-7378-aed4-5f92169e2062` completed at
+2026-08-30 16:32:09 UTC. The VPS ops deployment correctly stayed skipped.
+Independent exact-source acceptance verified seven discovery sitemap URLs, a
+real immutable Next asset, storefront health and release locks, and the path-
+and query-preserving `www` redirect.
+
+PR #96 merged the homepage Signature Series hero release. It places the final
+transparent clear-glass bottle with natural perfume liquid in the second slide,
+matches the Inspired bottle's presentation angle, removes the two retired
+static composition slides, labels the black bottle Inspired Series, and adds
+guarded mobile left/right swiping while retaining arrow controls and vertical
+page scrolling. Fresh production browser acceptance at 390 by 844 and 1440 by
+900 confirmed both swipe directions, vertical-gesture rejection, the loaded
+Signature image, zero horizontal overflow, and zero console errors or warnings.
+No database migration, catalog import, price change, release-flag change, or
+ops runtime deployment occurred.
+
 Workflow run
 [`33311717758`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33311717758)
 passed quality, all 101 disposable-PostgreSQL integration tests, verified
