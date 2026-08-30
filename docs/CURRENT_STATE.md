@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-29 17:52:31 UTC**
+Last refreshed: **2026-08-30 12:44:43 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -33,28 +33,42 @@ and ignored local environment files.
 ## Exact releases and automation
 
 The storefront and ops both run exact source
-`205f8489ab81b1dbf6368acc78b4e0b7b405ba75`. Ops uses immutable image digest
-`sha256:516849648617217cd338d131b29300b33b0efc69f7fccea544f98b88a1777cc8`.
+`66f9e2c44872c599b9a8b926ecbe75c90c33469d`. Ops uses immutable image digest
+`sha256:a7b1ab5de6d447f014fb3fabdef6f8ccd9af06866dd30772a10e35d1823a79eb`.
 Workflow run
-[`33266315017`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33266315017)
+[`33311717758`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33311717758)
 passed quality, all 101 disposable-PostgreSQL integration tests, verified
 packaging, direct Hostinger archive deployment, immutable VPS ops deployment,
 and both exact live verifiers. Hostinger build
-`01a04ea3-3d39-7153-87c7-dad7b3e142bf` completed at 2026-08-29 17:49:17 UTC.
+`01a052ad-4bee-72f2-a430-a3495eea8570` completed at 2026-08-30 12:39:08 UTC.
 Independent acceptance verified the exact source on both surfaces, seven
 discovery sitemap URLs, a real immutable Next asset, storefront health and
-release locks, ops live/ready and unauthenticated session, a real `404`, and
-the path- and query-preserving `www` redirect.
+release locks, ops live/ready, and the path- and query-preserving `www`
+redirect.
 
-Fresh production browser acceptance confirmed exactly 114 shop cards: 79
-Inspired, 15 temporary Unknown, and 20 Signature. The Unknown query returned
-exactly 15 cards. Heaven Rose retained its literal name, Unknown breadcrumb,
-and ₹600 / ₹800 / ₹1,400 prices for 30 / 50 / 100 ml; the 1280 px shop and
-product pages had zero horizontal overflow. No Neon catalog import or migration
-occurred, and public catalog publication, checkout, payment, customer
-authentication, inquiries,
-and all staff-security release flags remain closed. The remote repository
-continues to contain only `main`.
+PR #94 merged the responsive shop and product-purchase UX release. It added
+the 39-brand catalog filter, compact animated mobile search and reliable filter
+menus, aligned catalog cards, per-card size and price selection, correct
+selected-variant cart updates, quantity-aware product totals and WhatsApp order
+messages, and the mobile product hero/sticky purchase handoff. Review fixes
+route every automatic size-menu dismissal through one close path, restore the
+full-card link, move keyboard focus into the portalled size dialog, and require
+HTTPS for the configured production storefront mutation origin.
+
+Fresh production browser acceptance confirmed exactly 114 shop cards with zero
+horizontal overflow or broken images at 1280 by 900. The Unknown query returned
+exactly 15 cards; selecting Heaven Rose 50 ml added the ₹800 variant to the
+cart; the brand menu reported 39 brands and Dior returned exactly three scents;
+and mobile search expanded from 44 px to the available toolbar width with input
+focus. At 390 by 844, the Regent Noir hero and primary Add to Cart action both
+ended exactly at the viewport bottom, quantity three updated the action and
+WhatsApp total to ₹3,600, and the transparent sticky purchase controls appeared
+after the hero. The Inspired by label used Londrina Outline while the reference
+name remained solid. Production console acceptance returned zero errors and
+warnings. No Neon catalog import or migration occurred, and public catalog
+publication, checkout, payment, customer authentication, inquiries, and all
+staff-security release flags remain closed. The remote repository continues to
+contain only `main`.
 
 PR #77 merged the responsive shop-discovery release. It added compact animated
 collection, size, sort, and instant-search controls; collection-aware size
