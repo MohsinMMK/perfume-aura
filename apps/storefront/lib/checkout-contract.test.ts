@@ -17,5 +17,7 @@ describe("authenticated UPI checkout contract", () => {
     assert.doesNotMatch(checkout, /provider:\s*"cod"/);
     assert.match(checkout, /CASHFREE_PAYMENT_TTL_MINUTES/);
     assert.match(checkout, /requestPayloadDigest/);
+    assert.match(checkout, /bindCreatedCashfreePaymentAttempt/);
+    assert.doesNotMatch(checkout, /transaction\.update\(paymentAttempts\)\.set\(\{[\s\S]*?providerOrderId/);
   });
 });

@@ -30,6 +30,46 @@ the storefront auth/maintenance secrets were rotated on 2026-08-14 after an
 operator-output exposure; current values exist only in approved secret stores
 and ignored local environment files.
 
+## Approved self-hosted PostgreSQL migration — not cut over
+
+The chosen target is version-controlled under
+[`deploy/postgres-vps/`](../deploy/postgres-vps/): PostgreSQL 17.10, separate
+transaction poolers for ops and storefront, mutual TLS plus SCRAM on the sole
+public storefront pooler, root-controlled loopback-only owner/pgAdmin paths,
+and encrypted off-host pgBackRest recovery. The current VPS service, Hostinger
+configuration, DNS, Neon source, and release flags remain unchanged.
+
+On 2026-08-31, a fresh logical export of the Neon source restored into an
+ephemeral local PostgreSQL 17 target without source writes. The read-only
+migration verifier matched the source and target migration journal, all public
+table counts, sequence states, and auth/stock/oil/invoice integrity summaries.
+The local target bootstrap rehearsal applied all 18 source migrations and
+created three distinct non-inheriting roles: ops runtime, normal storefront
+runtime, and a payment-finalizer role. The normal storefront role cannot read
+product cost, change catalog/policy/price records, directly write stock,
+reservations, or oil, bind Cashfree provider identities, or mark a payment
+successful; the finalizer role has no table grants and may only bind an
+authentic provider session, atomically cancel a failed/expired provider-bound
+intent, and atomically settle an independently verified Cashfree
+payment/stock/oil transition. Checkout stock reservation now holds the exact
+FIFO raw-oil lots before a provider session is issued; release and settlement
+use those exact holds rather than a later aggregate oil balance. A root-owned
+role registry makes those state guards independent of deployment-specific role
+names.
+
+Read-only VPS admission was rechecked on 2026-08-31: the Ubuntu 24.04 host has
+Docker 29.1.3/Compose 2.40.3 and a non-interactive sudo-capable operator, but
+has no `/srv/perfume-aura` checkout, target Compose project, PostgreSQL/pooler
+containers, target configuration, systemd backup units, or pgBackRest
+repository configuration. The unrelated existing Ops stack at
+`/srv/khanect/stacks/perfume-aura-ops` remains untouched. Live cutover is now
+blocked only by the missing independently managed encrypted off-VPS pgBackRest
+repository material and the authenticated Hostinger environment-variable update
+for both restricted storefront URLs plus their mutual-TLS connection material.
+Do not change either runtime `DATABASE_URL`, open port 6432, or merge a
+target-runtime release until those gates, an on-VPS restore drill, and exact
+post-cutover acceptance pass.
+
 ## Exact releases and automation
 
 The storefront runs exact source
@@ -676,3 +716,8 @@ Next actions:
    inquiry activation sequence plus the final low-value live UPI
    purchase/refund. Until then, keep every commerce and staff-security flag
    closed; brand/guide discovery does not weaken those gates.
+6. Complete the approved self-hosted PostgreSQL rehearsal on the VPS: provide
+   the independently encrypted off-VPS pgBackRest repository material, prove a
+   disposable restore, then update the ops and storefront runtime secrets during
+   a controlled write freeze. Keep Neon intact as the rollback source until the
+   documented recovery window and exact acceptance evidence are complete.

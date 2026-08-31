@@ -1,0 +1,237 @@
+name: perfume-aura-postgres
+
+# This stack is intentionally independent from deploy/ops-vps/compose.yaml.
+# It joins that existing private network only through pgbouncer-ops. Raw
+# PostgreSQL is never publicly reachable; its owner port is loopback-only for
+# root-controlled bootstrap and SSH tunnels.
+services:
+  postgres:
+    image: perfume-aura-postgres:17.10-pgbackrest-2.59.1
+    build:
+      context: ./postgres
+      args:
+        PGBACKREST_VERSION: 2.59.1
+        PGBACKREST_SOURCE_SHA256: 1cd522afc33b8ff846ef88c55dc238717c9c8817a4f6ca7c9f64887de9c7402d
+    restart: unless-stopped
+    init: true
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATABASE:?set POSTGRES_DATABASE in the root-only compose environment file}
+      POSTGRES_USER: ${POSTGRES_OWNER_ROLE:?set POSTGRES_OWNER_ROLE in the root-only compose environment file}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_superuser_password
+      # Keep the entrypoint's one-time cluster initialization on SCRAM too. The
+      # mounted production pg_hba.conf remains the authoritative runtime file.
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=scram-sha-256
+      PGDATA: /var/lib/postgresql/data
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - pgbackrest-spool:/var/lib/pgbackrest
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+    secrets:
+      - postgres_superuser_password
+      - pgbackrest_config
+    networks:
+      - database_internal
+      - backup_egress
+    # This direct owner listener is intentionally host-loopback-only. It is
+    # needed by the root-run bootstrap and is not a public database exposure.
+    ports:
+      - 127.0.0.1:${POSTGRES_OWNER_LOOPBACK_PORT:-55432}:5432
+    # The official entrypoint initially owns a fresh volume as root, then
+    # drops to the postgres user. Keep only the capabilities necessary for
+    # that one-time initialization; the database process itself is unprivileged.
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    security_opt:
+      - no-new-privileges:true
+    cpus: ${POSTGRES_CPU_LIMIT:-2.0}
+    mem_limit: ${POSTGRES_MEMORY_LIMIT:-3g}
+    mem_reservation: 1g
+    pids_limit: 512
+    stop_grace_period: 90s
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready --username="$$POSTGRES_USER" --dbname="$$POSTGRES_DB"
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 45s
+    labels:
+      com.khanect.stack: perfume-aura-postgres
+      com.khanect.service: postgres
+      com.khanect.owner: Perfume-Aura
+      com.khanect.backup: pgbackrest-off-host-required
+      com.khanect.exposure: docker-internal-plus-loopback-owner-and-backup-egress
+
+  pgbouncer-ops:
+    image: edoburu/pgbouncer:v1.25.2-p0@sha256:7d7a27d9e90985cab5cf42256f5c13a3120baa4b055b69df37beb272b89b2340
+    restart: unless-stopped
+    init: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./pgbouncer/pgbouncer-ops.ini:/etc/pgbouncer/pgbouncer.ini:ro
+    secrets:
+      - source: pgbouncer_ops_userlist
+        target: pgbouncer_userlist
+    networks:
+      database_internal:
+      ops_internal:
+        aliases:
+          - postgres-pooler
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m,mode=1777
+      - /var/run/pgbouncer:rw,noexec,nosuid,nodev,size=8m,uid=70,gid=70,mode=0750
+      - /var/log/pgbouncer:rw,noexec,nosuid,nodev,size=16m,uid=70,gid=70,mode=0750
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    cpus: ${PGBOUNCER_CPU_LIMIT:-0.50}
+    mem_limit: ${PGBOUNCER_MEMORY_LIMIT:-256m}
+    mem_reservation: 64m
+    pids_limit: 128
+    stop_grace_period: 30s
+    labels:
+      com.khanect.stack: perfume-aura-postgres
+      com.khanect.service: pgbouncer-ops
+      com.khanect.owner: Perfume-Aura
+      com.khanect.exposure: docker-ops-network-only
+
+  pgbouncer-external:
+    image: edoburu/pgbouncer:v1.25.2-p0@sha256:7d7a27d9e90985cab5cf42256f5c13a3120baa4b055b69df37beb272b89b2340
+    restart: unless-stopped
+    init: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - ${PGBOUNCER_BIND_ADDRESS:-0.0.0.0}:${PGBOUNCER_EXTERNAL_PORT:-6432}:6432
+    volumes:
+      - ./pgbouncer/pgbouncer-external.ini:/etc/pgbouncer/pgbouncer.ini:ro
+    secrets:
+      - source: pgbouncer_storefront_userlist
+        target: pgbouncer_userlist
+      - pgbouncer_tls_ca
+      - pgbouncer_tls_server_cert
+      - pgbouncer_tls_server_key
+    networks:
+      - database_internal
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m,mode=1777
+      - /var/run/pgbouncer:rw,noexec,nosuid,nodev,size=8m,uid=70,gid=70,mode=0750
+      - /var/log/pgbouncer:rw,noexec,nosuid,nodev,size=16m,uid=70,gid=70,mode=0750
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    cpus: ${PGBOUNCER_CPU_LIMIT:-0.50}
+    mem_limit: ${PGBOUNCER_MEMORY_LIMIT:-256m}
+    mem_reservation: 64m
+    pids_limit: 128
+    stop_grace_period: 30s
+    labels:
+      com.khanect.stack: perfume-aura-postgres
+      com.khanect.service: pgbouncer-external
+      com.khanect.owner: Perfume-Aura
+      com.khanect.exposure: public-mtls-only-6432
+
+  pgadmin:
+    image: dpage/pgadmin4:9.17@sha256:2f4ce946ddf8360680d7eff4eaba1d91859eb6b4003e6623bad5c63a322c2f4d
+    restart: unless-stopped
+    init: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:?set PGADMIN_DEFAULT_EMAIL in the root-only compose environment file}
+      PGADMIN_DEFAULT_PASSWORD_FILE: /run/secrets/pgadmin_password
+      PGADMIN_CONFIG_SERVER_MODE: "True"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "True"
+      # The service account has no NET_BIND_SERVICE capability, so keep its
+      # container port unprivileged while preserving a loopback-only host bind.
+      PGADMIN_LISTEN_PORT: "8080"
+    ports:
+      - 127.0.0.1:${PGADMIN_LOOPBACK_PORT:-5050}:8080
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    secrets:
+      - pgadmin_password
+    networks:
+      - database_internal
+    # pgAdmin also initializes its named data volume before its final process
+    # runs as its service account.
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    mem_reservation: 128m
+    pids_limit: 256
+    stop_grace_period: 30s
+    labels:
+      com.khanect.stack: perfume-aura-postgres
+      com.khanect.service: pgadmin
+      com.khanect.owner: Perfume-Aura
+      com.khanect.exposure: loopback-only
+
+networks:
+  database_internal:
+    name: perfume-aura-postgres-internal
+    internal: true
+  # PostgreSQL reaches only the independently managed pgBackRest repository
+  # through this dedicated outbound network. Keep host firewall egress rules
+  # restricted to the repository endpoint on TCP 443; never attach app stacks.
+  backup_egress:
+    name: perfume-aura-postgres-backup-egress
+  # Existing, external Compose network from deploy/ops-vps/compose.yaml.
+  # This declaration cannot create, alter, or remove the ops network.
+  ops_internal:
+    external: true
+    name: ${OPS_DOCKER_NETWORK:-perfume-aura-ops-internal}
+
+volumes:
+  postgres-data:
+    name: perfume-aura-postgres-data
+  pgbackrest-spool:
+    name: perfume-aura-pgbackrest-spool
+  pgadmin-data:
+    name: perfume-aura-pgadmin-data
+
+secrets:
+  postgres_superuser_password:
+    file: ${POSTGRES_SUPERUSER_PASSWORD_FILE:?set POSTGRES_SUPERUSER_PASSWORD_FILE}
+  pgbouncer_ops_userlist:
+    file: ${PGBOUNCER_OPS_USERLIST_FILE:?set PGBOUNCER_OPS_USERLIST_FILE}
+  pgbouncer_storefront_userlist:
+    file: ${PGBOUNCER_STOREFRONT_USERLIST_FILE:?set PGBOUNCER_STOREFRONT_USERLIST_FILE}
+  pgbouncer_tls_ca:
+    file: ${PGBOUNCER_TLS_CA_FILE:?set PGBOUNCER_TLS_CA_FILE}
+  pgbouncer_tls_server_cert:
+    file: ${PGBOUNCER_TLS_SERVER_CERT_FILE:?set PGBOUNCER_TLS_SERVER_CERT_FILE}
+  pgbouncer_tls_server_key:
+    file: ${PGBOUNCER_TLS_SERVER_KEY_FILE:?set PGBOUNCER_TLS_SERVER_KEY_FILE}
+  pgbackrest_config:
+    file: ${PGBACKREST_CONFIG_FILE:?set PGBACKREST_CONFIG_FILE}
+  pgadmin_password:
+    file: ${PGADMIN_PASSWORD_FILE:?set PGADMIN_PASSWORD_FILE}

@@ -1,0 +1,22 @@
+# Official Docker Hub image index pinned by the Dockerfile base reference.
+# Regenerate only through the verified update procedure in ../RUNBOOK.md.
+repository=postgres
+tag=17.10-bookworm
+index_digest=sha256:9b18b78397054fce88a9552e9d5a3ad5bb7fd258c5b3cc1c5028e46373d6ea8f
+linux_amd64_digest=sha256:6e5a6518f9d2ff9e9f4cba2a5a87d8f41b0f067f6f92ac847c344351a6c8d923
+linux_arm64_digest=sha256:3aac91d19d5b7aff4c650dddfacc1a26c436459aafd4eb51ab0bf1748e990dbb
+
+# PgBouncer and pgAdmin are Compose images, but they sit on the same critical
+# database boundary. Pin and verify them alongside PostgreSQL; never rely on a
+# mutable semver tag for the public TLS/SCRAM listener or break-glass UI.
+pgbouncer_repository=edoburu/pgbouncer
+pgbouncer_tag=v1.25.2-p0
+pgbouncer_index_digest=sha256:7d7a27d9e90985cab5cf42256f5c13a3120baa4b055b69df37beb272b89b2340
+pgbouncer_linux_amd64_digest=sha256:68969403ee54dbf98601b49a1e92db644a9fdeed5c40969f7f0adce5193ac5b8
+pgbouncer_linux_arm64_digest=sha256:a7f51a178b15e58dbdac312e09a7636fe587333b064b411589b5bc93c8ded5df
+
+pgadmin_repository=dpage/pgadmin4
+pgadmin_tag=9.17
+pgadmin_index_digest=sha256:2f4ce946ddf8360680d7eff4eaba1d91859eb6b4003e6623bad5c63a322c2f4d
+pgadmin_linux_amd64_digest=sha256:8cfafd474324cb038b92277ff4f8b01d9576440702fce03eb5ba845fa1405960
+pgadmin_linux_arm64_digest=sha256:a5807e29e73fa0df641a8545b6bdf0cea83b543a924616ef37d34dbe87ea0bed

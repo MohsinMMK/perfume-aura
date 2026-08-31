@@ -46,3 +46,31 @@ export function remainingOilAfterDelta(
   }
   return remainingMl + deltaMl;
 }
+
+/**
+ * Oil that an owner-side sale may consume. Storefront checkout holds remain
+ * unavailable until their own SQL settlement releases or consumes them.
+ */
+export function availableOilMl(
+  remainingMl: number,
+  reservedMl: number,
+): number {
+  if (
+    !Number.isInteger(remainingMl) ||
+    !Number.isInteger(reservedMl) ||
+    remainingMl < 0 ||
+    reservedMl < 0
+  ) {
+    throw new InventoryMathError(
+      "remainingMl and reservedMl must be non-negative integers",
+      "INVALID_INPUT",
+    );
+  }
+  if (reservedMl > remainingMl) {
+    throw new InventoryMathError(
+      "reservedMl cannot exceed remainingMl",
+      "INVALID_INPUT",
+    );
+  }
+  return remainingMl - reservedMl;
+}

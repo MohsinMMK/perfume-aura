@@ -17,14 +17,17 @@ import {
   productPublications,
   products,
   productVariants,
-  releaseCheckoutReservations,
   reserveCheckoutStock,
   shippingServiceability,
   sql,
   storefrontCustomerProfile,
   variantPrices,
 } from "@perfume-aura/db";
-import { createCashfreeOrder } from "./cashfree";
+import { createCashfreeOrder, getCashfreeOrder } from "./cashfree";
+import {
+  bindCreatedCashfreePaymentAttempt,
+  cancelCashfreePaymentAttempt,
+} from "./payment-finalizer-client";
 import {
   checkoutCartSnapshotChanged,
   compareCheckoutCartSet,
@@ -314,7 +317,6 @@ export async function placeCheckoutOrder(
       tokenDigest: digest(checkoutToken),
       requestId: input.requestId,
       payloadDigest: requestPayloadDigest,
-      status: "open",
       pricingVersion: 1,
       email: customer.email,
       shippingAddress: approvedShippingAddress,
@@ -328,9 +330,6 @@ export async function placeCheckoutOrder(
       checkoutSessionId: checkout.id,
       customerUserId: customer.userId,
       guestEmail: customer.email,
-      status: "pending",
-      paymentState: "prepaid_pending",
-      currency: "INR",
       subtotalAmountMinor,
       shippingAmountMinor,
       taxAmountMinor: 0,
@@ -359,9 +358,7 @@ export async function placeCheckoutOrder(
     const [attempt] = await transaction.insert(paymentAttempts).values({
       orderId: order.id,
       provider: "cashfree",
-      status: "created",
       idempotencyKey: input.requestId,
-      currency: "INR",
       amountMinor: totalAmountMinor,
       providerOrderExpiresAt,
       finalizationDeadlineAt,
@@ -409,6 +406,7 @@ export async function placeCheckoutOrder(
   if (created.cartChanged) throw new CheckoutCartChangedError();
 
   const { lines, totalAmountMinor } = created;
+  let providerOrderMayExist = false;
 
   try {
     await reserveCheckoutStock({
@@ -417,6 +415,10 @@ export async function placeCheckoutOrder(
       expiresAt: finalizationDeadlineAt,
     });
     const storefrontUrl = new URL(process.env.STOREFRONT_URL ?? "https://perfumeaura.com");
+    // Set this before the network request. A transport failure can occur after
+    // Cashfree accepted the idempotent order, so the catch path must treat the
+    // provider intent as live until Cashfree itself confirms it is terminal.
+    providerOrderMayExist = true;
     const providerOrder = await createCashfreeOrder({
       orderId: createdOrderNumber,
       amountMinor: totalAmountMinor,
@@ -430,15 +432,14 @@ export async function placeCheckoutOrder(
       returnUrl: new URL(`${orderPath(createdOrderNumber)}?payment=return`, storefrontUrl).toString(),
       notifyUrl: new URL("/api/payments/cashfree/webhook", storefrontUrl).toString(),
     });
-    if (!providerOrder.payment_session_id) throw new Error("Cashfree did not return a payment session");
-    await db.transaction(async (transaction) => {
-      await transaction.update(paymentAttempts).set({
-        status: "pending",
-        providerOrderId: providerOrder.order_id,
-        providerSessionId: providerOrder.payment_session_id,
-      }).where(eq(paymentAttempts.id, created.attemptId));
-      await transaction.update(checkoutSessions).set({ status: "payment_pending" })
-        .where(eq(checkoutSessions.id, created.checkoutId));
+    if (!providerOrder.order_id || !providerOrder.payment_session_id) {
+      throw new Error("Cashfree did not return a complete payment session");
+    }
+    await bindCreatedCashfreePaymentAttempt({
+      paymentAttemptId: created.attemptId,
+      providerOrderId: providerOrder.order_id,
+      providerSessionId: providerOrder.payment_session_id,
+      boundAt: new Date(),
     });
     return {
       orderNumber: createdOrderNumber,
@@ -447,25 +448,46 @@ export async function placeCheckoutOrder(
       cashfreeMode: process.env.CASHFREE_ENV === "production" ? "production" : "sandbox",
     };
   } catch (error) {
-    await releaseCheckoutReservations({ checkoutSessionId: created.checkoutId, reason: "payment_failed" });
-    await db.transaction(async (transaction) => {
-      await transaction.update(paymentAttempts).set({ status: "failed" })
-        .where(eq(paymentAttempts.id, created.attemptId));
-      await transaction.update(commerceOrders)
-        .set({ status: "cancelled", paymentState: "failed", cancelledAt: new Date() })
-        .where(eq(commerceOrders.id, created.orderId));
-      await transaction.update(checkoutSessions).set({ status: "cancelled" })
-        .where(eq(checkoutSessions.id, created.checkoutId));
-      await transaction.update(commerceCarts).set({ status: "active" })
-        .where(eq(commerceCarts.id, cart.id));
-      await transaction.insert(commerceOrderEvents).values({
-        orderId: created.orderId,
-        eventType: "payment_failed",
-        fromStatus: "pending",
-        toStatus: "cancelled",
-        idempotencyKey: `payment-session-failed:${created.attemptId}`,
-      });
-    });
+    let terminalProviderFailure = !providerOrderMayExist;
+    if (providerOrderMayExist) {
+      try {
+        const providerOrder = await getCashfreeOrder(createdOrderNumber);
+        terminalProviderFailure =
+          providerOrder.order_status === "EXPIRED" ||
+          providerOrder.order_status === "TERMINATED";
+        if (!terminalProviderFailure) {
+          console.warn("[checkout] retained uncertain Cashfree intent for reconciliation", {
+            orderNumber: createdOrderNumber,
+            providerStatus: providerOrder.order_status,
+          });
+        }
+      } catch (providerLookupError) {
+        // A provider timeout is not evidence of failure. Keep the exact stock
+        // and oil holds until a verified terminal status or the expiry job can
+        // safely release them.
+        console.warn("[checkout] unable to verify Cashfree intent for cancellation", {
+          orderNumber: createdOrderNumber,
+          name: providerLookupError instanceof Error ? providerLookupError.name : "UnknownError",
+        });
+      }
+    }
+
+    if (terminalProviderFailure) {
+      try {
+        await cancelCashfreePaymentAttempt({
+          paymentAttemptId: created.attemptId,
+          reason: "payment_failed",
+          cancelledAt: new Date(),
+        });
+      } catch (cancellationError) {
+        // Do not hide the checkout/provider failure, but make the operational
+        // cleanup failure visible for reconciliation. The finalizer routine is
+        // atomic and idempotent, so a maintenance retry can safely recover it.
+        console.error("[checkout] Cashfree cancellation cleanup failed", {
+          name: cancellationError instanceof Error ? cancellationError.name : "UnknownError",
+        });
+      }
+    }
     throw error;
   }
 }

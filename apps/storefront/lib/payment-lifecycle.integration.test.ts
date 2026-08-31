@@ -5,6 +5,7 @@ import {
   checkoutSessions,
   commerceCarts,
   commerceOrderEvents,
+  commerceOrderItems,
   commerceOrders,
   commerceRefunds,
   db,
@@ -67,6 +68,16 @@ async function seedPayment(input: Readonly<{
     shippingAddressSnapshot: { postalCode: "400001" },
   }).returning({ id: commerceOrders.id });
   assert.ok(order);
+  await db.insert(commerceOrderItems).values({
+    orderId: order.id,
+    variantId: variant.id,
+    productNameSnapshot: `Payment test ${suffix}`,
+    skuSnapshot: `PAY-${suffix}`,
+    sizeMlSnapshot: 100,
+    unitPriceAmountMinor: 10_000,
+    quantity: 2,
+    lineTotalAmountMinor: 20_000,
+  });
   const providerOrderId = `provider-order-${suffix}`;
   const [attempt] = await db.insert(paymentAttempts).values({
     orderId: order.id, provider: "cashfree", status: input.attemptStatus ?? "pending",
@@ -83,11 +94,33 @@ async function seedPayment(input: Readonly<{
   }
   await db.insert(locations).values({ code: "MAIN", name: "Main" }).onConflictDoNothing();
   const { receiveOilLot } = await import("@perfume-aura/db");
-  await receiveOilLot({
+  const oilLot = await receiveOilLot({
     productId: product.id,
     kgBottles: 1,
     idempotencyKey: `oil-pay-${suffix}`,
   });
+  if (input.withReservation !== false) {
+    // A payment-pending fixture must model the exact pre-provider oil hold
+    // created by reserve_storefront_checkout_stock: two 100 ml bottles use
+    // 100 ml concentrate, not a later aggregate oil balance.
+    await db.execute(sql`
+      UPDATE public.oil_lots
+      SET reserved_quantity_ml = 100
+      WHERE id = ${oilLot.lotId}::uuid
+    `);
+    await db.execute(sql`
+      INSERT INTO public.oil_reservations (
+        checkout_session_id, lot_id, product_id, quantity_ml, expires_at
+      )
+      VALUES (
+        ${checkout.id}::uuid,
+        ${oilLot.lotId}::uuid,
+        ${product.id}::uuid,
+        100,
+        now() + interval '40 minutes'
+      )
+    `);
+  }
   return { attemptId: attempt.id, checkoutId: checkout.id, orderId: order.id, providerOrderId, variantId: variant.id };
 }
 

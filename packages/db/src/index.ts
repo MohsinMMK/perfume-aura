@@ -1,4 +1,5 @@
 export { db, pool, type Database } from "./client";
+export { resolveRuntimeDatabaseTlsOptions } from "./database-tls";
 
 export * from "./schema";
 
@@ -97,6 +98,7 @@ export {
   oilMlForBottles,
   receiveOilMl,
   remainingOilAfterDelta,
+  availableOilMl,
 } from "./oil-math";
 
 export {
@@ -181,6 +183,7 @@ export {
  */
 export {
   and,
+  asc,
   count,
   desc,
   eq,

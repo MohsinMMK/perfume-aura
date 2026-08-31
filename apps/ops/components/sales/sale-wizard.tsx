@@ -108,10 +108,16 @@ export function SaleWizard({
           byProduct.set(line.productId, {
             productName: line.productName,
             oilMl: (current?.oilMl ?? 0) + line.oilMl,
-            remainingOilMl: line.remainingOilMl,
+            availableOilMl: line.availableOilMl,
+            reservedOilMl: line.reservedOilMl,
           });
           return byProduct;
-        }, new Map<string, { productName: string; oilMl: number; remainingOilMl: number }>())
+        }, new Map<string, {
+          productName: string;
+          oilMl: number;
+          availableOilMl: number;
+          reservedOilMl: number;
+        }>())
         .values(),
     ];
     return {
@@ -445,8 +451,11 @@ export function SaleWizard({
               {preview.oil.map((row) => (
                 <li key={row.productName}>
                   {row.productName}: {formatQty(row.oilMl)} ml oil leaves the 1 kg
-                  bottle. {formatQty(Math.max(0, row.remainingOilMl - row.oilMl))} ml
-                  remains.
+                  bottle. {formatQty(Math.max(0, row.availableOilMl - row.oilMl))} ml
+                  remains available
+                  {row.reservedOilMl > 0
+                    ? ` (${formatQty(row.reservedOilMl)} ml held for storefront checkouts)`
+                    : ""}.
                 </li>
               ))}
             </ul>

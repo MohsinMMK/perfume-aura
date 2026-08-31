@@ -1,0 +1,12 @@
+[Unit]
+Description=Perfume Aura PostgreSQL weekly full backup (Sunday)
+
+[Timer]
+OnCalendar=Sun *-*-* 03:15:00 UTC
+Persistent=true
+RandomizedDelaySec=15m
+AccuracySec=1m
+Unit=perfume-aura-postgres-full-backup.service
+
+[Install]
+WantedBy=timers.target

@@ -225,9 +225,12 @@ Migration and inventory rules:
 
 1. `applyMovement()` owns non-commerce receive, return, sale, damage, and
    adjustment movements. Commerce checkout uses the separate atomic
-   `reserveCheckoutStock`, `releaseCheckoutReservations`,
-   `consumeCheckoutReservations`, and `expireAbandonedCheckouts` path; direct
-   callers may not bypass either contract.
+   `reserveCheckoutStock` and `releaseCheckoutReservations` path. Its separate
+   `STOREFRONT_PAYMENT_FINALIZER_DATABASE_URL` capability binds the authentic
+   Cashfree provider session, atomically cancels a failed/expired bound intent,
+   and after independent verification invokes the atomic payment-and-settlement
+   routine; `consumeCheckoutReservations` is owner-only support/test plumbing,
+   not a public storefront transition.
 2. Ledger insertion and cached balance updates commit together. Stock never
    goes negative; sales also respect `available = on_hand - qty_reserved`.
    Exact idempotency-key retries return the prior result without applying twice.
@@ -236,9 +239,16 @@ Migration and inventory rules:
    fails the same transaction. `0014_oil_lots` owns that ledger. Migration
    `0016_even_silk_fever` adds optional supplier, purchase reference, total
    INR-paise cost, and received-date provenance to each oil lot without
-   changing FIFO consumption. The storefront runtime receives only the
-   column-level oil-lot grants required for FIFO settlement; it cannot select
-   procurement provenance, costs, or internal notes.
+   changing FIFO consumption. A checkout reserves the exact FIFO oil lots
+   before a Cashfree session can be bound; owner-side consumption uses
+   `remaining - reserved`, and settlement/release consume or return those exact
+   holds. The regular storefront runtime receives no raw oil, reservation,
+   stock-movement, or catalog-pricing writes; the dedicated finalizer role has
+   no table grants and may execute only the reviewed Cashfree provider-binding,
+   cancellation, and verified-finalization routines. A database transition
+   guard denies the normal storefront role every checkout/order/payment-attempt
+   state transition, except a provider-confirmed paid-to-refund payment-state
+   update required by the refund workflow.
 3. Manual receive/adjust requires active product and variant. Fulfillment of an
    already-issued invoice is the deliberate archived-SKU exception. An
    owner-authorized local invoice-line return writes an idempotent positive

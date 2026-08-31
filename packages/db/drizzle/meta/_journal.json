@@ -120,6 +120,13 @@
       "when": 1788160258762,
       "tag": "0016_even_silk_fever",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1788180387529,
+      "tag": "0017_storefront_sale_settlement",
+      "breakpoints": true
     }
   ]
 }

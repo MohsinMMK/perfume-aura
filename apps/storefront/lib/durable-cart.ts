@@ -227,7 +227,6 @@ export async function setDurableCartLine(
             sql`${productMedia.approvalReference} IS NOT NULL`,
           ),
         )
-        .for("update", { of: productVariants })
         .limit(1);
       if (!variant || Number(variant.available) < quantity) {
         throw new Error("This item is unavailable in the requested quantity");
