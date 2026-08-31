@@ -85,6 +85,8 @@ type TextAreaFieldProps = {
   required?: boolean;
   placeholder?: string;
   defaultValue?: string;
+  value?: string;
+  onChange?: (value: string) => void;
   error?: string;
   hint?: string;
   rows?: number;
@@ -98,6 +100,8 @@ export function TextAreaField({
   required,
   placeholder,
   defaultValue,
+  value,
+  onChange,
   error,
   hint,
   rows = 3,
@@ -118,7 +122,11 @@ export function TextAreaField({
         name={name}
         required={required}
         placeholder={placeholder}
-        defaultValue={defaultValue}
+        defaultValue={value === undefined ? defaultValue : undefined}
+        value={value}
+        onChange={
+          onChange ? (event) => onChange(event.target.value) : undefined
+        }
         rows={rows}
         aria-invalid={error ? true : undefined}
       />

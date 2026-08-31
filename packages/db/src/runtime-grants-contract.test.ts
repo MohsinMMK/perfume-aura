@@ -19,7 +19,17 @@ describe("customer commerce runtime grant matrices", () => {
     assert.match(ops, /'oil_lots', ARRAY\['SELECT','INSERT','UPDATE'\]/);
     assert.match(ops, /'oil_movements', ARRAY\['SELECT','INSERT'\]/);
     assert.match(ops, /'ops_sales', ARRAY\['SELECT','INSERT'\]/);
-    assert.match(storefront, /'oil_lots', ARRAY\['SELECT','INSERT','UPDATE'\]/);
+    assert.match(
+      storefront,
+      /GRANT SELECT \("id", "product_id", "remaining_quantity_ml", "version", "created_at"\)[\s\S]*?ON TABLE "oil_lots"/,
+    );
+    assert.match(
+      storefront,
+      /GRANT UPDATE \("remaining_quantity_ml", "version", "updated_at"\)[\s\S]*?ON TABLE "oil_lots"/,
+    );
+    assert.match(storefront, /\('oil_lots', ARRAY\[\]::text\[\]\)/);
+    assert.match(storefront, /\('total_cost_cents', ARRAY\[\]::text\[\]\)/);
+    assert.match(storefront, /\('supplier_name', ARRAY\[\]::text\[\]\)/);
     assert.match(storefront, /'oil_movements', ARRAY\['SELECT','INSERT'\]/);
   });
 });

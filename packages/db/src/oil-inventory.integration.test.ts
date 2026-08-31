@@ -79,6 +79,40 @@ describe("oil inventory integration", () => {
     assert.equal(lot?.remaining, 950);
   });
 
+  it("stores oil purchase provenance and rejects a conflicting retry", async () => {
+    const key = randomUUID();
+    const received = await receiveOilLot({
+      productId,
+      kgBottles: 2,
+      supplierName: "Concentrate Supplier",
+      supplierReference: "BILL-204",
+      totalCostCents: 84_000,
+      receivedDate: "2094-03-05",
+      note: "Sealed bottles",
+      idempotencyKey: key,
+    });
+    const [lot] = await db
+      .select()
+      .from(oilLots)
+      .where(eq(oilLots.id, received.lotId));
+    assert.equal(lot?.supplierName, "Concentrate Supplier");
+    assert.equal(lot?.supplierReference, "BILL-204");
+    assert.equal(lot?.totalCostCents, 84_000);
+    assert.equal(lot?.receivedDate, "2094-03-05");
+
+    await assert.rejects(
+      () =>
+        receiveOilLot({
+          productId,
+          kgBottles: 2,
+          supplierName: "Different supplier",
+          idempotencyKey: key,
+        }),
+      (error: unknown) =>
+        error instanceof OilInventoryError && error.code === "IDEMPOTENCY_CONFLICT",
+    );
+  });
+
   it("blocks a sale when oil is insufficient and leaves the lot unchanged", async () => {
     const suffix = randomUUID();
     const [product] = await db

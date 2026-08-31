@@ -314,6 +314,14 @@ the integration suite on that branch. Loopback `TEST_DATABASE_URL` remains the
 only place for `pnpm test:integration`. Production apply still needs a separate
 explicit owner authorization after this proof.
 
+Migration `0016_even_silk_fever` adds oil-lot procurement provenance. Pass its
+tag explicitly to the proof command; the script resolves the requested parent
+to the Neon default production branch, then requires all four provenance
+columns and the non-negative optional-cost constraint after migration. Reapply
+both grant scripts after the owner apply: the storefront role keeps only the
+column-level oil access required to settle FIFO consumption and cannot read
+supplier, cost, received-date, or note fields.
+
 ## Migrations and runtime grants
 
 Apply `packages/db/sql/ops-runtime-grants.sql` with the reviewed role name. The

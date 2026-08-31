@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Add01Icon, MinusSignIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@perfume-aura/ui/components/button";
 import { formatMoney } from "@/lib/money";
+import { CartLineImage } from "./cart-line-image";
 import { useCart } from "./cart-provider";
 
 export function CartPageContent() {
@@ -25,10 +25,11 @@ export function CartPageContent() {
     <div className="grid gap-10 lg:grid-cols-[1fr_26rem]">
       <ul className="space-y-5">
         {cart.lines.map((line) => (
-          <li key={line.variantId} className="grid grid-cols-[7rem_1fr] gap-4 border-b border-black/20 pb-5 sm:grid-cols-[9rem_1fr]">
-            <div className="relative aspect-square bg-[#211f1d]">
-              <Image src={line.image} alt="" fill sizes="144px" className="object-cover" />
-            </div>
+          <li
+            key={line.variantId}
+            className="grid grid-cols-[7rem_1fr] gap-4 border-b border-dotted border-black/20 pb-5 last:border-b-0 sm:grid-cols-[9rem_1fr]"
+          >
+            <CartLineImage line={line} sizes="144px" />
             <div className="flex min-w-0 flex-col justify-between py-1 sm:flex-row sm:items-center">
               <div>
                 <Link href={`/products/${line.productSlug}`} className="font-display text-2xl hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)]">{line.productName}</Link>

@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   check,
+  date,
   index,
   integer,
   pgEnum,
@@ -34,6 +35,10 @@ export const oilLots = pgTable(
     receivedQuantityMl: integer("received_quantity_ml").notNull(),
     remainingQuantityMl: integer("remaining_quantity_ml").notNull(),
     kgBottles: integer("kg_bottles").notNull(),
+    supplierName: text("supplier_name"),
+    supplierReference: text("supplier_reference"),
+    totalCostCents: integer("total_cost_cents"),
+    receivedDate: date("received_date"),
     note: text("note"),
     version: integer("version").notNull().default(0),
     createdBy: text("created_by"),
@@ -56,6 +61,7 @@ export const oilLots = pgTable(
         AND ${table.receivedQuantityMl} > 0
         AND ${table.remainingQuantityMl} >= 0
         AND ${table.remainingQuantityMl} <= ${table.receivedQuantityMl}
+        AND (${table.totalCostCents} IS NULL OR ${table.totalCostCents} >= 0)
         AND ${table.version} >= 0`,
     ),
   ],

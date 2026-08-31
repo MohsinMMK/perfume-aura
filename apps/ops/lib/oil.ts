@@ -10,6 +10,7 @@ import {
   products,
   receiveOilLot,
   OilInventoryError,
+  sql,
 } from "@perfume-aura/db";
 import {
   receiveOilSchema,
@@ -24,7 +25,9 @@ import {
   parsePage,
   type PaginatedResult,
 } from "@/lib/pagination";
+import { hasOpsCapability } from "@/lib/ops-access";
 import { requireCapability } from "@/lib/session";
+import { rupeesToPaise } from "@/lib/money";
 
 export type OilBalanceRow = {
   productId: string;
@@ -39,6 +42,20 @@ export type OilMovementRow = {
   type: "receive" | "sale" | "adjust";
   quantityDeltaMl: number;
   quantityAfterMl: number;
+  note: string | null;
+  createdAt: Date;
+};
+
+export type OilLotRow = {
+  id: string;
+  productName: string;
+  receivedQuantityMl: number;
+  remainingQuantityMl: number;
+  kgBottles: number;
+  supplierName: string | null;
+  supplierReference: string | null;
+  totalCostCents: number | null;
+  receivedDate: string | null;
   note: string | null;
   createdAt: Date;
 };
@@ -84,6 +101,46 @@ export async function listActiveProductsForOilSelect(): Promise<
     .from(products)
     .where(eq(products.status, "active"))
     .orderBy(products.name, products.id);
+}
+
+export async function listOilLots(opts?: {
+  page?: number;
+  pageSize?: number;
+}): Promise<PaginatedResult<OilLotRow>> {
+  const session = await requireCapability("stock.view");
+  const canViewCost = hasOpsCapability(session.user.role, "stock.view-cost");
+  const page = parsePage(opts?.page);
+  const pageSize = normalizePageSize(opts?.pageSize);
+  const [rows, totals] = await Promise.all([
+    db
+      .select({
+        id: oilLots.id,
+        productName: products.name,
+        receivedQuantityMl: oilLots.receivedQuantityMl,
+        remainingQuantityMl: oilLots.remainingQuantityMl,
+        kgBottles: oilLots.kgBottles,
+        supplierName: oilLots.supplierName,
+        supplierReference: oilLots.supplierReference,
+        totalCostCents: canViewCost
+          ? oilLots.totalCostCents
+          : sql<number | null>`null::int`,
+        receivedDate: oilLots.receivedDate,
+        note: oilLots.note,
+        createdAt: oilLots.createdAt,
+      })
+      .from(oilLots)
+      .innerJoin(products, eq(products.id, oilLots.productId))
+      .orderBy(desc(oilLots.createdAt), desc(oilLots.id))
+      .limit(pageSize)
+      .offset(pageOffset(page, pageSize)),
+    db.select({ total: count(oilLots.id) }).from(oilLots),
+  ]);
+  return paginatedResult(
+    rows,
+    Number(totals[0]?.total ?? 0),
+    page,
+    pageSize,
+  );
 }
 
 export async function listRecentOilMovements(opts?: {
@@ -134,11 +191,22 @@ export async function receiveOilAction(
     return actionError("Please fix the form errors", zodFieldErrors(parsed.error));
   }
   const data: ReceiveOilInput = parsed.data;
+  const canViewCost = hasOpsCapability(session.user.role, "stock.view-cost");
+  if (data.totalCost !== undefined && !canViewCost) {
+    return actionError("Only an owner can record purchase costs");
+  }
 
   try {
     const result = await receiveOilLot({
       productId: data.productId,
       kgBottles: data.kgBottles,
+      supplierName: data.supplierName,
+      supplierReference: data.supplierReference,
+      totalCostCents:
+        canViewCost && data.totalCost !== undefined
+          ? rupeesToPaise(data.totalCost)
+          : null,
+      receivedDate: data.receivedDate,
       note: data.note?.trim() || null,
       userId: session.user.id,
       idempotencyKey: data.idempotencyKey,
@@ -147,6 +215,7 @@ export async function receiveOilAction(
     revalidatePath("/stock/oil");
     revalidatePath("/sales/new");
     revalidatePath("/dashboard");
+    revalidatePath("/reports");
     return actionOk({ remainingQuantityMl: result.remainingQuantityMl });
   } catch (error) {
     if (error instanceof OilInventoryError) {

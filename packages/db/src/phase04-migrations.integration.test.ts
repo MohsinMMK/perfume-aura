@@ -118,7 +118,7 @@ async function assertPhase04Catalog(pool: Pool): Promise<void> {
     SELECT count(*)::text AS count
     FROM drizzle.__drizzle_migrations
   `);
-  assert.equal(journal.rows[0]?.count, "16");
+  assert.equal(journal.rows[0]?.count, "17");
 
   const publicationProfile = await pool.query<{ count: string }>(`
     SELECT count(*)::text AS count
@@ -128,6 +128,20 @@ async function assertPhase04Catalog(pool: Pool): Promise<void> {
       AND column_name IN ('audience', 'season', 'concentration', 'sillage')
   `);
   assert.equal(publicationProfile.rows[0]?.count, "4");
+
+  const oilProcurementProfile = await pool.query<{ count: string }>(`
+    SELECT count(*)::text AS count
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'oil_lots'
+      AND column_name IN (
+        'supplier_name',
+        'supplier_reference',
+        'total_cost_cents',
+        'received_date'
+      )
+  `);
+  assert.equal(oilProcurementProfile.rows[0]?.count, "4");
 
   const authCatalog = await pool.query<{
     rate_limit_exists: boolean;

@@ -406,11 +406,11 @@ body {
 
 .aura-cart-popover[data-side="right"] {
   inset: auto var(--aura-gutter) auto auto;
-  top: calc(5.5rem + var(--aura-gap));
+  top: var(--aura-gutter);
   width: calc(100% - (2 * var(--aura-gutter)));
   height: auto;
   max-width: 44rem;
-  max-height: calc(100svh - 5.5rem - (2 * var(--aura-gap)));
+  max-height: calc(100svh - (2 * var(--aura-gutter)));
   border-radius: 1rem;
   box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 38%);
   transform-origin: calc(100% - 4.25rem) 0;
@@ -449,8 +449,8 @@ body {
 @media (min-width: 1024px) {
   .aura-cart-popover[data-side="right"] {
     right: var(--aura-gutter-lg);
-    top: calc(5.5rem + var(--aura-gap-lg));
-    max-height: calc(100svh - 5.5rem - (2 * var(--aura-gap-lg)));
+    top: var(--aura-gutter-lg);
+    max-height: calc(100svh - (2 * var(--aura-gutter-lg)));
     transform-origin: 78% 0;
   }
 }

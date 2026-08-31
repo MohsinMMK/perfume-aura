@@ -95,16 +95,6 @@ export default function FragranceGuidePage() {
           </div>
         </header>
 
-        <nav aria-label="On this page" className="border-y border-dashed border-[color:var(--aura-rule)] px-[var(--aura-gutter)] lg:px-[var(--aura-gutter-lg)]">
-          <div className="mx-auto flex max-w-[94rem] flex-wrap gap-x-7 py-4 text-sm">
-            <span className="font-semibold text-[var(--aura-brass)]">On this page</span>
-            <a href="#four-steps" className="min-h-11 content-center underline-offset-4 hover:underline">Four steps</a>
-            <a href="#families" className="min-h-11 content-center underline-offset-4 hover:underline">Fragrance families</a>
-            <a href="#testing" className="min-h-11 content-center underline-offset-4 hover:underline">How to test</a>
-            <a href="#questions" className="min-h-11 content-center underline-offset-4 hover:underline">Quick answers</a>
-          </div>
-        </nav>
-
         <section id="four-steps" className="scroll-mt-24 px-[var(--aura-gutter)] py-24 lg:px-[var(--aura-gutter-lg)] lg:py-32">
           <div className="mx-auto max-w-[94rem]">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--aura-brass)]">A simple decision path</p>

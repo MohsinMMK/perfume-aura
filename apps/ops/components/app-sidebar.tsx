@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Alert02Icon,
+  Analytics01Icon,
   DashboardSquare01Icon,
   File01Icon,
   Logout01Icon,
@@ -49,6 +50,7 @@ const inventoryNav = [
   { href: "/stock/oil", label: "Oil stock", icon: WarehouseIcon, capability: "stock.view" },
   { href: "/stock/low", label: "Low stock", icon: Alert02Icon, capability: "stock.view" },
   { href: "/finance", label: "Finance", icon: ChartHistogramIcon, capability: "finance.view" },
+  { href: "/reports", label: "Reports", icon: Analytics01Icon, capability: "finance.view" },
 ] as const;
 
 const salesNav = [

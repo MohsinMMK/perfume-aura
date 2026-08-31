@@ -13,6 +13,10 @@ export type OilMovementType = "receive" | "sale" | "adjust";
 export type ReceiveOilLotInput = {
   productId: string;
   kgBottles: number;
+  supplierName?: string | null;
+  supplierReference?: string | null;
+  totalCostCents?: number | null;
+  receivedDate?: string | null;
   note?: string | null;
   userId?: string | null;
   idempotencyKey?: string;
@@ -26,6 +30,11 @@ export type ReceiveOilLotResult = {
   kgBottles: number;
   idempotent: boolean;
 };
+
+function emptyToNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? "";
+  return trimmed.length === 0 ? null : trimmed;
+}
 
 export type OilDemand = {
   productId: string;
@@ -94,9 +103,26 @@ export async function receiveOilLotInTransaction(
       .limit(1);
     if (existing) {
       const receivedQuantityMl = receiveOilMl(input.kgBottles);
+      const [existingLot] = await tx
+        .select({
+          supplierName: oilLots.supplierName,
+          supplierReference: oilLots.supplierReference,
+          totalCostCents: oilLots.totalCostCents,
+          receivedDate: oilLots.receivedDate,
+          note: oilLots.note,
+        })
+        .from(oilLots)
+        .where(eq(oilLots.id, existing.lotId))
+        .limit(1);
       if (
         existing.productId !== input.productId ||
-        existing.quantityDeltaMl !== receivedQuantityMl
+        existing.quantityDeltaMl !== receivedQuantityMl ||
+        !existingLot ||
+        existingLot.supplierName !== emptyToNull(input.supplierName) ||
+        existingLot.supplierReference !== emptyToNull(input.supplierReference) ||
+        existingLot.totalCostCents !== (input.totalCostCents ?? null) ||
+        existingLot.receivedDate !== emptyToNull(input.receivedDate) ||
+        existingLot.note !== emptyToNull(input.note)
       ) {
         throw new OilInventoryError(
           "IDEMPOTENCY_CONFLICT",
@@ -136,7 +162,11 @@ export async function receiveOilLotInTransaction(
       receivedQuantityMl,
       remainingQuantityMl: receivedQuantityMl,
       kgBottles: input.kgBottles,
-      note: input.note?.trim() || null,
+      supplierName: emptyToNull(input.supplierName),
+      supplierReference: emptyToNull(input.supplierReference),
+      totalCostCents: input.totalCostCents ?? null,
+      receivedDate: emptyToNull(input.receivedDate),
+      note: emptyToNull(input.note),
       createdBy: input.userId ?? null,
     })
     .returning({ id: oilLots.id });
@@ -247,7 +277,13 @@ export async function consumeOilInTransaction(
   }
 
   const lots = await tx
-    .select()
+    .select({
+      id: oilLots.id,
+      productId: oilLots.productId,
+      remainingQuantityMl: oilLots.remainingQuantityMl,
+      version: oilLots.version,
+      createdAt: oilLots.createdAt,
+    })
     .from(oilLots)
     .where(
       and(inArray(oilLots.productId, productIds), gt(oilLots.remainingQuantityMl, 0)),

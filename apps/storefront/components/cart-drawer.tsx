@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Add01Icon, Cancel01Icon, MinusSignIcon } from "@hugeicons/core-free-icons";
@@ -15,6 +14,7 @@ import {
   SheetTitle,
 } from "@perfume-aura/ui/components/sheet";
 import { formatMoney } from "@/lib/money";
+import { CartLineImage } from "./cart-line-image";
 import { useCart } from "./cart-provider";
 
 export function CartDrawer() {
@@ -37,12 +37,12 @@ export function CartDrawer() {
         >
           <HugeiconsIcon icon={Cancel01Icon} strokeWidth={1.7} />
         </SheetClose>
-        <SheetHeader className="border-b border-black/15 px-5 py-5 pr-20 sm:px-7 sm:pr-24">
+        <SheetHeader className="border-b border-dotted border-black/15 px-5 py-5 pr-20 sm:px-7 sm:pr-24">
           <SheetTitle className="font-display text-4xl text-[var(--aura-ink)]">
             Your cart
           </SheetTitle>
-          <SheetDescription className="text-[var(--aura-text-muted-on-ivory)]">
-            Price and availability are checked again whenever your cart changes.
+          <SheetDescription className="sr-only">
+            Review products, quantities, and subtotal.
           </SheetDescription>
         </SheetHeader>
 
@@ -67,14 +67,12 @@ export function CartDrawer() {
           ) : (
             <ul className="space-y-5">
               {lines.map((line) => (
-                <li key={line.variantId} className="grid grid-cols-[5.5rem_1fr] gap-4 border-b border-black/15 pb-5">
-                  <div className="relative aspect-square overflow-hidden bg-[#211f1d]">
-                    <Image src={line.image} alt="" fill sizes="88px" className="object-cover" />
-                  </div>
+                <li key={line.variantId} className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-3 border-b border-dotted border-black/15 pb-5 last:border-b-0 min-[380px]:grid-cols-[8rem_minmax(0,1fr)] min-[380px]:gap-4">
+                  <CartLineImage line={line} sizes="128px" />
                   <div className="min-w-0">
                     <Link
                       href={`/products/${line.productSlug}`}
-                      className="inline-flex min-h-11 items-center font-display text-2xl hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)]"
+                      className="inline-flex min-h-11 max-w-full items-center break-words font-display text-2xl leading-tight hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)]"
                       onClick={() => setDrawerOpen(false)}
                     >
                       {line.productName}
@@ -82,33 +80,35 @@ export function CartDrawer() {
                     <p className="mt-1 text-xs uppercase tracking-[0.16em] text-[#655f57]">
                       {line.sizeMl} ml · {formatMoney(line.unitPrice)}
                     </p>
-                    <div className="mt-4 flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon-lg"
-                        className="min-h-11 min-w-11 rounded-[0.45rem] border-black/25 bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)] focus-visible:ring-0"
-                        aria-label={`Decrease ${line.productName} quantity`}
-                        disabled={loading}
-                        onClick={() => setQuantity(line.variantId, line.quantity - 1)}
-                      >
-                        <HugeiconsIcon icon={MinusSignIcon} strokeWidth={1.8} />
-                      </Button>
-                      <output className="grid min-h-11 min-w-11 place-items-center" aria-live="polite">
-                        {line.quantity}
-                      </output>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon-lg"
-                        className="min-h-11 min-w-11 rounded-[0.45rem] border-black/25 bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)] focus-visible:ring-0"
-                        aria-label={`Increase ${line.productName} quantity`}
-                        disabled={loading || line.quantity >= 10}
-                        onClick={() => setQuantity(line.variantId, line.quantity + 1)}
-                      >
-                        <HugeiconsIcon icon={Add01Icon} strokeWidth={1.8} />
-                      </Button>
-                      <p className="ml-auto font-medium">
+                    <div className="mt-4 flex flex-col items-start gap-2 min-[380px]:flex-row min-[380px]:items-center">
+                      <div className="grid grid-cols-[2.75rem_2rem_2.75rem] items-center rounded-[var(--aura-radius)] border border-black/25">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-lg"
+                          className="min-h-11 min-w-11 rounded-l-[calc(var(--aura-radius)-1px)] rounded-r-none border-0 bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)] focus-visible:ring-0"
+                          aria-label={`Decrease ${line.productName} quantity`}
+                          disabled={loading}
+                          onClick={() => setQuantity(line.variantId, line.quantity - 1)}
+                        >
+                          <HugeiconsIcon icon={MinusSignIcon} strokeWidth={1.8} />
+                        </Button>
+                        <output className="grid min-h-11 place-items-center border-x border-black/15" aria-live="polite">
+                          {line.quantity}
+                        </output>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-lg"
+                          className="min-h-11 min-w-11 rounded-l-none rounded-r-[calc(var(--aura-radius)-1px)] border-0 bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ink)] focus-visible:ring-0"
+                          aria-label={`Increase ${line.productName} quantity`}
+                          disabled={loading || line.quantity >= 10}
+                          onClick={() => setQuantity(line.variantId, line.quantity + 1)}
+                        >
+                          <HugeiconsIcon icon={Add01Icon} strokeWidth={1.8} />
+                        </Button>
+                      </div>
+                      <p className="font-medium min-[380px]:ml-auto">
                         {formatMoney({
                           currency: "INR",
                           amountMinor: line.unitPrice.amountMinor * line.quantity,
@@ -123,14 +123,14 @@ export function CartDrawer() {
         </div>
 
         {hasLines ? (
-          <SheetFooter className="border-t border-black/15 px-5 py-5 sm:px-7">
+          <SheetFooter className="border-t border-dotted border-black/15 px-5 py-5 sm:px-7">
             <div className="mb-3 flex items-baseline justify-between">
               <span className="text-xs uppercase tracking-[0.18em]">Subtotal</span>
               <strong className="font-display text-3xl">
                 {cart ? formatMoney(cart.subtotal) : "₹0"}
               </strong>
             </div>
-            <div className="mb-4 grid grid-cols-3 gap-2 border-y border-black/15 py-3 text-center text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-[var(--aura-text-muted-on-ivory)]" aria-label="Checkout steps">
+            <div className="mb-4 grid grid-cols-3 gap-2 border-y border-dotted border-black/15 py-3 text-center text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-[var(--aura-text-muted-on-ivory)]" aria-label="Checkout steps">
               <span>1 · Sign in</span>
               <span>2 · Delivery</span>
               <span>3 · UPI</span>
