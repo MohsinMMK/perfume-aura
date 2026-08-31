@@ -233,9 +233,17 @@ Migration and inventory rules:
    Exact idempotency-key retries return the prior result without applying twice.
    Finished-bottle sales also consume concentrate from `oil_lots` at 50%
    of bottle millilitres, treating one 1 kg lot as 1000 ml. Non-whole results ceil so Signature 105 ml consumes 53 ml. Insufficient oil
-   fails the same transaction. `0014_oil_lots` owns that ledger.
+   fails the same transaction. `0014_oil_lots` owns that ledger. Migration
+   `0016_even_silk_fever` adds optional supplier, purchase reference, total
+   INR-paise cost, and received-date provenance to each oil lot without
+   changing FIFO consumption. The storefront runtime receives only the
+   column-level oil-lot grants required for FIFO settlement; it cannot select
+   procurement provenance, costs, or internal notes.
 3. Manual receive/adjust requires active product and variant. Fulfillment of an
-   already-issued invoice is the deliberate archived-SKU exception.
+   already-issued invoice is the deliberate archived-SKU exception. An
+   owner-authorized local invoice-line return writes an idempotent positive
+   finished-stock movement against the fulfilled line, never restores consumed
+   oil, and never implies that a provider or accounting refund occurred.
 4. Migration `0008_phase03_contract` owns validated financial/inventory checks;
    `0010_curved_puma` owns Admin/2FA roles, final-owner protection, and immutable
    staff records. `0013_silly_vanisher` gives Better Auth 1.7 operations

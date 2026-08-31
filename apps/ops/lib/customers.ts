@@ -8,7 +8,11 @@ import {
   desc,
   eq,
   ilike,
+  invoiceLines,
+  invoices,
   or,
+  payments,
+  sql,
 } from "@perfume-aura/db";
 import {
   archiveCustomerSchema,
@@ -46,6 +50,27 @@ export type CustomerDetail = CustomerListItem & {
   addressLine: string | null;
   notes: string | null;
   updatedAt: Date;
+};
+
+export type CustomerOverview = {
+  invoiceCount: number;
+  lifetimeValueCents: number;
+  amountPaidCents: number;
+  openBalanceCents: number;
+  lastPurchaseAt: Date | null;
+  invoices: Array<{
+    id: string;
+    number: string | null;
+    status: "draft" | "issued" | "paid" | "void";
+    totalCents: number;
+    balanceCents: number;
+    createdAt: Date;
+  }>;
+  favoriteProducts: Array<{
+    description: string;
+    quantity: number;
+    spentCents: number;
+  }>;
 };
 
 function emptyToNull(value: string | undefined | null): string | null {
@@ -141,6 +166,85 @@ export async function getCustomer(
     status: row.status,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+  };
+}
+
+export async function getCustomerOverview(
+  customerId: string,
+): Promise<CustomerOverview> {
+  await requireCapability("customers.view");
+
+  const [summaryRows, invoiceRows, productRows, paymentRows] = await Promise.all([
+    db
+      .select({
+        invoiceCount: sql<number>`count(*) filter (where ${invoices.status} in ('issued', 'paid'))::int`,
+        lifetimeValueCents: sql<number>`coalesce(sum(${invoices.totalCents}) filter (where ${invoices.status} in ('issued', 'paid')), 0)::bigint`,
+        openBalanceCents: sql<number>`coalesce(sum(${invoices.totalCents} - ${invoices.amountPaidCents}) filter (where ${invoices.status} = 'issued'), 0)::bigint`,
+        lastPurchaseAt: sql<string | null>`max(${invoices.issuedAt}) filter (where ${invoices.status} in ('issued', 'paid'))`,
+      })
+      .from(invoices)
+      .where(eq(invoices.customerId, customerId)),
+    db
+      .select({
+        id: invoices.id,
+        number: invoices.number,
+        status: invoices.status,
+        totalCents: invoices.totalCents,
+        amountPaidCents: invoices.amountPaidCents,
+        createdAt: invoices.createdAt,
+      })
+      .from(invoices)
+      .where(eq(invoices.customerId, customerId))
+      .orderBy(desc(invoices.createdAt), desc(invoices.id))
+      .limit(8),
+    db
+      .select({
+        description: invoiceLines.description,
+        quantity: sql<number>`coalesce(sum(${invoiceLines.quantity}), 0)::int`,
+        spentCents: sql<number>`coalesce(sum(${invoiceLines.lineTotalCents}), 0)::bigint`,
+      })
+      .from(invoiceLines)
+      .innerJoin(invoices, eq(invoices.id, invoiceLines.invoiceId))
+      .where(
+        sql`${invoices.customerId} = ${customerId} and ${invoices.status} in ('issued', 'paid')`,
+      )
+      .groupBy(invoiceLines.description)
+      .orderBy(desc(sql`sum(${invoiceLines.quantity})`), invoiceLines.description)
+      .limit(5),
+    db
+      .select({
+        amountPaidCents: sql<number>`coalesce(sum(${payments.amountCents}), 0)::bigint`,
+      })
+      .from(payments)
+      .where(eq(payments.customerId, customerId)),
+  ]);
+
+  const summary = summaryRows[0];
+  const lastPurchaseAt = summary?.lastPurchaseAt
+    ? new Date(summary.lastPurchaseAt)
+    : null;
+  return {
+    invoiceCount: Number(summary?.invoiceCount ?? 0),
+    lifetimeValueCents: Number(summary?.lifetimeValueCents ?? 0),
+    amountPaidCents: Number(paymentRows[0]?.amountPaidCents ?? 0),
+    openBalanceCents: Number(summary?.openBalanceCents ?? 0),
+    lastPurchaseAt:
+      lastPurchaseAt && !Number.isNaN(lastPurchaseAt.getTime())
+        ? lastPurchaseAt
+        : null,
+    invoices: invoiceRows.map((invoice) => ({
+      id: invoice.id,
+      number: invoice.number,
+      status: invoice.status,
+      totalCents: invoice.totalCents,
+      balanceCents: Math.max(0, invoice.totalCents - invoice.amountPaidCents),
+      createdAt: invoice.createdAt,
+    })),
+    favoriteProducts: productRows.map((product) => ({
+      description: product.description,
+      quantity: Number(product.quantity),
+      spentCents: Number(product.spentCents),
+    })),
   };
 }
 

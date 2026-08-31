@@ -21,6 +21,9 @@ export default async function InvoicePrintPage({
   const result = await safeDbQuery(() => getInvoice(id));
   if (result.error || !result.data) notFound();
   const inv = result.data;
+  const hasReturnedLines = inv.lines.some(
+    (line) => line.quantityReturned > 0,
+  );
 
   return (
     <div className="mx-auto max-w-3xl bg-white p-8 text-black print:p-0">
@@ -64,6 +67,9 @@ export default async function InvoicePrintPage({
           <tr className="border-b border-neutral-300 text-left">
             <th className="py-2 pr-2">Description</th>
             <th className="py-2 pr-2 text-right">Qty</th>
+            {hasReturnedLines ? (
+              <th className="py-2 pr-2 text-right">Returned</th>
+            ) : null}
             <th className="py-2 pr-2 text-right">Unit</th>
             <th className="py-2 text-right">Amount</th>
           </tr>
@@ -75,6 +81,11 @@ export default async function InvoicePrintPage({
               <td className="py-2 pr-2 text-right tabular-nums">
                 {formatQty(line.quantity)}
               </td>
+              {hasReturnedLines ? (
+                <td className="py-2 pr-2 text-right tabular-nums">
+                  {formatQty(line.quantityReturned)}
+                </td>
+              ) : null}
               <td className="py-2 pr-2 text-right tabular-nums">
                 {formatInr(line.unitPriceCents)}
               </td>
@@ -108,6 +119,13 @@ export default async function InvoicePrintPage({
       {inv.notes ? (
         <p className="mt-8 text-sm text-neutral-600 whitespace-pre-wrap">
           {inv.notes}
+        </p>
+      ) : null}
+
+      {hasReturnedLines ? (
+        <p className="mt-4 text-sm text-neutral-600">
+          Returned bottles have been received back into finished stock. Any
+          refund is handled separately.
         </p>
       ) : null}
 

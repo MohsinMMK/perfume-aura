@@ -124,6 +124,8 @@ export async function completeSaleAction(
           ? {
               amountCents: rupeesToPaise(data.paymentAmount ?? 0),
               method: data.paymentMethod ?? "cash",
+              reference: data.paymentReference,
+              note: data.paymentNote,
               idempotencyKey: data.paymentIdempotencyKey,
               paidAt: new Date(data.paidAt),
             }
@@ -140,6 +142,7 @@ export async function completeSaleAction(
     revalidatePath("/stock");
     revalidatePath("/stock/oil");
     revalidatePath("/dashboard");
+    revalidatePath("/reports");
     return actionOk({
       invoiceId: result.invoiceId,
       invoiceNumber: result.invoiceNumber,

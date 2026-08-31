@@ -36,8 +36,17 @@ TO :"runtime_role";
 
 GRANT SELECT, INSERT, UPDATE ON TABLE
   "commerce_orders", "commerce_refunds", "payment_attempts",
-  "payment_events", "inquiry_notification_outbox", "notification_outbox", "stock_reservations",
-  "oil_lots"
+  "payment_events", "inquiry_notification_outbox", "notification_outbox", "stock_reservations"
+TO :"runtime_role";
+
+-- Storefront settlement can consume oil FIFO without exposing procurement,
+-- supplier, cost, or internal-note fields to the public runtime role.
+GRANT SELECT ("id", "product_id", "remaining_quantity_ml", "version", "created_at")
+ON TABLE "oil_lots"
+TO :"runtime_role";
+
+GRANT UPDATE ("remaining_quantity_ml", "version", "updated_at")
+ON TABLE "oil_lots"
 TO :"runtime_role";
 
 GRANT SELECT ON TABLE
@@ -85,7 +94,7 @@ WITH matrix(table_name, allowed) AS (
     ('notification_outbox', ARRAY['SELECT','INSERT','UPDATE']),
     ('shipping_serviceability', ARRAY['SELECT']),
     ('stock_reservations', ARRAY['SELECT','INSERT','UPDATE']),
-    ('oil_lots', ARRAY['SELECT','INSERT','UPDATE']),
+    ('oil_lots', ARRAY[]::text[]),
     ('oil_movements', ARRAY['SELECT','INSERT']),
     ('commerce_order_events', ARRAY['SELECT','INSERT']),
     ('commerce_order_items', ARRAY['SELECT','INSERT']),
@@ -103,6 +112,37 @@ SELECT matrix.table_name, privileges.privilege,
 FROM matrix CROSS JOIN privileges
 WHERE has_table_privilege(
         :'runtime_role', format('public.%I', matrix.table_name), privileges.privilege
+      ) <> (privileges.privilege = ANY(matrix.allowed));
+
+-- All returned rows are column-level privilege drift. The storefront can settle
+-- its own oil consumption but must not read procurement provenance or costs.
+WITH matrix(column_name, allowed) AS (
+  VALUES
+    ('id', ARRAY['SELECT']),
+    ('product_id', ARRAY['SELECT']),
+    ('received_quantity_ml', ARRAY[]::text[]),
+    ('remaining_quantity_ml', ARRAY['SELECT','UPDATE']),
+    ('kg_bottles', ARRAY[]::text[]),
+    ('supplier_name', ARRAY[]::text[]),
+    ('supplier_reference', ARRAY[]::text[]),
+    ('total_cost_cents', ARRAY[]::text[]),
+    ('received_date', ARRAY[]::text[]),
+    ('note', ARRAY[]::text[]),
+    ('version', ARRAY['SELECT','UPDATE']),
+    ('created_by', ARRAY[]::text[]),
+    ('created_at', ARRAY['SELECT']),
+    ('updated_at', ARRAY['UPDATE'])
+), privileges(privilege) AS (
+  VALUES ('SELECT'), ('INSERT'), ('UPDATE'), ('REFERENCES')
+)
+SELECT matrix.column_name, privileges.privilege,
+       has_column_privilege(
+         :'runtime_role', 'public.oil_lots', matrix.column_name, privileges.privilege
+       ) AS observed,
+       privileges.privilege = ANY(matrix.allowed) AS expected
+FROM matrix CROSS JOIN privileges
+WHERE has_column_privilege(
+        :'runtime_role', 'public.oil_lots', matrix.column_name, privileges.privilege
       ) <> (privileges.privilege = ANY(matrix.allowed));
 
 -- Must remain zero rows; these tables use UUID/text identities, not sequences.

@@ -12,6 +12,7 @@ import {
   setPreviewCartLine,
 } from "@/lib/cart-store";
 import type { CartSnapshot } from "@/lib/cart-store";
+import { resolveCartMedia } from "@/lib/cart-media";
 import { isTrustedStorefrontMutation } from "@/lib/customer-request-security";
 
 const cartCookieName = "pa_storefront_cart";
@@ -116,7 +117,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         variantId: resolved.variant.id,
         productSlug: resolved.product.slug,
         productName: resolved.product.name,
-        image: resolved.product.image,
+        ...resolveCartMedia(resolved.product, resolved.variant),
         sizeMl: resolved.variant.sizeMl,
         unitPrice: resolved.variant.price,
       },

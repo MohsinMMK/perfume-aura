@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@perfume-aura/ui/components/card";
@@ -36,6 +37,9 @@ import {
   parsePage,
 } from "@/lib/pagination";
 import { PaginationNav } from "@/components/pagination-nav";
+import { InvoiceShareActions } from "@/components/invoices/invoice-share-actions";
+import { createInvoiceWhatsAppUrl } from "@/lib/invoice-sharing";
+import { ReceiveReturnForm } from "@/components/invoices/receive-return-form";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +61,7 @@ export default async function InvoiceDetailPage({
     session.user.role,
     "payments.record",
   );
+  const canReceiveReturns = hasOpsCapability(session.user.role, "stock.adjust");
   const { id } = await params;
   const resolvedSearch = await searchParams;
   const paymentsPage = parsePage(resolvedSearch.paymentsPage);
@@ -101,6 +106,19 @@ export default async function InvoiceDetailPage({
     retailRupees: v.retailCents / 100,
   }));
   const paymentRows = paymentsResult.data?.items ?? [];
+  const whatsappUrl =
+    inv.number && inv.customerPhone
+      ? createInvoiceWhatsAppUrl({
+          invoiceNumber: inv.number,
+          customerName: inv.customerName,
+          customerPhone: inv.customerPhone,
+          total: formatInr(inv.totalCents),
+          balance: formatInr(inv.balanceCents),
+          items: inv.lines.map(
+            (line) => `${line.description} × ${formatQty(line.quantity)}`,
+          ),
+        })
+      : null;
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -132,6 +150,20 @@ export default async function InvoiceDetailPage({
           status={inv.status}
         />
       </div>
+
+      {inv.status !== "draft" ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Share invoice</CardTitle>
+            <CardDescription>
+              Save the print view as a PDF, then open the prepared customer message and attach the PDF in WhatsApp.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <InvoiceShareActions invoiceId={inv.id} whatsappUrl={whatsappUrl} />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
@@ -176,6 +208,7 @@ export default async function InvoiceDetailPage({
                 <TableHead className="text-right">Unit</TableHead>
                 <TableHead className="text-right">Line</TableHead>
                 <TableHead className="text-right">Fulfilled</TableHead>
+                <TableHead className="text-right">Returned</TableHead>
                 {inv.status === "draft" && canDraft ? <TableHead /> : null}
               </TableRow>
             </TableHeader>
@@ -183,7 +216,7 @@ export default async function InvoiceDetailPage({
               {inv.lines.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={inv.status === "draft" && canDraft ? 6 : 5}
+                    colSpan={inv.status === "draft" && canDraft ? 7 : 6}
                     className="text-center text-muted-foreground"
                   >
                     No lines yet.
@@ -205,6 +238,9 @@ export default async function InvoiceDetailPage({
                     <TableCell className="text-right tabular-nums">
                       {formatQty(line.quantityFulfilled)}
                       {line.variantId ? "" : " · no SKU"}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatQty(line.quantityReturned)}
                     </TableCell>
                     {inv.status === "draft" && canDraft ? (
                       <TableCell className="text-right">
@@ -231,6 +267,24 @@ export default async function InvoiceDetailPage({
           key={inv.balanceCents}
           invoiceId={inv.id}
           balanceRupees={inv.balanceCents / 100}
+        />
+      ) : null}
+
+      {(inv.status === "issued" || inv.status === "paid") && canReceiveReturns ? (
+        <ReceiveReturnForm
+          invoiceId={inv.id}
+          lines={inv.lines
+            .filter(
+              (line) =>
+                line.variantId &&
+                line.quantityFulfilled - line.quantityReturned > 0,
+            )
+            .map((line) => ({
+              id: line.id,
+              description: line.description,
+              quantityReturnable:
+                line.quantityFulfilled - line.quantityReturned,
+            }))}
         />
       ) : null}
 

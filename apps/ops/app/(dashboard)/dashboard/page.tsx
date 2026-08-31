@@ -39,6 +39,7 @@ export default async function DashboardPage() {
   );
   const canDraftInvoices = hasOpsCapability(session.user.role, "invoices.draft");
   const canReceiveStock = hasOpsCapability(session.user.role, "stock.receive");
+  const canCompleteSale = hasOpsCapability(session.user.role, "sales.complete");
 
   const [result, arResult, cashResult] = await Promise.all([
     safeDbQuery(() => getDashboardStats()),
@@ -168,8 +169,13 @@ export default async function DashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
+          {canCompleteSale ? (
+            <Link href="/sales/new" className={buttonVariants()}>
+              Record local sale
+            </Link>
+          ) : null}
           {canManageCommercialCatalog ? (
-            <Link href="/products/new" className={buttonVariants()}>
+            <Link href="/products/new" className={buttonVariants({ variant: "outline" })}>
               New product
             </Link>
           ) : null}
@@ -205,6 +211,14 @@ export default async function DashboardPage() {
               Payments
             </Link>
           ) : null}
+          {canViewFinance ? (
+            <Link
+              href="/reports"
+              className={buttonVariants({ variant: "secondary" })}
+            >
+              Operations report
+            </Link>
+          ) : null}
           <Link
             href="/stock/low"
             className={buttonVariants({ variant: "secondary" })}
@@ -213,6 +227,31 @@ export default async function DashboardPage() {
           </Link>
         </CardContent>
       </Card>
+
+      {stats && stats.productCount === 0 ? (
+        <Card className="border-dashed">
+          <CardHeader>
+            <CardTitle>Set up operations in order</CardTitle>
+            <CardDescription>
+              The system is ready, but sales stay blocked until the catalog and opening stock are entered.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
+            {[
+              ["1", "Add products", "Create each perfume and bottle size."],
+              ["2", "Receive stock", "Enter finished bottles on hand."],
+              ["3", "Receive oil", "Add each 1 kg oil purchase lot."],
+              ["4", "Record sales", "Customer, invoice, payment, stock, and oil update together."],
+            ].map(([number, title, description]) => (
+              <div key={number} className="rounded-lg border bg-muted/20 p-4">
+                <Badge variant="outline">Step {number}</Badge>
+                <p className="mt-3 font-medium">{title}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

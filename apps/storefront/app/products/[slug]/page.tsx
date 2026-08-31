@@ -122,10 +122,10 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
           </div>
         </div>
 
-        <div className="aura-product-info-panel flex min-h-0 items-stretch px-5 sm:items-end sm:px-10 sm:py-12 lg:min-h-[100svh] lg:px-3 lg:pb-3 lg:pt-24 xl:px-5">
+        <div className="aura-product-info-panel flex min-h-0 items-stretch px-5 sm:items-end sm:px-10 sm:py-12 lg:min-h-[100svh] lg:items-stretch lg:px-3 lg:pb-3 lg:pt-24 xl:px-5">
           <div className="flex min-h-0 w-full flex-col">
-            <div className="lg:text-center">
-              <Link href="/shop" className="aura-product-breadcrumb inline-flex min-h-11 items-center font-display text-sm text-[color:rgb(245_228_199_/_62%)] underline-offset-8 hover:underline sm:min-h-8 sm:text-lg">Shop / {product.collectionSlug === "signature" ? "Signature" : product.collectionSlug === "inspired" ? "Inspired" : product.collectionSlug === "unknown" ? "Unknown" : "Collection"}</Link>
+            <div className="lg:flex lg:flex-1 lg:flex-col lg:justify-center lg:text-center">
+              <Link href="/shop" className="aura-product-breadcrumb inline-flex min-h-11 items-center font-display text-sm text-[color:rgb(245_228_199_/_62%)] underline-offset-8 hover:underline sm:min-h-8 sm:text-lg lg:self-center">Shop / {product.collectionSlug === "signature" ? "Signature" : product.collectionSlug === "inspired" ? "Inspired" : product.collectionSlug === "unknown" ? "Unknown" : "Collection"}</Link>
               <h1 className="aura-product-title font-display mt-2 text-[clamp(2.25rem,10vw,2.75rem)] leading-[0.86] text-balance sm:mt-1 sm:text-[clamp(3.6rem,7vw,7.8rem)] sm:leading-[0.77] lg:mx-auto lg:max-w-[8.5ch]">
                 {inspiredReferenceName ? (
                   <>

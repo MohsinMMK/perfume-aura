@@ -25,6 +25,7 @@ const ALLOWED_RETURN_PATH_PREFIXES = [
   "/invoices",
   "/payments",
   "/finance",
+  "/reports",
   "/commerce",
   "/settings/security",
 ] as const;

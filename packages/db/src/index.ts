@@ -122,6 +122,12 @@ export {
 } from "./sale-workflows";
 
 export {
+  receiveInvoiceLineReturn,
+  type ReceiveInvoiceLineReturnInput,
+  type ReceiveInvoiceLineReturnResult,
+} from "./return-workflows";
+
+export {
   lineTotalCents,
   invoiceSubtotalCents,
   invoiceBalanceCents,

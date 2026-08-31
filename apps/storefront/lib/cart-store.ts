@@ -1,10 +1,13 @@
 import type { Money } from "./money";
 
+export type CartImageTone = "inspired" | "signature";
+
 export type CartLine = Readonly<{
   variantId: string;
   productSlug: string;
   productName: string;
   image: string;
+  imageTone?: CartImageTone;
   sizeMl: number;
   quantity: number;
   unitPrice: Money;

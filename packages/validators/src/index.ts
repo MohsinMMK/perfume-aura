@@ -190,6 +190,14 @@ export const fulfillInvoiceSchema = z.object({
   lineIds: z.array(z.string().uuid()).optional(),
 });
 
+export const returnInvoiceLineSchema = z.object({
+  invoiceId: z.string().uuid(),
+  lineId: z.string().uuid(),
+  quantity: z.number().int().positive("Return quantity must be positive"),
+  reason: z.string().trim().min(3, "Add a return reason").max(500),
+  idempotencyKey: z.string().uuid(),
+});
+
 export type CustomerFormInput = z.infer<typeof customerFormSchema>;
 export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;
 export type CreateInvoiceDraftInput = z.infer<typeof createInvoiceDraftSchema>;
@@ -226,6 +234,14 @@ export const receiveOilSchema = z.object({
   idempotencyKey: z.string().uuid(),
   productId: z.string().uuid("Select a perfume"),
   kgBottles: z.number().int().positive("Enter whole 1 kg bottles"),
+  supplierName: z.string().max(200).optional(),
+  supplierReference: z.string().max(120).optional(),
+  totalCost: z
+    .number()
+    .min(0, "Cost cannot be negative")
+    .max(21_474_836.47, "Cost is too large")
+    .optional(),
+  receivedDate: z.iso.date().optional().or(z.literal("")),
   note: z.string().max(1000).optional(),
 });
 
@@ -250,6 +266,8 @@ export const completeSaleSchema = z
     lines: z.array(saleLineInputSchema).min(1, "Add at least one product"),
     paymentAmount: z.number().min(0).optional(),
     paymentMethod: paymentMethodSchema.optional(),
+    paymentReference: z.string().max(120).optional(),
+    paymentNote: z.string().max(1000).optional(),
     paymentIdempotencyKey: z.string().uuid().optional(),
     paidAt: z.string().optional(),
   })

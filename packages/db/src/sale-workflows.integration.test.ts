@@ -14,8 +14,11 @@ describe("completeOpsSale integration", () => {
   let productVariants: typeof import("./schema/index").productVariants;
   let oilLots: typeof import("./schema/index").oilLots;
   let invoices: typeof import("./schema/index").invoices;
+  let invoiceLines: typeof import("./schema/index").invoiceLines;
+  let stockMovements: typeof import("./schema/index").stockMovements;
   let receiveOilLot: typeof import("./oil-inventory").receiveOilLot;
   let completeOpsSale: typeof import("./sale-workflows").completeOpsSale;
+  let receiveInvoiceLineReturn: typeof import("./return-workflows").receiveInvoiceLineReturn;
   let DomainError: typeof import("./domain-errors").DomainError;
   let seedMainLocation: typeof import("./seed").seedMainLocation;
 
@@ -24,11 +27,12 @@ describe("completeOpsSale integration", () => {
 
   before(async () => {
     ({ db, pool } = await import("./client"));
-    ({ products, productVariants, oilLots, invoices } = await import(
+    ({ products, productVariants, oilLots, invoices, invoiceLines, stockMovements } = await import(
       "./schema/index"
     ));
     ({ receiveOilLot } = await import("./oil-inventory"));
     ({ completeOpsSale } = await import("./sale-workflows"));
+    ({ receiveInvoiceLineReturn } = await import("./return-workflows"));
     ({ DomainError } = await import("./domain-errors"));
     ({ seedMainLocation } = await import("./seed"));
     await seedMainLocation();
@@ -190,5 +194,65 @@ describe("completeOpsSale integration", () => {
     });
     assert.equal(result.totalCents, 26_000);
     assert.equal(result.oilConsumedMl, 53);
+  });
+
+  it("returns a fulfilled bottle to stock without restoring consumed oil", async () => {
+    const sale = await completeOpsSale({
+      customer: { name: "Return customer" },
+      lines: [{ variantId: variant100Id, quantity: 1 }],
+      idempotencyKey: randomUUID(),
+      now: new Date("2094-03-05T12:00:00.000Z"),
+    });
+    const [line] = await db
+      .select({ id: invoiceLines.id })
+      .from(invoiceLines)
+      .where(eq(invoiceLines.invoiceId, sale.invoiceId));
+    assert.ok(line);
+    const [oilBefore] = await db
+      .select({ remaining: oilLots.remainingQuantityMl })
+      .from(oilLots)
+      .where(eq(oilLots.productId, productId));
+
+    const key = randomUUID();
+    const returned = await receiveInvoiceLineReturn({
+      invoiceId: sale.invoiceId,
+      lineId: line.id,
+      quantity: 1,
+      reason: "Customer returned sealed bottle",
+      idempotencyKey: key,
+    });
+    const replay = await receiveInvoiceLineReturn({
+      invoiceId: sale.invoiceId,
+      lineId: line.id,
+      quantity: 1,
+      reason: "Customer returned sealed bottle",
+      idempotencyKey: key,
+    });
+    assert.equal(returned.idempotent, false);
+    assert.equal(replay.idempotent, true);
+
+    const [movement] = await db
+      .select({ quantityDelta: stockMovements.quantityDelta })
+      .from(stockMovements)
+      .where(eq(stockMovements.idempotencyKey, key));
+    assert.equal(movement?.quantityDelta, 1);
+    const [oilAfter] = await db
+      .select({ remaining: oilLots.remainingQuantityMl })
+      .from(oilLots)
+      .where(eq(oilLots.productId, productId));
+    assert.equal(oilAfter?.remaining, oilBefore?.remaining);
+
+    await assert.rejects(
+      () =>
+        receiveInvoiceLineReturn({
+          invoiceId: sale.invoiceId,
+          lineId: line.id,
+          quantity: 1,
+          reason: "Second return",
+          idempotencyKey: randomUUID(),
+        }),
+      (error: unknown) =>
+        error instanceof DomainError && error.code === "INVALID_INPUT",
+    );
   });
 });

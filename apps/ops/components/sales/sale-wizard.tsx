@@ -30,7 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@perfume-aura/ui/components/table";
-import { FormField } from "@/components/form-field";
+import { FormField, TextAreaField } from "@/components/form-field";
 import { formatInr, formatQty } from "@/lib/money";
 import { completeSaleAction } from "@/lib/sales";
 import type { SaleCatalogItem } from "@/lib/sales";
@@ -64,8 +64,11 @@ export function SaleWizard({
   const [customerId, setCustomerId] = useState(customers[0]?.id ?? "");
   const [newCustomer, setNewCustomer] = useState({
     name: "",
+    email: "",
     phone: "",
+    addressLine: "",
     city: "",
+    notes: "",
   });
   const [lines, setLines] = useState<DraftLine[]>([]);
   const [selectedVariantId, setSelectedVariantId] = useState(
@@ -73,6 +76,10 @@ export function SaleWizard({
   );
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [recordPayment, setRecordPayment] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<
+    "cash" | "bank_transfer" | "card" | "other"
+  >("cash");
+  const [paymentReference, setPaymentReference] = useState("");
   const idempotencyKeyRef = useRef(crypto.randomUUID());
   const paymentKeyRef = useRef(crypto.randomUUID());
 
@@ -146,15 +153,19 @@ export function SaleWizard({
         idempotencyKey: idempotencyKeyRef.current,
         customerId: customerMode === "existing" ? customerId : "",
         name: newCustomer.name,
+        email: newCustomer.email,
         phone: newCustomer.phone,
+        addressLine: newCustomer.addressLine,
         city: newCustomer.city,
+        customerNotes: newCustomer.notes,
         lines: preview.lines.map((line) => ({
           variantId: line.variantId,
           quantity: line.quantity,
         })),
         paymentAmount:
           canRecordPayment && recordPayment ? preview.totalCents / 100 : undefined,
-        paymentMethod: "cash",
+        paymentMethod,
+        paymentReference,
         paymentIdempotencyKey: paymentKeyRef.current,
         paidAt: new Date().toISOString(),
       });
@@ -241,7 +252,7 @@ export function SaleWizard({
                 <FieldError>{fieldErrors.customerId?.[0]}</FieldError>
               </Field>
             ) : (
-              <>
+              <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   label="Name"
                   name="name"
@@ -253,8 +264,20 @@ export function SaleWizard({
                   error={fieldErrors.name?.[0]}
                 />
                 <FormField
+                  label="Email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  value={newCustomer.email}
+                  onChange={(value) =>
+                    setNewCustomer((current) => ({ ...current, email: value }))
+                  }
+                  error={fieldErrors.email?.[0]}
+                />
+                <FormField
                   label="Phone"
                   name="phone"
+                  autoComplete="tel"
                   value={newCustomer.phone}
                   onChange={(value) =>
                     setNewCustomer((current) => ({ ...current, phone: value }))
@@ -270,7 +293,28 @@ export function SaleWizard({
                   }
                   error={fieldErrors.city?.[0]}
                 />
-              </>
+                <FormField
+                  label="Address"
+                  name="addressLine"
+                  autoComplete="street-address"
+                  className="sm:col-span-2"
+                  value={newCustomer.addressLine}
+                  onChange={(value) =>
+                    setNewCustomer((current) => ({ ...current, addressLine: value }))
+                  }
+                  error={fieldErrors.addressLine?.[0]}
+                />
+                <TextAreaField
+                  label="Customer note"
+                  name="customerNotes"
+                  className="sm:col-span-2"
+                  value={newCustomer.notes}
+                  onChange={(value) =>
+                    setNewCustomer((current) => ({ ...current, notes: value }))
+                  }
+                  error={fieldErrors.customerNotes?.[0]}
+                />
+              </div>
             )}
           </FieldGroup>
         ) : null}
@@ -401,14 +445,52 @@ export function SaleWizard({
             </ul>
             <p className="text-sm font-medium">Total {formatInr(preview.totalCents)}</p>
             {step === 3 && canRecordPayment ? (
-              <label className="flex min-h-11 items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={recordPayment}
-                  onChange={(event) => setRecordPayment(event.target.checked)}
-                />
-                Record cash payment now
-              </label>
+              <div className="rounded-lg border p-4">
+                <label className="flex min-h-11 items-center gap-3 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    checked={recordPayment}
+                    onChange={(event) => setRecordPayment(event.target.checked)}
+                  />
+                  Record full payment now
+                </label>
+                {recordPayment ? (
+                  <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                    <Field>
+                      <FieldLabel htmlFor="paymentMethod">Payment method</FieldLabel>
+                      <NativeSelect
+                        id="paymentMethod"
+                        className="min-h-11 w-full"
+                        value={paymentMethod}
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          if (
+                            value === "cash" ||
+                            value === "bank_transfer" ||
+                            value === "card" ||
+                            value === "other"
+                          ) {
+                            setPaymentMethod(value);
+                          }
+                        }}
+                      >
+                        <NativeSelectOption value="cash">Cash</NativeSelectOption>
+                        <NativeSelectOption value="bank_transfer">Bank transfer / UPI</NativeSelectOption>
+                        <NativeSelectOption value="card">Card</NativeSelectOption>
+                        <NativeSelectOption value="other">Other</NativeSelectOption>
+                      </NativeSelect>
+                    </Field>
+                    <FormField
+                      label="Reference"
+                      name="paymentReference"
+                      placeholder="UPI or transaction reference"
+                      value={paymentReference}
+                      onChange={setPaymentReference}
+                      error={fieldErrors.paymentReference?.[0]}
+                    />
+                  </div>
+                ) : null}
+              </div>
             ) : null}
           </div>
         ) : null}

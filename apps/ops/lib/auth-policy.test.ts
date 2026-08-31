@@ -91,6 +91,7 @@ describe("safe auth return paths", () => {
     );
     assert.equal(safeReturnPath("/settings/security"), "/settings/security");
     assert.equal(safeReturnPath("/commerce/orders"), "/commerce/orders");
+    assert.equal(safeReturnPath("/reports?days=90"), "/reports?days=90");
   });
 
   it("rejects external, encoded, malformed, and unrecognized targets", () => {

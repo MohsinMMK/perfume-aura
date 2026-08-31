@@ -27,9 +27,10 @@ import { FormField, TextAreaField } from "@/components/form-field";
 
 type Props = {
   products: { id: string; name: string }[];
+  canViewCost: boolean;
 };
 
-export function ReceiveOilForm({ products }: Props) {
+export function ReceiveOilForm({ products, canViewCost }: Props) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +51,13 @@ export function ReceiveOilForm({ products }: Props) {
         idempotencyKey: idempotencyKeyRef.current,
         productId: String(form.get("productId") ?? ""),
         kgBottles: Number(form.get("kgBottles")),
+        supplierName: String(form.get("supplierName") ?? "").trim(),
+        supplierReference: String(form.get("supplierReference") ?? "").trim(),
+        totalCost:
+          String(form.get("totalCost") ?? "").trim() === ""
+            ? undefined
+            : Number(form.get("totalCost")),
+        receivedDate: String(form.get("receivedDate") ?? "").trim(),
         note: String(form.get("note") ?? "").trim(),
       });
       if (!result.ok) {
@@ -111,8 +119,38 @@ export function ReceiveOilForm({ products }: Props) {
               required
               error={fieldErrors.kgBottles?.[0]}
             />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                label="Supplier"
+                name="supplierName"
+                placeholder="Supplier or seller"
+                error={fieldErrors.supplierName?.[0]}
+              />
+              <FormField
+                label="Purchase reference"
+                name="supplierReference"
+                placeholder="Bill, batch, or PO number"
+                error={fieldErrors.supplierReference?.[0]}
+              />
+              {canViewCost ? (
+                <FormField
+                  label="Total purchase cost (INR)"
+                  name="totalCost"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  error={fieldErrors.totalCost?.[0]}
+                />
+              ) : null}
+              <FormField
+                label="Received date"
+                name="receivedDate"
+                type="date"
+                error={fieldErrors.receivedDate?.[0]}
+              />
+            </div>
             <TextAreaField
-              label="Note"
+              label="Internal note"
               name="note"
               error={fieldErrors.note?.[0]}
             />

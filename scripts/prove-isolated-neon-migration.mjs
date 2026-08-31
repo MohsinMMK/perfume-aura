@@ -106,6 +106,46 @@ export function parseArgs(argv) {
   return options;
 }
 
+export function hasOilLotProvenanceColumns(columns) {
+  const expectedColumns = [
+    "received_date",
+    "supplier_name",
+    "supplier_reference",
+    "total_cost_cents",
+  ];
+  return (
+    Array.isArray(columns) &&
+    columns.length === expectedColumns.length &&
+    expectedColumns.every((column) => columns.includes(column))
+  );
+}
+
+export function hasNonnegativeOilLotCostConstraint(definition) {
+  return /total_cost_cents[\s\S]*is null[\s\S]*or[\s\S]*total_cost_cents[\s\S]*>=\s*0/i.test(
+    String(definition ?? ""),
+  );
+}
+
+export function selectProductionParentBranch(project, branches, parent) {
+  const defaultBranchId = project?.default_branch_id;
+  if (typeof defaultBranchId !== "string" || defaultBranchId.length === 0) {
+    throw new Error("Neon project is missing a default production branch");
+  }
+  if (!Array.isArray(branches)) {
+    throw new Error("Neon branch list is unavailable");
+  }
+  const selected = branches.find(
+    (branch) => branch?.id === parent || branch?.name === parent,
+  );
+  if (!selected || typeof selected.id !== "string" || typeof selected.name !== "string") {
+    throw new Error(`requested Neon parent branch is unavailable: ${parent}`);
+  }
+  if (selected.id !== defaultBranchId) {
+    throw new Error("isolated proof parent must be the Neon default production branch");
+  }
+  return selected;
+}
+
 function readLinkedProjectId() {
   try {
     const raw = JSON.parse(readFileSync(path.join(REPO_ROOT, ".neon"), "utf8"));
@@ -207,12 +247,39 @@ async function querySafeCounts(client) {
       to_regclass('public.ops_sales') IS NOT NULL AS ops_sales,
       to_regclass('public.products') IS NOT NULL AS products
   `);
+  const oilLotProvenance = await client.query(`
+    SELECT array_agg(column_name ORDER BY column_name) AS columns
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'oil_lots'
+      AND column_name = ANY (
+        ARRAY[
+          'supplier_name',
+          'supplier_reference',
+          'total_cost_cents',
+          'received_date'
+        ]
+      )
+  `);
+  const oilLotCostConstraint = await client.query(`
+    SELECT pg_get_constraintdef(constraint_row.oid) AS definition
+    FROM pg_constraint AS constraint_row
+    INNER JOIN pg_class AS table_row ON table_row.oid = constraint_row.conrelid
+    INNER JOIN pg_namespace AS namespace_row ON namespace_row.oid = table_row.relnamespace
+    WHERE namespace_row.nspname = 'public'
+      AND table_row.relname = 'oil_lots'
+      AND constraint_row.conname = 'oil_lots_values_check'
+  `);
+  const provenanceColumns = oilLotProvenance.rows[0]?.columns ?? [];
+  const constraintDefinition = String(oilLotCostConstraint.rows[0]?.definition ?? "");
   return {
     migrationCount: migrations.rows[0]?.count ?? null,
     oilLots: tables.rows[0]?.oil_lots === true,
     oilMovements: tables.rows[0]?.oil_movements === true,
     opsSales: tables.rows[0]?.ops_sales === true,
     products: tables.rows[0]?.products === true,
+    oilLotProvenanceColumns: hasOilLotProvenanceColumns(provenanceColumns),
+    oilLotCostConstraint: hasNonnegativeOilLotCostConstraint(constraintDefinition),
   };
 }
 
@@ -231,10 +298,20 @@ export async function proveIsolatedNeonMigration(options, deps = {}) {
     ? fetchImpl
     : (method, pathname, body) => neonRequest(apiKey, method, pathname, body);
 
+  const projectPayload = await request("GET", `/projects/${options.projectId}`);
+  const branchPayload = await request("GET", `/projects/${options.projectId}/branches`);
+  const parentBranch = selectProductionParentBranch(
+    projectPayload?.project,
+    branchPayload?.branches,
+    options.parent,
+  );
+  process.stdout.write(`isolated parent ${parentBranch.name} id=${parentBranch.id}\n`);
+
   const created = await request("POST", `/projects/${options.projectId}/branches`, {
     endpoints: [{ type: "read_write" }],
     branch: {
       name: branchName,
+      parent_id: parentBranch.id,
       expires_at: expires.toISOString(),
     },
   });
@@ -272,7 +349,7 @@ export async function proveIsolatedNeonMigration(options, deps = {}) {
   try {
     const beforeGrants = await querySafeCounts(client);
     process.stdout.write(
-      `after migrate migrations=${beforeGrants.migrationCount} oil_lots=${beforeGrants.oilLots} oil_movements=${beforeGrants.oilMovements} ops_sales=${beforeGrants.opsSales} products=${beforeGrants.products}\n`,
+      `after migrate migrations=${beforeGrants.migrationCount} oil_lots=${beforeGrants.oilLots} oil_movements=${beforeGrants.oilMovements} ops_sales=${beforeGrants.opsSales} products=${beforeGrants.products} oil_lot_provenance_columns=${beforeGrants.oilLotProvenanceColumns} oil_lot_cost_constraint=${beforeGrants.oilLotCostConstraint}\n`,
     );
     if (
       !beforeGrants.oilLots ||
@@ -281,6 +358,9 @@ export async function proveIsolatedNeonMigration(options, deps = {}) {
       !beforeGrants.products
     ) {
       throw new Error("isolated branch is missing expected 0014 oil tables");
+    }
+    if (!beforeGrants.oilLotProvenanceColumns || !beforeGrants.oilLotCostConstraint) {
+      throw new Error("isolated branch is missing expected 0016 oil-lot provenance constraints");
     }
     if (!options.skipGrants) {
       if (!options.opsRole || !options.storefrontRole) {
@@ -337,6 +417,46 @@ function selfTest() {
   ]);
   assert.equal(parsed.skipGrants, true);
   assert.equal(parsed.migrationTag, "0014_oil_lots");
+  assert.equal(
+    hasOilLotProvenanceColumns([
+      "received_date",
+      "supplier_name",
+      "supplier_reference",
+      "total_cost_cents",
+    ]),
+    true,
+  );
+  assert.equal(hasOilLotProvenanceColumns(["supplier_name"]), false);
+  assert.equal(
+    hasNonnegativeOilLotCostConstraint(
+      'CHECK ((("oil_lots"."total_cost_cents" IS NULL) OR ("oil_lots"."total_cost_cents" >= 0)))',
+    ),
+    true,
+  );
+  assert.equal(hasNonnegativeOilLotCostConstraint("CHECK (version >= 0)"), false);
+  assert.deepEqual(
+    selectProductionParentBranch(
+      { default_branch_id: "br-production" },
+      [
+        { id: "br-production", name: "main" },
+        { id: "br-preview", name: "preview" },
+      ],
+      "main",
+    ),
+    { id: "br-production", name: "main" },
+  );
+  assert.throws(
+    () =>
+      selectProductionParentBranch(
+        { default_branch_id: "br-production" },
+        [
+          { id: "br-production", name: "main" },
+          { id: "br-preview", name: "preview" },
+        ],
+        "preview",
+      ),
+    /default production branch/,
+  );
   assert.throws(() => parseArgs(["--expires-hours", "0"]), /expires-hours/);
   assert.throws(() => parseArgs(["--ops-role", "bad-role;drop"]), /invalid --ops-role/);
   const linked = readLinkedProjectId();

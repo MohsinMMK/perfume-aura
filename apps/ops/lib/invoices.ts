@@ -2,6 +2,7 @@
 
 import {
   addInvoiceLine,
+  and,
   count,
   createInvoiceDraft,
   customers,
@@ -13,11 +14,14 @@ import {
   invoiceBalanceCents,
   invoiceLines,
   invoices,
+  inArray,
   issueInvoice,
   parseBusinessDateTime,
   recordRemainingInvoiceBalance,
+  receiveInvoiceLineReturn,
   removeInvoiceLine,
   sql,
+  stockMovements,
   voidInvoice,
 } from "@perfume-aura/db";
 import {
@@ -27,6 +31,7 @@ import {
   invoiceLineSchema,
   markInvoicePaidSchema,
   removeInvoiceLineSchema,
+  returnInvoiceLineSchema,
 } from "@perfume-aura/validators";
 import { revalidatePath } from "next/cache";
 import { requireCapability } from "@/lib/session";
@@ -67,6 +72,7 @@ type InvoiceLineRow = {
   unitPriceCents: number;
   lineTotalCents: number;
   quantityFulfilled: number;
+  quantityReturned: number;
 };
 
 export type InvoiceDetail = {
@@ -203,7 +209,7 @@ export async function getInvoice(id: string): Promise<InvoiceDetail | null> {
 
   if (!invoice) return null;
 
-  const lines = await db
+  const lineRows = await db
     .select({
       id: invoiceLines.id,
       position: invoiceLines.position,
@@ -217,6 +223,33 @@ export async function getInvoice(id: string): Promise<InvoiceDetail | null> {
     .from(invoiceLines)
     .where(eq(invoiceLines.invoiceId, id))
     .orderBy(invoiceLines.position, invoiceLines.createdAt);
+
+  const returnedRows = lineRows.length > 0
+    ? await db
+        .select({
+          lineId: stockMovements.refId,
+          quantityReturned: sql<number>`coalesce(sum(${stockMovements.quantityDelta}), 0)::int`,
+        })
+        .from(stockMovements)
+        .where(
+          and(
+            eq(stockMovements.type, "return"),
+            eq(stockMovements.refType, "invoice_line_return"),
+            inArray(
+              stockMovements.refId,
+              lineRows.map((line) => line.id),
+            ),
+          ),
+        )
+        .groupBy(stockMovements.refId)
+    : [];
+  const returnedByLine = new Map(
+    returnedRows.map((row) => [row.lineId, Number(row.quantityReturned)]),
+  );
+  const lines = lineRows.map((line) => ({
+    ...line,
+    quantityReturned: returnedByLine.get(line.id) ?? 0,
+  }));
 
   return {
     ...invoice,
@@ -413,5 +446,35 @@ export async function fulfillInvoiceAction(
     return actionOk({ fulfilledLines: result.fulfilledLines });
   } catch (error) {
     return expectedDomainFailure(error, "Fulfill failed");
+  }
+}
+
+export async function receiveInvoiceReturnAction(
+  raw: unknown,
+): Promise<ActionResult<{ quantityAfter: number }>> {
+  let session;
+  try {
+    session = await requireCapability("stock.adjust");
+  } catch {
+    return actionError("Only the owner can receive a returned bottle");
+  }
+
+  const parsed = returnInvoiceLineSchema.safeParse(raw);
+  if (!parsed.success) {
+    return actionError("Please fix the return details", zodFieldErrors(parsed.error));
+  }
+
+  try {
+    const result = await receiveInvoiceLineReturn({
+      ...parsed.data,
+      userId: session.user.id,
+    });
+    revalidateInvoicePaths(parsed.data.invoiceId);
+    revalidatePath("/stock");
+    revalidatePath("/stock/low");
+    revalidatePath("/reports");
+    return actionOk({ quantityAfter: result.quantityAfter });
+  } catch (error) {
+    return expectedDomainFailure(error, "Could not receive the return");
   }
 }
