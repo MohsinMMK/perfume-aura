@@ -4,6 +4,7 @@ import { InventoryMathError } from "./inventory-math";
 import {
   ML_PER_KG_OIL_BOTTLE,
   OIL_CONCENTRATION_PERCENT,
+  availableOilMl,
   oilMlForBottles,
   receiveOilMl,
   remainingOilAfterDelta,
@@ -40,5 +41,18 @@ describe("remainingOilAfterDelta", () => {
   it("applies receive and sale deltas", () => {
     assert.equal(remainingOilAfterDelta(1000, -50), 950);
     assert.equal(remainingOilAfterDelta(0, 1000), 1000);
+  });
+});
+
+describe("availableOilMl", () => {
+  it("excludes active storefront holds from owner-side consumption", () => {
+    assert.equal(availableOilMl(1000, 0), 1000);
+    assert.equal(availableOilMl(1000, 175), 825);
+    assert.equal(availableOilMl(175, 175), 0);
+  });
+
+  it("rejects invalid or over-reserved oil balances", () => {
+    assert.throws(() => availableOilMl(1000, -1), InventoryMathError);
+    assert.throws(() => availableOilMl(1000, 1001), InventoryMathError);
   });
 });

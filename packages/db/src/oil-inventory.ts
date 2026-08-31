@@ -1,6 +1,11 @@
 import { and, asc, eq, gt, inArray } from "drizzle-orm";
 import { DomainError } from "./domain-errors";
-import { oilMlForBottles, receiveOilMl, remainingOilAfterDelta } from "./oil-math";
+import {
+  availableOilMl,
+  oilMlForBottles,
+  receiveOilMl,
+  remainingOilAfterDelta,
+} from "./oil-math";
 import { oilLots, oilMovements, products } from "./schema";
 import {
   isUniqueViolation,
@@ -281,12 +286,16 @@ export async function consumeOilInTransaction(
       id: oilLots.id,
       productId: oilLots.productId,
       remainingQuantityMl: oilLots.remainingQuantityMl,
+      reservedQuantityMl: oilLots.reservedQuantityMl,
       version: oilLots.version,
       createdAt: oilLots.createdAt,
     })
     .from(oilLots)
     .where(
-      and(inArray(oilLots.productId, productIds), gt(oilLots.remainingQuantityMl, 0)),
+      and(
+        inArray(oilLots.productId, productIds),
+        gt(oilLots.remainingQuantityMl, oilLots.reservedQuantityMl),
+      ),
     )
     .orderBy(asc(oilLots.createdAt), asc(oilLots.id))
     .for("update");
@@ -308,7 +317,8 @@ export async function consumeOilInTransaction(
     let remainingNeed = merged.get(productId) ?? 0;
     const availableLots = lotsByProduct.get(productId) ?? [];
     const availableMl = availableLots.reduce(
-      (total, lot) => total + lot.remainingQuantityMl,
+      (total, lot) =>
+        total + availableOilMl(lot.remainingQuantityMl, lot.reservedQuantityMl),
       0,
     );
     if (availableMl < remainingNeed) {
@@ -322,7 +332,10 @@ export async function consumeOilInTransaction(
     }
     for (const lot of availableLots) {
       if (remainingNeed === 0) break;
-      const takeMl = Math.min(lot.remainingQuantityMl, remainingNeed);
+      const takeMl = Math.min(
+        availableOilMl(lot.remainingQuantityMl, lot.reservedQuantityMl),
+        remainingNeed,
+      );
       allocations.push({
         lot,
         takeMl,

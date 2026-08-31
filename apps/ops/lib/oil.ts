@@ -33,6 +33,8 @@ export type OilBalanceRow = {
   productId: string;
   productName: string;
   remainingMl: number;
+  reservedMl: number;
+  availableMl: number;
   lotCount: number;
 };
 
@@ -51,6 +53,8 @@ export type OilLotRow = {
   productName: string;
   receivedQuantityMl: number;
   remainingQuantityMl: number;
+  reservedQuantityMl: number;
+  availableQuantityMl: number;
   kgBottles: number;
   supplierName: string | null;
   supplierReference: string | null;
@@ -67,6 +71,8 @@ export async function listOilBalances(): Promise<OilBalanceRow[]> {
       productId: products.id,
       productName: products.name,
       remainingMl: oilLots.remainingQuantityMl,
+      reservedMl: oilLots.reservedQuantityMl,
+      availableMl: sql<number>`${oilLots.remainingQuantityMl} - ${oilLots.reservedQuantityMl}`,
       lotId: oilLots.id,
     })
     .from(oilLots)
@@ -79,6 +85,8 @@ export async function listOilBalances(): Promise<OilBalanceRow[]> {
     const current = byProduct.get(row.productId);
     if (current) {
       current.remainingMl += row.remainingMl;
+      current.reservedMl += row.reservedMl;
+      current.availableMl += row.availableMl;
       current.lotCount += 1;
       continue;
     }
@@ -86,6 +94,8 @@ export async function listOilBalances(): Promise<OilBalanceRow[]> {
       productId: row.productId,
       productName: row.productName,
       remainingMl: row.remainingMl,
+      reservedMl: row.reservedMl,
+      availableMl: row.availableMl,
       lotCount: 1,
     });
   }
@@ -118,6 +128,8 @@ export async function listOilLots(opts?: {
         productName: products.name,
         receivedQuantityMl: oilLots.receivedQuantityMl,
         remainingQuantityMl: oilLots.remainingQuantityMl,
+        reservedQuantityMl: oilLots.reservedQuantityMl,
+        availableQuantityMl: sql<number>`${oilLots.remainingQuantityMl} - ${oilLots.reservedQuantityMl}`,
         kgBottles: oilLots.kgBottles,
         supplierName: oilLots.supplierName,
         supplierReference: oilLots.supplierReference,

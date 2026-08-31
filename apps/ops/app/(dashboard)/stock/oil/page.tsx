@@ -126,9 +126,9 @@ export default async function OilStockPage({
             ) : null}
             <Card className="overflow-hidden py-0">
               <CardHeader className="border-b py-4">
-                <CardTitle>Remaining oil</CardTitle>
+                <CardTitle>Available oil</CardTitle>
                 <CardDescription>
-                  Sum of open lots per perfume, in millilitres.
+                  Raw oil available after active storefront holds, in millilitres.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
@@ -146,7 +146,8 @@ export default async function OilStockPage({
                     <TableHeader>
                       <TableRow>
                         <TableHead>Perfume</TableHead>
-                        <TableHead className="w-24 text-right">Remaining</TableHead>
+                        <TableHead className="w-24 text-right">Available</TableHead>
+                        <TableHead className="w-20 text-right">Held</TableHead>
                         <TableHead className="w-16 text-right">Lots</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -157,7 +158,10 @@ export default async function OilStockPage({
                             {row.productName}
                           </TableCell>
                           <TableCell className="text-right">
-                            {formatQty(row.remainingMl)} ml
+                            {formatQty(row.availableMl)} ml
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatQty(row.reservedMl)} ml
                           </TableCell>
                           <TableCell className="text-right">
                             {formatQty(row.lotCount)}
@@ -175,7 +179,7 @@ export default async function OilStockPage({
             <CardHeader className="border-b py-4">
               <CardTitle>Purchase lots</CardTitle>
               <CardDescription>
-                Supplier, purchase reference, and remaining oil for every receipt.
+                Supplier, purchase reference, physical remaining oil, and active storefront holds for every receipt.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
@@ -197,6 +201,8 @@ export default async function OilStockPage({
                       <TableHead className="w-48">Supplier / reference</TableHead>
                       <TableHead className="w-24 text-right">Received</TableHead>
                       <TableHead className="w-24 text-right">Remaining</TableHead>
+                      <TableHead className="w-20 text-right">Held</TableHead>
+                      <TableHead className="w-24 text-right">Available</TableHead>
                       {canViewCost ? (
                         <TableHead className="w-24 text-right">Cost</TableHead>
                       ) : null}
@@ -226,6 +232,12 @@ export default async function OilStockPage({
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
                           {formatQty(lot.remainingQuantityMl)} ml
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {formatQty(lot.reservedQuantityMl)} ml
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {formatQty(lot.availableQuantityMl)} ml
                         </TableCell>
                         {canViewCost ? (
                           <TableCell className="text-right tabular-nums">

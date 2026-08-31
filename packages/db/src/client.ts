@@ -1,5 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
+import { resolveRuntimeDatabaseTlsOptions } from "./database-tls";
 import * as schema from "./schema";
 
 const connectionString = process.env.DATABASE_URL;
@@ -19,6 +20,9 @@ if (!connectionString) {
 export const pool = new Pool({
   connectionString: connectionString ?? "postgresql://invalid",
   max: 10,
+  ...resolveRuntimeDatabaseTlsOptions(
+    connectionString ?? "postgresql://invalid",
+  ),
 });
 
 export const db = drizzle(pool, { schema });

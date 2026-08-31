@@ -23,7 +23,9 @@ export const oilMovementTypeEnum = pgEnum("oil_movement_type", [
 
 /**
  * One received concentrate lot. A 1 kg original bottle is 1000 ml.
- * remaining_quantity_ml is a cache; oil_movements is the ledger.
+ * remaining_quantity_ml is a cache; oil_movements is the consumption ledger.
+ * Active storefront holds are tracked separately in SQL-only oil_reservations
+ * and cached here so every owner-side sale sees only unreserved oil.
  */
 export const oilLots = pgTable(
   "oil_lots",
@@ -34,6 +36,7 @@ export const oilLots = pgTable(
       .references(() => products.id, { onDelete: "restrict" }),
     receivedQuantityMl: integer("received_quantity_ml").notNull(),
     remainingQuantityMl: integer("remaining_quantity_ml").notNull(),
+    reservedQuantityMl: integer("reserved_quantity_ml").notNull().default(0),
     kgBottles: integer("kg_bottles").notNull(),
     supplierName: text("supplier_name"),
     supplierReference: text("supplier_reference"),
@@ -63,6 +66,11 @@ export const oilLots = pgTable(
         AND ${table.remainingQuantityMl} <= ${table.receivedQuantityMl}
         AND (${table.totalCostCents} IS NULL OR ${table.totalCostCents} >= 0)
         AND ${table.version} >= 0`,
+    ),
+    check(
+      "oil_lots_reserved_quantity_check",
+      sql`${table.reservedQuantityMl} >= 0
+        AND ${table.reservedQuantityMl} <= ${table.remainingQuantityMl}`,
     ),
   ],
 );

@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Perfume Aura PostgreSQL",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "perfume_aura",
+      "Username": "perfume_aura_owner",
+      "SSLMode": "disable",
+      "Comment": "Use only over the VPS loopback SSH tunnel. Do not store a password in this file."
+    }
+  }
+}

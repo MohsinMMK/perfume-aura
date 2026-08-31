@@ -149,22 +149,53 @@ export default async function ReportsPage({
             <CardHeader className="border-b py-4">
               <CardTitle>Oil coverage</CardTitle>
               <CardDescription>
-                Estimated days remaining uses the selected period’s average consumption; “No usage” means there is not enough history to forecast.
+                Estimated days remaining uses oil available after active storefront
+                holds and the selected period’s average consumption; “No usage”
+                means there is not enough history to forecast.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
-                <TableHeader><TableRow><TableHead>Perfume</TableHead><TableHead className="text-right">Remaining</TableHead><TableHead className="text-right">Used</TableHead><TableHead className="text-right">Coverage</TableHead></TableRow></TableHeader>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Perfume</TableHead>
+                    <TableHead className="text-right">Available</TableHead>
+                    <TableHead className="text-right">Held</TableHead>
+                    <TableHead className="text-right">Used</TableHead>
+                    <TableHead className="text-right">Coverage</TableHead>
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
                   {report.oilCoverage.length === 0 ? (
-                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">No oil receipts or usage yet.</TableCell></TableRow>
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        className="text-center text-muted-foreground"
+                      >
+                        No oil receipts or usage yet.
+                      </TableCell>
+                    </TableRow>
                   ) : report.oilCoverage.map((oil) => (
                     <TableRow key={oil.productId}>
                       <TableCell className="font-medium">{oil.productName}</TableCell>
-                      <TableCell className="text-right tabular-nums">{formatQty(oil.remainingMl)} ml</TableCell>
-                      <TableCell className="text-right tabular-nums">{formatQty(oil.usedMl)} ml</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatQty(oil.availableMl)} ml
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatQty(oil.reservedMl)} ml
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatQty(oil.usedMl)} ml
+                      </TableCell>
                       <TableCell className="text-right">
-                        <Badge variant={oil.estimatedDaysLeft !== null && oil.estimatedDaysLeft <= 14 ? "destructive" : "secondary"}>
+                        <Badge
+                          variant={
+                            oil.estimatedDaysLeft !== null &&
+                            oil.estimatedDaysLeft <= 14
+                              ? "destructive"
+                              : "secondary"
+                          }
+                        >
                           {oil.estimatedDaysLeft === null
                             ? "No usage"
                             : `${oil.estimatedDaysLeft} ${oil.estimatedDaysLeft === 1 ? "day" : "days"}`}

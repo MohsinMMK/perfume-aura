@@ -1,0 +1,23 @@
+[Unit]
+Description=Perfume Aura PostgreSQL pgBackRest weekly full backup
+Wants=docker.service
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+UMask=0077
+WorkingDirectory=/srv/perfume-aura/deploy/postgres-vps
+Environment=COMPOSE_PROJECT_NAME=perfume-aura-postgres
+ExecStartPre=/usr/bin/docker compose --env-file /etc/perfume-aura-postgres/compose.env -f /srv/perfume-aura/deploy/postgres-vps/compose.yaml exec -T --user postgres postgres pg_isready -q
+ExecStart=/usr/bin/docker compose --env-file /etc/perfume-aura-postgres/compose.env -f /srv/perfume-aura/deploy/postgres-vps/compose.yaml exec -T --user postgres postgres pgbackrest --config=/run/secrets/pgbackrest_config --stanza=perfume_aura check
+ExecStart=/usr/bin/flock -w 7200 /run/perfume-aura-postgres-backup.lock /usr/bin/docker compose --env-file /etc/perfume-aura-postgres/compose.env -f /srv/perfume-aura/deploy/postgres-vps/compose.yaml exec -T --user postgres postgres pgbackrest --config=/run/secrets/pgbackrest_config --stanza=perfume_aura backup --type=full
+ExecStartPost=/usr/bin/docker compose --env-file /etc/perfume-aura-postgres/compose.env -f /srv/perfume-aura/deploy/postgres-vps/compose.yaml exec -T --user postgres postgres pgbackrest --config=/run/secrets/pgbackrest_config --stanza=perfume_aura info
+TimeoutStartSec=4h
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+
+[Install]
+WantedBy=multi-user.target

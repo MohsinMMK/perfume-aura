@@ -43,6 +43,8 @@ export type OperationsReport = {
     productId: string;
     productName: string;
     remainingMl: number;
+    reservedMl: number;
+    availableMl: number;
     usedMl: number;
     estimatedDaysLeft: number | null;
   }>;
@@ -123,6 +125,8 @@ export async function getOperationsReport(days = 30): Promise<OperationsReport> 
         productId: products.id,
         productName: products.name,
         remainingMl: sql<number>`coalesce(sum(${oilLots.remainingQuantityMl}), 0)::int`,
+        reservedMl: sql<number>`coalesce(sum(${oilLots.reservedQuantityMl}), 0)::int`,
+        availableMl: sql<number>`coalesce(sum(${oilLots.remainingQuantityMl} - ${oilLots.reservedQuantityMl}), 0)::int`,
       })
       .from(oilLots)
       .innerJoin(products, sql`${products.id} = ${oilLots.productId}`)
@@ -145,13 +149,22 @@ export async function getOperationsReport(days = 30): Promise<OperationsReport> 
   const invoiceSummary = invoiceSummaryRows[0];
   const oilByProduct = new Map<
     string,
-    { productId: string; productName: string; remainingMl: number; usedMl: number }
+    {
+      productId: string;
+      productName: string;
+      remainingMl: number;
+      reservedMl: number;
+      availableMl: number;
+      usedMl: number;
+    }
   >();
   for (const row of oilBalanceRows) {
     oilByProduct.set(row.productId, {
       productId: row.productId,
       productName: row.productName,
       remainingMl: Number(row.remainingMl),
+      reservedMl: Number(row.reservedMl),
+      availableMl: Number(row.availableMl),
       usedMl: 0,
     });
   }
@@ -161,23 +174,30 @@ export async function getOperationsReport(days = 30): Promise<OperationsReport> 
       productId: row.productId,
       productName: row.productName,
       remainingMl: existing?.remainingMl ?? 0,
+      reservedMl: existing?.reservedMl ?? 0,
+      availableMl: existing?.availableMl ?? 0,
       usedMl: Number(row.usedMl),
     });
   }
 
   const oilCoverage = [...oilByProduct.values()]
     .map((row) => {
-      const { remainingMl, usedMl } = row;
+      const { remainingMl, reservedMl, availableMl, usedMl } = row;
       return {
         productId: row.productId,
         productName: row.productName,
         remainingMl,
+        reservedMl,
+        availableMl,
         usedMl,
         estimatedDaysLeft:
-          usedMl > 0 ? Math.floor(remainingMl / (usedMl / days)) : null,
+          usedMl > 0 ? Math.floor(availableMl / (usedMl / days)) : null,
       };
     })
-    .filter((row) => row.remainingMl > 0 || row.usedMl > 0)
+    .filter(
+      (row) =>
+        row.remainingMl > 0 || row.reservedMl > 0 || row.usedMl > 0,
+    )
     .sort((left, right) => {
       if (left.estimatedDaysLeft === null) return 1;
       if (right.estimatedDaysLeft === null) return -1;

@@ -10,6 +10,7 @@ import {
   oilMlForBottles,
   products,
   productVariants,
+  sql,
 } from "@perfume-aura/db";
 import {
   completeSaleSchema,
@@ -30,6 +31,8 @@ export type SaleCatalogItem = {
   retailCents: number;
   quantityOnHand: number;
   remainingOilMl: number;
+  reservedOilMl: number;
+  availableOilMl: number;
   oilMlPerBottle: number;
 };
 
@@ -56,21 +59,30 @@ export async function listSaleCatalog(): Promise<SaleCatalogItem[]> {
       .select({
         productId: oilLots.productId,
         remainingMl: oilLots.remainingQuantityMl,
+        reservedMl: oilLots.reservedQuantityMl,
+        availableMl: sql<number>`${oilLots.remainingQuantityMl} - ${oilLots.reservedQuantityMl}`,
       })
       .from(oilLots),
   ]);
 
-  const oilByProduct = new Map<string, number>();
+  const oilByProduct = new Map<
+    string,
+    { remainingMl: number; reservedMl: number; availableMl: number }
+  >();
   for (const lot of lots) {
-    oilByProduct.set(
-      lot.productId,
-      (oilByProduct.get(lot.productId) ?? 0) + lot.remainingMl,
-    );
+    const current = oilByProduct.get(lot.productId);
+    oilByProduct.set(lot.productId, {
+      remainingMl: (current?.remainingMl ?? 0) + lot.remainingMl,
+      reservedMl: (current?.reservedMl ?? 0) + lot.reservedMl,
+      availableMl: (current?.availableMl ?? 0) + lot.availableMl,
+    });
   }
 
   return variants.map((variant) => ({
     ...variant,
-    remainingOilMl: oilByProduct.get(variant.productId) ?? 0,
+    remainingOilMl: oilByProduct.get(variant.productId)?.remainingMl ?? 0,
+    reservedOilMl: oilByProduct.get(variant.productId)?.reservedMl ?? 0,
+    availableOilMl: oilByProduct.get(variant.productId)?.availableMl ?? 0,
     oilMlPerBottle: oilMlForBottles(variant.sizeMl, 1),
   }));
 }

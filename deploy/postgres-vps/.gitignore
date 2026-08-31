@@ -1,0 +1,6 @@
+# Root-owned production material. Only the documented templates stay tracked.
+compose.env
+secrets/*
+!secrets/README.md
+!secrets/*.example
+!secrets/**/*.example

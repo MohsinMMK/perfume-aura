@@ -1,25 +1,18 @@
 import { and, asc, eq, inArray, lte, sql } from "drizzle-orm";
 import { DomainError } from "./domain-errors";
 import {
-  consumeOilInTransaction,
-  oilDemandForVariant,
-} from "./oil-inventory";
-import {
-  productPublications,
-  products,
-  productVariants,
   checkoutSessions,
   commerceCarts,
   commerceOrderEvents,
   commerceOrders,
-  locations,
   notificationOutbox,
   paymentAttempts,
-  stockMovements,
-  stockReservations,
-  variantPrices,
 } from "./schema";
-import { runDomainTransaction } from "./transactions";
+import {
+  postgresSqlState,
+  runDomainTransaction,
+  type DbTransaction,
+} from "./transactions";
 
 export type ReservationItemInput = Readonly<{
   variantId: string;
@@ -36,6 +29,83 @@ export type ReservationResult = Readonly<{
   }>[];
   idempotent: boolean;
 }>;
+
+type ReservationRoutineRow = Readonly<{
+  reservation_id: string;
+  variant_id: string;
+  quantity: number;
+  expires_at: Date | string;
+  idempotent: boolean;
+}>;
+
+type ReleaseRoutineRow = Readonly<{
+  released_count: number;
+  idempotent: boolean;
+  has_consumed: boolean;
+}>;
+
+type SettlementRoutineRow = Readonly<{
+  consumed_count: number;
+  idempotent: boolean;
+}>;
+
+function routineRows<T>(result: Readonly<{ rows: unknown[] }>): readonly T[] {
+  return result.rows as readonly T[];
+}
+
+function parsedTimestamp(value: Date | string, field: string): Date {
+  const timestamp = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(timestamp.getTime())) {
+    throw new DomainError("INVALID_STATE", `Database returned an invalid ${field}`);
+  }
+  return timestamp;
+}
+
+function singleRoutineRow<T>(rows: readonly T[], routine: string): T {
+  const row = rows[0];
+  if (!row || rows.length !== 1) {
+    throw new DomainError("INVALID_STATE", `${routine} returned an invalid result`);
+  }
+  return row;
+}
+
+function routineErrorMessage(error: unknown): string {
+  const seen = new Set<unknown>();
+  let current = error;
+  let deepestMessage: string | undefined;
+
+  while (
+    current &&
+    (typeof current === "object" || typeof current === "function") &&
+    !seen.has(current)
+  ) {
+    seen.add(current);
+    const candidate = current as Readonly<{ message?: unknown; cause?: unknown }>;
+    if (typeof candidate.message === "string" && candidate.message.trim()) {
+      deepestMessage = candidate.message;
+    }
+    current = candidate.cause;
+  }
+
+  return deepestMessage ?? "Storefront inventory transition failed";
+}
+
+function normalizedRoutineError(error: unknown): DomainError {
+  if (error instanceof DomainError) return error;
+
+  const message = routineErrorMessage(error);
+  const state = postgresSqlState(error);
+  const code = state === "22023"
+    ? "INVALID_INPUT"
+    : state === "P0002"
+      ? "NOT_FOUND"
+      : message.startsWith("Insufficient oil")
+        ? "INSUFFICIENT_OIL"
+        : message.startsWith("Insufficient available stock")
+          ? "INSUFFICIENT_STOCK"
+          : "INVALID_STATE";
+  return new DomainError(code, message, { cause: error });
+}
 
 export function normalizeReservationItems(
   items: readonly ReservationItemInput[],
@@ -58,6 +128,45 @@ export function normalizeReservationItems(
     .map(([variantId, quantity]) => ({ variantId, quantity }));
 }
 
+async function reserveInTransaction(
+  tx: DbTransaction,
+  input: Readonly<{
+    checkoutSessionId: string;
+    items: readonly ReservationItemInput[];
+    expiresAt: Date;
+  }>,
+): Promise<ReservationResult> {
+  const rows = routineRows<ReservationRoutineRow>((await tx.execute(sql`
+    SELECT reservation_id, variant_id, quantity, expires_at, idempotent
+    FROM public.reserve_storefront_checkout_stock(
+      ${input.checkoutSessionId}::uuid,
+      ARRAY[${sql.join(
+        input.items.map((item) => sql`${item.variantId}::uuid`),
+        sql`, `,
+      )}]::uuid[],
+      ARRAY[${sql.join(
+        input.items.map((item) => sql`${item.quantity}::integer`),
+        sql`, `,
+      )}]::integer[],
+      ${input.expiresAt}::timestamptz
+    )
+  `)) as Readonly<{ rows: unknown[] }>);
+  if (rows.length !== input.items.length) {
+    throw new DomainError("INVALID_STATE", "Stock reservation returned an incomplete result");
+  }
+
+  return {
+    checkoutSessionId: input.checkoutSessionId,
+    reservations: rows.map((row) => ({
+      id: row.reservation_id,
+      variantId: row.variant_id,
+      quantity: Number(row.quantity),
+      expiresAt: parsedTimestamp(row.expires_at, "reservation expiry"),
+    })),
+    idempotent: rows.every((row) => row.idempotent),
+  };
+}
+
 export async function reserveCheckoutStock(input: Readonly<{
   checkoutSessionId: string;
   items: readonly ReservationItemInput[];
@@ -69,167 +178,34 @@ export async function reserveCheckoutStock(input: Readonly<{
     throw new DomainError("INVALID_INPUT", "Reservation expiry must be in the future");
   }
   const items = normalizeReservationItems(input.items);
-  const variantIds = items.map((item) => item.variantId);
-
-  return runDomainTransaction(async (tx) => {
-    const existing = await tx
-      .select()
-      .from(stockReservations)
-      .where(eq(stockReservations.checkoutSessionId, input.checkoutSessionId))
-      .orderBy(asc(stockReservations.variantId))
-      .for("update");
-
-    if (existing.length > 0) {
-      const matches =
-        existing.length === items.length &&
-        existing.every(
-          (reservation, index) =>
-            reservation.status === "active" &&
-            reservation.variantId === items[index]?.variantId &&
-            reservation.quantity === items[index]?.quantity,
-        );
-      if (!matches) {
-        throw new DomainError(
-          "IDEMPOTENCY_CONFLICT",
-          "Checkout already owns a different reservation set",
-        );
-      }
-      return {
-        checkoutSessionId: input.checkoutSessionId,
-        reservations: existing.map((reservation) => ({
-          id: reservation.id,
-          variantId: reservation.variantId,
-          quantity: reservation.quantity,
-          expiresAt: reservation.expiresAt,
-        })),
-        idempotent: true,
-      };
-    }
-
-    const candidates = await tx
-      .select({ productId: productVariants.productId })
-      .from(productVariants)
-      .where(inArray(productVariants.id, variantIds));
-    if (candidates.length !== variantIds.length) {
-      throw new DomainError("NOT_FOUND", "One or more product variants were not found");
-    }
-
-    const productIds = [...new Set(candidates.map((row) => row.productId))].sort();
-    const lockedProducts = await tx
-      .select({ id: products.id, status: products.status })
-      .from(products)
-      .where(inArray(products.id, productIds))
-      .orderBy(asc(products.id))
-      .for("update");
-    if (
-      lockedProducts.length !== productIds.length ||
-      lockedProducts.some((product) => product.status !== "active")
-    ) {
-      throw new DomainError("INVALID_STATE", "All reserved products must be active");
-    }
-
-    const lockedVariants = await tx
-      .select({
-        id: productVariants.id,
-        status: productVariants.status,
-        quantityOnHand: productVariants.quantityOnHand,
-        qtyReserved: productVariants.qtyReserved,
-      })
-      .from(productVariants)
-      .where(inArray(productVariants.id, variantIds))
-      .orderBy(asc(productVariants.id))
-      .for("update");
-
-    const publicationRows = await tx
-      .select({
-        variantId: variantPrices.variantId,
-        publicationStatus: productPublications.status,
-        legalApprovedAt: productPublications.legalApprovedAt,
-        legalApprovalReference: productPublications.legalApprovalReference,
-        contentApprovedAt: productPublications.contentApprovedAt,
-        contentApprovalReference: productPublications.contentApprovalReference,
-        mediaApprovedAt: productPublications.mediaApprovedAt,
-        mediaApprovalReference: productPublications.mediaApprovalReference,
-        priceActive: variantPrices.active,
-        priceApprovedAt: variantPrices.approvedAt,
-        priceApprovalReference: variantPrices.approvalReference,
-        priceCurrency: variantPrices.currency,
-        priceAmountMinor: variantPrices.amountMinor,
-      })
-      .from(variantPrices)
-      .innerJoin(productVariants, eq(variantPrices.variantId, productVariants.id))
-      .innerJoin(productPublications, eq(productVariants.productId, productPublications.productId))
-      .where(inArray(variantPrices.variantId, variantIds));
-    const publicationByVariant = new Map(
-      publicationRows.map((row) => [row.variantId, row]),
-    );
-
-    for (const item of items) {
-      const variant = lockedVariants.find((candidate) => candidate.id === item.variantId);
-      const publication = publicationByVariant.get(item.variantId);
-      if (
-        !variant ||
-        variant.status !== "active" ||
-        publication?.publicationStatus !== "published" ||
-        !publication.legalApprovedAt ||
-        !publication.legalApprovalReference ||
-        !publication.contentApprovedAt ||
-        !publication.contentApprovalReference ||
-        !publication.mediaApprovedAt ||
-        !publication.mediaApprovalReference ||
-        !publication.priceActive ||
-        !publication.priceApprovedAt ||
-        !publication.priceApprovalReference ||
-        publication.priceCurrency !== "INR" ||
-        publication.priceAmountMinor <= 0
-      ) {
-        throw new DomainError(
-          "INVALID_STATE",
-          "Every reserved variant must be active, published, and price-approved",
-        );
-      }
-      const available = variant.quantityOnHand - variant.qtyReserved;
-      if (item.quantity > available) {
-        throw new DomainError(
-          "INSUFFICIENT_STOCK",
-          `Insufficient available stock for variant ${item.variantId}`,
-        );
-      }
-    }
-
-    const inserted = await tx
-      .insert(stockReservations)
-      .values(
-        items.map((item) => ({
-          checkoutSessionId: input.checkoutSessionId,
-          variantId: item.variantId,
-          quantity: item.quantity,
-          expiresAt: input.expiresAt,
-        })),
-      )
-      .returning();
-
-    for (const item of items) {
-      await tx
-        .update(productVariants)
-        .set({
-          qtyReserved: sql`${productVariants.qtyReserved} + ${item.quantity}`,
-          version: sql`${productVariants.version} + 1`,
-        })
-        .where(eq(productVariants.id, item.variantId));
-    }
-
-    return {
+  try {
+    return await runDomainTransaction((tx) => reserveInTransaction(tx, {
       checkoutSessionId: input.checkoutSessionId,
-      reservations: inserted.map((reservation) => ({
-        id: reservation.id,
-        variantId: reservation.variantId,
-        quantity: reservation.quantity,
-        expiresAt: reservation.expiresAt,
-      })),
-      idempotent: false,
-    };
-  });
+      items,
+      expiresAt: input.expiresAt,
+    }));
+  } catch (error) {
+    throw normalizedRoutineError(error);
+  }
+}
+
+async function releaseInTransaction(
+  tx: DbTransaction,
+  input: Readonly<{
+    checkoutSessionId: string;
+    reason: "cancelled" | "payment_failed" | "abandoned" | "expired";
+    releasedAt: Date;
+  }>,
+): Promise<ReleaseRoutineRow> {
+  const rows = routineRows<ReleaseRoutineRow>((await tx.execute(sql`
+    SELECT released_count, idempotent, has_consumed
+    FROM public.release_storefront_checkout_reservations(
+      ${input.checkoutSessionId}::uuid,
+      ${input.reason}::text,
+      ${input.releasedAt}::timestamptz
+    )
+  `)) as Readonly<{ rows: unknown[] }>);
+  return singleRoutineRow(rows, "Stock reservation release");
 }
 
 export async function releaseCheckoutReservations(input: Readonly<{
@@ -237,55 +213,26 @@ export async function releaseCheckoutReservations(input: Readonly<{
   reason: "cancelled" | "payment_failed" | "abandoned" | "expired";
   now?: Date;
 }>): Promise<Readonly<{ releasedCount: number; idempotent: boolean }>> {
-  const now = input.now ?? new Date();
-  return runDomainTransaction(async (tx) => {
-    const activeReservations = await tx
-      .select()
-      .from(stockReservations)
-      .where(eq(stockReservations.checkoutSessionId, input.checkoutSessionId))
-      .orderBy(asc(stockReservations.variantId))
-      .for("update");
-    const releasable = activeReservations.filter(
-      (reservation) => reservation.status === "active",
-    );
-    if (releasable.length === 0) {
-      return { releasedCount: 0, idempotent: true };
-    }
-
-    const variantIds = releasable.map((reservation) => reservation.variantId);
-    await tx
-      .select({ id: productVariants.id })
-      .from(productVariants)
-      .where(inArray(productVariants.id, variantIds))
-      .orderBy(asc(productVariants.id))
-      .for("update");
-
-    for (const reservation of releasable) {
-      await tx
-        .update(productVariants)
-        .set({
-          qtyReserved: sql`${productVariants.qtyReserved} - ${reservation.quantity}`,
-          version: sql`${productVariants.version} + 1`,
-        })
-        .where(eq(productVariants.id, reservation.variantId));
-      await tx
-        .update(stockReservations)
-        .set({
-          status: input.reason === "expired" ? "expired" : "released",
-          releasedAt: now,
-          releaseReason: input.reason,
-        })
-        .where(eq(stockReservations.id, reservation.id));
-    }
-
-    return { releasedCount: releasable.length, idempotent: false };
-  });
+  let row: ReleaseRoutineRow;
+  try {
+    row = await runDomainTransaction((tx) => releaseInTransaction(tx, {
+      checkoutSessionId: input.checkoutSessionId,
+      reason: input.reason,
+      releasedAt: input.now ?? new Date(),
+    }));
+  } catch (error) {
+    throw normalizedRoutineError(error);
+  }
+  return {
+    releasedCount: Number(row.released_count),
+    idempotent: row.idempotent,
+  };
 }
 
 /**
- * Convert every active checkout reservation into append-only sale ledger rows.
- * A retry after a successful consume is a no-op; mixed consumed/active state is
- * rejected so partial inventory settlement can never be hidden.
+ * Convert active checkout reservations into stock and oil ledger entries.
+ * The security-definer routine derives every internal value from the bound
+ * checkout/order pair, so the storefront role cannot submit raw stock writes.
  */
 export async function consumeCheckoutReservations(input: Readonly<{
   checkoutSessionId: string;
@@ -297,98 +244,26 @@ export async function consumeCheckoutReservations(input: Readonly<{
     throw new DomainError("INVALID_INPUT", "Checkout session and order are required");
   }
 
-  return runDomainTransaction(async (tx) => {
-    const reservations = await tx
-      .select()
-      .from(stockReservations)
-      .where(eq(stockReservations.checkoutSessionId, input.checkoutSessionId))
-      .orderBy(asc(stockReservations.variantId))
-      .for("update");
-    if (reservations.length === 0) {
-      throw new DomainError("NOT_FOUND", "Checkout reservation was not found");
-    }
-    if (reservations.every((reservation) => reservation.status === "consumed")) {
-      return { consumedCount: 0, idempotent: true };
-    }
-    if (reservations.some((reservation) => reservation.status !== "active")) {
-      throw new DomainError("INVALID_STATE", "Checkout reservations are not wholly active");
-    }
-
-    const [mainLocation] = await tx
-      .select({ id: locations.id })
-      .from(locations)
-      .where(eq(locations.code, "MAIN"))
-      .limit(1);
-    if (!mainLocation) {
-      throw new DomainError("NOT_FOUND", "Inventory location MAIN is not configured");
-    }
-
-    const variantIds = reservations.map((reservation) => reservation.variantId);
-    const variants = await tx
-      .select()
-      .from(productVariants)
-      .where(inArray(productVariants.id, variantIds))
-      .orderBy(asc(productVariants.id))
-      .for("update");
-    if (variants.length !== reservations.length) {
-      throw new DomainError("NOT_FOUND", "A reserved variant was not found");
-    }
-
-    for (const reservation of reservations) {
-      const variant = variants.find((candidate) => candidate.id === reservation.variantId);
-      if (
-        !variant ||
-        variant.qtyReserved < reservation.quantity ||
-        variant.quantityOnHand < reservation.quantity
-      ) {
-        throw new DomainError("INVALID_STATE", "Reserved inventory balance is inconsistent");
-      }
-      const quantityAfter = variant.quantityOnHand - reservation.quantity;
-      await tx.insert(stockMovements).values({
-        variantId: variant.id,
-        locationId: mainLocation.id,
-        type: "sale",
-        quantityDelta: -reservation.quantity,
-        quantityAfter,
-        refType: "commerce_order",
-        refId: input.orderId,
-        note: "Storefront order inventory settlement",
-        idempotencyKey: `commerce-order:${input.orderId}:${variant.id}`,
-        unitCostCents: variant.costCents,
-        costBasis: "snapshot",
-      });
-      await tx
-        .update(productVariants)
-        .set({
-          quantityOnHand: quantityAfter,
-          qtyReserved: variant.qtyReserved - reservation.quantity,
-          version: variant.version + 1,
-          updatedAt: now,
-        })
-        .where(eq(productVariants.id, variant.id));
-      await tx
-        .update(stockReservations)
-        .set({ status: "consumed", releasedAt: now, releaseReason: "order_settled" })
-        .where(eq(stockReservations.id, reservation.id));
-    }
-    await consumeOilInTransaction(tx, {
-      demands: reservations.map((reservation) => {
-        const variant = variants.find((candidate) => candidate.id === reservation.variantId);
-        if (!variant) {
-          throw new DomainError("NOT_FOUND", "A reserved variant was not found");
-        }
-        return oilDemandForVariant({
-          productId: variant.productId,
-          sizeMl: variant.sizeMl,
-          quantity: reservation.quantity,
-        });
-      }),
-      refType: "commerce_order",
-      refId: input.orderId,
-      idempotencyPrefix: `oil:commerce-order:${input.orderId}`,
+  let row: SettlementRoutineRow;
+  try {
+    row = await runDomainTransaction(async (tx) => {
+      const rows = routineRows<SettlementRoutineRow>((await tx.execute(sql`
+        SELECT consumed_count, idempotent
+        FROM public.settle_storefront_checkout_reservations(
+          ${input.checkoutSessionId}::uuid,
+          ${input.orderId}::uuid,
+          ${now}::timestamptz
+        )
+      `)) as Readonly<{ rows: unknown[] }>);
+      return singleRoutineRow(rows, "Stock reservation settlement");
     });
-    return { consumedCount: reservations.length, idempotent: false };
-  });
+  } catch (error) {
+    throw normalizedRoutineError(error);
+  }
+  return {
+    consumedCount: Number(row.consumed_count),
+    idempotent: row.idempotent,
+  };
 }
 
 /** Release expired checkout holds in bounded batches. Safe for concurrent jobs. */
@@ -402,6 +277,7 @@ export async function expireAbandonedCheckouts(input: Readonly<{
   if (!Number.isInteger(limit) || limit < 1 || limit > 500) {
     throw new DomainError("INVALID_INPUT", "Expiry batch limit must be from 1 to 500");
   }
+  try {
   const candidates = await runDomainTransaction((tx) =>
     tx
       .select({ id: checkoutSessions.id })
@@ -419,16 +295,17 @@ export async function expireAbandonedCheckouts(input: Readonly<{
   let expiredCheckoutCount = 0;
   let releasedReservationCount = 0;
   for (const candidate of candidates) {
-    // Authorize every candidate before opening the locking transaction. The
-    // checkout may move from open to payment_pending between discovery and
-    // locking, so the locked status below is the only state used to decide
-    // whether provider authorization is required.
     const paymentPendingReleaseAuthorized = input.canReleasePaymentPending
       ? await input.canReleasePaymentPending(candidate.id)
       : false;
     const result = await runDomainTransaction(async (tx) => {
       const [checkout] = await tx
-        .select({ id: checkoutSessions.id, cartId: checkoutSessions.cartId, status: checkoutSessions.status, expiresAt: checkoutSessions.expiresAt })
+        .select({
+          id: checkoutSessions.id,
+          cartId: checkoutSessions.cartId,
+          status: checkoutSessions.status,
+          expiresAt: checkoutSessions.expiresAt,
+        })
         .from(checkoutSessions)
         .where(eq(checkoutSessions.id, candidate.id))
         .for("update")
@@ -443,92 +320,72 @@ export async function expireAbandonedCheckouts(input: Readonly<{
       if (checkout.status === "payment_pending" && !paymentPendingReleaseAuthorized) {
         return { expired: false, released: 0 };
       }
-      const reservations = await tx
-        .select()
-        .from(stockReservations)
-        .where(eq(stockReservations.checkoutSessionId, checkout.id))
-        .orderBy(asc(stockReservations.variantId))
-        .for("update");
-      if (reservations.some((reservation) => reservation.status === "consumed")) {
+
+      const release = await releaseInTransaction(tx, {
+        checkoutSessionId: checkout.id,
+        reason: "expired",
+        releasedAt: now,
+      });
+      if (release.has_consumed) {
         return { expired: false, released: 0 };
       }
-      const active = reservations.filter((reservation) => reservation.status === "active");
-      if (active.length > 0) {
-        const variantIds = active.map((reservation) => reservation.variantId);
-        await tx
-          .select({ id: productVariants.id })
-          .from(productVariants)
-          .where(inArray(productVariants.id, variantIds))
-          .orderBy(asc(productVariants.id))
-          .for("update");
-        for (const reservation of active) {
-          const updatedVariants = await tx
-            .update(productVariants)
-            .set({
-              qtyReserved: sql`${productVariants.qtyReserved} - ${reservation.quantity}`,
-              version: sql`${productVariants.version} + 1`,
-              updatedAt: now,
-            })
-            .where(
-              and(
-                eq(productVariants.id, reservation.variantId),
-                sql`${productVariants.qtyReserved} >= ${reservation.quantity}`,
-              ),
-            )
-            .returning({ id: productVariants.id });
-          if (updatedVariants.length !== 1) {
-            throw new DomainError(
-              "INVALID_STATE",
-              "Reserved inventory balance is inconsistent",
-            );
-          }
-          await tx
-            .update(stockReservations)
-            .set({ status: "expired", releasedAt: now, releaseReason: "expired" })
-            .where(eq(stockReservations.id, reservation.id));
-        }
-      }
+
       await tx
         .update(checkoutSessions)
         .set({ status: "expired", updatedAt: now })
         .where(eq(checkoutSessions.id, checkout.id));
-      await tx.update(commerceCarts).set({ status: "active", updatedAt: now })
+      await tx
+        .update(commerceCarts)
+        .set({ status: "active", updatedAt: now })
         .where(eq(commerceCarts.id, checkout.cartId));
-      const [order] = await tx.select({ id: commerceOrders.id, status: commerceOrders.status })
+      const [order] = await tx
+        .select({ id: commerceOrders.id, status: commerceOrders.status })
         .from(commerceOrders)
         .where(eq(commerceOrders.checkoutSessionId, checkout.id))
         .for("update")
         .limit(1);
       if (order && order.status === "pending") {
-        await tx.update(commerceOrders).set({
-          status: "cancelled",
-          paymentState: "failed",
-          cancelledAt: now,
-          updatedAt: now,
-        }).where(eq(commerceOrders.id, order.id));
-        await tx.update(paymentAttempts).set({ status: "cancelled", updatedAt: now })
+        await tx
+          .update(commerceOrders)
+          .set({
+            status: "cancelled",
+            paymentState: "failed",
+            cancelledAt: now,
+            updatedAt: now,
+          })
+          .where(eq(commerceOrders.id, order.id));
+        await tx
+          .update(paymentAttempts)
+          .set({ status: "cancelled", updatedAt: now })
           .where(and(
             eq(paymentAttempts.orderId, order.id),
             inArray(paymentAttempts.status, ["created", "pending"]),
           ));
-        const [cancelledEvent] = await tx.insert(commerceOrderEvents).values({
-          orderId: order.id,
-          eventType: "cancelled",
-          fromStatus: "pending",
-          toStatus: "cancelled",
-          idempotencyKey: `checkout-expired:${checkout.id}`,
-        }).onConflictDoNothing().returning({ id: commerceOrderEvents.id });
+        const [cancelledEvent] = await tx
+          .insert(commerceOrderEvents)
+          .values({
+            orderId: order.id,
+            eventType: "cancelled",
+            fromStatus: "pending",
+            toStatus: "cancelled",
+            idempotencyKey: `checkout-expired:${checkout.id}`,
+          })
+          .onConflictDoNothing()
+          .returning({ id: commerceOrderEvents.id });
         if (cancelledEvent) {
-          await tx.insert(notificationOutbox).values({
-            orderEventId: cancelledEvent.id,
-            kind: "order_cancelled",
-          }).onConflictDoNothing();
+          await tx
+            .insert(notificationOutbox)
+            .values({ orderEventId: cancelledEvent.id, kind: "order_cancelled" })
+            .onConflictDoNothing();
         }
       }
-      return { expired: true, released: active.length };
+      return { expired: true, released: Number(release.released_count) };
     });
     if (result.expired) expiredCheckoutCount += 1;
     releasedReservationCount += result.released;
   }
   return { expiredCheckoutCount, releasedReservationCount };
+  } catch (error) {
+    throw normalizedRoutineError(error);
+  }
 }

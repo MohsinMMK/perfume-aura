@@ -164,6 +164,92 @@ describe("oil inventory integration", () => {
     assert.equal(after[0]?.remaining, before[0]?.remaining);
   });
 
+  it("does not let owner-side invoices consume storefront-held oil", async () => {
+    const suffix = randomUUID();
+    const [product] = await db
+      .insert(products)
+      .values({
+        name: `Oil held ${suffix}`,
+        slug: `oil-held-${suffix}`,
+        status: "active",
+      })
+      .returning({ id: products.id });
+    assert.ok(product);
+    const received = await receiveOilLot({
+      productId: product.id,
+      kgBottles: 1,
+      idempotencyKey: randomUUID(),
+    });
+    await db
+      .update(oilLots)
+      .set({ reservedQuantityMl: 975 })
+      .where(eq(oilLots.id, received.lotId));
+
+    const before = await db
+      .select({
+        remaining: oilLots.remainingQuantityMl,
+        reserved: oilLots.reservedQuantityMl,
+      })
+      .from(oilLots)
+      .where(eq(oilLots.id, received.lotId));
+
+    await assert.rejects(
+      () =>
+        runDomainTransaction((tx) =>
+          consumeOilInTransaction(tx, {
+            demands: [
+              oilDemandForVariant({
+                productId: product.id,
+                sizeMl: 100,
+                quantity: 1,
+              }),
+            ],
+            refType: "invoice",
+            refId: randomUUID(),
+            idempotencyPrefix: `oil:test:${randomUUID()}`,
+          }),
+        ),
+      (error: unknown) =>
+        error instanceof OilInventoryError &&
+        error.code === "INSUFFICIENT_OIL" &&
+        error.message.includes("available 25 ml, needed 50 ml"),
+    );
+
+    const afterRejected = await db
+      .select({
+        remaining: oilLots.remainingQuantityMl,
+        reserved: oilLots.reservedQuantityMl,
+      })
+      .from(oilLots)
+      .where(eq(oilLots.id, received.lotId));
+    assert.deepEqual(afterRejected, before);
+
+    const consumed = await runDomainTransaction((tx) =>
+      consumeOilInTransaction(tx, {
+        demands: [
+          oilDemandForVariant({
+            productId: product.id,
+            sizeMl: 50,
+            quantity: 1,
+          }),
+        ],
+        refType: "invoice",
+        refId: randomUUID(),
+        idempotencyPrefix: `oil:test:${randomUUID()}`,
+      }),
+    );
+    assert.equal(consumed.consumedMl, 25);
+
+    const [afterConsumed] = await db
+      .select({
+        remaining: oilLots.remainingQuantityMl,
+        reserved: oilLots.reservedQuantityMl,
+      })
+      .from(oilLots)
+      .where(eq(oilLots.id, received.lotId));
+    assert.deepEqual(afterConsumed, { remaining: 975, reserved: 975 });
+  });
+
   it("replays the same consume key without double-deducting", async () => {
     await receiveOilLot({
       productId,

@@ -7,6 +7,7 @@ secret, or release-flag action.
 - [Storefront deployment and recovery](#storefront-deployment-and-recovery)
 - [Ops deployment and recovery](#ops-deployment-and-recovery)
 - [Migrations and runtime grants](#migrations-and-runtime-grants)
+- [Self-hosted PostgreSQL target](#self-hosted-postgresql-target)
 - [Production acceptance](#production-acceptance)
 - [Staff release procedure](#staff-operations-release-procedure)
 - [Owner recovery and break glass](#owner-recovery-and-break-glass)
@@ -372,6 +373,49 @@ SELECT * FROM pg_auth_members;
 
 Any unexpected effective privilege fails the handoff. The runtime role has no
 DDL, temporary-object, role-membership, or broad sequence power.
+
+## Self-hosted PostgreSQL target
+
+The approved migration target is defined in
+[`../deploy/postgres-vps/`](../deploy/postgres-vps/). It is a separate Compose
+stack with PostgreSQL 17.10, a private ops PgBouncer listener, a mutual-TLS
+plus SCRAM storefront listener on port 6432, loopback-only direct-owner and
+pgAdmin paths, and pgBackRest. The storefront uses two distinct restricted
+database credentials on that same mTLS endpoint: normal runtime
+`DATABASE_URL` and the binding/finalization-only
+`STOREFRONT_PAYMENT_FINALIZER_DATABASE_URL`. The latter can only bind an
+authentic provider session, atomically cancel a failed/expired provider-bound
+intent, and settle independently verified Cashfree success; it has no direct
+table grants. Checkout reservation holds exact raw-oil lots before a provider
+session exists, so an accepted payment cannot be finalized against a later
+depleted aggregate oil balance. It is not live merely because these files
+exist.
+
+Use [`../deploy/postgres-vps/RUNBOOK.md`](../deploy/postgres-vps/RUNBOOK.md)
+for the ordering. The minimum non-negotiable gate is:
+
+```text
+fresh source export -> disposable restore -> read-only parity verifier
+-> direct-owner migrations -> role/grant bootstrap -> full off-host backup
+-> independent restore drill -> controlled runtime cutover -> exact acceptance
+```
+
+Run the read-only parity verifier only with direct owner URLs supplied through
+the invoking environment; it rejects Neon/pooler targets and prints no rows,
+URLs, credentials, or aggregate values:
+
+```bash
+MIGRATION_SOURCE_DATABASE_URL_DIRECT='<source-direct-url>' \
+MIGRATION_TARGET_DATABASE_URL_DIRECT='<target-direct-url>' \
+pnpm db:verify-self-hosted-migration \
+  -- --allow-target-host <exact-vps-database-hostname>
+```
+
+Never expose raw PostgreSQL, pgAdmin, owner credentials, or a password-only
+storefront listener. The existing forced-command deploy identity is not a
+provisioning account; use a separately authorized root-controlled path. An
+encrypted, independent off-host pgBackRest repository and a successful restore
+drill are required before changing either production runtime connection.
 
 ## Production acceptance
 

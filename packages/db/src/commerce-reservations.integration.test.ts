@@ -5,6 +5,7 @@ import { and, count, eq } from "drizzle-orm";
 import {
   checkoutSessions,
   commerceCarts,
+  commerceOrderItems,
   commerceOrders,
   locations,
   productPublications,
@@ -87,11 +88,22 @@ async function seedSellableVariant(quantityOnHand = 10): Promise<Readonly<{
     accessTokenDigest: `access-${suffix}`,
     checkoutSessionId: checkout.id,
     guestEmail: "reservation-test@example.invalid",
+    paymentState: "prepaid_pending",
     subtotalAmountMinor: 20_000,
     totalAmountMinor: 20_000,
     shippingAddressSnapshot: { postalCode: "400001" },
   }).returning({ id: commerceOrders.id });
   assert.ok(order);
+  await db.insert(commerceOrderItems).values({
+    orderId: order.id,
+    variantId: variant.id,
+    productNameSnapshot: `Reservation test ${suffix}`,
+    skuSnapshot: `RES-${suffix}`,
+    sizeMlSnapshot: 100,
+    unitPriceAmountMinor: 20_000,
+    quantity: 2,
+    lineTotalAmountMinor: 40_000,
+  });
   await db.insert(locations).values({ code: "MAIN", name: "Main" }).onConflictDoNothing();
   const { receiveOilLot } = await import("./oil-inventory");
   await receiveOilLot({
@@ -119,7 +131,7 @@ describe("commerce reservation state transitions", () => {
 
   it("reserves and consumes stock exactly once across retries", async () => {
     const seeded = await seedSellableVariant();
-    const expiry = new Date(Date.now() + 40 * 60_000);
+    const expiry = new Date(Date.now() + 30 * 60_000);
     const firstReservation = await reserveCheckoutStock({
       checkoutSessionId: seeded.checkoutSessionId,
       items: [{ variantId: seeded.variantId, quantity: 2 }],
@@ -162,7 +174,7 @@ describe("commerce reservation state transitions", () => {
     await reserveCheckoutStock({
       checkoutSessionId: seeded.checkoutSessionId,
       items: [{ variantId: seeded.variantId, quantity: 3 }],
-      expiresAt: new Date(Date.now() + 40 * 60_000),
+      expiresAt: new Date(Date.now() + 30 * 60_000),
     });
     const first = await releaseCheckoutReservations({
       checkoutSessionId: seeded.checkoutSessionId,
@@ -187,7 +199,7 @@ describe("commerce reservation state transitions", () => {
     await reserveCheckoutStock({
       checkoutSessionId: seeded.checkoutSessionId,
       items: [{ variantId: seeded.variantId, quantity: 2 }],
-      expiresAt: new Date(Date.now() + 60_000),
+      expiresAt: new Date(Date.now() + 30 * 60_000),
     });
     await db.update(checkoutSessions).set({ expiresAt: expiredAt })
       .where(eq(checkoutSessions.id, seeded.checkoutSessionId));

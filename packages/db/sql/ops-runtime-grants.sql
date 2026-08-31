@@ -11,7 +11,7 @@ BEGIN;
 REVOKE ALL PRIVILEGES ON TABLE
   "two_factor", "staff_invitation_events", "ops_audit_events",
   "inquiry_notification_outbox", "notification_outbox", "shipping_serviceability",
-  "oil_lots", "oil_movements", "ops_sales"
+  "oil_lots", "oil_movements", "oil_reservations", "ops_sales", "runtime_capability_roles"
 FROM :"runtime_role";
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
@@ -49,7 +49,9 @@ WITH matrix(table_name, allowed) AS (
     ('ops_audit_events', ARRAY['SELECT','INSERT']),
     ('oil_lots', ARRAY['SELECT','INSERT','UPDATE']),
     ('oil_movements', ARRAY['SELECT','INSERT']),
-    ('ops_sales', ARRAY['SELECT','INSERT'])
+    ('oil_reservations', ARRAY[]::text[]),
+    ('ops_sales', ARRAY['SELECT','INSERT']),
+    ('runtime_capability_roles', ARRAY[]::text[])
 ), privileges(privilege) AS (
   VALUES ('SELECT'), ('INSERT'), ('UPDATE'), ('DELETE'), ('TRUNCATE'),
          ('REFERENCES'), ('TRIGGER')
