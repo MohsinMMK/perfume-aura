@@ -27,8 +27,10 @@ Storefront and ops continue to share Neon PostgreSQL. No database or migration
 moved to the VPS. Their auth tables, secrets, cookies, origins, and recovery
 flows remain separate. The Neon owner and restricted runtime credentials and
 the storefront auth/maintenance secrets were rotated on 2026-08-14 after an
-operator-output exposure; current values exist only in approved secret stores
-and ignored local environment files.
+operator-output exposure. The Neon owner password was rotated again on
+2026-08-31 after a disposable-branch CLI parser echoed its inherited owner
+credential; the proof branch was deleted, temporary API keys were revoked, and
+the replacement owner value exists only in the ignored local owner environment.
 
 ## Approved self-hosted PostgreSQL migration — not cut over
 
@@ -36,8 +38,10 @@ The chosen target is version-controlled under
 [`deploy/postgres-vps/`](../deploy/postgres-vps/): PostgreSQL 17.10, separate
 transaction poolers for ops and storefront, mutual TLS plus SCRAM on the sole
 public storefront pooler, root-controlled loopback-only owner/pgAdmin paths,
-and encrypted off-host pgBackRest recovery. The current VPS service, Hostinger
-configuration, DNS, Neon source, and release flags remain unchanged.
+and encrypted off-host pgBackRest recovery. The self-hosted database target,
+Hostinger database configuration, DNS, Neon source, and release flags remain
+unchanged; the separately deployed existing Ops application continues to use
+Neon.
 
 On 2026-08-31, a fresh logical export of the Neon source restored into an
 ephemeral local PostgreSQL 17 target without source writes. The read-only

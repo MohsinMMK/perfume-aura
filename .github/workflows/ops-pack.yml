@@ -570,7 +570,7 @@ jobs:
         run: |
           set -euo pipefail
           node scripts/verify-production-deploy.mjs "$GITHUB_SHA" \
-            --target both \
+            --target ops \
             --public-surface storefront \
             --public-base https://perfumeaura.com \
             --www-base https://www.perfumeaura.com \
