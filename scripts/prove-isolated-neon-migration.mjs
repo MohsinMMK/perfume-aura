@@ -103,7 +103,25 @@ export function parseArgs(argv) {
   if (options.storefrontRole && !ROLE_NAME.test(options.storefrontRole)) {
     throw new Error("invalid --storefront-role");
   }
+  if (!options.selfTest) {
+    assertGrantRoles(options);
+  }
   return options;
+}
+
+export function assertGrantRoles(options) {
+  if (options.skipGrants) {
+    return;
+  }
+  if (!options.opsRole || !options.storefrontRole) {
+    throw new Error("pass --ops-role and --storefront-role, or --skip-grants");
+  }
+  if (!ROLE_NAME.test(options.opsRole) || !ROLE_NAME.test(options.storefrontRole)) {
+    throw new Error("invalid runtime role");
+  }
+  if (options.opsRole === options.storefrontRole) {
+    throw new Error("ops and storefront runtime roles must be distinct");
+  }
 }
 
 export function hasOilLotProvenanceColumns(columns) {
@@ -340,6 +358,7 @@ async function querySafeCounts(client) {
 }
 
 export async function proveIsolatedNeonMigration(options, deps = {}) {
+  assertGrantRoles(options);
   const apiKey = (deps.requireApiKey ?? requireApiKey)();
   const now = deps.now ?? (() => new Date());
   const fetchImpl = deps.fetchImpl;
@@ -419,9 +438,6 @@ export async function proveIsolatedNeonMigration(options, deps = {}) {
       throw new Error("isolated branch is missing expected 0016 oil-lot provenance constraints");
     }
     if (!options.skipGrants) {
-      if (!options.opsRole || !options.storefrontRole) {
-        throw new Error("pass --ops-role and --storefront-role, or --skip-grants");
-      }
       await applyGrantScript(
         client,
         path.join(REPO_ROOT, "packages/db/sql/ops-runtime-grants.sql"),
@@ -515,6 +531,33 @@ async function selfTest() {
   );
   assert.throws(() => parseArgs(["--expires-hours", "0"]), /expires-hours/);
   assert.throws(() => parseArgs(["--ops-role", "bad-role;drop"]), /invalid --ops-role/);
+  assert.throws(
+    () => parseArgs(["--ops-role", "shared_runtime", "--storefront-role", "shared_runtime"]),
+    /must be distinct/,
+  );
+  await assert.rejects(
+    () =>
+      proveIsolatedNeonMigration(
+        {
+          projectId: "project-shared-role",
+          parent: "main",
+          migrationTag: "0016_even_silk_fever",
+          expiresHours: 24,
+          opsRole: "shared_runtime",
+          storefrontRole: "shared_runtime",
+          skipGrants: false,
+        },
+        {
+          requireApiKey: () => {
+            throw new Error("must not request an API key");
+          },
+          fetchImpl: async () => {
+            throw new Error("must not make a Neon request");
+          },
+        },
+      ),
+    /must be distinct/,
+  );
   const paginatedRequests = [];
   const paginatedResult = await proveIsolatedNeonMigration(
     {
