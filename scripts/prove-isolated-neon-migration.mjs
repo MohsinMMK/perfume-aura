@@ -145,12 +145,16 @@ export function hasNonnegativeOilLotCostConstraint(definition) {
 }
 
 export function selectProductionParentBranch(project, branches, parent) {
-  const defaultBranchId = project?.default_branch_id;
-  if (typeof defaultBranchId !== "string" || defaultBranchId.length === 0) {
-    throw new Error("Neon project is missing a default production branch");
-  }
   if (!Array.isArray(branches)) {
     throw new Error("Neon branch list is unavailable");
+  }
+  const projectDefaultBranchId = project?.default_branch_id;
+  const defaultBranchId =
+    typeof projectDefaultBranchId === "string" && projectDefaultBranchId.length > 0
+      ? projectDefaultBranchId
+      : branches.find((branch) => branch?.default === true)?.id;
+  if (typeof defaultBranchId !== "string" || defaultBranchId.length === 0) {
+    throw new Error("Neon project is missing a default production branch");
   }
   const selected = branches.find(
     (branch) => branch?.id === parent || branch?.name === parent,
@@ -516,6 +520,17 @@ async function selfTest() {
       "main",
     ),
     { id: "br-production", name: "main" },
+  );
+  assert.deepEqual(
+    selectProductionParentBranch(
+      {},
+      [
+        { id: "br-production", name: "main", default: true },
+        { id: "br-preview", name: "preview", default: false },
+      ],
+      "main",
+    ),
+    { id: "br-production", name: "main", default: true },
   );
   assert.throws(
     () =>
