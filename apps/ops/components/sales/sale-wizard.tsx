@@ -80,6 +80,7 @@ export function SaleWizard({
     "cash" | "bank_transfer" | "card" | "other"
   >("cash");
   const [paymentReference, setPaymentReference] = useState("");
+  const [paymentNote, setPaymentNote] = useState("");
   const idempotencyKeyRef = useRef(crypto.randomUUID());
   const paymentKeyRef = useRef(crypto.randomUUID());
 
@@ -166,6 +167,7 @@ export function SaleWizard({
           canRecordPayment && recordPayment ? preview.totalCents / 100 : undefined,
         paymentMethod,
         paymentReference,
+        paymentNote,
         paymentIdempotencyKey: paymentKeyRef.current,
         paidAt: new Date().toISOString(),
       });
@@ -262,6 +264,7 @@ export function SaleWizard({
                     setNewCustomer((current) => ({ ...current, name: value }))
                   }
                   error={fieldErrors.name?.[0]}
+                  inputClassName="min-h-11"
                 />
                 <FormField
                   label="Email"
@@ -273,6 +276,7 @@ export function SaleWizard({
                     setNewCustomer((current) => ({ ...current, email: value }))
                   }
                   error={fieldErrors.email?.[0]}
+                  inputClassName="min-h-11"
                 />
                 <FormField
                   label="Phone"
@@ -283,6 +287,7 @@ export function SaleWizard({
                     setNewCustomer((current) => ({ ...current, phone: value }))
                   }
                   error={fieldErrors.phone?.[0]}
+                  inputClassName="min-h-11"
                 />
                 <FormField
                   label="City"
@@ -292,6 +297,7 @@ export function SaleWizard({
                     setNewCustomer((current) => ({ ...current, city: value }))
                   }
                   error={fieldErrors.city?.[0]}
+                  inputClassName="min-h-11"
                 />
                 <FormField
                   label="Address"
@@ -303,6 +309,7 @@ export function SaleWizard({
                     setNewCustomer((current) => ({ ...current, addressLine: value }))
                   }
                   error={fieldErrors.addressLine?.[0]}
+                  inputClassName="min-h-11"
                 />
                 <TextAreaField
                   label="Customer note"
@@ -487,6 +494,16 @@ export function SaleWizard({
                       value={paymentReference}
                       onChange={setPaymentReference}
                       error={fieldErrors.paymentReference?.[0]}
+                      inputClassName="min-h-11"
+                    />
+                    <TextAreaField
+                      label="Payment note"
+                      name="paymentNote"
+                      className="sm:col-span-2"
+                      rows={2}
+                      value={paymentNote}
+                      onChange={setPaymentNote}
+                      error={fieldErrors.paymentNote?.[0]}
                     />
                   </div>
                 ) : null}

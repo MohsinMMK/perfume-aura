@@ -146,6 +146,62 @@ export function selectProductionParentBranch(project, branches, parent) {
   return selected;
 }
 
+function nextBranchPagePath(projectId, next) {
+  const basePath = `/projects/${encodeURIComponent(projectId)}/branches`;
+  const nextValue = typeof next === "string" ? next.trim() : "";
+  if (!nextValue) {
+    return null;
+  }
+
+  if (!nextValue.startsWith("?") && !nextValue.startsWith("/") && !/^https?:\/\//i.test(nextValue)) {
+    return `${basePath}?cursor=${encodeURIComponent(nextValue)}`;
+  }
+
+  const apiUrl = new URL(NEON_API);
+  const expectedPath = `${apiUrl.pathname}${basePath}`;
+  const nextUrl = nextValue.startsWith("?")
+    ? new URL(`${NEON_API}${basePath}${nextValue}`)
+    : new URL(nextValue, `${NEON_API}/`);
+  if (nextUrl.origin !== apiUrl.origin || nextUrl.pathname !== expectedPath) {
+    throw new Error("Neon branch pagination next link is outside the requested project");
+  }
+  return `${basePath}${nextUrl.search}`;
+}
+
+export async function listProjectBranches(request, projectId) {
+  const branches = [];
+  const visitedPagePaths = new Set();
+  let next = null;
+
+  for (;;) {
+    const pagePath =
+      nextBranchPagePath(projectId, next) ??
+      `/projects/${encodeURIComponent(projectId)}/branches`;
+    if (visitedPagePaths.has(pagePath)) {
+      throw new Error("Neon branch pagination returned a repeated page");
+    }
+    visitedPagePaths.add(pagePath);
+
+    const payload = await request("GET", pagePath);
+    if (!Array.isArray(payload?.branches)) {
+      throw new Error("Neon branch list is unavailable");
+    }
+    branches.push(...payload.branches);
+
+    const nextPage = payload?.pagination?.next;
+    if (nextPage === null || nextPage === undefined) {
+      return branches;
+    }
+    if (typeof nextPage !== "string") {
+      throw new Error("Neon branch pagination next cursor is invalid");
+    }
+    if (nextPage.trim() === "") {
+      return branches;
+    }
+    next = nextPage;
+  }
+}
+
 function readLinkedProjectId() {
   try {
     const raw = JSON.parse(readFileSync(path.join(REPO_ROOT, ".neon"), "utf8"));
@@ -299,10 +355,10 @@ export async function proveIsolatedNeonMigration(options, deps = {}) {
     : (method, pathname, body) => neonRequest(apiKey, method, pathname, body);
 
   const projectPayload = await request("GET", `/projects/${options.projectId}`);
-  const branchPayload = await request("GET", `/projects/${options.projectId}/branches`);
+  const branches = await listProjectBranches(request, options.projectId);
   const parentBranch = selectProductionParentBranch(
     projectPayload?.project,
-    branchPayload?.branches,
+    branches,
     options.parent,
   );
   process.stdout.write(`isolated parent ${parentBranch.name} id=${parentBranch.id}\n`);
@@ -388,7 +444,7 @@ export async function proveIsolatedNeonMigration(options, deps = {}) {
   return { branchName, branchId };
 }
 
-function selfTest() {
+async function selfTest() {
   assert.equal(
     redactSecrets("postgresql://owner:secret@ep-gentle-scene-azcgwd0x.c-3.ap-southeast-1.aws.neon.tech/neondb"),
     "postgresql://redacted",
@@ -459,6 +515,78 @@ function selfTest() {
   );
   assert.throws(() => parseArgs(["--expires-hours", "0"]), /expires-hours/);
   assert.throws(() => parseArgs(["--ops-role", "bad-role;drop"]), /invalid --ops-role/);
+  const paginatedRequests = [];
+  const paginatedResult = await proveIsolatedNeonMigration(
+    {
+      projectId: "project-pagination",
+      parent: "main",
+      migrationTag: "0016_even_silk_fever",
+      expiresHours: 24,
+      opsRole: null,
+      storefrontRole: null,
+      skipGrants: true,
+    },
+    {
+      requireApiKey: () => "self-test-key",
+      now: () => new Date("2026-08-31T00:00:00.000Z"),
+      skipMigrate: true,
+      fetchImpl: async (method, pathname, body) => {
+        paginatedRequests.push({ method, pathname, body });
+        if (method === "GET" && pathname === "/projects/project-pagination") {
+          return { project: { default_branch_id: "br-production" } };
+        }
+        if (method === "GET" && pathname === "/projects/project-pagination/branches") {
+          return {
+            branches: [{ id: "br-preview", name: "preview" }],
+            pagination: { next: "page-two-cursor" },
+          };
+        }
+        if (
+          method === "GET" &&
+          pathname === "/projects/project-pagination/branches?cursor=page-two-cursor"
+        ) {
+          return {
+            branches: [{ id: "br-production", name: "main" }],
+            pagination: {},
+          };
+        }
+        if (method === "POST" && pathname === "/projects/project-pagination/branches") {
+          assert.equal(body?.branch?.parent_id, "br-production");
+          return {
+            branch: { id: "br-isolated" },
+            endpoints: [
+              { host: "ep-isolated-proof-xxxx.c-3.ap-southeast-1.aws.neon.tech" },
+            ],
+          };
+        }
+        if (
+          method === "GET" &&
+          pathname ===
+            "/projects/project-pagination/connection_uri?branch_id=br-isolated&database_name=neondb&pooled=false"
+        ) {
+          return {
+            uri: "postgresql://self-test@ep-isolated-proof-xxxx.c-3.ap-southeast-1.aws.neon.tech/neondb",
+          };
+        }
+        throw new Error(`unexpected self-test Neon request: ${method} ${pathname}`);
+      },
+    },
+  );
+  assert.deepEqual(paginatedResult, {
+    branchName: "release-0016_even_silk_fever-20260831T000",
+    branchId: "br-isolated",
+    host: "ep-isolated-proof-xxxx.c-3.ap-southeast-1.aws.neon.tech",
+  });
+  assert.deepEqual(
+    paginatedRequests.map(({ method, pathname }) => `${method} ${pathname}`),
+    [
+      "GET /projects/project-pagination",
+      "GET /projects/project-pagination/branches",
+      "GET /projects/project-pagination/branches?cursor=page-two-cursor",
+      "POST /projects/project-pagination/branches",
+      "GET /projects/project-pagination/connection_uri?branch_id=br-isolated&database_name=neondb&pooled=false",
+    ],
+  );
   const linked = readLinkedProjectId();
   if (linked) {
     assert.equal(linked, DEFAULT_PROJECT_ID);
@@ -468,12 +596,12 @@ function selfTest() {
 
 async function main(argv) {
   if (argv[0] === "self-test") {
-    selfTest();
+    await selfTest();
     return;
   }
   const options = parseArgs(argv);
   if (options.selfTest) {
-    selfTest();
+    await selfTest();
     return;
   }
   const linked = readLinkedProjectId();

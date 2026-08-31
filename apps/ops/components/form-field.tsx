@@ -23,6 +23,7 @@ type FormFieldProps = {
   error?: string;
   hint?: string;
   className?: string;
+  inputClassName?: string;
   autoComplete?: string;
 };
 
@@ -41,6 +42,7 @@ export function FormField({
   error,
   hint,
   className,
+  inputClassName,
   autoComplete,
 }: FormFieldProps) {
   const fieldId = id ?? name;
@@ -68,6 +70,7 @@ export function FormField({
         step={step}
         autoComplete={autoComplete}
         aria-invalid={error ? true : undefined}
+        className={cn(inputClassName)}
       />
       {error ? (
         <FieldError>{error}</FieldError>

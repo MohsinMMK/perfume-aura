@@ -172,4 +172,44 @@ describe("Phase 05 UI and query contracts", () => {
     assert.match(receiveSource, /name="note"\s+id="receive-note"/s);
     assert.match(adjustSource, /name="note"\s+id="adjust-note"/s);
   });
+
+  it("keeps sale capture controls touch-sized and retains payment notes", async () => {
+    const [fieldSource, saleWizardSource, returnFormSource] = await Promise.all([
+      readFile(resolve(opsRoot, "components/form-field.tsx"), "utf8"),
+      readFile(resolve(opsRoot, "components/sales/sale-wizard.tsx"), "utf8"),
+      readFile(
+        resolve(opsRoot, "components/invoices/receive-return-form.tsx"),
+        "utf8",
+      ),
+    ]);
+    assert.match(fieldSource, /inputClassName\?: string/);
+    assert.match(fieldSource, /className=\{cn\(inputClassName\)\}/);
+
+    const fields = saleWizardSource.match(/<FormField\b[\s\S]*?\/>/g) ?? [];
+    const fieldsByName = new Map(
+      fields.flatMap((field) => {
+        const name = field.match(/name="([^"]+)"/)?.[1];
+        return name ? [[name, field] as const] : [];
+      }),
+    );
+    for (const name of [
+      "name",
+      "email",
+      "phone",
+      "city",
+      "addressLine",
+      "paymentReference",
+    ]) {
+      assert.match(
+        fieldsByName.get(name) ?? "",
+        /inputClassName="min-h-11"/,
+        `${name} needs a 44 px touch target`,
+      );
+    }
+    assert.match(saleWizardSource, /const \[paymentNote, setPaymentNote\] = useState\(""\)/);
+    assert.match(saleWizardSource, /paymentReference,\s*paymentNote,\s*paymentIdempotencyKey:/s);
+    assert.match(saleWizardSource, /label="Payment note"\s+name="paymentNote"/s);
+    assert.match(returnFormSource, /const formElement = event\.currentTarget/);
+    assert.match(returnFormSource, /formElement\.reset\(\)/);
+  });
 });

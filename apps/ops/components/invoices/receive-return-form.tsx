@@ -39,7 +39,8 @@ export function ReceiveReturnForm({
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     idempotencyKeyRef.current ??= crypto.randomUUID();
     setPending(true);
     setError(null);
@@ -61,7 +62,7 @@ export function ReceiveReturnForm({
       }
       idempotencyKeyRef.current = null;
       setSuccess(`Return received. Finished stock is now ${result.data?.quantityAfter ?? 0}.`);
-      event.currentTarget.reset();
+      formElement.reset();
       router.refresh();
     } catch {
       setError("The return could not be saved");
