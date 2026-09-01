@@ -8,6 +8,24 @@ import {
 } from "./database-tls";
 
 const databaseUrl = "postgresql://runtime:password@db.perfumeaura.test:6432/perfume_aura";
+const clientCertificate = `-----BEGIN CERTIFICATE-----
+MIIBjjCCATSgAwIBAgIUTeB2Bv9Mdj+mCcd9JFQhI5/auUowCgYIKoZIzj0EAwIw
+HjEcMBoGA1UEAwwTZGIucGVyZnVtZWF1cmEudGVzdDAeFw0yNjA5MDExODAwMTBa
+Fw0yNjA5MDMxODAwMTBaMB4xHDAaBgNVBAMME2RiLnBlcmZ1bWVhdXJhLnRlc3Qw
+WTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQgkbQ3vs3irSf0t9GIDvzmZ/An+lps
+SYTb+So74XQOjpNIaLePU0jxzBRoU/mHvrs3C81+vZQgkS6Ztdvi2PTJo1AwTjAd
+BgNVHQ4EFgQU6J+JJB1vucUQIOLQvl0bKrlDdGMwHwYDVR0jBBgwFoAU6J+JJB1v
+ucUQIOLQvl0bKrlDdGMwDAYDVR0TAQH/BAIwADAKBggqhkjOPQQDAgNIADBFAiEA
+zOpQGZPan45ZKzm2WR4S10cPylI+n+iysCs5uMzfEMECIADJfOGr0nRlGMeCbdfr
+ifOXSi6r7lKhLgBSP82A+vry
+-----END CERTIFICATE-----
+`;
+const clientPrivateKey = `-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEIBMiYuJaoyhyI+B6LicMfpwP6IHV/jEPwG3T/hDJjFq+oAoGCCqGSM49
+AwEHoUQDQgAEIJG0N77N4q0n9LfRiA785mfwJ/pabEmE2/kqO+F0Do6TSGi3j1NI
+8cwUaFP5h767NwvNfr2UIJEumbXb4tj0yQ==
+-----END EC PRIVATE KEY-----
+`;
 
 function encodePem(pem: string): string {
   return Buffer.from(pem, "utf8").toString("base64");
@@ -17,14 +35,10 @@ function validTlsEnvironment(): NodeJS.ProcessEnv {
   const certificate = rootCertificates[0];
   assert.ok(certificate, "Node.js must provide a root certificate for TLS unit tests");
 
-  const { privateKey } = generateKeyPairSync("ed25519", {
-    privateKeyEncoding: { format: "pem", type: "pkcs8" },
-  });
-
   return {
     [tlsEnvironmentNames.ca]: encodePem(certificate),
-    [tlsEnvironmentNames.certificate]: encodePem(certificate),
-    [tlsEnvironmentNames.key]: encodePem(privateKey),
+    [tlsEnvironmentNames.certificate]: encodePem(clientCertificate),
+    [tlsEnvironmentNames.key]: encodePem(clientPrivateKey),
     [tlsEnvironmentNames.serverName]: "db.perfumeaura.test",
   };
 }
@@ -101,6 +115,29 @@ describe("resolveRuntimeDatabaseTlsOptions", () => {
     assert.throws(
       () => resolveRuntimeDatabaseTlsOptions(databaseUrl, environment),
       /must be a DNS hostname, not an IP address/,
+    );
+  });
+
+  it("rejects a CA certificate or a client certificate with the wrong private key", () => {
+    const caAsClientEnvironment = validTlsEnvironment();
+    const rootCertificate = rootCertificates[0];
+    assert.ok(rootCertificate);
+    caAsClientEnvironment[tlsEnvironmentNames.certificate] = encodePem(rootCertificate);
+
+    assert.throws(
+      () => resolveRuntimeDatabaseTlsOptions(databaseUrl, caAsClientEnvironment),
+      /must begin with an end-entity client certificate/,
+    );
+
+    const mismatchedKeyEnvironment = validTlsEnvironment();
+    const { privateKey } = generateKeyPairSync("ed25519", {
+      privateKeyEncoding: { format: "pem", type: "pkcs8" },
+    });
+    mismatchedKeyEnvironment[tlsEnvironmentNames.key] = encodePem(privateKey);
+
+    assert.throws(
+      () => resolveRuntimeDatabaseTlsOptions(databaseUrl, mismatchedKeyEnvironment),
+      /must form a matching key pair/,
     );
   });
 });

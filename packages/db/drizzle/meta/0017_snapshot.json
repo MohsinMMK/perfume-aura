@@ -1,6 +1,6 @@
 {
-  "id": "f17b554e-9c58-4836-8a21-fb7db37456c9",
-  "prevId": "03c68a79-9d32-4fd5-8efe-1070983b7258",
+  "id": "dd63d889-240e-4652-951d-2e40ed5d712c",
+  "prevId": "f17b554e-9c58-4836-8a21-fb7db37456c9",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -784,6 +784,13 @@
           "primaryKey": false,
           "notNull": true
         },
+        "reserved_quantity_ml": {
+          "name": "reserved_quantity_ml",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
         "kg_bottles": {
           "name": "kg_bottles",
           "type": "integer",
@@ -893,6 +900,10 @@
         "oil_lots_values_check": {
           "name": "oil_lots_values_check",
           "value": "\"oil_lots\".\"kg_bottles\" > 0\n        AND \"oil_lots\".\"received_quantity_ml\" > 0\n        AND \"oil_lots\".\"remaining_quantity_ml\" >= 0\n        AND \"oil_lots\".\"remaining_quantity_ml\" <= \"oil_lots\".\"received_quantity_ml\"\n        AND (\"oil_lots\".\"total_cost_cents\" IS NULL OR \"oil_lots\".\"total_cost_cents\" >= 0)\n        AND \"oil_lots\".\"version\" >= 0"
+        },
+        "oil_lots_reserved_quantity_check": {
+          "name": "oil_lots_reserved_quantity_check",
+          "value": "\"oil_lots\".\"reserved_quantity_ml\" >= 0\n        AND \"oil_lots\".\"reserved_quantity_ml\" <= \"oil_lots\".\"remaining_quantity_ml\""
         }
       },
       "isRLSEnabled": false

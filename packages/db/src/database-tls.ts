@@ -123,6 +123,28 @@ function validatePrivateKeyPem(value: string): string {
   return value.replace(/\r\n/g, "\n");
 }
 
+function validateClientCertificateKeyPair(
+  certificatePem: string,
+  privateKeyPem: string,
+): void {
+  const certificateBlocks = parsePemBlocks(
+    certificatePem,
+    tlsEnvironmentNames.certificate,
+  );
+  const leafCertificate = new X509Certificate(certificateBlocks[0].value);
+  if (leafCertificate.ca) {
+    throw tlsConfigurationError(
+      `${tlsEnvironmentNames.certificate} must begin with an end-entity client certificate`,
+    );
+  }
+
+  if (!leafCertificate.checkPrivateKey(createPrivateKey(privateKeyPem))) {
+    throw tlsConfigurationError(
+      `${tlsEnvironmentNames.certificate} and ${tlsEnvironmentNames.key} must form a matching key pair`,
+    );
+  }
+}
+
 function validateServerName(value: string): string {
   if (isIP(value) !== 0 || value.length > 253 || value.length === 0) {
     throw tlsConfigurationError(
@@ -200,6 +222,15 @@ export function resolveRuntimeDatabaseTlsOptions(
 
   rejectSslUrlParameters(connectionString);
 
+  const validatedCertificate = validateCertificatePem(
+    decodeBase64Pem(certificate, tlsEnvironmentNames.certificate),
+    tlsEnvironmentNames.certificate,
+  );
+  const validatedKey = validatePrivateKeyPem(
+    decodeBase64Pem(key, tlsEnvironmentNames.key),
+  );
+  validateClientCertificateKeyPair(validatedCertificate, validatedKey);
+
   return {
     // PgBouncer speaks the normal PostgreSQL SSLRequest protocol. Set this
     // explicitly so an ambient PGSSLNEGOTIATION value cannot alter the route.
@@ -209,11 +240,8 @@ export function resolveRuntimeDatabaseTlsOptions(
         decodeBase64Pem(ca, tlsEnvironmentNames.ca),
         tlsEnvironmentNames.ca,
       ),
-      cert: validateCertificatePem(
-        decodeBase64Pem(certificate, tlsEnvironmentNames.certificate),
-        tlsEnvironmentNames.certificate,
-      ),
-      key: validatePrivateKeyPem(decodeBase64Pem(key, tlsEnvironmentNames.key)),
+      cert: validatedCertificate,
+      key: validatedKey,
       minVersion: "TLSv1.2",
       rejectUnauthorized: true,
       servername: validateServerName(serverName),

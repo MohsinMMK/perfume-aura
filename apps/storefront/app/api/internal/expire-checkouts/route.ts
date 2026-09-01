@@ -12,6 +12,7 @@ import {
   paymentAttempts,
 } from "@perfume-aura/db";
 import { getCashfreeOrder } from "@/lib/cashfree";
+import { recoverCashfreePaymentBinding } from "@/lib/payment-binding-recovery";
 import { cancelCashfreePaymentAttempt } from "@/lib/payment-finalizer-client";
 
 function authorized(request: NextRequest): boolean {
@@ -32,8 +33,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const now = new Date();
     const candidates = await db.select({
       checkoutSessionId: checkoutSessions.id,
-      checkoutStatus: checkoutSessions.status,
       paymentAttemptId: paymentAttempts.id,
+      orderNumber: commerceOrders.orderNumber,
+      amountMinor: paymentAttempts.amountMinor,
       providerOrderId: paymentAttempts.providerOrderId,
     }).from(checkoutSessions)
       .innerJoin(commerceOrders, eq(commerceOrders.checkoutSessionId, checkoutSessions.id))
@@ -52,16 +54,49 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     let releasedReservationCount = 0;
     let skippedCount = 0;
     for (const candidate of candidates) {
-      if (candidate.checkoutStatus === "payment_pending") {
-        if (!candidate.providerOrderId) {
+      let providerOrderId = candidate.providerOrderId;
+      let recoveredProviderStatus:
+        | "ACTIVE"
+        | "PAID"
+        | "EXPIRED"
+        | "TERMINATED"
+        | "ABSENT"
+        | undefined;
+      if (!providerOrderId) {
+        try {
+          const recovery = await recoverCashfreePaymentBinding({
+            paymentAttemptId: candidate.paymentAttemptId,
+            createdOrderNumber: candidate.orderNumber,
+            expectedAmountMinor: candidate.amountMinor,
+            boundAt: now,
+          });
+          if (recovery.kind === "pending") {
+            skippedCount += 1;
+            continue;
+          }
+          if (recovery.kind === "bound") {
+            providerOrderId = recovery.providerOrderId;
+          }
+          recoveredProviderStatus = recovery.kind === "absent"
+            ? "ABSENT"
+            : recovery.providerStatus;
+        } catch (error) {
+          console.warn("[checkout expiry] provider binding recovery failed", {
+            checkoutSessionId: candidate.checkoutSessionId,
+            name: error instanceof Error ? error.name : "UnknownError",
+          });
           skippedCount += 1;
           continue;
         }
+      }
+      if (providerOrderId || recoveredProviderStatus) {
         try {
-          const providerOrder = await getCashfreeOrder(candidate.providerOrderId);
+          const providerStatus = recoveredProviderStatus ??
+            (providerOrderId ? (await getCashfreeOrder(providerOrderId)).order_status : undefined);
           if (
-            providerOrder.order_status !== "EXPIRED" &&
-            providerOrder.order_status !== "TERMINATED"
+            providerStatus !== "ABSENT" &&
+            providerStatus !== "EXPIRED" &&
+            providerStatus !== "TERMINATED"
           ) {
             skippedCount += 1;
             continue;

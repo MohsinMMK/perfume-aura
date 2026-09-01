@@ -209,20 +209,25 @@ describe("customer commerce runtime grant matrices", () => {
       roleBootstrapScript,
       /"\$trusted_node" "\$migration_runner" migrate --config/,
     );
-    const dependencyTreeGuard = roleBootstrapScript.indexOf(
-      'require_root_owned_nonwritable_dependency_tree "$repo_root"',
-    );
+    const ownerCredentialUse = roleBootstrapScript.match(
+      /export\s+PGPASSWORD=/,
+    )?.index ?? -1;
+    const dependencyTreeGuard = roleBootstrapScript.match(
+      /require_root_owned_nonwritable_dependency_tree\s+"?\$repo_root"?/,
+    )?.index ?? -1;
     assert.ok(
       dependencyTreeGuard >= 0
-        && dependencyTreeGuard < roleBootstrapScript.indexOf('export PGPASSWORD='),
+        && ownerCredentialUse >= 0
+        && dependencyTreeGuard < ownerCredentialUse,
       "bootstrap must verify executable dependencies before exposing the owner credential",
     );
-    const storefrontFinalizerSecretGuard = roleBootstrapScript.indexOf(
-      '"STOREFRONT_RUNTIME_PASSWORD_FILE" "$STOREFRONT_RUNTIME_PASSWORD" \\\n  "STOREFRONT_PAYMENT_FINALIZER_PASSWORD_FILE" "$STOREFRONT_PAYMENT_FINALIZER_PASSWORD"',
-    );
+    const storefrontFinalizerSecretGuard = roleBootstrapScript.match(
+      /"STOREFRONT_RUNTIME_PASSWORD_FILE"\s+"\$STOREFRONT_RUNTIME_PASSWORD"\s+\\?\s+"STOREFRONT_PAYMENT_FINALIZER_PASSWORD_FILE"\s+"\$STOREFRONT_PAYMENT_FINALIZER_PASSWORD"/,
+    )?.index ?? -1;
     assert.ok(
       storefrontFinalizerSecretGuard >= 0
-        && storefrontFinalizerSecretGuard < roleBootstrapScript.indexOf('export PGPASSWORD='),
+        && ownerCredentialUse >= 0
+        && storefrontFinalizerSecretGuard < ownerCredentialUse,
       "bootstrap must reject a shared storefront/finalizer password before it can use database credentials",
     );
     assert.match(roleBootstrapScript, /validate_runtime_principal_ownership/);

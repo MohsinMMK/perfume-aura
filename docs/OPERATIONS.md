@@ -321,9 +321,9 @@ Migration `0016_even_silk_fever` adds oil-lot procurement provenance. Pass its
 tag explicitly to the proof command; the script resolves the requested parent
 to the Neon default production branch, then requires all four provenance
 columns and the non-negative optional-cost constraint after migration. Reapply
-both grant scripts after the owner apply: the storefront role keeps only the
-column-level oil access required to settle FIFO consumption and cannot read
-supplier, cost, received-date, or note fields.
+the reviewed grant scripts after the owner apply. The normal storefront role
+has no direct oil-lot write access; payment settlement uses the separate
+table-grant-free finalizer role through the reviewed settlement routines.
 
 ## Migrations and runtime grants
 
