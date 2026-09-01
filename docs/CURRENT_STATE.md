@@ -96,7 +96,7 @@ Repository `main` is now exact source
 self-hosted PostgreSQL preparation and migration `0017_storefront_sale_settlement`.
 Its workflow run
 [`33550129391`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33550129391)
-passed quality, all 110 disposable-PostgreSQL integration tests, CodeQL, and
+passed quality, all 110 disposable-PostgreSQL integration tests, and
 verified packaging, then intentionally failed the production database-owner
 gate. Both runtime deployments stayed skipped. Production remains on Neon,
 migration `0017` has not been applied there, and both live runtimes therefore
