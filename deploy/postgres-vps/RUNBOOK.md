@@ -155,18 +155,37 @@ write. Enable the supplied timer only after both succeed:
 ```bash
 docker compose --env-file /etc/perfume-aura-postgres/compose.env -f /srv/perfume-aura/deploy/postgres-vps/compose.yaml exec -T --user postgres postgres pgbackrest --config=/run/secrets/pgbackrest_config --stanza=perfume_aura backup --type=full
 docker compose --env-file /etc/perfume-aura-postgres/compose.env -f /srv/perfume-aura/deploy/postgres-vps/compose.yaml exec -T --user postgres postgres pgbackrest --config=/run/secrets/pgbackrest_config --stanza=perfume_aura info
+docker compose --env-file /etc/perfume-aura-postgres/compose.env -f /srv/perfume-aura/deploy/postgres-vps/compose.yaml exec -T --user postgres postgres sh -ceu 'psql --set=ON_ERROR_STOP=1 --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" -c "CREATE SCHEMA IF NOT EXISTS backup_rehearsal; CREATE TABLE IF NOT EXISTS backup_rehearsal.probe (marker text PRIMARY KEY, written_at timestamptz NOT NULL DEFAULT now()); INSERT INTO backup_rehearsal.probe (marker) VALUES ('\''after-full-before-diff'\'') ON CONFLICT (marker) DO UPDATE SET written_at = now();"'
+docker compose --env-file /etc/perfume-aura-postgres/compose.env -f /srv/perfume-aura/deploy/postgres-vps/compose.yaml exec -T --user postgres postgres pgbackrest --config=/run/secrets/pgbackrest_config --stanza=perfume_aura backup --type=diff
+docker compose --env-file /etc/perfume-aura-postgres/compose.env -f /srv/perfume-aura/deploy/postgres-vps/compose.yaml exec -T --user postgres postgres pgbackrest --config=/run/secrets/pgbackrest_config --stanza=perfume_aura info
 install -o root -g root -m 0644 /srv/perfume-aura/deploy/postgres-vps/systemd/perfume-aura-postgres-backup.service /etc/systemd/system/perfume-aura-postgres-backup.service
 install -o root -g root -m 0644 /srv/perfume-aura/deploy/postgres-vps/systemd/perfume-aura-postgres-backup.timer /etc/systemd/system/perfume-aura-postgres-backup.timer
 install -o root -g root -m 0644 /srv/perfume-aura/deploy/postgres-vps/systemd/perfume-aura-postgres-full-backup.service /etc/systemd/system/perfume-aura-postgres-full-backup.service
 install -o root -g root -m 0644 /srv/perfume-aura/deploy/postgres-vps/systemd/perfume-aura-postgres-full-backup.timer /etc/systemd/system/perfume-aura-postgres-full-backup.timer
 systemctl daemon-reload
+if systemctl is-enabled --quiet NetworkManager.service; then
+  systemctl enable NetworkManager-wait-online.service
+elif systemctl is-enabled --quiet systemd-networkd.service; then
+  systemctl enable systemd-networkd-wait-online.service
+else
+  echo "ERROR: enable the host network manager's wait-online unit before backup timers" >&2
+  exit 1
+fi
 systemctl enable --now perfume-aura-postgres-backup.timer perfume-aura-postgres-full-backup.timer
 systemctl list-timers 'perfume-aura-postgres*-backup.timer'
+docker compose --env-file /etc/perfume-aura-postgres/compose.env -f /srv/perfume-aura/deploy/postgres-vps/compose.yaml exec -T --user postgres postgres sh -ceu 'psql --set=ON_ERROR_STOP=1 --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --command="SELECT archived_count, failed_count, last_archived_time, last_failed_time FROM pg_stat_archiver"'
+postgres_data_mount="$(docker volume inspect perfume-aura-postgres-data --format '{{ .Mountpoint }}')"
+test -n "$postgres_data_mount"
+df -h "$postgres_data_mount" /var/lib/docker
 ```
 
 The differential timer runs Monday through Saturday; the full timer runs Sunday
 at the same UTC time. Both backup commands take the same bounded lock so a
 delayed persistent timer cannot run an overlapping full and differential backup.
+Require `pg_stat_archiver.failed_count = 0` on the fresh rehearsal target and
+record both the PostgreSQL data-volume and Docker-filesystem free space. Repeat
+these two checks throughout load rehearsal and the controlled cutover; any
+increase in `failed_count` or exhausted-space trajectory stops the window.
 
 Restore into a separate disposable volume or VPS before production. Stop only
 the disposable target, run pgBackRest restore with its exact target config, and
@@ -207,10 +226,14 @@ operations workflow. Record no customer data in the evidence.
    migration journal, row-count summaries, foreign-key integrity, sequence
    positions, and role separation without printing customer data.
 5. Take a fresh pgBackRest full backup and repeat `check` before changing either
-   runtime connection setting.
-6. Update the root-owned ops secret store to the private pooler URL. Update the
-   Hostinger storefront environment to the mTLS external pooler URL and its
-   client certificate material through the owning provider mechanism.
+   runtime connection setting. Record `pg_stat_archiver` again, require its
+   `failed_count` not to have increased from the accepted rehearsal value, and
+   confirm the PostgreSQL data volume and Docker filesystem retain the reviewed
+   free-space margin.
+6. Update the root-owned ops secret store to the private pooler URL. Through the
+   owning Hostinger provider mechanism, switch storefront `DATABASE_URL` and
+   `STOREFRONT_PAYMENT_FINALIZER_DATABASE_URL` together to their distinct
+   restricted mTLS pooler URLs and apply the shared client certificate material.
 7. Deploy both exact application artifacts. Verify readiness, unauthenticated
    session behavior, ops login, stock/oil actions, storefront public pages,
    release locks, and a real static asset. Keep commerce and staff flags closed.
@@ -219,11 +242,12 @@ operations workflow. Record no customer data in the evidence.
 
 ## 6. Rollback
 
-If either runtime, grants, backup proof, or browser acceptance fails, return
-only the affected application connection setting to Neon, redeploy the prior
-known-good application artifact, and re-verify. Do not delete the VPS data
-volume, run destructive Docker commands, or alter the source database during
-rollback.
+If either runtime, grants, backup proof, or browser acceptance fails, return the
+affected application connection setting to Neon, redeploy the prior known-good
+application artifact, and re-verify. The storefront `DATABASE_URL` and
+`STOREFRONT_PAYMENT_FINALIZER_DATABASE_URL` must always switch or roll back as
+one unit. Do not delete the VPS data volume, run destructive Docker commands,
+or alter the source database during rollback.
 
 ## 7. Private pgAdmin access
 

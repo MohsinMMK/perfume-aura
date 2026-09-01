@@ -285,7 +285,7 @@ BEGIN
 
     IF v_variant.quantity > v_variant.quantity_on_hand - v_variant.qty_reserved THEN
       RAISE EXCEPTION USING
-        ERRCODE = '55000',
+        ERRCODE = 'P1001',
         MESSAGE = 'Insufficient available stock for a reserved variant';
     END IF;
   END LOOP;
@@ -329,7 +329,7 @@ BEGIN
 
     IF v_available_oil_ml < v_oil_demand.required_ml THEN
       RAISE EXCEPTION USING
-        ERRCODE = '55000',
+        ERRCODE = 'P1002',
         MESSAGE = 'Insufficient oil for the checkout reservation';
     END IF;
 

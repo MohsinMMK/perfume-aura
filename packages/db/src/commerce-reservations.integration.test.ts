@@ -16,6 +16,7 @@ import {
   variantPrices,
 } from "./schema";
 import { requireDisposableTestDatabaseUrl } from "./test-database-guard";
+import { DomainError } from "./domain-errors";
 
 const testDatabaseUrl = requireDisposableTestDatabaseUrl();
 process.env.DATABASE_URL = testDatabaseUrl;
@@ -191,6 +192,30 @@ describe("commerce reservation state transitions", () => {
       qtyReserved: productVariants.qtyReserved,
     }).from(productVariants).where(eq(productVariants.id, seeded.variantId));
     assert.deepEqual(variant, { quantityOnHand: 10, qtyReserved: 0 });
+  });
+
+  it("returns stable shortage codes without parsing database messages", async () => {
+    const stockShortage = await seedSellableVariant(1);
+    await assert.rejects(
+      () => reserveCheckoutStock({
+        checkoutSessionId: stockShortage.checkoutSessionId,
+        items: [{ variantId: stockShortage.variantId, quantity: 2 }],
+        expiresAt: new Date(Date.now() + 30 * 60_000),
+      }),
+      (error: unknown) =>
+        error instanceof DomainError && error.code === "INSUFFICIENT_STOCK",
+    );
+
+    const oilShortage = await seedSellableVariant(30);
+    await assert.rejects(
+      () => reserveCheckoutStock({
+        checkoutSessionId: oilShortage.checkoutSessionId,
+        items: [{ variantId: oilShortage.variantId, quantity: 21 }],
+        expiresAt: new Date(Date.now() + 30 * 60_000),
+      }),
+      (error: unknown) =>
+        error instanceof DomainError && error.code === "INSUFFICIENT_OIL",
+    );
   });
 
   it("aborts expiry when the reserved balance is inconsistent", async () => {

@@ -99,9 +99,9 @@ function normalizedRoutineError(error: unknown): DomainError {
     ? "INVALID_INPUT"
     : state === "P0002"
       ? "NOT_FOUND"
-      : message.startsWith("Insufficient oil")
+      : state === "P1002"
         ? "INSUFFICIENT_OIL"
-        : message.startsWith("Insufficient available stock")
+        : state === "P1001"
           ? "INSUFFICIENT_STOCK"
           : "INVALID_STATE";
   return new DomainError(code, message, { cause: error });

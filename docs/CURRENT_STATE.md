@@ -66,13 +66,14 @@ Docker 29.1.3/Compose 2.40.3 and a non-interactive sudo-capable operator, but
 has no `/srv/perfume-aura` checkout, target Compose project, PostgreSQL/pooler
 containers, target configuration, systemd backup units, or pgBackRest
 repository configuration. The unrelated existing Ops stack at
-`/srv/khanect/stacks/perfume-aura-ops` remains untouched. Live cutover is now
-blocked only by the missing independently managed encrypted off-VPS pgBackRest
-repository material and the authenticated Hostinger environment-variable update
-for both restricted storefront URLs plus their mutual-TLS connection material.
-Do not change either runtime `DATABASE_URL`, open port 6432, or merge a
-target-runtime release until those gates, an on-VPS restore drill, and exact
-post-cutover acceptance pass.
+`/srv/khanect/stacks/perfume-aura-ops` remains untouched. Pre-cutover remains
+blocked by the missing independently managed encrypted off-VPS pgBackRest
+repository material, a successful on-VPS restore drill, and an authenticated
+Hostinger update path for both restricted storefront URLs plus their mutual-TLS
+connection material. Do not change either runtime `DATABASE_URL`, open port
+6432, or merge a target-runtime release until every pre-cutover gate passes.
+After cutover, an exact acceptance pass is required to close the migration
+window; it is not a prerequisite that can run before the connection switch.
 
 ## Exact releases and automation
 

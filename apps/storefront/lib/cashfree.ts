@@ -25,6 +25,16 @@ export type CashfreeConfiguration = Readonly<{
   clientSecret: string;
 }>;
 
+export class CashfreeRequestError extends Error {
+  readonly status: number;
+
+  constructor(status: number) {
+    super(`Cashfree request failed with status ${status}`);
+    this.name = "CashfreeRequestError";
+    this.status = status;
+  }
+}
+
 export function resolveCashfreeConfiguration(
   environment: CashfreeEnvironment = process.env,
 ): CashfreeConfiguration {
@@ -97,7 +107,7 @@ async function cashfreeRequest(
   });
   const payload = await response.json().catch(() => undefined);
   if (!response.ok) {
-    throw new Error(`Cashfree request failed with status ${response.status}`);
+    throw new CashfreeRequestError(response.status);
   }
   return payload;
 }

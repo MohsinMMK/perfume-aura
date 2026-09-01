@@ -129,11 +129,19 @@ const STOCK_AGGREGATES_SQL = `
     ) AS stock_reference_orphans
 `;
 
-const OIL_AGGREGATES_SQL = `
+function oilAggregatesSql(hasReservedQuantityMl) {
+  const reservedQuantityAggregate = hasReservedQuantityMl
+    ? "(SELECT coalesce(sum(reserved_quantity_ml), 0)::text FROM public.oil_lots)"
+    : "'0'::text";
+  const reservedQuantityViolation = hasReservedQuantityMl
+    ? "OR reserved_quantity_ml < 0 OR reserved_quantity_ml > remaining_quantity_ml"
+    : "";
+  return `
   SELECT
     (SELECT count(*)::text FROM public.oil_lots) AS oil_lots,
     (SELECT coalesce(sum(received_quantity_ml), 0)::text FROM public.oil_lots) AS oil_received_ml_total,
     (SELECT coalesce(sum(remaining_quantity_ml), 0)::text FROM public.oil_lots) AS oil_remaining_ml_total,
+    ${reservedQuantityAggregate} AS oil_reserved_ml_total,
     (SELECT coalesce(sum(kg_bottles), 0)::text FROM public.oil_lots) AS oil_kg_bottles_total,
     (SELECT count(*)::text FROM public.oil_movements) AS oil_movements,
     (SELECT coalesce(sum(quantity_delta_ml), 0)::text FROM public.oil_movements) AS oil_delta_ml_total,
@@ -147,6 +155,7 @@ const OIL_AGGREGATES_SQL = `
       WHERE received_quantity_ml <= 0
         OR remaining_quantity_ml < 0
         OR remaining_quantity_ml > received_quantity_ml
+        ${reservedQuantityViolation}
         OR kg_bottles <= 0
         OR version < 0
     ) AS oil_lot_value_violations,
@@ -163,6 +172,7 @@ const OIL_AGGREGATES_SQL = `
       WHERE lot_row.id IS NULL OR product_row.id IS NULL
     ) AS oil_reference_orphans
 `;
+}
 
 const INVOICE_AGGREGATES_SQL = `
   SELECT
@@ -342,6 +352,15 @@ export function parseDatabaseUrl(value, label) {
   }
   databaseName(url);
   assertDirectDatabaseUrl(url, label);
+  const host = normalizeHostname(url.hostname);
+  if (!isLoopbackHost(host)) {
+    const sslModes = [...url.searchParams.entries()]
+      .filter(([name]) => name.toLowerCase() === "sslmode")
+      .map(([, mode]) => mode.toLowerCase());
+    if (sslModes.length !== 1 || sslModes[0] !== "verify-full") {
+      throw new Error(`${label} must set sslmode=verify-full for a non-loopback host`);
+    }
+  }
   return url;
 }
 
@@ -512,7 +531,19 @@ function assertCriticalTables(tableCounts) {
 async function readCriticalAggregates(client) {
   const auth = await queryFirstRow(client, AUTH_AGGREGATES_SQL);
   const stock = await queryFirstRow(client, STOCK_AGGREGATES_SQL);
-  const oil = await queryFirstRow(client, OIL_AGGREGATES_SQL);
+  const oilReservationColumn = await queryFirstRow(client, `
+    SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'oil_lots'
+        AND column_name = 'reserved_quantity_ml'
+    ) AS has_reserved_quantity_ml
+  `);
+  const oil = await queryFirstRow(
+    client,
+    oilAggregatesSql(oilReservationColumn.has_reserved_quantity_ml === true),
+  );
   const invoices = await queryFirstRow(client, INVOICE_AGGREGATES_SQL);
   return { auth, stock, oil, invoices };
 }
@@ -650,7 +681,7 @@ async function selfTest() {
     "postgresql://redacted [redacted-email]",
   );
   const sourceUrl = parseDatabaseUrl(
-    "postgresql://source_role:secret@source.example.test/perfume_aura",
+    "postgresql://source_role:secret@source.example.test/perfume_aura?sslmode=verify-full",
     SOURCE_URL_ENV,
   );
   const loopbackTarget = parseDatabaseUrl(
@@ -671,7 +702,7 @@ async function selfTest() {
     /source and target must be distinct/,
   );
   const externalTarget = parseDatabaseUrl(
-    "postgresql://target_role:secret@db.example.test/perfume_aura",
+    "postgresql://target_role:secret@db.example.test/perfume_aura?sslmode=verify-full",
     TARGET_URL_ENV,
   );
   assert.throws(
@@ -689,10 +720,18 @@ async function selfTest() {
   assert.throws(
     () =>
       parseDatabaseUrl(
-        "postgresql://target_role:secret@db-pooler.example.test:6432/perfume_aura",
+        "postgresql://target_role:secret@db-pooler.example.test:6432/perfume_aura?sslmode=verify-full",
         TARGET_URL_ENV,
       ),
     /pooler/,
+  );
+  assert.throws(
+    () =>
+      parseDatabaseUrl(
+        "postgresql://target_role:secret@db.example.test/perfume_aura?sslmode=require",
+        TARGET_URL_ENV,
+      ),
+    /sslmode=verify-full/,
   );
   assert.throws(
     () => parseArgs(["--statement-timeout-ms", "999"]),
@@ -788,6 +827,7 @@ async function selfTest() {
     "oil_lots",
     "oil_received_ml_total",
     "oil_remaining_ml_total",
+    "oil_reserved_ml_total",
     "oil_kg_bottles_total",
     "oil_movements",
     "oil_delta_ml_total",
@@ -859,6 +899,9 @@ async function selfTest() {
       if (query.includes("AS oil_lots")) {
         return { rows: [oilRow] };
       }
+      if (query.includes("AS has_reserved_quantity_ml")) {
+        return { rows: [{ has_reserved_quantity_ml: true }] };
+      }
       if (query.includes("AS customers")) {
         return { rows: [invoiceRow] };
       }
@@ -873,7 +916,7 @@ async function selfTest() {
     },
     {
       environment: {
-        [SOURCE_URL_ENV]: "postgresql://source_role:secret@source.example.test/perfume_aura",
+        [SOURCE_URL_ENV]: "postgresql://source_role:secret@source.example.test/perfume_aura?sslmode=verify-full",
         [TARGET_URL_ENV]: "postgresql://target_role:secret@127.0.0.1/perfume_aura_rehearsal",
       },
       pgModule: { Client: SelfTestClient },
@@ -904,7 +947,7 @@ async function main(argv) {
   await verifySelfHostedPostgresMigration(options);
 }
 
-if (process.argv[1] === SCRIPT_PATH) {
+if (import.meta.main) {
   main(process.argv.slice(2)).catch((error) => {
     process.stderr.write(
       `${redactSecrets(error instanceof Error ? error.message : String(error))}\n`,

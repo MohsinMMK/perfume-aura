@@ -4,6 +4,7 @@ import { after, before, describe, it } from "node:test";
 import {
   checkoutSessions,
   commerceCarts,
+  commerceSettings,
   commerceOrderEvents,
   commerceOrderItems,
   commerceOrders,
@@ -14,10 +15,12 @@ import {
   notificationOutbox,
   paymentAttempts,
   productVariants,
+  productPublications,
   products,
   sql,
   stockMovements,
   stockReservations,
+  variantPrices,
 } from "@perfume-aura/db";
 import { finalizeCashfreePayment } from "./payment-finalization";
 import { reconcilePendingPayments } from "./payment-reconciliation";
@@ -41,6 +44,7 @@ async function seedPayment(input: Readonly<{
   orderStatus?: "pending" | "processing";
   paymentState?: "prepaid_pending" | "paid";
   providerPaymentId?: string;
+  withProviderBinding?: boolean;
   withReservation?: boolean;
 }> = {}): Promise<SeededPayment> {
   const suffix = randomUUID();
@@ -48,22 +52,65 @@ async function seedPayment(input: Readonly<{
   assert.ok(product);
   const [variant] = await db.insert(productVariants).values({
     productId: product.id, sku: `PAY-${suffix}`, sizeMl: 100,
-    costCents: 5_000, retailCents: 10_000, quantityOnHand: 10,
+    costCents: 2_500, retailCents: 5_000, quantityOnHand: 10,
     qtyReserved: input.withReservation === false ? 0 : 2, status: "active",
   }).returning({ id: productVariants.id });
   assert.ok(variant);
+  if (input.withProviderBinding === false) {
+    const approvedAt = new Date();
+    await db.insert(productPublications).values({
+      productId: product.id,
+      publicName: `Payment test ${suffix}`,
+      publicSlug: `payment-test-${suffix}`,
+      status: "published",
+      legalApprovedAt: approvedAt,
+      legalApprovalReference: `legal-${suffix}`,
+      contentApprovedAt: approvedAt,
+      contentApprovalReference: `content-${suffix}`,
+      mediaApprovedAt: approvedAt,
+      mediaApprovalReference: `media-${suffix}`,
+      publishedAt: approvedAt,
+    });
+    await db.insert(variantPrices).values({
+      variantId: variant.id,
+      amountMinor: 5_000,
+      approvedAt,
+      approvalReference: `price-${suffix}`,
+      active: true,
+    });
+    await db.update(commerceSettings).set({
+      flatShippingAmountMinor: 500,
+      freeShippingThresholdMinor: 10_000,
+      taxTreatment: "prices_include_approved_tax",
+      taxPolicyApproved: true,
+      taxApprovalReference: `tax-${suffix}`,
+      catalogLegalApproved: true,
+      legalApprovalReference: `catalog-${suffix}`,
+      supportChannel: "email",
+      supportOperationsApproved: true,
+      shippingPolicyApproved: true,
+      returnsPolicyApproved: true,
+      cancellationPolicyApproved: true,
+      checkoutEnabled: true,
+    }).where(eq(commerceSettings.id, "primary"));
+  }
   const [cart] = await db.insert(commerceCarts).values({ tokenDigest: `payment-cart-${suffix}`, expiresAt: new Date(Date.now() + 3_600_000) }).returning({ id: commerceCarts.id });
   assert.ok(cart);
   const [checkout] = await db.insert(checkoutSessions).values({
     cartId: cart.id, tokenDigest: `payment-checkout-${suffix}`,
     requestId: randomUUID(), payloadDigest: `payload-${suffix}`,
-    status: "payment_pending", expiresAt: new Date(Date.now() + 2_400_000),
+    status: input.withProviderBinding === false ? "open" : "payment_pending",
+    expiresAt: new Date(Date.now() + 2_400_000),
   }).returning({ id: checkoutSessions.id });
   assert.ok(checkout);
+  const orderNumber = `PA-PAY-${suffix}`;
   const [order] = await db.insert(commerceOrders).values({
-    orderNumber: `PA-PAY-${suffix}`, accessTokenDigest: `payment-access-${suffix}`,
+    orderNumber, accessTokenDigest: `payment-access-${suffix}`,
     checkoutSessionId: checkout.id, guestEmail: "payment-test@example.invalid",
-    status: input.orderStatus ?? "pending", paymentState: input.paymentState ?? "prepaid_pending",
+    status: input.orderStatus ?? "pending",
+    paymentState: input.withProviderBinding === false
+      ? "unpaid"
+      : (input.paymentState ?? "prepaid_pending"),
     subtotalAmountMinor: 10_000, totalAmountMinor: 10_000,
     shippingAddressSnapshot: { postalCode: "400001" },
   }).returning({ id: commerceOrders.id });
@@ -74,14 +121,18 @@ async function seedPayment(input: Readonly<{
     productNameSnapshot: `Payment test ${suffix}`,
     skuSnapshot: `PAY-${suffix}`,
     sizeMlSnapshot: 100,
-    unitPriceAmountMinor: 10_000,
+    unitPriceAmountMinor: 5_000,
     quantity: 2,
-    lineTotalAmountMinor: 20_000,
+    lineTotalAmountMinor: 10_000,
   });
-  const providerOrderId = `provider-order-${suffix}`;
+  const providerOrderId = orderNumber;
   const [attempt] = await db.insert(paymentAttempts).values({
-    orderId: order.id, provider: "cashfree", status: input.attemptStatus ?? "pending",
-    providerOrderId, providerPaymentId: input.providerPaymentId,
+    orderId: order.id,
+    provider: "cashfree",
+    status: input.withProviderBinding === false ? "created" : (input.attemptStatus ?? "pending"),
+    providerOrderId: input.withProviderBinding === false ? null : providerOrderId,
+    providerSessionId: input.withProviderBinding === false ? null : `session-${suffix}`,
+    providerPaymentId: input.providerPaymentId,
     idempotencyKey: randomUUID(), amountMinor: 10_000,
     verifiedAt: input.attemptStatus === "succeeded" ? new Date() : null,
   }).returning({ id: paymentAttempts.id });
@@ -253,6 +304,44 @@ describe("Cashfree payment and refund lifecycle", () => {
     const [failedAttempt] = await db.select({ code: paymentAttempts.lastReconciliationErrorCode, count: paymentAttempts.reconciliationAttemptCount })
       .from(paymentAttempts).where(eq(paymentAttempts.id, failed.attemptId));
     assert.deepEqual(failedAttempt, { code: "provider_lookup_failed", count: 1 });
+  });
+
+  it("recovers an accepted Cashfree order whose local binding failed", async () => {
+    await db.update(paymentAttempts).set({ nextReconcileAt: new Date("2099-01-01T00:00:00.000Z") });
+    const seeded = await seedPayment({ withProviderBinding: false });
+    const paymentId = `payment-${randomUUID()}`;
+    globalThis.fetch = async (request) => {
+      const url = String(request);
+      if (url.endsWith(`/orders/${encodeURIComponent(seeded.providerOrderId)}/payments`)) {
+        return Response.json([capturedPayment(seeded.providerOrderId, paymentId)]);
+      }
+      if (url.endsWith(`/payments/${paymentId}`)) {
+        return Response.json(capturedPayment(seeded.providerOrderId, paymentId));
+      }
+      return Response.json({
+        ...paidOrder(seeded.providerOrderId),
+        payment_session_id: `session-${seeded.providerOrderId}`,
+      });
+    };
+
+    const result = await reconcilePendingPayments({ now: new Date(), limit: 10 });
+    assert.deepEqual(result, {
+      processed: 1,
+      succeeded: 1,
+      retried: 0,
+      mismatched: 0,
+      failed: 0,
+    });
+    const [attempt] = await db.select({
+      status: paymentAttempts.status,
+      providerOrderId: paymentAttempts.providerOrderId,
+      providerSessionId: paymentAttempts.providerSessionId,
+    }).from(paymentAttempts).where(eq(paymentAttempts.id, seeded.attemptId));
+    assert.deepEqual(attempt, {
+      status: "succeeded",
+      providerOrderId: seeded.providerOrderId,
+      providerSessionId: `session-${seeded.providerOrderId}`,
+    });
   });
 
   it("binds every refund identity and isolates a mismatch", async () => {

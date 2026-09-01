@@ -334,7 +334,7 @@ verify_reviewed_repository_root() {
     || fail "reviewed repository checkout does not define origin"
   [[ "$actual_origin" == "$PERFUME_AURA_BOOTSTRAP_GIT_ORIGIN" ]] \
     || fail "reviewed repository origin does not match PERFUME_AURA_BOOTSTRAP_GIT_ORIGIN"
-  actual_commit="$(git -C "$candidate" rev-parse --verify HEAD^{commit})" \
+  actual_commit="$(git -C "$candidate" rev-parse --verify 'HEAD^{commit}')" \
     || fail "reviewed repository HEAD is not a commit"
   [[ "$actual_commit" == "$PERFUME_AURA_BOOTSTRAP_GIT_COMMIT" ]] \
     || fail "reviewed repository HEAD does not match PERFUME_AURA_BOOTSTRAP_GIT_COMMIT"

@@ -24,6 +24,7 @@ const FORBIDDEN_HOST_MARKERS = [
   "::1",
 ];
 const ROLE_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const POSTGRES_IDENTIFIER_MAX_BYTES = 63;
 const NEON_API = "https://console.neon.tech/api/v2";
 
 export function redactSecrets(text) {
@@ -31,6 +32,13 @@ export function redactSecrets(text) {
     .replace(/postgres(?:ql)?:\/\/[^\s'"]+/gi, "postgresql://redacted")
     .replace(/ep-[a-z0-9-]+[^\s'"]*/gi, "[redacted-host]")
     .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "[redacted-email]");
+}
+
+function isValidRoleName(value) {
+  return (
+    ROLE_NAME.test(String(value ?? "")) &&
+    Buffer.byteLength(String(value), "utf8") <= POSTGRES_IDENTIFIER_MAX_BYTES
+  );
 }
 
 export function assertSafeDatabaseHost(hostname) {
@@ -97,10 +105,10 @@ export function parseArgs(argv) {
   if (!Number.isInteger(options.expiresHours) || options.expiresHours < 1 || options.expiresHours > 72) {
     throw new Error("--expires-hours must be an integer from 1 to 72");
   }
-  if (options.opsRole && !ROLE_NAME.test(options.opsRole)) {
+  if (options.opsRole && !isValidRoleName(options.opsRole)) {
     throw new Error("invalid --ops-role");
   }
-  if (options.storefrontRole && !ROLE_NAME.test(options.storefrontRole)) {
+  if (options.storefrontRole && !isValidRoleName(options.storefrontRole)) {
     throw new Error("invalid --storefront-role");
   }
   if (!options.selfTest) {
@@ -116,7 +124,7 @@ export function assertGrantRoles(options) {
   if (!options.opsRole || !options.storefrontRole) {
     throw new Error("pass --ops-role and --storefront-role, or --skip-grants");
   }
-  if (!ROLE_NAME.test(options.opsRole) || !ROLE_NAME.test(options.storefrontRole)) {
+  if (!isValidRoleName(options.opsRole) || !isValidRoleName(options.storefrontRole)) {
     throw new Error("invalid runtime role");
   }
   if (options.opsRole === options.storefrontRole) {
@@ -288,7 +296,7 @@ function runPnpmMigrate(directUrl) {
 }
 
 function prepareGrantSql(filePath, roleName) {
-  if (!ROLE_NAME.test(roleName)) {
+  if (!isValidRoleName(roleName)) {
     throw new Error("invalid runtime role");
   }
   const raw = readFileSync(filePath, "utf8")
@@ -546,6 +554,22 @@ async function selfTest() {
   );
   assert.throws(() => parseArgs(["--expires-hours", "0"]), /expires-hours/);
   assert.throws(() => parseArgs(["--ops-role", "bad-role;drop"]), /invalid --ops-role/);
+  const sharedSixtyThreeBytePrefix = `runtime_${"a".repeat(55)}`;
+  assert.equal(Buffer.byteLength(sharedSixtyThreeBytePrefix), 63);
+  assert.throws(
+    () => parseArgs(["--ops-role", `${sharedSixtyThreeBytePrefix}x`]),
+    /invalid --ops-role/,
+  );
+  assert.throws(
+    () =>
+      parseArgs([
+        "--ops-role",
+        `${sharedSixtyThreeBytePrefix}x`,
+        "--storefront-role",
+        `${sharedSixtyThreeBytePrefix}y`,
+      ]),
+    /invalid --ops-role/,
+  );
   assert.throws(
     () => parseArgs(["--ops-role", "shared_runtime", "--storefront-role", "shared_runtime"]),
     /must be distinct/,

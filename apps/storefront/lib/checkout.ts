@@ -23,7 +23,8 @@ import {
   storefrontCustomerProfile,
   variantPrices,
 } from "@perfume-aura/db";
-import { createCashfreeOrder, getCashfreeOrder } from "./cashfree";
+import { createCashfreeOrder } from "./cashfree";
+import { recoverCashfreePaymentBinding } from "./payment-binding-recovery";
 import {
   bindCreatedCashfreePaymentAttempt,
   cancelCashfreePaymentAttempt,
@@ -451,14 +452,26 @@ export async function placeCheckoutOrder(
     let terminalProviderFailure = !providerOrderMayExist;
     if (providerOrderMayExist) {
       try {
-        const providerOrder = await getCashfreeOrder(createdOrderNumber);
+        const recovery = await recoverCashfreePaymentBinding({
+          paymentAttemptId: created.attemptId,
+          createdOrderNumber,
+          expectedAmountMinor: totalAmountMinor,
+          boundAt: new Date(),
+        });
         terminalProviderFailure =
-          providerOrder.order_status === "EXPIRED" ||
-          providerOrder.order_status === "TERMINATED";
-        if (!terminalProviderFailure) {
+          recovery.kind === "terminal" || recovery.kind === "absent";
+        if (recovery.kind === "bound") {
+          return {
+            orderNumber: createdOrderNumber,
+            accountOrderPath: orderPath(createdOrderNumber),
+            cashfreePaymentSessionId: recovery.providerSessionId,
+            cashfreeMode: process.env.CASHFREE_ENV === "production" ? "production" : "sandbox",
+          };
+        }
+        if (recovery.kind === "pending") {
           console.warn("[checkout] retained uncertain Cashfree intent for reconciliation", {
             orderNumber: createdOrderNumber,
-            providerStatus: providerOrder.order_status,
+            providerStatus: recovery.providerStatus,
           });
         }
       } catch (providerLookupError) {

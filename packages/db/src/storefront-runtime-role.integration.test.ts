@@ -96,6 +96,10 @@ type OilReservationStateRow = QueryResultRow & {
   oil_sale_quantity_delta_ml: number | null;
 };
 
+type PrivilegeRestorationRow = QueryResultRow & {
+  statement: string;
+};
+
 function quoteIdentifier(value: string): string {
   assert.match(value, /^[a-z_][a-z0-9_]*$/);
   return `"${value}"`;
@@ -120,6 +124,86 @@ function rolePassword(): string {
   const password = randomUUID().replaceAll("-", "");
   assert.match(password, /^[a-f0-9]+$/);
   return password;
+}
+
+async function capturePublicPrivilegeRestorationStatements(
+  ownerPool: Pool,
+): Promise<string[]> {
+  const result = await ownerPool.query<PrivilegeRestorationRow>(`
+    SELECT statement
+    FROM (
+      SELECT format(
+        'GRANT %s ON DATABASE %I TO PUBLIC',
+        string_agg(acl.privilege_type, ', ' ORDER BY acl.privilege_type),
+        database.datname
+      ) AS statement
+      FROM pg_database AS database
+      CROSS JOIN LATERAL aclexplode(
+        coalesce(database.datacl, acldefault('d', database.datdba))
+      ) AS acl
+      WHERE database.datname = current_database() AND acl.grantee = 0
+      GROUP BY database.datname
+
+      UNION ALL
+
+      SELECT format(
+        'GRANT %s ON SCHEMA %I TO PUBLIC',
+        string_agg(acl.privilege_type, ', ' ORDER BY acl.privilege_type),
+        namespace.nspname
+      ) AS statement
+      FROM pg_namespace AS namespace
+      CROSS JOIN LATERAL aclexplode(
+        coalesce(namespace.nspacl, acldefault('n', namespace.nspowner))
+      ) AS acl
+      WHERE namespace.nspname = 'public' AND acl.grantee = 0
+      GROUP BY namespace.nspname
+
+      UNION ALL
+
+      SELECT format(
+        'GRANT %s ON %s %I.%I TO PUBLIC',
+        string_agg(acl.privilege_type, ', ' ORDER BY acl.privilege_type),
+        CASE WHEN relation.relkind = 'S' THEN 'SEQUENCE' ELSE 'TABLE' END,
+        namespace.nspname,
+        relation.relname
+      ) AS statement
+      FROM pg_class AS relation
+      INNER JOIN pg_namespace AS namespace ON namespace.oid = relation.relnamespace
+      CROSS JOIN LATERAL aclexplode(
+        coalesce(
+          relation.relacl,
+          acldefault(
+            (CASE WHEN relation.relkind = 'S' THEN 'S' ELSE 'r' END)::"char",
+            relation.relowner
+          )
+        )
+      ) AS acl
+      WHERE namespace.nspname = 'public'
+        AND relation.relkind = ANY(ARRAY['r', 'p', 'v', 'm', 'f', 'S']::"char"[])
+        AND acl.grantee = 0
+      GROUP BY namespace.nspname, relation.relname, relation.relkind
+
+      UNION ALL
+
+      SELECT format(
+        'GRANT %s ON FUNCTION %I.%I(%s) TO PUBLIC',
+        string_agg(acl.privilege_type, ', ' ORDER BY acl.privilege_type),
+        namespace.nspname,
+        routine.proname,
+        pg_get_function_identity_arguments(routine.oid)
+      ) AS statement
+      FROM pg_proc AS routine
+      INNER JOIN pg_namespace AS namespace ON namespace.oid = routine.pronamespace
+      CROSS JOIN LATERAL aclexplode(
+        coalesce(routine.proacl, acldefault('f', routine.proowner))
+      ) AS acl
+      WHERE namespace.nspname = 'public' AND acl.grantee = 0
+      GROUP BY namespace.nspname, routine.proname, routine.oid
+    ) AS restoration
+    WHERE statement IS NOT NULL
+    ORDER BY statement
+  `);
+  return result.rows.map((row) => row.statement);
 }
 
 function connectionUrlForRole(url: string, user: string, password: string): string {
@@ -742,6 +826,7 @@ describe("storefront and Cashfree finalizer runtime roles", () => {
   const finalizerPassword = rolePassword();
   let storefrontPool: Pool | undefined;
   let finalizerPool: Pool | undefined;
+  let publicPrivilegeRestorationStatements: string[] = [];
 
   before(async () => {
     const functions = await ownerPool.query<QueryResultRow & { routines_present: number }>(`
@@ -770,6 +855,9 @@ describe("storefront and Cashfree finalizer runtime roles", () => {
       true,
       "the disposable integration database owner must be allowed to create isolated runtime roles",
     );
+
+    publicPrivilegeRestorationStatements =
+      await capturePublicPrivilegeRestorationStatements(ownerPool);
 
     // Model the deny-by-default base stage from runtime-roles.sql before the
     // source-controlled per-role grants are applied. In particular, an
@@ -830,15 +918,43 @@ describe("storefront and Cashfree finalizer runtime roles", () => {
   });
 
   after(async () => {
-    await storefrontPool?.end();
-    await finalizerPool?.end();
-    await ownerPool.query(
-      "DELETE FROM public.runtime_capability_roles WHERE role_name = ANY($1::name[])",
-      [[storefrontRole, finalizerRole]],
+    const cleanupErrors: unknown[] = [];
+    const shutdownResults = await Promise.allSettled(
+      [storefrontPool, finalizerPool]
+        .filter((pool): pool is Pool => pool !== undefined)
+        .map((pool) => pool.end()),
     );
-    await dropRoleIfPresent(ownerPool, storefrontRole);
-    await dropRoleIfPresent(ownerPool, finalizerRole);
-    await ownerPool.end();
+    for (const result of shutdownResults) {
+      if (result.status === "rejected") cleanupErrors.push(result.reason);
+    }
+
+    const cleanupActions: ReadonlyArray<() => Promise<unknown>> = [
+      () => ownerPool.query(
+        "DELETE FROM public.runtime_capability_roles WHERE role_name = ANY($1::name[])",
+        [[storefrontRole, finalizerRole]],
+      ),
+      () => dropRoleIfPresent(ownerPool, storefrontRole),
+      () => dropRoleIfPresent(ownerPool, finalizerRole),
+      ...publicPrivilegeRestorationStatements.map(
+        (statement) => () => ownerPool.query(statement),
+      ),
+    ];
+    for (const cleanupAction of cleanupActions) {
+      try {
+        await cleanupAction();
+      } catch (error) {
+        cleanupErrors.push(error);
+      }
+    }
+    try {
+      await ownerPool.end();
+    } catch (error) {
+      cleanupErrors.push(error);
+    }
+
+    if (cleanupErrors.length > 0) {
+      throw new AggregateError(cleanupErrors, "runtime-role test cleanup failed");
+    }
   });
 
   it("allows only reviewed reservation transitions to the storefront role", async () => {
@@ -927,7 +1043,7 @@ describe("storefront and Cashfree finalizer runtime roles", () => {
 
     await assert.rejects(
       () => reserveAsStorefront(storefrontPool, seeded),
-      isPostgresStateWithMessage("55000", /Insufficient oil for the checkout reservation/),
+      isPostgresStateWithMessage("P1002", /Insufficient oil for the checkout reservation/),
     );
     assert.deepEqual(await preBindingState(ownerPool, seeded), {
       checkout_status: "open",

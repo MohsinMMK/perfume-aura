@@ -1,5 +1,9 @@
-import { and, db, eq, inArray, lte, or, paymentAttempts, sql } from "@perfume-aura/db";
+import { and, commerceOrders, db, eq, inArray, lte, or, paymentAttempts, sql } from "@perfume-aura/db";
 import { cashfreeMajorToAmountMinor, listCashfreePayments } from "./cashfree";
+import {
+  CashfreeOrderIdentityError,
+  recoverCashfreePaymentBinding,
+} from "./payment-binding-recovery";
 import { finalizeCashfreePayment } from "./payment-finalization";
 import { nextReconciliationSchedule } from "./reconciliation-backoff";
 
@@ -39,10 +43,13 @@ export async function reconcilePendingPayments(input: Readonly<{
   }
   const candidates = await db.select({
     id: paymentAttempts.id,
+    orderNumber: commerceOrders.orderNumber,
     providerOrderId: paymentAttempts.providerOrderId,
     amountMinor: paymentAttempts.amountMinor,
     reconciliationAttemptCount: paymentAttempts.reconciliationAttemptCount,
-  }).from(paymentAttempts).where(and(
+  }).from(paymentAttempts)
+    .innerJoin(commerceOrders, eq(commerceOrders.id, paymentAttempts.orderId))
+    .where(and(
     eq(paymentAttempts.provider, "cashfree"),
     inArray(paymentAttempts.status, ["created", "pending"]),
     or(
@@ -55,19 +62,46 @@ export async function reconcilePendingPayments(input: Readonly<{
   let mismatched = 0;
   let failed = 0;
   for (const candidate of candidates) {
-    if (!candidate.providerOrderId) {
-      await deferPaymentReconciliation({
-        paymentAttemptId: candidate.id,
-        currentAttemptCount: candidate.reconciliationAttemptCount,
-        errorCode: "missing_provider_order_id",
-        now,
-      });
-      retried += 1;
-      continue;
+    let providerOrderId = candidate.providerOrderId;
+    if (!providerOrderId) {
+      try {
+        const recovery = await recoverCashfreePaymentBinding({
+          paymentAttemptId: candidate.id,
+          createdOrderNumber: candidate.orderNumber,
+          expectedAmountMinor: candidate.amountMinor,
+          boundAt: now,
+        });
+        if (recovery.kind === "bound") {
+          providerOrderId = recovery.providerOrderId;
+        } else {
+          await deferPaymentReconciliation({
+            paymentAttemptId: candidate.id,
+            currentAttemptCount: candidate.reconciliationAttemptCount,
+            errorCode: recovery.kind === "terminal" || recovery.kind === "absent"
+              ? "payment_not_final"
+              : "missing_provider_order_id",
+            now,
+          });
+          retried += 1;
+          continue;
+        }
+      } catch (error) {
+        const identityMismatch = error instanceof CashfreeOrderIdentityError;
+        await deferPaymentReconciliation({
+          paymentAttemptId: candidate.id,
+          currentAttemptCount: candidate.reconciliationAttemptCount,
+          errorCode: identityMismatch ? "provider_identity_mismatch" : "provider_lookup_failed",
+          now,
+        });
+        retried += 1;
+        if (identityMismatch) mismatched += 1;
+        else failed += 1;
+        continue;
+      }
     }
     let payments: Awaited<ReturnType<typeof listCashfreePayments>>;
     try {
-      payments = await listCashfreePayments(candidate.providerOrderId);
+      payments = await listCashfreePayments(providerOrderId);
     } catch {
       await deferPaymentReconciliation({
         paymentAttemptId: candidate.id,
