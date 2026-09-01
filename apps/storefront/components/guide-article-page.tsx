@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { DiscoveryGuideLinks } from "@/components/discovery-guide-links";
 import type { EditorialGuide } from "@/lib/editorial-guides";
 import {
   createEditorialStructuredData,
@@ -89,12 +90,8 @@ export function GuideArticlePage({ guide }: Readonly<{ guide: EditorialGuide }>)
         </div>
 
         <aside className="bg-[var(--aura-ivory)] px-[var(--aura-gutter)] py-16 text-[var(--aura-ink)] lg:px-[var(--aura-gutter-lg)] lg:py-24">
-          <div className="mx-auto flex max-w-[82rem] flex-col justify-between gap-8 sm:flex-row sm:items-end">
-            <div>
-              <h2 className="font-display max-w-[12ch] text-[clamp(3.5rem,7vw,7rem)] leading-[0.8]">Continue choosing with context</h2>
-              <p className="mt-6 max-w-2xl text-base leading-7 text-black/72">Use the main guide to compare mood, family, intensity, occasion, and skin testing as one decision.</p>
-            </div>
-            <Link href="/fragrance-guide" className="inline-flex min-h-14 shrink-0 items-center rounded-[var(--aura-radius)] bg-[var(--aura-ink)] px-7 font-display text-lg text-[var(--aura-ivory)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ink)]">Read the fragrance guide</Link>
+          <div className="mx-auto max-w-[82rem]">
+            <DiscoveryGuideLinks currentSlug={guide.slug} heading="Continue choosing with context" />
           </div>
         </aside>
       </article>

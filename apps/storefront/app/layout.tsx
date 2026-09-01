@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { StorefrontShell } from "@/components/storefront-shell";
 import { getOptionalEmbeddedBuildSourceCommit } from "@/lib/build-version";
-import { defaultSiteDescription, siteName } from "@/lib/seo";
+import { defaultSiteDescription, indexableRobots, siteName } from "@/lib/seo";
 import "./globals.css";
 
 export const dynamic = "force-dynamic";
@@ -61,6 +61,7 @@ export const metadata: Metadata = {
   creator: siteName,
   publisher: siteName,
   category: "fragrance",
+  robots: indexableRobots,
   openGraph: {
     type: "website",
     locale: "en_IN",

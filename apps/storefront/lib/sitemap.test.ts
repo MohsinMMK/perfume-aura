@@ -20,6 +20,7 @@ describe("runtime storefront sitemap", () => {
     const empty = buildStorefrontSitemap({ baseUrl: "https://perfumeaura.com", publicCatalogEnabled: true, publishedProducts: [] });
     assert.deepEqual(closed, empty);
     assert.equal(closed.some((entry) => entry.url.endsWith("/shop")), false);
+    assert.ok(closed.every((entry) => entry.lastModified === "2026-08-28"));
   });
 
   it("adds only approved nonempty catalog paths with database timestamps", () => {

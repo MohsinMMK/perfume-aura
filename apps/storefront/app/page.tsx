@@ -9,6 +9,7 @@ import {
   Shield01Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@perfume-aura/ui/components/button";
+import { DiscoveryGuideLinks } from "@/components/discovery-guide-links";
 import { HomeHero } from "@/components/home-hero";
 import { IngredientAtmosphere } from "@/components/ingredient-atmosphere";
 import { ProductCard } from "@/components/product-card";
@@ -250,6 +251,12 @@ export default async function HomePage() {
               Read the fragrance guide <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={1.8} />
             </Button>
           </div>
+        </div>
+      </section>
+
+      <section className="bg-[var(--aura-ivory)] px-[var(--aura-gutter)] py-16 text-[var(--aura-ink)] lg:px-[var(--aura-gutter-lg)] lg:py-24">
+        <div className="mx-auto max-w-[82rem]">
+          <DiscoveryGuideLinks heading="Guides for Hyderabad and India" />
         </div>
       </section>
 

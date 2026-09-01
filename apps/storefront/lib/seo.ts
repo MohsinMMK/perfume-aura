@@ -3,25 +3,35 @@ export const siteName = "Perfume Aura";
 export const defaultSiteDescription =
   "Perfume Aura is a fragrance store in Kondapur, Hyderabad, helping people choose perfume by mood, intensity, occasion, and composition.";
 
+export const discoveryLastModified = "2026-08-28";
+
 export const discoverySitemapEntries = [
-  { path: "", changeFrequency: "weekly", priority: 1 },
-  { path: "/fragrance-guide", changeFrequency: "monthly", priority: 0.9 },
-  { path: "/about", changeFrequency: "monthly", priority: 0.7 },
-  { path: "/faq", changeFrequency: "monthly", priority: 0.6 },
+  { path: "", changeFrequency: "weekly", priority: 1, lastModified: discoveryLastModified },
+  {
+    path: "/fragrance-guide",
+    changeFrequency: "monthly",
+    priority: 0.9,
+    lastModified: discoveryLastModified,
+  },
+  { path: "/about", changeFrequency: "monthly", priority: 0.7, lastModified: discoveryLastModified },
+  { path: "/faq", changeFrequency: "monthly", priority: 0.6, lastModified: discoveryLastModified },
   {
     path: "/guides/perfume-for-hyderabad-weather",
     changeFrequency: "monthly",
     priority: 0.8,
+    lastModified: discoveryLastModified,
   },
   {
     path: "/guides/fragrance-families",
     changeFrequency: "monthly",
     priority: 0.8,
+    lastModified: discoveryLastModified,
   },
   {
     path: "/guides/perfume-for-occasions",
     changeFrequency: "monthly",
     priority: 0.8,
+    lastModified: discoveryLastModified,
   },
 ] as const;
 
@@ -35,6 +45,18 @@ export const privateCrawlerPaths = [
 ] as const;
 
 export const noIndexRobots = { index: false, follow: false } as const;
+
+export const indexableRobots = {
+  index: true,
+  follow: true,
+  googleBot: {
+    index: true,
+    follow: true,
+    "max-image-preview": "large",
+    "max-snippet": -1,
+    "max-video-preview": -1,
+  },
+} as const;
 
 export function getStorefrontOrigin(
   configuredUrl = process.env.STOREFRONT_URL,
@@ -56,10 +78,12 @@ export function createHomeStructuredData(origin = getStorefrontOrigin()) {
         "@type": "Organization",
         "@id": organizationId,
         name: siteName,
+        alternateName: "Perfume Aura Hyderabad",
         url: origin,
         logo: `${origin}/brand/perfume-aura-icon.svg`,
         image: `${origin}/images/hero-bottle-still-life.webp`,
         description: defaultSiteDescription,
+        sameAs: ["https://www.instagram.com/perfume.aura.hyd/"],
         areaServed: [
           { "@type": "City", name: "Hyderabad" },
           { "@type": "Country", name: "India" },
@@ -72,6 +96,17 @@ export function createHomeStructuredData(origin = getStorefrontOrigin()) {
         name: siteName,
         description: defaultSiteDescription,
         publisher: { "@id": organizationId },
+        inLanguage: "en-IN",
+      },
+      {
+        "@type": "WebPage",
+        "@id": `${origin}/#webpage`,
+        url: origin,
+        name: siteName,
+        description: defaultSiteDescription,
+        isPartOf: { "@id": `${origin}/#website` },
+        about: { "@id": organizationId },
+        primaryImageOfPage: `${origin}/images/hero-bottle-still-life.webp`,
         inLanguage: "en-IN",
       },
     ],
@@ -205,6 +240,8 @@ export function createFragranceGuideStructuredData(
         author: { "@id": `${origin}/#organization` },
         publisher: { "@id": `${origin}/#organization` },
         image: `${origin}/images/hero-bottle-still-life.webp`,
+        datePublished: discoveryLastModified,
+        dateModified: discoveryLastModified,
         inLanguage: "en-IN",
       },
       {
@@ -223,6 +260,76 @@ export function createFragranceGuideStructuredData(
             name: "Fragrance guide",
             item: pageUrl,
           },
+        ],
+      },
+    ],
+  } as const;
+}
+
+export const aboutPageDescription =
+  "Meet Perfume Aura, a fragrance store in Kondapur, Hyderabad, built around expressive presentation and careful, verified product claims.";
+
+export function createAboutStructuredData(origin = getStorefrontOrigin()) {
+  const pageUrl = `${origin}/about`;
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "AboutPage",
+        "@id": `${pageUrl}#about`,
+        name: "Our story",
+        description: aboutPageDescription,
+        url: pageUrl,
+        isPartOf: { "@id": `${origin}/#website` },
+        about: { "@id": `${origin}/#organization` },
+        inLanguage: "en-IN",
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${pageUrl}#breadcrumb`,
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: origin },
+          { "@type": "ListItem", position: 2, name: "About", item: pageUrl },
+        ],
+      },
+    ],
+  } as const;
+}
+
+export type FaqStructuredDataItem = Readonly<{
+  question: string;
+  answer: string;
+}>;
+
+export function createFaqStructuredData(
+  items: readonly FaqStructuredDataItem[],
+  origin = getStorefrontOrigin(),
+) {
+  const pageUrl = `${origin}/faq`;
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "FAQPage",
+        "@id": `${pageUrl}#faq`,
+        url: pageUrl,
+        inLanguage: "en-IN",
+        isPartOf: { "@id": `${origin}/#website` },
+        mainEntity: items.map((item) => ({
+          "@type": "Question",
+          name: item.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: item.answer,
+          },
+        })),
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${pageUrl}#breadcrumb`,
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: origin },
+          { "@type": "ListItem", position: 2, name: "FAQ", item: pageUrl },
         ],
       },
     ],

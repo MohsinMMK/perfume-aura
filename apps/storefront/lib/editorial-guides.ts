@@ -68,6 +68,19 @@ export const editorialGuides: Readonly<Record<EditorialGuideSlug, EditorialGuide
         ],
       },
       {
+        id: "indoor-outdoor",
+        title: "Indoor cold air and outdoor heat",
+        paragraphs: [
+          "A typical Hyderabad workday can move from air-conditioned offices in Kondapur or HITEC City into much warmer outdoor air. A perfume that feels quiet indoors may seem broader on the street, so wear it through both settings before you decide.",
+          "Use that swing as evidence, not as a reason to overspray. If the scent becomes uncomfortable once you leave the cooled room, choose a lighter application or a different direction rather than assuming the formula failed.",
+        ],
+        points: [
+          { title: "Office to street", detail: "Notice the scent when you step outside, not only at your desk." },
+          { title: "Evening plans", detail: "If you will go from work into an outdoor dinner, test that full sequence." },
+          { title: "Do not chase hour counts", detail: "Wear time varies; write down what you actually noticed in this climate." },
+        ],
+      },
+      {
         id: "routine",
         title: "A useful Hyderabad testing routine",
         paragraphs: [
