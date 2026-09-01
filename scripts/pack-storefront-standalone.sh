@@ -107,15 +107,17 @@ cp "$RUNTIME_DEPS_DIR/package-lock.json" "$SHARP_TMP/package-lock.json"
 (cd "$SHARP_TMP" && npm ci --omit=dev --ignore-scripts --no-audit --no-fund --os=linux --cpu=x64 --libc=glibc >/dev/null)
 
 # The traced tree follows pnpm aliases and can duplicate the host platform's
-# large Sharp/libvips binary throughout several resolver neighborhoods. This
-# archive has one declared Linux x64/glibc target, so discard every traced
+# large Sharp/libvips binary throughout several resolver neighborhoods,
+# including package directories whose pnpm store names encode the @img scope.
+# This archive has one declared Linux x64/glibc target, so discard every traced
 # platform binary before installing the locked target runtime in the two
 # resolver boundaries used by the extracted server.
 while IFS= read -r -d '' traced_sharp_platform_directory; do
   rm -rf "$traced_sharp_platform_directory"
 done < <(
   find "$STAGE" -type d \
-    \( -name 'sharp-*-*' -o -name 'sharp-libvips-*-*' \) \
+    \( -name 'sharp-*-*' -o -name 'sharp-libvips-*-*' \
+       -o -name '@img+sharp-*@*' -o -name '@img+sharp-libvips-*@*' \) \
     -prune -print0
 )
 
