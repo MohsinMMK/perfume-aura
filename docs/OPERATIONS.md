@@ -128,7 +128,8 @@ pnpm storefront:pack
 The deployment script first asks Hostinger to inspect the uploaded archive,
 then overrides the result with the reviewed contract: Node 24.x, Framework
 Other, root `./`, no build command, empty output directory, and entry
-`apps/storefront/server.js`. Set
+`apps/storefront/server.js`. If that inspection omits the `start` script,
+the script retries a bounded number of times before fail-closed. Set
 `STOREFRONT_URL` and `CUSTOMER_AUTH_URL` to `https://perfumeaura.com`.
 
 The build request submits no environment values. Before accepting a release,
