@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { AboutBottleStage } from "@/components/about-bottle-stage";
+import { DiscoveryGuideLinks } from "@/components/discovery-guide-links";
+import {
+  aboutPageDescription,
+  createAboutStructuredData,
+  serializeJsonLd,
+} from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Our story",
-  description:
-    "Meet Perfume Aura, a fragrance store in Kondapur, Hyderabad, built around expressive presentation and careful, verified product claims.",
+  description: aboutPageDescription,
   alternates: { canonical: "/about" },
   openGraph: {
     type: "website",
@@ -18,8 +23,14 @@ export const metadata: Metadata = {
 };
 
 export default function AboutPage() {
+  const structuredData = createAboutStructuredData();
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }}
+      />
       <section className="relative min-h-[96svh] overflow-hidden bg-[var(--aura-ink)] px-[var(--aura-gutter)] pb-20 pt-28 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:pt-32">
         <AboutBottleStage />
         <div className="relative z-10 mx-auto flex min-h-[72svh] max-w-[94rem] flex-col justify-center">
@@ -63,6 +74,11 @@ export default function AboutPage() {
             <p>The storefront is a preview of the house taking shape. Product names, performance claims, ingredients, prices, reviews, and policies appear only when they are complete and ready to share.</p>
             <p>The result is intentionally expressive in presentation and conservative in what it claims.</p>
           </div>
+        </div>
+      </section>
+      <section className="bg-[var(--aura-ivory)] px-[var(--aura-gutter)] py-16 text-[var(--aura-ink)] lg:px-[var(--aura-gutter-lg)] lg:py-24">
+        <div className="mx-auto max-w-[82rem]">
+          <DiscoveryGuideLinks heading="How to choose a scent" />
         </div>
       </section>
     </>

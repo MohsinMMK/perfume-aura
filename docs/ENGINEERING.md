@@ -307,12 +307,14 @@ resolve to `404`. Catalog-import dry runs emit a deterministic
 supports `discovery` and `public-catalog` SEO modes; public-catalog mode requires
 that reviewed manifest and crawls every sitemap URL.
 
-The homepage publishes one Organization/WebSite graph. The fragrance guides
-publish visible Article and BreadcrumbList data that matches their rendered
-content. Published product pages may emit Product and BreadcrumbList data, but
-must not emit Offer until online checkout is genuinely available. Do not add
-speculative AggregateRating, FAQ, address, or contact facts, and do not create
-scaled keyword pages. Root social
+The homepage publishes one Organization/WebSite/WebPage graph. `/about` publishes
+AboutPage data and `/faq` publishes FAQPage data only from the same visible,
+reviewed answers. The fragrance guides publish visible Article and
+BreadcrumbList data that matches their rendered content. Discovery sitemap
+entries include `lastmod`. Published product pages may emit Product and
+BreadcrumbList data, but must not emit Offer until online checkout is genuinely
+available. Do not invent AggregateRating, address, contact, hours, or extra FAQ
+facts, and do not create scaled keyword pages. Root social
 metadata uses the verified bottle still life; self-hosted fonts are preloaded
 through `next/font/local` with adjusted fallbacks to protect layout stability.
 

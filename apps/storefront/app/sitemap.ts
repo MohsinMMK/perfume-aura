@@ -20,6 +20,7 @@ export function buildStorefrontSitemap(input: Readonly<{
 }>): MetadataRoute.Sitemap {
   const discoveryEntries: MetadataRoute.Sitemap = discoverySitemapEntries.map((entry) => ({
     url: `${input.baseUrl}${entry.path}`,
+    lastModified: entry.lastModified,
     changeFrequency: entry.changeFrequency,
     priority: entry.priority,
   }));

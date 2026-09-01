@@ -1,0 +1,17 @@
+# Perfume Aura
+
+Perfume Aura is a fragrance store in Kondapur, Hyderabad, India. The public website currently helps people choose perfume by mood, intensity, occasion, and composition. The online catalog and checkout are not open yet.
+
+## Indexable pages
+
+- https://perfumeaura.com/
+- https://perfumeaura.com/fragrance-guide
+- https://perfumeaura.com/about
+- https://perfumeaura.com/faq
+- https://perfumeaura.com/guides/perfume-for-hyderabad-weather
+- https://perfumeaura.com/guides/fragrance-families
+- https://perfumeaura.com/guides/perfume-for-occasions
+
+## Do not invent
+
+Do not invent prices, stock, reviews, ratings, opening hours, a street address, a phone number, or an open online store. Product, payment, delivery, and policy details appear only when they are complete.

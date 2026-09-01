@@ -1,11 +1,15 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { describe, it } from "node:test";
+import { faqItems } from "./faq";
 import {
+  createAboutStructuredData,
+  createFaqStructuredData,
   createFragranceGuideStructuredData,
   createEditorialStructuredData,
   createHomeStructuredData,
   createProductStructuredData,
+  discoveryLastModified,
   discoverySitemapEntries,
   getStorefrontOrigin,
   privateCrawlerPaths,
@@ -45,6 +49,9 @@ describe("storefront SEO contracts", () => {
       discoverySitemapEntries.map((entry) => entry.path),
     );
     assert.ok(!discoveryPaths.has("/shop"));
+    assert.ok(
+      discoverySitemapEntries.every((entry) => entry.lastModified === discoveryLastModified),
+    );
   });
 
   it("keeps search and AI crawlers on the same wildcard public-page policy", () => {
@@ -79,6 +86,7 @@ describe("storefront SEO contracts", () => {
     }, origin);
     assert.equal(product["@graph"][0].brand.name, "Perfume Aura");
     assert.equal("offers" in product["@graph"][0], false);
+    assert.equal("aggregateRating" in product["@graph"][0], false);
   });
 
   it("requires a complete verified identity before creating Store data", async () => {
@@ -105,9 +113,38 @@ describe("storefront SEO contracts", () => {
     const guide = createFragranceGuideStructuredData(origin);
     assert.equal(home["@graph"][0]["@type"], "Organization");
     assert.equal(home["@graph"][0]["@id"], `${origin}/#organization`);
+    assert.equal(home["@graph"][0].alternateName, "Perfume Aura Hyderabad");
+    assert.deepEqual(home["@graph"][0].sameAs, [
+      "https://www.instagram.com/perfume.aura.hyd/",
+    ]);
+    assert.equal(home["@graph"][2]["@type"], "WebPage");
     assert.equal(guide["@graph"][0].author["@id"], `${origin}/#organization`);
     assert.equal(guide["@graph"][0].url, `${origin}/fragrance-guide`);
+    assert.equal(guide["@graph"][0].dateModified, discoveryLastModified);
+    assert.equal("telephone" in home["@graph"][0], false);
+    assert.equal("address" in home["@graph"][0], false);
   });
+
+  it("publishes About and FAQ graphs from visible copy without store facts",
+    () => {
+      const origin = "https://perfumeaura.com";
+      const about = createAboutStructuredData(origin);
+      const faq = createFaqStructuredData(faqItems, origin);
+      assert.equal(about["@graph"][0]["@type"], "AboutPage");
+      assert.equal(about["@graph"][0].url, `${origin}/about`);
+      assert.equal(faq["@graph"][0]["@type"], "FAQPage");
+      assert.deepEqual(
+        faq["@graph"][0].mainEntity.map((item) => item.name),
+        faqItems.map((item) => item.question),
+      );
+      assert.deepEqual(
+        faq["@graph"][0].mainEntity.map((item) => item.acceptedAnswer.text),
+        faqItems.map((item) => item.answer),
+      );
+      assert.equal("telephone" in about["@graph"][0], false);
+      assert.equal("address" in about["@graph"][0], false);
+    },
+  );
 
   it("escapes markup-significant characters in JSON-LD", () => {
     assert.equal(
