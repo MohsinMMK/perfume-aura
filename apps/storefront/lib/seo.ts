@@ -4,6 +4,7 @@ export const defaultSiteDescription =
   "Perfume Aura is a fragrance store in Kondapur, Hyderabad, helping people choose perfume by mood, intensity, occasion, and composition.";
 
 export const discoveryLastModified = "2026-09-01";
+export const fragranceGuidePublishedDate = "2026-08-28";
 
 export const discoverySitemapEntries = [
   { path: "", changeFrequency: "weekly", priority: 1, lastModified: discoveryLastModified },
@@ -240,7 +241,7 @@ export function createFragranceGuideStructuredData(
         author: { "@id": `${origin}/#organization` },
         publisher: { "@id": `${origin}/#organization` },
         image: `${origin}/images/hero-bottle-still-life.webp`,
-        datePublished: discoveryLastModified,
+        datePublished: fragranceGuidePublishedDate,
         dateModified: discoveryLastModified,
         inLanguage: "en-IN",
       },

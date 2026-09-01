@@ -11,6 +11,7 @@ import {
   createProductStructuredData,
   discoveryLastModified,
   discoverySitemapEntries,
+  fragranceGuidePublishedDate,
   getStorefrontOrigin,
   privateCrawlerPaths,
   serializeJsonLd,
@@ -120,6 +121,7 @@ describe("storefront SEO contracts", () => {
     assert.equal(home["@graph"][2]["@type"], "WebPage");
     assert.equal(guide["@graph"][0].author["@id"], `${origin}/#organization`);
     assert.equal(guide["@graph"][0].url, `${origin}/fragrance-guide`);
+    assert.equal(guide["@graph"][0].datePublished, fragranceGuidePublishedDate);
     assert.equal(guide["@graph"][0].dateModified, discoveryLastModified);
     assert.equal("telephone" in home["@graph"][0], false);
     assert.equal("address" in home["@graph"][0], false);
