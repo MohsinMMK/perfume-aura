@@ -72,6 +72,12 @@ APP_ROOT="$STANDALONE/apps/storefront"
 [[ -d "$ROOT/apps/storefront/.next/static" ]] || { echo "ERROR: storefront static output missing" >&2; exit 1; }
 
 echo "==> Materializing standalone tree"
+# Next's traced pnpm tree can retain optional links whose package target was
+# correctly omitted from the standalone output. Dereferencing the tree must not
+# fail on those dangling generated links; valid links remain materialized.
+while IFS= read -r -d '' traced_link; do
+  if [[ ! -e "$traced_link" ]]; then rm -f "$traced_link"; fi
+done < <(find "$STANDALONE" -type l -print0)
 cp -RL "$STANDALONE"/. "$STAGE"/
 mkdir -p "$STAGE/apps/storefront/.next"
 rm -rf "$STAGE/apps/storefront/.next/static"
