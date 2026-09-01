@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-09-01 08:25:53 UTC**
+Last refreshed: **2026-09-01 20:15:00 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -77,20 +77,31 @@ window; it is not a prerequisite that can run before the connection switch.
 
 ## Exact releases and automation
 
-The storefront runs exact source
-`6082f9de7ab3c54c92dbd1c31c7648dd3f519623`; ops remains exact source
-`66f9e2c44872c599b9a8b926ecbe75c90c33469d`. Ops uses immutable image digest
-`sha256:a7b1ab5de6d447f014fb3fabdef6f8ccd9af06866dd30772a10e35d1823a79eb`.
-Storefront workflow run
-[`33484741312`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33484741312)
+Both storefront and Ops run exact source
+`09164609b918cf8c356ec35e42e6d96ff1a25dce`. Ops uses immutable image digest
+`sha256:077f7017b2ebbb0e5258f7011426143cbd5d913fe2c8507d1e1cddf08c09df54`.
+Workflow run
+[`33545988514`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33545988514)
 passed quality, disposable-PostgreSQL integration tests, verified packaging,
-direct Hostinger archive deployment after one detect-settings retry, and exact
-live verification. Hostinger build `01a05c10-3de7-720f-b14f-8bf2a673455c`
-completed at 2026-09-01 08:23:54 UTC. The VPS ops deployment correctly stayed
-skipped. Live `/api/health/version` returns that storefront commit.
-Independent acceptance verified seven discovery sitemap URLs with `lastmod`,
-`llms.txt`, AboutPage and FAQPage JSON-LD, shop `noindex`, storefront health
-and release locks, and the path-preserving `www` `308`.
+the immutable VPS Ops deployment, the direct Hostinger storefront archive
+deployment, and exact live verification. Hostinger build
+`01a05e55-2ac0-72d6-aa22-74edcba73c63` completed at 2026-09-01 18:58:37 UTC.
+Independent repository-owned acceptance passed the same exact source on both
+surfaces, Ops live/readiness and unauthenticated-session checks, seven discovery
+sitemap URLs, a real immutable Next asset, storefront health and release locks,
+and the path- and query-preserving `www` `308`.
+
+Repository `main` is now exact source
+`937408fe4694f185dface5c0056cbbaadb660e6e`. PR #101 merged the reviewed
+self-hosted PostgreSQL preparation and migration `0017_storefront_sale_settlement`.
+Its workflow run
+[`33550129391`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33550129391)
+passed quality, all 110 disposable-PostgreSQL integration tests, CodeQL, and
+verified packaging, then intentionally failed the production database-owner
+gate. Both runtime deployments stayed skipped. Production remains on Neon,
+migration `0017` has not been applied there, and both live runtimes therefore
+correctly remain on `09164609b918cf8c356ec35e42e6d96ff1a25dce` until the
+documented pre-cutover owner gates are completed.
 
 PR #103 deployed discovery SEO hardening: sitemap `lastmod`, Organization
 alternateName and Instagram `sameAs`, About/FAQ structured data from visible
