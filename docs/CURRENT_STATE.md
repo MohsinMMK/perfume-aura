@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-08-30 22:27:07 UTC**
+Last refreshed: **2026-09-01 08:25:53 UTC**
 (`Asia/Kolkata`, UTC+05:30).
 
 ## Production topology
@@ -33,18 +33,25 @@ and ignored local environment files.
 ## Exact releases and automation
 
 The storefront runs exact source
-`778e4dbba2e1ed667d3652319825a61d6c515c74`; ops remains exact source
+`6082f9de7ab3c54c92dbd1c31c7648dd3f519623`; ops remains exact source
 `66f9e2c44872c599b9a8b926ecbe75c90c33469d`. Ops uses immutable image digest
 `sha256:a7b1ab5de6d447f014fb3fabdef6f8ccd9af06866dd30772a10e35d1823a79eb`.
 Storefront workflow run
-[`33338378664`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33338378664)
-passed quality, all 101 disposable-PostgreSQL integration tests, verified
-packaging, direct Hostinger archive deployment, and exact live verification.
-Hostinger build `01a054be-f9dc-72ef-a61b-b7f4ffeea71a` completed at
-2026-08-30 22:18:07 UTC. The VPS ops deployment correctly stayed skipped.
-Independent exact-source acceptance verified seven discovery sitemap URLs, a
-real immutable Next asset, storefront health and release locks, and the path-
-and query-preserving `www` redirect.
+[`33484741312`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33484741312)
+passed quality, disposable-PostgreSQL integration tests, verified packaging,
+direct Hostinger archive deployment after one detect-settings retry, and exact
+live verification. Hostinger build `01a05c10-3de7-720f-b14f-8bf2a673455c`
+completed at 2026-09-01 08:23:54 UTC. The VPS ops deployment correctly stayed
+skipped. Live `/api/health/version` returns that storefront commit.
+Independent acceptance verified seven discovery sitemap URLs with `lastmod`,
+`llms.txt`, AboutPage and FAQPage JSON-LD, shop `noindex`, storefront health
+and release locks, and the path-preserving `www` `308`.
+
+PR #103 deployed discovery SEO hardening: sitemap `lastmod`, Organization
+alternateName and Instagram `sameAs`, About/FAQ structured data from visible
+copy, Hyderabad indoor/outdoor guide context, internal discovery links, and
+public `llms.txt`. No catalog, checkout, NAP, Store schema, or release-flag
+change occurred.
 
 PR #98 merged the storefront product-imagery and motion release. Signature
 shop cards now use the clear-glass Signature bottle on their own dark solid
@@ -396,8 +403,10 @@ closed.
 Brand discovery is separated from commerce release. The request-time discovery
 sitemap contains exactly `/`, `/fragrance-guide`, `/about`, `/faq`,
 `/guides/perfume-for-hyderabad-weather`, `/guides/fragrance-families`, and
-`/guides/perfume-for-occasions`. Public crawling is allowed, while preview
-commerce and incomplete policy/inquiry pages remain `noindex` and private
+`/guides/perfume-for-occasions`, each with `lastmod`. `/about` and `/faq`
+publish AboutPage and FAQPage JSON-LD from visible copy, and `/llms.txt` is
+public. Public crawling is allowed, while preview commerce and incomplete
+policy/inquiry pages remain `noindex` and private
 account, API, cart, checkout, and order paths stay disallowed in `robots.txt`.
 Product and collection URLs enter the sitemap only after the existing
 public-catalog gate opens and then only from the approved Neon projection.
