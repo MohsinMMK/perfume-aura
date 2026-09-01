@@ -3,7 +3,7 @@ export const siteName = "Perfume Aura";
 export const defaultSiteDescription =
   "Perfume Aura is a fragrance store in Kondapur, Hyderabad, helping people choose perfume by mood, intensity, occasion, and composition.";
 
-export const discoveryLastModified = "2026-08-28";
+export const discoveryLastModified = "2026-09-01";
 
 export const discoverySitemapEntries = [
   { path: "", changeFrequency: "weekly", priority: 1, lastModified: discoveryLastModified },

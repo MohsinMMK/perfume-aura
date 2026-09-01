@@ -25,7 +25,7 @@ export type EditorialGuide = Readonly<{
   author: "Perfume Aura";
   reviewer: "Perfume Aura editorial team";
   publishedDate: "2026-08-28";
-  reviewedDate: "2026-08-28";
+  reviewedDate: "2026-08-28" | "2026-09-01";
   sections: readonly EditorialGuideSection[];
 }>;
 
@@ -44,7 +44,7 @@ export const editorialGuides: Readonly<Record<EditorialGuideSlug, EditorialGuide
     author: "Perfume Aura",
     reviewer: "Perfume Aura editorial team",
     publishedDate: "2026-08-28",
-    reviewedDate: "2026-08-28",
+    reviewedDate: "2026-09-01",
     sections: [
       {
         id: "heat",

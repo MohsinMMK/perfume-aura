@@ -177,14 +177,27 @@ function runSelfTests() {
     publishStorefront: true,
     opsMigrationBlocked: false,
   });
+  assert.deepEqual(
+    classifyDeploymentImpact(normalizeNullDelimitedPaths("docs/CURRENT_STATE.md\0\n")),
+    {
+      shouldPublish: false,
+      publishOps: false,
+      publishStorefront: false,
+      opsMigrationBlocked: false,
+    },
+  );
   process.stdout.write("deployment-impact self-test ok\n");
 }
 
-function readNullDelimitedPaths() {
-  return readFileSync(0)
-    .toString("utf8")
+export function normalizeNullDelimitedPaths(raw) {
+  return raw
     .split("\0")
+    .map((changedPath) => changedPath.replace(/[\r\n]+$/g, ""))
     .filter((changedPath) => changedPath.length > 0);
+}
+
+function readNullDelimitedPaths() {
+  return normalizeNullDelimitedPaths(readFileSync(0).toString("utf8"));
 }
 
 const command = process.argv[2];

@@ -10,6 +10,7 @@ const DEFAULT_API_BASE_URL = "https://developers.hostinger.com";
 const DEFAULT_DOMAIN = "perfumeaura.com";
 const DEFAULT_REMOTE_ARCHIVE = "perfume-aura-storefront-release.zip";
 const DEFAULT_POLL_INTERVAL_MS = 10_000;
+const DEFAULT_SETTINGS_ATTEMPTS = 6;
 const DEFAULT_TIMEOUT_MS = 20 * 60_000;
 const EXPECTED_APPLICATION = "@perfume-aura/storefront";
 const EXPECTED_ENTRY_FILE = "apps/storefront/server.js";
@@ -333,6 +334,45 @@ function validateDetectedSettings(settings) {
   }
 }
 
+function isMissingStartScript(error) {
+  return error instanceof Error
+    && error.message === "Hostinger archive settings do not expose the required start script";
+}
+
+async function detectReviewedArchiveSettings({
+  fetchImpl,
+  apiBaseUrl,
+  apiToken,
+  settingsPath,
+  sleepImpl,
+  pollIntervalMs,
+  logger,
+  sourceCommit,
+  attempts = DEFAULT_SETTINGS_ATTEMPTS,
+}) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const detectedSettings = await hostingerRequest({
+      fetchImpl,
+      apiBaseUrl,
+      apiToken,
+      pathname: settingsPath,
+    });
+    try {
+      validateDetectedSettings(detectedSettings);
+      return detectedSettings;
+    } catch (error) {
+      lastError = error;
+      if (!isMissingStartScript(error) || attempt === attempts) {
+        throw error;
+      }
+      logger(`hostinger-storefront-archive-deploy: source=${sourceCommit} settings=retry attempt=${attempt}`);
+      await sleepImpl(pollIntervalMs);
+    }
+  }
+  throw lastError;
+}
+
 function exactBuildRequest(remoteArchivePath) {
   return {
     node_version: EXPECTED_NODE_VERSION,
@@ -448,13 +488,16 @@ export async function deployStorefrontArchive({
   logger(`hostinger-storefront-archive-deploy: source=${commit} upload=completed`);
 
   const settingsPath = `${buildPath}/settings/from-archive?archive_path=${encodeURIComponent(remotePath)}`;
-  const detectedSettings = await hostingerRequest({
+  await detectReviewedArchiveSettings({
     fetchImpl,
     apiBaseUrl: baseUrl,
     apiToken: token,
-    pathname: settingsPath,
+    settingsPath,
+    sleepImpl,
+    pollIntervalMs,
+    logger,
+    sourceCommit: commit,
   });
-  validateDetectedSettings(detectedSettings);
   logger(`hostinger-storefront-archive-deploy: source=${commit} settings=accepted`);
 
   const startedBuild = validateBuild(await hostingerRequest({
@@ -553,6 +596,49 @@ async function runSelfTest() {
       parseCurlTransferOutput("HTTP/2 204\r\nupload-offset: 42\r\n\r\n\n__HOSTINGER_HTTP_STATUS__:204\n"),
       { status: 204, uploadOffset: "42" },
     );
+
+    const retryRequests = [];
+    const retryResponses = [
+      new Response(JSON.stringify({
+        url: "https://upload.hstgr.io/",
+        auth_key: "upload-auth-key",
+        rest_auth_key: "upload-rest-auth-key",
+      }), { status: 200 }),
+      new Response(JSON.stringify({ node_version: 24, available_scripts: ["build"] }), { status: 200 }),
+      new Response(JSON.stringify({ node_version: 24, available_scripts: ["build", "start"] }), { status: 200 }),
+      new Response(JSON.stringify({ uuid: "build-2", state: "completed" }), { status: 200 }),
+    ];
+    const retryFetch = async (url, options = {}) => {
+      retryRequests.push({ url: String(url), options });
+      const response = retryResponses.shift();
+      assert.ok(response, "unexpected extra retry request");
+      return response;
+    };
+    const retryUploadRequests = [];
+    const retryUploadRequest = async (request) => {
+      retryUploadRequests.push(request);
+      return retryUploadRequests.length === 1
+        ? { status: 201, uploadOffset: null }
+        : { status: 204, uploadOffset: String(archive.length) };
+    };
+    const retryLogs = [];
+    const retryResult = await deployStorefrontArchive({
+      archivePath,
+      manifestPath,
+      sourceCommit: commit,
+      apiToken: "test-token",
+      username: "u123456789",
+      fetchImpl: retryFetch,
+      uploadRequestImpl: retryUploadRequest,
+      sleepImpl: async () => {},
+      pollIntervalMs: 0,
+      timeoutMs: 10_000,
+      logger: (line) => retryLogs.push(line),
+    });
+    assert.deepEqual(retryResult, { sourceCommit: commit, buildUuid: "build-2" });
+    assert.equal(retryRequests.length, 4);
+    assert.equal(retryResponses.length, 0);
+    assert.ok(retryLogs.some((line) => line.includes("settings=retry attempt=1")));
 
     await assert.rejects(
       deployStorefrontArchive({
