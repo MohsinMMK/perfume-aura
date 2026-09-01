@@ -2,10 +2,26 @@ packages:
   - "apps/*"
   - "packages/*"
 
-# pnpm 11: reviewed exact pins + lockfile are the supply-chain gate.
-# Default minimumReleaseAge blocks those pins for 24h after npm publish.
+# pnpm 11's default minimumReleaseAge quarantines releases for 24 hours.
 confirmModulesPurge: false
-minimumReleaseAge: 0
+minimumReleaseAgeExclude:
+  # Exact versions reviewed in this dependency update; later releases remain
+  # subject to pnpm 11's default 24-hour quarantine.
+  - "@next/env@16.3.4"
+  - "@next/eslint-plugin-next@16.3.4"
+  - "@next/swc-darwin-arm64@16.3.4"
+  - "@next/swc-darwin-x64@16.3.4"
+  - "@next/swc-linux-arm64-gnu@16.3.4"
+  - "@next/swc-linux-arm64-musl@16.3.4"
+  - "@next/swc-linux-x64-gnu@16.3.4"
+  - "@next/swc-linux-x64-musl@16.3.4"
+  - "@next/swc-win32-arm64-msvc@16.3.4"
+  - "@next/swc-win32-x64-msvc@16.3.4"
+  - "@posthog/browser-common@0.7.1"
+  - "@posthog/core@1.50.1"
+  - "eslint-config-next@16.3.4"
+  - "next@16.3.4"
+  - "posthog-js@1.424.0"
 
 overrides:
   sharp: "0.35.3"

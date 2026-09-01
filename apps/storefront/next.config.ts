@@ -1,6 +1,6 @@
 import path from "node:path";
 import type { NextConfig } from "next";
-import { withSentryConfig } from "@sentry/nextjs";
+import { withSentryConfig } from "@sentry/nextjs/config";
 import { securityHeaders } from "./lib/security-headers";
 
 const monorepoRoot = path.join(__dirname, "../..");

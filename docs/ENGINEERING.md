@@ -45,7 +45,7 @@ container for ops; Neon remains the shared managed database.
 | Workspace | pnpm `11.25.0` monorepo |
 | Runtime | Node `24.x`; repository, CI, and ops image baseline `24.6.0`, engines `>=24.6.0 <25` |
 | Ops + storefront | Next.js `16.3.4`, App Router, React `19.2.8`, TypeScript `7.0.2` `tsc` |
-| TypeScript compatibility | `@typescript/native` is `typescript@7.0.2` for `tsc`/Next CLI; `typescript` is `@typescript/typescript6@6.0.2` so typescript-eslint keeps the TS 6 API |
+| TypeScript compatibility | `@typescript/native` aliases `typescript@7.0.2` and provides the workspace `tsc`; the package named `typescript` aliases `@typescript/typescript6@6.0.2` for typescript-eslint and Next's compiler-API/CLI compatibility path |
 | UI | shadcn/ui, Base UI, Tailwind CSS 4, Hugeicons |
 | Auth | Two isolated Better Auth boundaries: owner ops and storefront customer, each with separate tables, secrets, cookies, origins, and Drizzle adapter |
 | Database | Neon PostgreSQL + Drizzle ORM/Kit + `pg` Pool |
