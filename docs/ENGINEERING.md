@@ -42,10 +42,10 @@ container for ops; Neon remains the shared managed database.
 
 | Area | Choice |
 |---|---|
-| Workspace | pnpm `10.32.1` monorepo, aligned to the observed Hostinger deployment baseline |
+| Workspace | pnpm `11.25.0` monorepo |
 | Runtime | Node `24.x`; repository, CI, and ops image baseline `24.6.0`, engines `>=24.6.0 <25` |
-| Ops + storefront | Next.js `16.3.4`, App Router, React `19.2.8`, standard TypeScript `6.0.2` compiler |
-| TypeScript compatibility | `typescript@6.0.2` is the shared Next.js/ESLint compiler; `@typescript/native` retains the TypeScript `7.0.2` native CLI compatibility lane |
+| Ops + storefront | Next.js `16.3.4`, App Router, React `19.2.8`, TypeScript `7.0.2` `tsc` |
+| TypeScript compatibility | `@typescript/native` is `typescript@7.0.2` for `tsc`/Next CLI; `typescript` is `@typescript/typescript6@6.0.2` so typescript-eslint keeps the TS 6 API |
 | UI | shadcn/ui, Base UI, Tailwind CSS 4, Hugeicons |
 | Auth | Two isolated Better Auth boundaries: owner ops and storefront customer, each with separate tables, secrets, cookies, origins, and Drizzle adapter |
 | Database | Neon PostgreSQL + Drizzle ORM/Kit + `pg` Pool |
@@ -59,8 +59,8 @@ container for ops; Neon remains the shared managed database.
 | Payments | Cashfree Payment Gateway for prepaid INR UPI (server-created orders, signed raw-body webhooks, server status verification, and refunds); no COD checkout |
 | Registrar | GoDaddy; registration/renewal only |
 
-Official tooling only: shadcn CLI, current App Router docs, standard TypeScript
-6 with the separate TypeScript 7 native CLI lane, Better Auth, Drizzle, Neon,
+Official tooling only: shadcn CLI, current App Router docs, TypeScript 7,
+Better Auth, Drizzle, Neon,
 Hostinger, PostHog, Sentry, and pnpm. No hand-rolled substitutes. No Vercel
 production deployment.
 
@@ -71,7 +71,7 @@ patch. Storefront deployment logs are therefore the authority for managed
 runtime compatibility.
 
 The ops image, CI, and package generation pin Node `24.6.0`; CI also pins npm
-`11.5.1` and pnpm `10.32.1`. Application engines accept compatible Node `24.x`
+`11.5.1` and pnpm `11.25.0`. Application engines accept compatible Node `24.x`
 patches from `24.6.0` onward. A future managed-runtime, image, or
 package-manager change is not accepted silently: inspect the owning platform
 evidence, update the compatibility lane, run the complete gate, and verify the
@@ -361,7 +361,7 @@ requests, main pushes, and the weekly schedule.
 | `verify-production-deploy.mjs` | `pnpm ops:verify-production-deploy` | Verify exact SHA, runtime surfaces, and storefront locks |
 | `verify-commerce-foundation.mjs` | `pnpm commerce:verify`, `pnpm commerce:verify:self-test` | Check catalog/document invariants and negative mutations |
 
-Packers require Node `24.6.0`, npm `11.5.1`, and pnpm `10.32.1`; reject
+Packers require Node `24.6.0`, npm `11.5.1`, and pnpm `11.25.0`; reject
 secret-shaped files; verify Linux x64 Sharp inputs; start extracted servers;
 and publish checksum sidecars only after smoke passes.
 

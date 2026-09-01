@@ -34,7 +34,7 @@ permissions:
 env:
   EXACT_NODE_VERSION: 24.6.0
   EXACT_NPM_VERSION: 11.5.1
-  EXACT_PNPM_VERSION: 10.32.1
+  EXACT_PNPM_VERSION: 11.25.0
 
 jobs:
   deployment-impact:
@@ -110,7 +110,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
-          version: 10.32.1
+          version: 11.25.0
 
       - name: Setup exact Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -210,7 +210,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
-          version: 10.32.1
+          version: 11.25.0
 
       - name: Setup exact Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -294,7 +294,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
-          version: 10.32.1
+          version: 11.25.0
 
       - name: Setup exact Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -345,8 +345,8 @@ jobs:
           assert.equal(manifest.source.dirty, false);
           assert.equal(manifest.runtime.node, "24.6.0");
           assert.equal(manifest.runtime.npm, "11.5.1");
-          assert.equal(manifest.runtime.pnpm, "10.32.1");
-          assert.equal(manifest.runtime.next, "16.3.2");
+          assert.equal(manifest.runtime.pnpm, "11.25.0");
+          assert.equal(manifest.runtime.next, "16.3.4");
           assert.equal(manifest.runtime.sharp, "0.35.3");
           assert.equal(manifest.runtime.postcss, "8.5.23");
           const runtimeLockSha256 = crypto
@@ -380,8 +380,8 @@ jobs:
           assert.equal(manifest.extractedSmoke, "passed");
           assert.equal(manifest.runtime.node, "24.6.0");
           assert.equal(manifest.runtime.npm, "11.5.1");
-          assert.equal(manifest.runtime.pnpm, "10.32.1");
-          assert.equal(manifest.runtime.next, "16.3.2");
+          assert.equal(manifest.runtime.pnpm, "11.25.0");
+          assert.equal(manifest.runtime.next, "16.3.4");
           assert.equal(manifest.runtime.sharp, "0.35.3");
           assert.equal(manifest.runtime.postcss, "8.5.23");
           assert.ok(manifest.archive.bytes <= 50_000_000);
