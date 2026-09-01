@@ -44,7 +44,7 @@ container for ops; Neon remains the shared managed database.
 |---|---|
 | Workspace | pnpm `10.32.1` monorepo, aligned to the observed Hostinger deployment baseline |
 | Runtime | Node `24.x`; repository, CI, and ops image baseline `24.6.0`, engines `>=24.6.0 <25` |
-| Ops + storefront | Next.js `16.3.2`, App Router, React `19.2.8`, standard TypeScript `6.0.2` compiler |
+| Ops + storefront | Next.js `16.3.4`, App Router, React `19.2.8`, standard TypeScript `6.0.2` compiler |
 | TypeScript compatibility | `typescript@6.0.2` is the shared Next.js/ESLint compiler; `@typescript/native` retains the TypeScript `7.0.2` native CLI compatibility lane |
 | UI | shadcn/ui, Base UI, Tailwind CSS 4, Hugeicons |
 | Auth | Two isolated Better Auth boundaries: owner ops and storefront customer, each with separate tables, secrets, cookies, origins, and Drizzle adapter |
@@ -384,7 +384,7 @@ deploy while `CURRENT_STATE.md` contains an active deployment blocker.
 
 Current repository baseline, not a field-performance claim:
 
-- Next.js `16.3.2`, React `19.2.8`, App Router, and standalone output.
+- Next.js `16.3.4`, React `19.2.8`, App Router, and standalone output.
 - Fonts are self-hosted with `next/font`.
 - Storefront skips locked-cart hydration, limits low-intent prefetch, and
   defers disabled customer-auth code.
