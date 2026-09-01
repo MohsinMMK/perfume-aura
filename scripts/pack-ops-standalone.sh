@@ -719,8 +719,8 @@ done < <(find "$STAGE/node_modules" "$STAGE/apps/ops/node_modules" \
 
 # Remove broken symlinks left after darwin strip / pnpm relocate
 while IFS= read -r -d '' link; do
-  rm -f "$link"
-done < <(find "$STAGE/node_modules" "$STAGE/apps/ops/node_modules" -type l ! -e -print0 2>/dev/null || true)
+  if [[ ! -e "$link" ]]; then rm -f "$link"; fi
+done < <(find "$STAGE/node_modules" "$STAGE/apps/ops/node_modules" -type l -print0 2>/dev/null)
 
 # Rewrite absolute build-machine paths baked into standalone manifests
 echo "==> Scrubbing absolute build paths from standalone manifests…"
