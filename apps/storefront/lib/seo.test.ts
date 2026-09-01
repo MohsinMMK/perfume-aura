@@ -137,7 +137,10 @@ describe("storefront SEO contracts", () => {
         faq["@graph"][0].mainEntity.map((item) => item.name),
         faqItems.map((item) => item.question),
       );
-      assert.equal(faqItems[4]?.answer.includes("Not yet"), true);
+      assert.deepEqual(
+        faq["@graph"][0].mainEntity.map((item) => item.acceptedAnswer.text),
+        faqItems.map((item) => item.answer),
+      );
       assert.equal("telephone" in about["@graph"][0], false);
       assert.equal("address" in about["@graph"][0], false);
     },
