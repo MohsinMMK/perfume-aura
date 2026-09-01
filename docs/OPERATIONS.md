@@ -39,9 +39,10 @@ the web deployments and must never be copied into, deleted by, or recreated
 during a deployment.
 
 The storefront selects Hostinger Node `24.x`; live deployment logs established
-Node `24.6.0` and pnpm `10.32.1` as its current managed baseline. Ops uses the
-repository-pinned Node image in its immutable VPS artifact. Reinspect the
-managed logs whenever Hostinger changes the storefront runtime.
+Node `24.6.0` as the managed Node baseline. CI and packers use pnpm `11.25.0`.
+Storefront deploys a prebuilt archive, so Hostinger's own pnpm patch is unused.
+Ops uses the repository-pinned Node image in its immutable VPS artifact.
+Reinspect the managed logs whenever Hostinger changes the storefront runtime.
 
 The unresolved managed-hosting process incident remains a storefront/shared-plan
 risk but is no longer on the public ops path. Do not use a plan-wide process

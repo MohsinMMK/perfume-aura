@@ -2,6 +2,11 @@ packages:
   - "apps/*"
   - "packages/*"
 
+# pnpm 11: reviewed exact pins + lockfile are the supply-chain gate.
+# Default minimumReleaseAge blocks those pins for 24h after npm publish.
+confirmModulesPurge: false
+minimumReleaseAge: 0
+
 overrides:
   sharp: "0.35.3"
   postcss: "8.5.23"
@@ -16,10 +21,6 @@ overrides:
   nanoid: "3.3.18"
   undici: "7.29.0"
 
-onlyBuiltDependencies:
-  - esbuild
-  - sharp
-  - unrs-resolver
 allowBuilds:
   '@sentry/cli': true
   core-js: false
