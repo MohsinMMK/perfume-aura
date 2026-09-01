@@ -651,6 +651,19 @@ if [[ ! -d "$SHARP_SRC" ]]; then
   exit 1
 fi
 
+# The pnpm trace can retain optional Sharp binaries for every supported host,
+# including scoped package wrappers encoded as @img+sharp-* store names. Drop
+# all traced platform binaries before installing the single locked Hostinger
+# runtime below.
+while IFS= read -r -d '' traced_sharp_platform_directory; do
+  rm -rf "$traced_sharp_platform_directory"
+done < <(
+  find "$STAGE" -type d \
+    \( -name 'sharp-*-*' -o -name 'sharp-libvips-*-*' \
+       -o -name '@img+sharp-*@*' -o -name '@img+sharp-libvips-*@*' \) \
+    -prune -print0
+)
+
 # sharp's npm tree puts runtime deps (semver, detect-libc, …) as siblings, not inside sharp/
 copy_sharp_into() {
   local dest_nm="$1"
