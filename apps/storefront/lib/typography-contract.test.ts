@@ -64,4 +64,14 @@ describe("storefront typography contract", () => {
     assert.match(layout, /londrina-outline-latin-400-normal\.woff2/u);
     assert.doesNotMatch(layout, /bebas-neue/u);
   });
+
+  it("keeps the animated hero heading accessible while its words stay decorative", async () => {
+    const hero = await readStorefront("../components/home-hero.tsx");
+
+    assert.match(hero, /<h1\s+aria-label=\{heroHeadingWords\.join\(" "\)\}/u);
+    assert.match(
+      hero,
+      /<span\s+aria-hidden="true"\s+className="aura-hero-motion/u,
+    );
+  });
 });
