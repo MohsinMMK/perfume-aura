@@ -1,9 +1,14 @@
 # Commerce operating-policy register
 
-This register is locked fail-closed. Empty evidence means the related public
-claim, inquiry channel, catalog publication, delivery route, or checkout gate
-must remain disabled. Record references only; never paste credentials,
-customer data, private provider payloads, or legal advice into this file.
+This register is locked fail-closed and is **not an approval**. Every evidence
+row below is still Pending. Locked ₹99/₹999, 3–7 day, seven-day return, and
+`support@perfumeaura.com` values are implementation inputs, not CA, counsel, or
+owner sign-off.
+
+Empty evidence means the related public claim, inquiry channel, catalog
+publication, delivery route, or checkout gate must remain disabled. Record
+references only; never paste credentials, customer data, private provider
+payloads, or legal advice into this file.
 
 The dated approval templates are
 [`2026-08-20-india-counsel-commerce-review.md`](review-packets/2026-08-20-india-counsel-commerce-review.md)

@@ -42,10 +42,12 @@ always last.
 **Goal:** approve the exact customer-visible naming, claims, policies, and
 reference-fragrance treatment for every intended surface.
 
-**Current blocker:** the India-counsel review packet is still pending. B01
-preparation was refreshed on 29 August 2026 for the replacement catalog with an
-exact [`114-name legal-surface inventory`](review-packets/2026-08-29-b01-114-name-legal-surface-inventory.md).
-Inspired listing titles remain planning identity only; they are not trademark
+**Current blocker:** the India-counsel review packet is still pending. Hand
+counsel the [`114-name review CSV`](review-packets/2026-08-29-b01-114-name-review.csv)
+and the refreshed
+[`114-name legal-surface inventory`](review-packets/2026-08-29-b01-114-name-legal-surface-inventory.md)
+(79 Inspired / 15 Unknown / 20 Signature). Do not send the 69-name packets.
+Inspired listing titles are already on live `/shop`; they are not trademark
 clearance or permission to use references on labels or packaging.
 
 Preparation completed:

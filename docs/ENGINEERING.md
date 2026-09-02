@@ -9,122 +9,102 @@
 - [Observability code and privacy](#observability-code-and-privacy)
 - [Pending outcome](#pending-outcome)
 
+Live SHAs, deploy flags, and rollback belong in
+[`CURRENT_STATE.md`](CURRENT_STATE.md). Product routes and release locks belong
+in [`PRODUCT.md`](PRODUCT.md).
+
 ## Repository layout and boundaries
 
 ```text
-apps/storefront/  public Next.js application
-apps/ops/         internal Next.js application
-packages/db/      Drizzle schema, SQL migrations, runtime grants, tests
-packages/ui/      shadcn/Base UI shared primitives
-packages/validators/
-scripts/          packages, deployment verification, commerce checks
+apps/storefront/  public Next.js application; pack entry apps/storefront/server.js
+apps/ops/         internal Next.js application; pack entry apps/ops/server.js
+packages/db/      Drizzle schema, 18 SQL migrations, runtime grants, tests
+packages/ui/      shadcn/Base UI primitives
+packages/validators/  Zod schemas used by ops
+scripts/          pack, deploy, verify, commerce, client-JS budgets
+deploy/ops-vps/   ops image/compose
+deploy/postgres-vps/  approved self-hosted PG target (not cut over)
 ```
 
-No static marketing application or generated root publish surface remains.
+No static marketing app, generated storefront branch, root `tsconfig.json`, or
+`turbo.json` remains.
 
-- Storefront uses a controlled public catalog projection and a secure HttpOnly
-  cart token. It never returns costs, raw stock, internal notes, or archived
-  records.
-- Ops uses independent Better Auth owner/staff sessions and private,
-  capability-authorized server actions. Roles are exact `owner`, `staff`, or
-  `user`; missing, unknown, and comma-separated values fail closed.
-- Storefront customer auth has separate tables, secrets, cookies, and trusted
-  origins. It is disabled and must not import auth/database code on disabled
-  routes.
-- `proxy.ts` preserves apex canonicalization and redirects `www` to the exact
-  apex path and query.
+- Until `STOREFRONT_PUBLIC_RELEASE=true`, `/shop` is the workbook listing in
+  `apps/storefront/lib/listing-catalog.ts`, not the Neon projection.
+- Public catalog queries omit cost, raw stock, internal notes, and archives.
+- Cart cookie is `pa_storefront_cart`. Customer cookies use prefix `pa_customer`.
+- `www` → apex is `apps/storefront/next.config.ts` `redirects()` (`permanent:
+  true` → 308). There is no storefront `proxy.ts` or `middleware.ts`.
+- Ops `apps/ops/proxy.ts` is a cookie-presence gate for dashboard routes, not
+  the security boundary and not canonicalization.
 
 ## Locked runtime and tooling
 
-Change stack only through an explicit reviewed decision. Production is split
-between Hostinger-managed hosting for storefront and a hardened Hostinger VPS
-container for ops; Neon remains the shared managed database.
+Change stack only through an explicit reviewed decision. No Vercel production.
 
 | Area | Choice |
 |---|---|
-| Workspace | pnpm `11.25.0` monorepo |
-| Runtime | Node `24.x`; repository, CI, and ops image baseline `24.6.0`, engines `>=24.6.0 <25` |
-| Ops + storefront | Next.js `16.3.4`, App Router, React `19.2.8`, TypeScript `7.0.2` `tsc` |
-| TypeScript compatibility | `@typescript/native` aliases `typescript@7.0.2` and provides the workspace `tsc`; the package named `typescript` aliases `@typescript/typescript6@6.0.2` for typescript-eslint and Next's compiler-API/CLI compatibility path |
-| UI | shadcn/ui, Base UI, Tailwind CSS 4, Hugeicons |
-| Auth | Two isolated Better Auth boundaries: owner ops and storefront customer, each with separate tables, secrets, cookies, origins, and Drizzle adapter |
-| Database | Neon PostgreSQL + Drizzle ORM/Kit + `pg` Pool |
-| Validation | Zod |
-| Analytics | Privacy-filtered PostHog JavaScript SDK; shared project separated by mandatory `application` property |
-| Errors and traces | Official Sentry Next.js SDK with separate storefront and ops projects |
-| Production | Hostinger Business Web App/HCDN for storefront; Hostinger VPS/Caddy for ops; Neon PostgreSQL shared |
-| Ops deploy mechanism | GitHub Actions verified standalone → immutable GHCR image → Tailscale forced SSH → hardened VPS container (`apps/ops/server.js`) |
-| Storefront deploy mechanism | Checksum-verified Hostinger Node.js archive with `apps/storefront/server.js`, uploaded and deployed directly by GitHub Actions through the Hostinger API |
-| Active deploy and rollback state | [`CURRENT_STATE.md`](CURRENT_STATE.md) owns current provider paths, releases, and rollback eligibility |
-| Payments | Cashfree Payment Gateway for prepaid INR UPI (server-created orders, signed raw-body webhooks, server status verification, and refunds); no COD checkout |
-| Registrar | GoDaddy; registration/renewal only |
+| Workspace | pnpm `11.25.0` (`packageManager`), engines Node `>=24.6.0 <25` |
+| Pins | Node `24.6.0`, npm `11.5.1` (`.nvmrc`, CI, ops image, packers) |
+| Apps | Next.js `16.3.4`, React `19.2.8`, App Router, `output: "standalone"` |
+| TypeScript | `tsc` is `7.0.2` via `@typescript/native`. Package named `typescript` is `@typescript/typescript6@6.0.2` for eslint/Next compiler API. `strict: true` |
+| UI | shadcn `^4.19.1`, `@base-ui/react` `^1.7.0`, Tailwind `4.3.3`, Hugeicons. No Radix runtime |
+| Fonts | Ops: IBM Plex Sans + Raleway. Storefront: self-hosted Londrina Solid/Outline + Inter Tight |
+| Auth | Better Auth `1.7.2`, two Drizzle adapters |
+| Database | drizzle-orm `0.45.2`, drizzle-kit `^0.31.10`, `pg` `8.23.0` Pool (`max: 10`) |
+| Validation | Zod `4.5.4` |
+| Telemetry | `posthog-js` `1.424.0`, `@sentry/nextjs` `10.73.0` |
+| Payments | Cashfree JS `^1.0.7`; dashboard TTL 20 minutes; provider order expiry 15 minutes |
 
-Official tooling only: shadcn CLI, current App Router docs, TypeScript 7,
-Better Auth, Drizzle, Neon,
-Hostinger, PostHog, Sentry, and pnpm. No hand-rolled substitutes. No Vercel
-production deployment.
+`pnpm-workspace.yaml` overrides: `sharp@0.35.3`, `postcss@8.5.23`,
+`@hono/node-server@1.19.14 → 2.0.10`, `brace-expansion@5.0.9`,
+`esbuild@0.18.20 → 0.25.12`, `fast-uri@3.1.5`, `hono@4.12.34`,
+`ip-address@10.3.1`, `js-yaml@4.3.1`, `nanoid@3.3.18`, `undici@7.29.0`. Patch:
+`patches/minimatch@3.1.5.patch`. Change an override only with dependency-path
+evidence, then verify audit, lint, shadcn preset resolution, migrations, both
+builds, and both packages.
 
-Hostinger Business Web Hosting exposes Node.js by major-version selector. The
-supported managed choices currently include `18.x`, `20.x`, `22.x`, and `24.x`;
-the storefront selects `24.x`. Hostinger supports pnpm but owns the installed
-patch. Storefront deployment logs are therefore the authority for managed
-runtime compatibility.
-
-The ops image, CI, and package generation pin Node `24.6.0`; CI also pins npm
-`11.5.1` and pnpm `11.25.0`. Application engines accept compatible Node `24.x`
-patches from `24.6.0` onward. A future managed-runtime, image, or
-package-manager change is not accepted silently: inspect the owning platform
-evidence, update the compatibility lane, run the complete gate, and verify the
-exact deployed SHA before release.
-
-`pnpm-workspace.yaml` contains reviewed overrides for parent ranges that lag
-security or runtime fixes. `patches/minimatch@3.1.5.patch`, created with
-`pnpm patch`, adapts minimatch 3 to brace-expansion 5's CommonJS export. The
-reviewed security overrides currently pin `postcss@8.5.23`, `nanoid@3.3.18`,
-`brace-expansion@5.0.9`, `fast-uri@3.1.5`, `ip-address@10.3.1`,
-`undici@7.29.0`, `js-yaml@4.3.1`, and `hono@4.12.34`. Change an override only
-with dependency-path evidence, then verify the audit, lint, shadcn preset
-resolution, migrations, both builds, and both packages. Remove overrides when
-upstream ranges make them unnecessary.
+Hostinger storefront selects Node `24.x`; the API records major 24 only. The
+repository pin is `24.6.0`.
 
 ## Shared UI contract
 
 - Base UI package: `packages/ui` (`@perfume-aura/ui`).
-- App composition: `apps/ops/components/` and `apps/storefront/components/`
-  import `@perfume-aura/ui/components/*`.
-- Preset: `b23PPibQOI` — luma, taupe, Hugeicons, IBM Plex Sans + Raleway, small radius.
-- Tokens: `packages/ui/src/globals.css` only.
-- `apps/ops/components.json` must point `tailwind.css` to `../../packages/ui/src/globals.css`.
-- Add only used components through CLI:
+- Apps import `@perfume-aura/ui/components/*`. Never place base UI under
+  `apps/*/components/ui`.
+- Preset identity `b23PPibQOI` lives in `packages/ui/src/globals.css`.
+  `components.json` uses `style: "base-luma"`.
+- Tokens: `packages/ui/src/globals.css` only. Ops `components.json` must point
+  `tailwind.css` at `../../packages/ui/src/globals.css`.
 
 ```bash
 pnpm dlx shadcn@latest preset resolve -c apps/ops
 pnpm dlx shadcn@latest add button -c apps/ops -y
-pnpm dlx shadcn@latest add button -c apps/ops --dry-run
 pnpm dlx shadcn@latest preset resolve -c apps/storefront
 ```
 
-Preset resolve must return `b23PPibQOI` without fallback. Never copy registry
-components manually as primary install path or place base UI under
-`apps/ops/components/ui`.
+Preset resolve must return `b23PPibQOI` without fallback.
 
-Skills live under `.agents/skills/` and are locked by `skills-lock.json`:
-shadcn, Better Auth, Neon, and Vercel React/composition patterns only. Never
-use Vercel deploy skills. Restore with `pnpm dlx skills experimental_install`.
+Skills live under `.agents/skills/` and are locked by `skills-lock.json`.
+Never use Vercel deploy skills.
 
 ## Data, database, and auth contracts
 
-- Runtime transactional work: pooled Neon URL through `pg` Pool.
-- Migrations and administrative SQL: direct Neon URL.
-- Tests: disposable loopback PostgreSQL only.
-- Ledger writes require interactive transactions; do not switch to `neon-http`.
-- Runtime role owns no schema, DDL, role membership, or sequence privilege.
-- Money persists as integer INR paise; no browser float is authoritative.
-- Inventory, invoice/payment, and commerce reservation/order lifecycles are
-  transactionally locked and idempotent where a client or provider may retry.
-- The Admin/2FA schema uses immutable invitation/audit tables and a database
-  owner invariant: a blank database may have zero owners until seeded, then it
-  permits one owner only and prevents removal/demotion of the final owner.
+- Runtime transactional work: pooled `DATABASE_URL` through `pg` Pool.
+- Migrations and administrative SQL: `DATABASE_URL_DIRECT`.
+- Tests: disposable loopback PostgreSQL only. Names must match
+  `perfume_aura_phaseNN_<purpose>`. Never load application env files.
+- Money persists as integer INR paise. Ops/invoice columns often `*_cents`;
+  commerce columns often `amount_minor`. Same unit. No browser float is
+  authoritative.
+- Repo migrations: `0000`–`0017` (18 files). Production has not applied
+  `0017`. `0016` is in the live source; its Neon apply is unrecorded — confirm
+  the journal before oil-provenance work. See [`CURRENT_STATE.md`](CURRENT_STATE.md).
+- `oil_reservations` and settlement routines are SQL in `0017`, not Drizzle TS
+  tables. Finalizer env: `STOREFRONT_PAYMENT_FINALIZER_DATABASE_URL`. That role
+  has no table grants.
+- Legacy COD enum values stay for historical rows only. Active flows must not
+  create or advertise COD.
 
 The following database contracts remain operational safeguards; they are not
 legacy deployment behavior:
@@ -143,77 +123,27 @@ database-trigger-blocked until a linked reversal/credit-note model can preserve
 the authoritative net-sum. Fulfillment is aggregate-only for free-text invoice
 lines. Return movements are not netted into invoice fulfillment, and a draft line with a matching sale movement is rejected by preflight and reconciliation.
 
-Legacy COD enum values and reconciliation columns remain in the database for
-migration compatibility only. Active storefront and ops flows must not create,
-advertise, or expose COD controls; a later schema-removal migration requires
-separate production-data proof and authorization.
+### Auth isolation
 
-Storefront checkout accepts only a stable request UUID and validated Indian
-delivery fields. The verified customer ID/email come from the server session;
-request/payload digests make exact retries reusable and conflicting reuse
-fail closed. Cashfree order expiry is 15 minutes, the dashboard transaction TTL
-must be exactly 20 minutes, and stock release waits a further 5-minute safety
-allowance before a server provider-state check.
-
-Migration `0012_amused_cloak` adds one-shot customer reconciliation leases,
-per-record payment/refund retry state, unique provider-payment binding,
-evidence references for catalog/price/media approval, fixed 3–7-day PIN-code
-serviceability, and separate order/inquiry notification outboxes. Maintenance
-returns aggregate processed/succeeded/retried/mismatched/failed counts; one
-provider failure cannot starve the remainder of its batch.
-
-Customer review and return writes are server-authoritative. Review eligibility
-requires the verified session to own a delivered, fully fulfilled order item;
-the database uniqueness boundary permits one pending moderation record per
-item. Return creation locks the owned delivered order, requires a non-null
-delivered shipment timestamp inside seven calendar days, creates one complete
-order request and item set transactionally, and rejects concurrent duplicates.
-Staff review/return transitions use capability checks, expected-state guards,
-row locks, and audit events. A return cannot become `refunded` until the linked
-order payment state is already fully refunded.
-
-Browser mutations for cart, checkout, delivery profile, order claim, review,
-and return require the exact storefront `Origin`; a cross-site Fetch Metadata
-value is rejected. Disabled customer-auth routes return `404` before importing
-Better Auth or querying Neon.
-
-Checkout compares the complete stored cart set with the complete eligible join
-inside the locked cart transaction. Any missing, duplicated, unpublished,
-unapproved, unstocked, or changed line produces `409 CART_CHANGED`, removes only
-the invalid line, and creates no checkout, reservation, payment, or order.
-
-- Owner/staff public sign-up disabled. Customer sign-up is a distinct
-  verified-email flow and defaults off until
-  `STOREFRONT_CUSTOMER_AUTH_ENABLED=true` plus all secret, SMTP, and
-  callback-domain gates are proven.
-- Owner seeded explicitly.
-- Password length: 12–256 characters.
-- Ops roles are exact `owner`, `staff`, or `user`; roles and capability checks
-  fail closed. The official Admin + 2FA plugins use TOTP, encrypted recovery
-  codes, a 30-day trusted-device window, and feature flags that default off.
-- Generic reset responses prevent account enumeration.
-- SMTP reset tokens, sessions, trusted origins, and rate limits follow Better
-  Auth official guidance.
-- Hostinger proxy/IP header trust stays disabled/unassumed until the provider
-  chain is proven non-forgeable through the production gate in
-  [`OPERATIONS.md`](OPERATIONS.md).
-- Never expose `BETTER_AUTH_SECRET`, owner credentials, SMTP password, or
-  database URLs.
+- Ops: `apps/ops/lib/auth.ts`. Public sign-up disabled. Roles exact `owner` /
+  `staff` / `user`. Admin + 2FA plugins. Flags default off.
+- Customer: `apps/storefront/lib/customer-auth.ts`. Enabled only when
+  `STOREFRONT_CUSTOMER_AUTH_ENABLED === "true"`.
+- `/api/customer-auth/[...all]` lazy-imports Better Auth after the 404 gate.
+- Checkout, reviews, returns, claim-order, and delivery-profile **statically
+  import** customer auth (claim-order also imports `@perfume-aura/db`) and then
+  404. Do not “fix” that without review.
+- Disabled account **pages** render flags-off UX; they do not 404.
+- Browser mutations require the exact storefront `Origin`; `sec-fetch-site:
+  cross-site` is rejected (`isTrustedStorefrontMutation`).
+- Password length 12–256. Generic reset responses. Never expose
+  `BETTER_AUTH_SECRET`, `CUSTOMER_AUTH_SECRET`, SMTP passwords, or database URLs.
 
 ### Database package workflow
 
-`packages/db` owns Drizzle schema, migrations, the pooled `pg` client, and the
-ledger-first inventory API. `drizzle.config.ts` requires
-`DATABASE_URL_DIRECT` and fails closed when it is absent; runtime code uses only
-`DATABASE_URL` through the pooled client.
-
-| Domain | Main records |
-|---|---|
-| Better Auth | `user`, `session`, `account`, `verification`, `rate_limit`, `two_factor` |
-| Staff security | append-only `staff_invitation_events`, `ops_audit_events` |
-| Catalog and inventory | `products`, `product_variants`, approval-gated publications/prices/media, `shipping_serviceability`, `locations`, append-only `stock_movements`, concentrate `oil_lots` / append-only `oil_movements`, offline `ops_sales` |
-| Storefront commerce delivery | payment/refund reconciliation state, typed order events, review moderation, return lifecycle, separate order/inquiry notification outboxes |
-| Finance | invoices, payments, atomic `document_number_counters` |
+`packages/db` owns schema, migrations, the pooled client, and inventory APIs.
+`drizzle.config.ts` fails closed without `DATABASE_URL_DIRECT`. Applications
+import schema only through `@perfume-aura/db`.
 
 ```bash
 pnpm db:generate
@@ -221,116 +151,54 @@ pnpm db:migrate
 pnpm --filter @perfume-aura/db seed
 ```
 
-Migration and inventory rules:
+Grant SQL: `packages/db/sql/ops-runtime-grants.sql`,
+`storefront-runtime-grants.sql`, `storefront-payment-finalizer-grants.sql`.
+Reapply restricted grants after every production schema change. Procedure:
+[`OPERATIONS.md`](OPERATIONS.md#migrations-and-runtime-grants).
+
+Inventory rules that remain in force:
 
 1. `applyMovement()` owns non-commerce receive, return, sale, damage, and
-   adjustment movements. Commerce checkout uses the separate atomic
-   `reserveCheckoutStock` and `releaseCheckoutReservations` path. Its separate
-   `STOREFRONT_PAYMENT_FINALIZER_DATABASE_URL` capability binds the authentic
-   Cashfree provider session, atomically cancels a failed/expired bound intent,
-   and after independent verification invokes the atomic payment-and-settlement
-   routine; `consumeCheckoutReservations` is owner-only support/test plumbing,
-   not a public storefront transition.
-2. Ledger insertion and cached balance updates commit together. Stock never
-   goes negative; sales also respect `available = on_hand - qty_reserved`.
-   Exact idempotency-key retries return the prior result without applying twice.
-   Finished-bottle sales also consume concentrate from `oil_lots` at 50%
-   of bottle millilitres, treating one 1 kg lot as 1000 ml. Non-whole results ceil so Signature 105 ml consumes 53 ml. Insufficient oil
-   fails the same transaction. `0014_oil_lots` owns that ledger. Migration
-   `0016_even_silk_fever` adds optional supplier, purchase reference, total
-   INR-paise cost, and received-date provenance to each oil lot without
-   changing FIFO consumption. A checkout reserves the exact FIFO oil lots
-   before a Cashfree session can be bound; owner-side consumption uses
-   `remaining - reserved`, and settlement/release consume or return those exact
-   holds. The regular storefront runtime receives no raw oil, reservation,
-   stock-movement, or catalog-pricing writes; the dedicated finalizer role has
-   no table grants and may execute only the reviewed Cashfree provider-binding,
-   cancellation, and verified-finalization routines. A database transition
-   guard denies the normal storefront role every checkout/order/payment-attempt
-   state transition, except a provider-confirmed paid-to-refund payment-state
-   update required by the refund workflow.
-3. Manual receive/adjust requires active product and variant. Fulfillment of an
-   already-issued invoice is the deliberate archived-SKU exception. An
-   owner-authorized local invoice-line return writes an idempotent positive
-   finished-stock movement against the fulfilled line, never restores consumed
-   oil, and never implies that a provider or accounting refund occurred.
-4. Migration `0008_phase03_contract` owns validated financial/inventory checks;
-   `0010_curved_puma` owns Admin/2FA roles, final-owner protection, and immutable
-   staff records. `0013_silly_vanisher` gives Better Auth 1.7 operations
-   accounts a non-null issuer, rewrites credential identities to the stable
-   user ID, rejects unmapped providers, and enforces issuer/account uniqueness.
-   Production migration order and grant reapplication belong in
-   [`OPERATIONS.md`](OPERATIONS.md#migrations-and-runtime-grants).
-5. Migration tests require lowercase loopback database names matching
-   `perfume_aura_phaseNN_<purpose>` and never load application env files.
-
-Applications import schema, helpers, and Drizzle operators through
-`@perfume-aura/db` only so pnpm resolves one `drizzle-orm` instance. Extend
-`packages/db/src/index.ts` when a query needs another exported operator.
+   adjustment. Commerce checkout uses `reserveCheckoutStock` /
+   `releaseCheckoutReservations`. The finalizer role may only bind an authentic
+   Cashfree session, cancel a failed/expired bound intent, and settle an
+   independently verified payment. `consumeCheckoutReservations` is owner-only
+   support/test plumbing.
+2. Stock never goes negative. Sales respect `available = on_hand - qty_reserved`.
+   Finished-bottle sales consume concentrate from `oil_lots` at 50% of bottle
+   millilitres (1 kg = 1000 ml; Signature 105 ml consumes 53 ml, ceiled).
+   Checkout reserves exact FIFO lots before a provider session can be bound.
+3. Owner-authorized local invoice-line returns restore finished stock, never
+   restore consumed oil, and never imply a provider refund.
+4. `0013_silly_vanisher` is the Better Auth 1.7 issuer boundary.
+   `0014_oil_lots` owns the concentrate ledger. `0016_even_silk_fever` adds
+   optional oil-lot provenance. `0017_storefront_sale_settlement` owns
+   reservations and finalizer routines.
 
 ## Local development and validation
 
 ```bash
-pnpm lint
-pnpm typecheck
-pnpm test:unit
+pnpm check
 PERFUME_AURA_TEST_DB_URL='<migrated-disposable-loopback-url>'
 TEST_DATABASE_URL="$PERFUME_AURA_TEST_DB_URL" \
   DATABASE_URL="$PERFUME_AURA_TEST_DB_URL" \
   DATABASE_URL_DIRECT="$PERFUME_AURA_TEST_DB_URL" \
-  pnpm test:integration
-pnpm build:storefront
-pnpm build:ops
-pnpm storefront:pack
-pnpm ops:pack
-node scripts/verify-production-deploy.mjs self-test
+  pnpm db:migrate
+pnpm test:integration
 git diff --check
 ```
 
-`pnpm check` runs deployment self-tests, commerce verification, lint,
-typecheck, unit tests, both production builds, both route client-JavaScript
-budget checks, and the full workspace dependency audit. The audit fails on any
-known severity and also checks the separate ops runtime lock. Run integration
-tests separately with explicitly supplied disposable database URLs.
+`pnpm check` runs deployment self-tests, `pnpm commerce:verify`, lint,
+typecheck, unit tests, both production builds, both client-JS budget asserts,
+and the workspace plus ops-runtime audits. Integration tests are **not** inside
+`pnpm check`.
 
-## Search discovery
+Tests use Node built-in runner via `tsx --test` (not Vitest/Jest). Inventory
+guard: `scripts/check-test-inventory.mjs`. Approximately 73 unit files (~302
+cases) and 18 integration files (110 cases). DB integration uses
+`--test-concurrency=1`.
 
-`apps/storefront/lib/seo.ts` owns the canonical site identity, discovery
-sitemap entries, private crawler paths, and JSON-LD serialization. Keep the
-release-locked sitemap limited to `/`, `/fragrance-guide`, `/about`, `/faq`,
-`/guides/perfume-for-hyderabad-weather`, `/guides/fragrance-families`, and
-`/guides/perfume-for-occasions`; published product and collection URLs enter it
-only through the existing public-catalog gate. Placeholder, preview, account,
-transactional, search, and incomplete-policy pages must remain `noindex`.
-
-`apps/storefront/lib/editorial-guides.ts` owns the typed initial guide registry.
-`apps/storefront/lib/public-business.ts` defines the complete owner-verified
-NAP, geo, hours, images, and official-profile contract. Do not instantiate or
-publish its Store schema or location route until every required fact is
-confirmed.
-
-The sitemap route is explicitly request-time dynamic. Public mode never falls
-back to workbook/listing products or collections: an empty approved projection
-means no `/shop` or catalog sitemap URLs, and missing or empty collections
-resolve to `404`. Catalog-import dry runs emit a deterministic
-`approvedPublicUrlManifest` beside the signed digest. The production verifier
-supports `discovery` and `public-catalog` SEO modes; public-catalog mode requires
-that reviewed manifest and crawls every sitemap URL.
-
-The homepage publishes one Organization/WebSite/WebPage graph. `/about` publishes
-AboutPage data and `/faq` publishes FAQPage data only from the same visible,
-reviewed answers. The fragrance guides publish visible Article and
-BreadcrumbList data that matches their rendered content. Discovery sitemap
-entries include `lastmod`. Published product pages may emit Product and
-BreadcrumbList data, but must not emit Offer until online checkout is genuinely
-available. Do not invent AggregateRating, address, contact, hours, or extra FAQ
-facts, and do not create scaled keyword pages. Root social
-metadata uses the verified bottle still life; self-hosted fonts are preloaded
-through `next/font/local` with adjusted fallbacks to protect layout stability.
-
-Ops local bootstrap uses `apps/ops/.env.local` copied from `.env.example`.
-Export command-required values explicitly rather than sourcing the file, then
-run migrations, seed `MAIN`, seed the owner, and start ops:
+Ops local bootstrap:
 
 ```bash
 pnpm db:migrate
@@ -339,129 +207,64 @@ pnpm --filter @perfume-aura/ops seed:owner
 pnpm dev:ops
 ```
 
-Public sign-up remains disabled. Owner seeding is atomic and idempotent: it
-repairs partial owner/credential state without replacing an existing password.
-Normal recovery uses `/forgot-password`; destructive recovery commands are
-owned by [`OPERATIONS.md`](OPERATIONS.md#owner-recovery-and-break-glass).
+Owner seeding is atomic and idempotent. Normal recovery uses
+`/forgot-password`. Destructive recovery belongs in
+[`OPERATIONS.md`](OPERATIONS.md#owner-recovery-and-break-glass).
 
 ## CI, packaging, and impact classification
 
-`.github/workflows/ops-pack.yml` validates both production builds and both
-clean standalone artifacts. Runtime-affecting `main` changes publish only the
-surfaces selected by the fail-closed impact classifier. Ops is built as an
-immutable GHCR image from the verified package and deployed through Tailscale
-forced SSH to the VPS. Storefront publication uploads the same verified ZIP
-through the Hostinger API, applies the reviewed Node.js settings, polls the
-exact provider build, and then verifies the public release. Provider
-connectivity, active release path, and live-verification eligibility belong only in
-[`CURRENT_STATE.md`](CURRENT_STATE.md).
+`.github/workflows/ops-pack.yml` (`ci-and-ops-artifact`):
 
-Markdown-only main changes still run CI and packaging but do not publish or
-deploy either surface. Database migration or runtime-grant changes block the
-automatic ops deployment until the manual migration gate is satisfied. Missing
-or unclassifiable change evidence rebuilds both surfaces so uncertainty cannot
-silently suppress verification. CodeQL scans JavaScript and TypeScript on pull
-requests, main pushes, and the weekly schedule.
+| Job | Runs |
+|---|---|
+| `deployment-impact` | Fail-closed classifier. Markdown-only → no publish. drizzle/sql → `ops_migration_blocked` |
+| `quality` | self-tests, commerce verify, lint, typecheck, unit, audit, both production builds. **Does not run `pnpm check` or client-JS budgets** |
+| `postgresql-16-integration` | migrate + all integration tests on `postgres:16` |
+| `verified-hostinger-zip` | both packs, checksums, ops image build |
+| `publish-and-deploy-vps-ops` / `deploy-hostinger-storefront-archive` | only when auto-deploy flags and not migration-blocked |
+| `block-runtime-deploy-on-database-migration` | fails closed |
 
-| Script | Command | Contract |
-|---|---|---|
-| `pack-storefront-standalone.sh` | `pnpm storefront:pack` | Build, extract-smoke, checksum, and manifest storefront ZIP |
-| `pack-ops-standalone.sh` | `pnpm ops:pack` | Build, extract-smoke, checksum, and manifest ops runtime |
-| `deploy-hostinger-storefront-archive.mjs` | `pnpm storefront:deploy-archive` | Re-verify, upload, configure, deploy, and poll the exact storefront ZIP without a generated Git branch |
-| `verify-production-deploy.mjs` | `pnpm ops:verify-production-deploy` | Verify exact SHA, runtime surfaces, and storefront locks |
-| `verify-commerce-foundation.mjs` | `pnpm commerce:verify`, `pnpm commerce:verify:self-test` | Check catalog/document invariants and negative mutations |
+CodeQL is a separate workflow. Commerce maintenance cron is flags-off unless
+`STOREFRONT_COMMERCE_MAINTENANCE_ENABLED=true`.
+
+| Script | Command |
+|---|---|
+| `pack-storefront-standalone.sh` | `pnpm storefront:pack` |
+| `pack-ops-standalone.sh` | `pnpm ops:pack` |
+| `deploy-hostinger-storefront-archive.mjs` | `pnpm storefront:deploy-archive` |
+| `verify-production-deploy.mjs` | `pnpm ops:verify-production-deploy` |
+| `verify-commerce-foundation.mjs` | `pnpm commerce:verify` |
 
 Packers require Node `24.6.0`, npm `11.5.1`, and pnpm `11.25.0`; reject
-secret-shaped files; verify Linux x64 Sharp inputs; start extracted servers;
-and publish checksum sidecars only after smoke passes.
+secret-shaped files; verify Linux x64 Sharp; smoke extracted servers.
 
-The production verifier always checks the apex storefront plus ops exact SHA,
-health, auth-session response, and static assets:
-
-```bash
-node scripts/verify-production-deploy.mjs <40-character-sha> \
-  --target ops \
-  --public-surface storefront \
-  --public-base https://perfumeaura.com \
-  --timeout-ms 1200000
-```
+Search/discovery implementation lives in `apps/storefront/lib/seo.ts`,
+`editorial-guides.ts`, and `public-business.ts`. Product contract:
+[`PRODUCT.md`](PRODUCT.md). Do not publish Store schema until NAP facts are
+confirmed.
 
 ## Performance engineering
 
-Performance work is measurement-led. Preserve authentication, authorization,
-money, database, release-lock, accessibility, and deployment contracts. Do not
-deploy while `CURRENT_STATE.md` contains an active deployment blocker.
+Preserve auth, money, database, release-lock, accessibility, and deployment
+contracts. Client-JS budgets are asserted by `pnpm check`, not by CI `quality`.
 
-Current repository baseline, not a field-performance claim:
+| App | Route | Budget (bytes) |
+|---|---|---:|
+| Storefront | `/` | 226_500 |
+| Storefront | `/shop` | 220_000 |
+| Storefront | `/products/[slug]` | 240_000 |
+| Storefront | `/cart` | 218_000 |
+| Storefront | `/checkout` | 233_500 |
+| Storefront | `/search` | 235_000 |
+| Storefront | `/account/sign-in` | 235_000 |
+| Ops | login | 185_000 |
+| Ops | forgot / reset / 2FA | 181_000 / 184_000 / 176_000 |
+| Ops | dashboard | 396_000 |
 
-- Next.js `16.3.4`, React `19.2.8`, App Router, and standalone output.
-- Fonts are self-hosted with `next/font`.
-- Storefront skips locked-cart hydration, limits low-intent prefetch, and
-  defers disabled customer-auth code.
-- Ops keeps dashboard-only tooltip/toast providers out of auth routes.
-- Both applications make reduced-motion transitions effectively immediate.
-- Client JavaScript budgets run after each production build. `pnpm check`
-  enforces both `storefront:verify-client-budget` and
-  `ops:verify-client-budget` on `main`.
-
-Do not repeat broad optimization without a measured regression or
-representative new release data. Use the same source SHA, Node/pnpm versions,
-build mode, fixture, route, viewport, and throttling before and after a change.
-
-```bash
-pnpm build:storefront
-pnpm storefront:measure-client
-pnpm storefront:pack
-pnpm build:ops
-pnpm ops:measure-client
-pnpm ops:pack
-```
-
-For browser journeys, record LCP, INP, and CLS; transferred JavaScript and
-CSS; request waterfalls and long tasks; interaction commit time or dropped
-frames when relevant; and functional, accessibility, and reduced-motion
-results. Field targets at the 75th percentile are LCP ≤ 2.5 seconds,
-INP ≤ 200 ms, and CLS ≤ 0.1. Lab TBT is only a proxy for INP.
-
-Change order:
-
-1. Trace route modules before changing imports or Client Component boundaries.
-2. Remove duplicate or unnecessary work without weakening capability or data
-   boundaries.
-3. Fix proven slow interactions before adding memoization or concurrency APIs.
-4. Animate only `transform` and `opacity` where behavior remains equivalent;
-   preserve reduced motion.
-5. Change fonts, icons, dependencies, or experimental Next.js options only
-   through the reviewed stack process.
-
-Generated analyzers, traces, and screenshots stay untracked. Compact dated
-attestations live in
-[`REFERENCE.md`](REFERENCE.md#historical-evidence). They never override this
+Animate only `transform` and `opacity` where behavior remains equivalent;
+preserve reduced motion. Generated traces stay untracked. Dated attestations
+in [`REFERENCE.md`](REFERENCE.md#historical-evidence) never override this
 policy or `CURRENT_STATE.md`.
-
-For an implemented optimization, record:
-
-```text
-source SHA; route/journey; bottleneck; before; change; after;
-functional checks; accessibility checks; security checks; commands; decision
-```
-
-## Pending outcome
-
-Capture privacy-safe Core Web Vitals and repeat
-desktop/mobile performance checks after representative approved catalog
-content is live. Optimize from measured bottlenecks only.
-
-Official references:
-
-- [Next.js production checklist](https://nextjs.org/docs/app/guides/production-checklist)
-- [Next.js package bundling](https://nextjs.org/docs/app/guides/package-bundling)
-- [Next.js lazy loading](https://nextjs.org/docs/app/guides/lazy-loading)
-- [Next.js prefetching](https://nextjs.org/docs/app/guides/prefetching)
-- [React Profiler](https://react.dev/reference/react/Profiler)
-- [Web Vitals](https://web.dev/articles/vitals)
-- [Reduced motion](https://web.dev/articles/prefers-reduced-motion)
-- [Knip workspaces](https://knip.dev/features/monorepos-and-workspaces)
 
 ## Observability code and privacy
 
@@ -488,21 +291,18 @@ app/global-error.tsx
 PostHog initializes after page load, captures page-view/page-leave activity and
 the allowlisted `storefront_contact_action` event, and registers an application
 discriminator. Contact actions contain only `application`, `surface`, and
-`action`; referral values are reduced to their origin domain. Broad DOM autocapture,
-surveys, experiments, feature flags, exception capture, and session replay
-remain disabled. Sentry captures unhandled failures, sampled traces, and typed
-structured logs. Console capture is intentionally not enabled.
+`action`. Broad DOM autocapture, surveys, experiments, feature flags, exception
+capture, and session replay remain disabled. Storefront persistence is
+`sessionStorage`; ops is `localStorage`.
 
 Privacy sanitizers remove direct-identifier property keys, request bodies,
-headers, cookies, query strings, fragments, and opaque URL tokens before an
-event can leave either app. Authenticated identification uses only the stable
-internal user ID. Operations logout and customer logout reset provider
-identity. Tests for those filters run in each application's unit suite. Do not
-add console capture, DOM autocapture, session replay, or customer/staff email
-identification without a separate privacy review.
+headers, cookies, query strings, fragments, and opaque URL tokens. Authenticated
+identification uses only the stable internal user ID. Do not add console
+capture, DOM autocapture, session replay, or email identification without a
+separate privacy review.
 
-Provider names, environment placement, source-map CI settings, and activation
-procedure belong in [`OPERATIONS.md`](OPERATIONS.md#observability-configuration-and-activation).
+Activation procedure:
+[`OPERATIONS.md`](OPERATIONS.md#observability-configuration-and-activation).
 
 ## Quality and accessibility
 
@@ -514,3 +314,10 @@ procedure belong in [`OPERATIONS.md`](OPERATIONS.md#observability-configuration-
   drawers, focus restoration, and reduced-motion-safe animation.
 - Every public release flag remains false unless its owning acceptance evidence
   is recorded.
+
+## Pending outcome
+
+Do not apply `0016` or `0017` to production without the owner migration gate.
+Do not treat CI `quality` as `pnpm check`. Capture privacy-safe Core Web Vitals
+only after approved catalog content is live. Next production actions live in
+[`CURRENT_STATE.md`](CURRENT_STATE.md).

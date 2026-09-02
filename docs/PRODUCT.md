@@ -1,127 +1,146 @@
 # Product
 
-Perfume Aura is an India-first perfume operations and future ecommerce system.
-Persisted money is integer INR paise; public money uses
-`{ currency: "INR", amountMinor: number }` and is always server-authoritative.
+Perfume Aura is an India-first fragrance house with a public discovery website
+and a private operations app. Persisted money is integer INR paise. Public
+money uses `{ currency: "INR", amountMinor: number }` and is always
+server-authoritative.
 
-## Users and applications
+Live SHAs, flags, and next actions belong in
+[`CURRENT_STATE.md`](CURRENT_STATE.md). Commerce ADRs belong in
+[`COMMERCE.md`](COMMERCE.md).
 
-- `perfumeaura.com` is the animated public storefront.
-- `app.perfumeaura.com` is the internal operations application.
-- Owner public sign-up is disabled. Customer authentication is a separate
-  storefront boundary and is currently disabled.
-- Owner and staff operations remain separate from customer accounts and orders.
+## Who uses what
 
-## Route contract
+| Surface | Audience | Auth |
+|---|---|---|
+| `perfumeaura.com` | Visitors | None required. Customer auth is a separate storefront boundary and is off. |
+| `www.perfumeaura.com` | Same visitors | Permanent `308` to the matching apex path and query (`apps/storefront/next.config.ts` `redirects()`, not middleware). |
+| `app.perfumeaura.com` | Owner and invited staff | Independent Better Auth. Public sign-up is disabled. |
 
-| Area | Routes |
+Customer accounts and operations accounts never share tables, secrets, cookies,
+origins, or recovery.
+
+## Live public routes
+
+Indexable (`index, follow`, in sitemap, `en-IN`): `/`, `/fragrance-guide`,
+`/about`, `/faq`, `/guides/perfume-for-hyderabad-weather`,
+`/guides/fragrance-families`, `/guides/perfume-for-occasions`. Home JSON-LD is
+Organization + WebSite + WebPage. About is AboutPage. FAQ is FAQPage. Guides
+are Article. `/llms.txt` is public.
+
+Reachable, `noindex`, not in sitemap: `/shop`, `/products/[slug]`,
+`/collections/[slug]`, `/search`, `/find-your-scent`, `/cart`, `/contact`,
+`/wholesale`, `/shipping`, `/returns`, `/privacy`, `/terms`, `/account`,
+`/account/sign-in`, `/account/orders`, `/account/settings`, `/account/delivery`.
+
+HTML `404` while flags are closed: `/checkout`, `/account/register`,
+`/account/recover`.
+
+`robots.txt` allows `/` and disallows `/account`, `/api/`, `/cart`,
+`/checkout`, `/order/`. Product and collection URLs enter the sitemap only
+after Neon publication and `STOREFRONT_PUBLIC_RELEASE=true`.
+
+Header: Shop, Scent guide, About, FAQ, Account, cart popover, WhatsApp “Get
+scent”. Mobile menu also has Search, Instagram `@perfume.aura.hyd`, and
+WhatsApp `+91 95495 49060`. `/find-your-scent` exists and is not in
+header/footer. There is no location page and no Store schema; do not invent
+NAP, hours, or an open online store.
+
+## Locked vs visible
+
+Discovery listing does **not** require `STOREFRONT_PREVIEW_CATALOG` or
+`STOREFRONT_PUBLIC_RELEASE`. Those flags gate preview carts and Neon-published
+sellable products.
+
+| Flag | Visitor/staff effect while false |
 |---|---|
-| Ops auth | `/login`, `/forgot-password`, `/reset-password`, `/settings/security` |
-| Ops | `/dashboard`, `/products`, `/stock`, `/stock/oil`, `/sales/new`, `/customers`, `/invoices`, `/payments`, `/finance`, `/reports`, `/commerce/*` |
-| Storefront | `/`, `/shop`, `/collections/[slug]`, `/products/[slug]`, `/search`, `/find-your-scent`, `/cart`, `/checkout`, `/account`, `/account/delivery`, `/account/orders`, `/account/orders/[orderNumber]`, legacy `/order/[token]` |
-| Store content | `/about`, `/fragrance-guide`, `/faq`, `/guides/perfume-for-hyderabad-weather`, `/guides/fragrance-families`, `/guides/perfume-for-occasions`, `/contact`, `/wholesale`, `/shipping`, `/returns`, `/privacy`, `/terms` |
-| Customer boundary | `/account/*`, `/api/customer-auth/*`, `/api/account/*` |
+| `STOREFRONT_PUBLIC_RELEASE` | Workbook listing, not Neon projection. Shop/product stay `noindex`. No Product/Offer JSON-LD. |
+| `STOREFRONT_PREVIEW_CATALOG` | Add to cart disabled. Cart lines empty, subtotal zero, checkout unavailable. Also true automatically in local `development`. |
+| `STOREFRONT_CUSTOMER_AUTH_ENABLED` | `/api/customer-auth/*` returns `404` before Better Auth or Neon. `/account` and `/account/sign-in` still render “not open yet”. Register/recover are `404`. |
+| `STOREFRONT_CHECKOUT_RELEASE_APPROVED` and DB `checkout_enabled` | `/checkout` is `404`. Either plane false keeps checkout locked. |
+| `STOREFRONT_INQUIRIES_ENABLED` | Contact/wholesale forms disabled. Posted inquiries return `503`. |
+| `OPS_TWO_FACTOR_REQUIRED` / `OPS_STAFF_INVITES_ENABLED` | Ops login works; mandatory 2FA and staff invites stay off. |
 
-## Commerce release locks
+WhatsApp is the live order/contact path while checkout is closed. Product pages
+can still build a prefilled WhatsApp message with selected size and quantity.
 
-The storefront is public as a visual brand and product-discovery surface, but
-commerce is fail-closed:
+## Catalog presentation
 
-- no product or collection is public without identity, legal, content, media,
-  SKU, stock, cost, and INR-price approval;
-- checkout, Cashfree prepaid UPI, customer authentication, contact and
-  wholesale inquiries, reviews, and product/catalog indexing are disabled;
-- when inquiry release is eventually approved, contact and wholesale require
-  explicit versioned privacy consent, use generic accepted responses and a
-  honeypot, apply HMAC-only email/IP throttles, and deliver asynchronously into
-  the audited support inbox;
-- disabled customer-auth routes return `404` without loading Better Auth or
-  Neon;
-- cart totals are zero and checkout is blocked while public release is closed;
-- Search discovery is intentionally separate from commerce release. `/`,
-  `/fragrance-guide`, `/about`, `/faq`, and the three approved `/guides/*`
-  editorial routes are indexable; preview shop,
-  product, collection, search, finder, inquiry, and incomplete-policy pages
-  remain `noindex`. `robots.txt` allows public crawling while blocking private
-  account, API, cart, checkout, and order paths.
-- Observability is fail-closed until configured. PostHog uses page activity
-  without DOM autocapture or session replay; Sentry excludes direct PII and
-  sensitive request material. Monitoring never changes a commerce release lock.
+Source: `data/catalog/launch-products.csv` + `launch-variants.csv` →
+`apps/storefront/lib/listing-workbook-data.ts`. This is listing identity, not
+legal clearance, import approval, or sale approval.
 
-Active flag values and next production actions belong in
-[`CURRENT_STATE.md`](CURRENT_STATE.md). Commerce requirement IDs and ADRs belong
-in [`COMMERCE.md`](COMMERCE.md).
+| Collection | Count | Sizes | Titles |
+|---|---:|---|---|
+| Inspired | 79 | 30 / 50 / 100 ml | `Inspired by <brand> <reference>` |
+| Unknown | 15 | 30 / 50 / 100 ml | Exact supplied names; no invented brand |
+| Signature | 20 | 50 / 105 ml | In-house names, no “Inspired by” prefix |
+
+114 products, 322 variants, 39 Inspired brands. Shop query: `q`, `collection`,
+`brand`, `size`, `sort`.
+
+Prices (owner-supplied, complete):
+
+- Main-list rows 1–16 (includes Unknown Heaven Rose and Rose Elegance):
+  ₹600 / ₹800 / ₹1,400
+- Main-list rows 17–94: ₹450 / ₹650 / ₹1,200
+- Signature: ₹1,200 / ₹2,200 except Oud of Dubai and Visionnaire at
+  ₹1,800 / ₹3,000
+
+SKU, cost, opening stock, media, and structured scent copy are incomplete.
+Composition shows “Details coming soon”. 10 ml and discovery sets stay out of
+public commerce until a separate sample format is approved. COD is not offered.
+
+When `STOREFRONT_PUBLIC_RELEASE=true`, the storefront switches to the Neon
+projection and unpublished products must `404`. Until then the homepage does
+not feature the 114 workbook products; the hero is Inspired + Signature bottle
+slides plus editorial studies.
+
+## Shop and product UX invariants
+
+- Signature cards use the clear-glass bottle; Inspired and Unknown share the
+  matte-black bottle. Desktop hover reveal; touch layouts use viewport
+  activation. Reduced motion keeps transforms static.
+- “Inspired by” uses Londrina Outline; the reference name stays solid.
+- Filters expose labeled dropdowns. Horizontal carousels must not steal
+  vertical page scrolling. Closed menus restore focus.
+- Persistent labels, visible focus, inert closed drawers, 44px targets.
+- Cart cookie `pa_storefront_cart`. Quantity 0–10. Browser mutations require
+  the exact storefront `Origin`; cross-site Fetch Metadata is `403`.
+- Policy pages are unpublished shells. Hardcoded ₹99/₹999 shipping values
+  must not render until flags and DB approvals match
+  [`COMMERCE_OPERATING_POLICIES.md`](COMMERCE_OPERATING_POLICIES.md). Those
+  numbers are locked implementation inputs, not professional approval.
+
+Implemented flags-off, not live visitor behavior: verified checkout, Google
+One Tap, Cashfree UPI, one saved delivery profile, reviews, and 7-day
+returns. See [`COMMERCE.md`](COMMERCE.md).
+
+## Operations screens
+
+Auth: `/login`, `/forgot-password`, `/reset-password`, `/two-factor`.
+
+Inventory: `/dashboard`, `/products`, `/stock`, `/stock/oil`, `/stock/low`,
+`/finance`, `/reports`. Sales: `/sales/new`, `/customers`, `/invoices`,
+`/invoices/ar`, `/payments`. Commerce: `/commerce`, `/commerce/catalog`,
+`/commerce/orders`, `/commerce/promotions`, `/commerce/reviews`,
+`/commerce/support`, `/commerce/settings`. Settings: `/settings/security`,
+`/settings/staff`.
+
+Roles are exact `owner`, `staff`, or `user`. Staff can update shipment state
+and cannot manage refunds, costs, finance, promotions, publication, or staff.
+Cookie proxy covers dashboard routes; `/reports` and `/sales` still
+authenticate in the dashboard layout.
+
+Staff 2FA/invites stay false until SMTP delivery, owner TOTP/recovery, and the
+staff denial journey in
+[`OPERATIONS.md`](OPERATIONS.md#staff-operations-release-procedure).
+Migrations and grants for that schema are already on production; the remaining
+gate is owner/provider acceptance, not “apply `0010`”.
 
 ## Pending outcome
 
-Keep catalog, checkout, customer authentication,
-inquiries, and every commerce flag disabled until business, catalog, policy,
-media, pricing, stock, shipping, tax, support, Cashfree, SMTP, and lifecycle
-gates pass. Use a separate authorized release decision for each public
-capability.
-
-## Catalog and money policy
-
-- Premium Segment rows 1–16: 30 ml ₹600, 50 ml ₹800, 100 ml ₹1,400.
-- Main-list rows 17–94: 30 ml ₹450, 50 ml ₹650, 100 ml ₹1,200.
-- Signature scents: 50 ml and 105 ml only, using the exact owner-supplied
-  per-product prices recorded in the catalog variants.
-- Storefront listing titles for all 79 researched Inspired rows use
-  `Inspired by <brand> <reference>` (COM-ADR-029 / 033). The remaining 15
-  main-list rows use their exact supplied names in the temporary `Unknown`
-  collection because no single defensible brand/reference mapping was found.
-  This is listing identity and organization, not legal clearance or sale
-  approval.
-- 10 ml and discovery sets are excluded from public commerce until a separate
-  sample format is approved.
-
-## Operations and financial invariants
-
-- Product/variant updates use transaction and version guards.
-- Stock receive, adjustment, and fulfillment append immutable movements and
-  use deterministic row locks and idempotency keys.
-- Invoices and payments are distinct financial records; payment replay cannot
-  overpay an invoice.
-- Storefront orders use immutable item snapshots. Reservation expiry,
-  cancellation, failed payment, and abandonment release stock exactly once.
-- Catalog projection never exposes cost, raw stock, internal notes, or archived
-  records.
-- Cashfree success requires raw webhook verification and server-side status
-  verification. Checkout is prepaid-only through approved Cashfree UPI flows;
-  cash on delivery is not offered.
-- Visitors may browse and create a cart anonymously. Checkout requires a
-  verified customer session, derives email and user identity on the server,
-  and preserves the cart through the sign-in callback.
-- Customers can explicitly save one delivery profile; the checkout opt-in is
-  unchecked by default and historical order snapshots never change.
-- A verified customer may submit one pending review for each delivered,
-  fully fulfilled order item. Only staff-approved reviews enter the public
-  product projection.
-- A verified customer may request one full-order return only after every item
-  is fulfilled and within seven calendar days of the recorded delivery.
-  Staff controls the audited requested → approved → received → refunded path;
-  refunded status requires the order payment state to be fully refunded.
-- The scent finder considers only published structured scent profiles, explains
-  every matching answer axis, and returns no recommendation when fewer than two
-  axes match.
-
-## Staff capability contract
-
-Ops implements Better Auth Admin and 2FA plugins, strict `owner`/`staff`/`user`
-roles, server-side capabilities, immutable staff invitation/audit records,
-TOTP, recovery codes, trusted private devices, staff deactivation, and
-owner-only financial/publication/payment controls. Staff can update shipment
-state but cannot manage refunds or other owner-only payment operations.
-
-`OPS_TWO_FACTOR_REQUIRED` and `OPS_STAFF_INVITES_ENABLED` remain false until
-the migration and restricted grants are applied, SMTP delivery is proven, the
-owner completes TOTP and recovery-code proof, and an authorized staff journey
-proves direct action denials. The function-mapped production smoke order is
-the [staff operations release procedure](OPERATIONS.md#staff-operations-release-procedure).
-
-## Customer privacy limits
-
-Monitoring cannot change a commerce release lock or become a source of truth
-for commerce, authentication, inventory, or finance. Capture, filtering, and
-PII restrictions are owned by
-[`ENGINEERING.md`](ENGINEERING.md#observability-code-and-privacy).
+Keep catalog publication, checkout, customer authentication, inquiries, and
+every commerce flag disabled until the owning gates in
+[`BLOCKERS.md`](BLOCKERS.md) and [`CURRENT_STATE.md`](CURRENT_STATE.md) pass.
+Use a separate authorized release decision for each public capability.

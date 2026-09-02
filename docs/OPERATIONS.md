@@ -13,6 +13,7 @@ secret, or release-flag action.
 - [Owner recovery and break glass](#owner-recovery-and-break-glass)
 - [Observability activation](#observability-configuration-and-activation)
 - [Incident control](#nproc-incident-control)
+- [Current outcome](#current-outcome)
 - [Pending outcome](#pending-outcome)
 
 ## Authority, topology, and safety boundaries
@@ -20,7 +21,7 @@ secret, or release-flag action.
 | Domain | Purpose | Entry |
 |---|---|---|
 | `perfumeaura.com` | Public storefront | `apps/storefront/server.js` |
-| `www.perfumeaura.com` | Path-preserving apex redirect | Storefront middleware |
+| `www.perfumeaura.com` | Path-preserving apex redirect | `apps/storefront/next.config.ts` `redirects()` |
 | `app.perfumeaura.com` | Private operations | `apps/ops/server.js` |
 
 `www.app.perfumeaura.com` and `shop.perfumeaura.com` must remain absent. The
@@ -82,10 +83,14 @@ before first use and never print its token.
 ```bash
 docker mcp tools --gateway-arg=--profile --gateway-arg=hostinger-api count
 docker mcp tools --gateway-arg=--profile --gateway-arg=hostinger-api \
-  call hosting_listWebsitesV1 domain=app.perfumeaura.com per_page=10
+  call hosting_listWebsitesV1 domain=perfumeaura.com per_page=10
 docker mcp tools --gateway-arg=--profile --gateway-arg=hostinger-api \
-  call hosting_listJsDeployments domain=app.perfumeaura.com page=1 perPage=20
+  call hosting_listJsDeployments domain=perfumeaura.com page=1 perPage=20
 ```
+
+The Hostinger vhost `app.perfumeaura.com` is leftover rollback inventory, not
+the live ops surface. Live ops is the VPS behind Caddy. Confirm identities in
+[`CURRENT_STATE.md`](CURRENT_STATE.md) before any Hostinger mutation.
 
 For an authorized provider mutation, enable only its exact MCP tool, execute it
 once, verify the result, then disable it. Record privacy-safe production changes
@@ -178,9 +183,9 @@ do not expose them to browsers or replace them with an unauthenticated cron:
 | `/api/internal/send-order-emails` | Drain the transactional order-email outbox with retry/backoff |
 | `/api/internal/send-inquiry-notifications` | Drain the separate support-inquiry notification outbox without persisting PII in it |
 
-Keep all five jobs disabled until migrations through `0013_silly_vanisher`,
-restricted runtime grants, Cashfree sandbox behavior, and Hostinger SMTP delivery are
-proven on their owning environments. A failed or ambiguous provider response
+Keep all five jobs disabled until Cashfree sandbox behavior and Hostinger SMTP
+delivery are proven on their owning environments. Schema through
+`0015_catalog-publication-profile` is already on production; `0017` is not. A failed or ambiguous provider response
 must retain stock and remain available for the next reconciliation run.
 The repository-owned scheduler is
 `.github/workflows/storefront-commerce-maintenance.yml`. Configure the same
@@ -238,12 +243,17 @@ record its result in `CURRENT_STATE.md`.
 
 ## Current outcome
 
-Each runtime-affecting main merge must deploy the checksum-verified storefront
+Live SHA, Hostinger build id, ops digest, flag values, Neon journal, and
+rollback inventory belong only in [`CURRENT_STATE.md`](CURRENT_STATE.md).
+Repo `main` can be ahead of live when a drizzle changeset fails closed.
+
+Each runtime-affecting main merge deploys the checksum-verified storefront
 archive through the Hostinger API with Node 24.x, Framework Other, root `./`,
 empty build/output settings, existing environment values, and entry
-`apps/storefront/server.js`. It must then pass exact HCDN and clean-browser
-verification. The active release and any temporary migration rollback state
-belong in [`CURRENT_STATE.md`](CURRENT_STATE.md).
+`apps/storefront/server.js`, then passes exact HCDN verification — unless the
+classifier marks the changeset `ops_migration_blocked`. In that case both
+runtime deploys stay skipped until the owner migration gate is completed. Do
+not infer the live SHA from `git HEAD`.
 
 ## Ops deployment and recovery
 
@@ -285,10 +295,11 @@ root-owned `/etc/khanect/perfume-aura-ops.env`; deploy automation never sends
 them. Use `pnpm ops:pack` only for artifact recovery.
 
 The old Hostinger ops Web App is off public DNS and retained only as frozen
-provider state. [`CURRENT_STATE.md`](CURRENT_STATE.md) owns its current
-retention deadline and eligibility. Retiring its former deployment branch
-requires explicit authorization and fresh exact-SHA VPS acceptance evidence.
-Do not restore its captured DNS records outside an authorized rollback.
+provider inventory. [`CURRENT_STATE.md`](CURRENT_STATE.md) owns whether it is
+still enabled and whether authorized removal is pending. The 48-hour
+post-cutover clock has expired; do not treat it as an open countdown. Do not
+publish new ops releases to it or restore its DNS records outside an
+authorized rollback.
 
 Production migrations remain manual direct-owner operations. Reapply restricted
 runtime grants after every schema change.
@@ -324,6 +335,14 @@ columns and the non-negative optional-cost constraint after migration. Reapply
 the reviewed grant scripts after the owner apply. The normal storefront role
 has no direct oil-lot write access; payment settlement uses the separate
 table-grant-free finalizer role through the reviewed settlement routines.
+
+Migration `0017_storefront_sale_settlement` is on repo `main` and not on the
+live SHA. It adds `oil_reservations`, FIFO checkout oil holds, and the
+function-only payment-finalizer routines. Prove it on an isolated Neon branch,
+then apply through the direct owner connection with both grant scripts and the
+finalizer grant script. Do not merge a target-runtime release or change either
+`DATABASE_URL` as part of that apply. Production apply of `0016` is unrecorded;
+confirm the Neon journal before combining provenance work with `0017`.
 
 ## Migrations and runtime grants
 
@@ -464,16 +483,25 @@ Never use production or Neon as an integration-test database.
 
 ### Phase A — schema and flags-off deploy
 
-1. Create an isolated Neon branch and apply `0010_curved_puma`.
+Staff-security schema (`0010_curved_puma`) and later commerce/oil migrations
+through `0015` are already on production. Do not re-apply them.
+
+1. If a new unapplied migration is in the candidate SHA, create an isolated
+   Neon branch and apply only that reviewed pending migration (currently
+   `0017_storefront_sale_settlement` on `main`; confirm `0016` against the
+   production journal first).
 2. Validate the migration and restricted grant contract on that Neon branch;
    do not run the integration suite there.
 3. Apply the same migration to a disposable loopback PostgreSQL database and
    run authenticated integration tests with all three database URL variables
    set to that exact loopback database.
-4. Apply the reviewed migration to production using `DATABASE_URL_DIRECT`.
-5. Reapply `packages/db/sql/ops-runtime-grants.sql` with the reviewed runtime
-   role; reject any unexpected effective privilege.
-6. Deploy ops with both security flags false.
+4. Apply the reviewed pending migration to production using
+   `DATABASE_URL_DIRECT` only with explicit owner authorization.
+5. Reapply `packages/db/sql/ops-runtime-grants.sql` (and storefront plus
+   finalizer grants when the changeset includes them); reject any unexpected
+   effective privilege.
+6. Deploy ops with both security flags false. A drizzle changeset will fail
+   closed in CI until this owner gate completes.
 7. Verify exact SHA, live, ready, version, unauthenticated session, a real static
    asset, and existing owner login.
 8. Re-smoke storefront, its release locks, and the path-preserving `www` `308`.
@@ -695,6 +723,13 @@ whole plan, not the VPS ops service. Capture resources and storefront endpoint
 evidence before provider action; prefer a scoped repair. Use plan-wide stop only
 with explicit authorization, then re-smoke every affected managed site and
 update `CURRENT_STATE.md`.
+
+## Pending outcome
+
+Live values belong in [`CURRENT_STATE.md`](CURRENT_STATE.md). Until those next
+actions complete: keep every commerce and staff-security flag closed; do not
+apply `0017` or change runtime `DATABASE_URL`; rotate the Hostinger archive
+token before 2026-09-28; do not use plan-wide process stop.
 
 ## Official references
 
