@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-09-02 08:18:00 UTC** from public HTTPS, authoritative
+Last refreshed: **2026-09-02 12:10:00 UTC** from public HTTPS, authoritative
 DNS, Hostinger inventory, GitHub Actions, and this checkout. Do not infer live
 SHAs from `git HEAD`.
 
@@ -55,36 +55,41 @@ API listing.
 
 ## Exact releases and automation
 
-Both live surfaces report source
+The storefront reports source
+`c921d24ca9931b847e047ff4df02c407c755f0da`; ops remains on
 `09164609b918cf8c356ec35e42e6d96ff1a25dce`:
 
 | Probe | Result |
 |---|---|
-| `https://perfumeaura.com/api/health/version` | `{"status":"ok","commit":"09164609…"}` |
-| Homepage `data-perfume-aura-release` | same SHA |
-| `https://app.perfumeaura.com/api/health/version` | same SHA |
+| `https://perfumeaura.com/api/health/version` | `{"status":"ok","commit":"c921d24…"}` |
+| Homepage `data-perfume-aura-release` | storefront SHA |
+| `https://app.perfumeaura.com/api/health/version` | `{"status":"ok","commit":"09164609…"}` |
 | Ops `/api/health/live` / `/ready` | `ok` / `ready` |
 | `www` `/shop?probe=1` | `308` → `https://perfumeaura.com/shop?probe=1` |
 | Storefront `/api/health/live` and `/ready` | do not exist |
 
-Hostinger storefront build `01a05e55-2ac0-72d6-aa22-74edcba73c63` completed
-2026-09-01 18:58:31 UTC: Node `24`, Framework Other, root `./`, no build or
+Hostinger storefront build `01a061f2-e8c8-7368-af37-aec3d95b25f6` completed
+2026-09-02 11:49:12 UTC: Node `24`, Framework Other, root `./`, no build or
 output directory, entry `apps/storefront/server.js`, `source_type: archive`.
 Workflow run
-[`33545988514`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33545988514)
-is the last successful runtime deploy of that SHA.
+[`33625906829`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33625906829)
+is the last successful storefront runtime deploy. Its initial hosted live
+verifier timed out while production was already exact; after all four published
+IPv4 origins and the repository verifier confirmed `c921d24…`, the failed
+verifier-only rerun passed in 19 seconds. Ops deployment remained skipped.
 
-Repository `main` is `07f3ca9234f2e39b6fe0a214074ae07f0030afd8`. After the live
-SHA it contains self-hosted PostgreSQL preparation, migration
-`0017_storefront_sale_settlement`, and docs-only commits. Workflow run
-[`33550129391`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33550129391)
-passed quality, 110 disposable-PostgreSQL integration tests, and packaging,
-then failed closed on the production database-owner gate. Both runtime deploys
-stayed skipped. That is why production remains on `09164609…`.
+Repository `main` is `c921d24ca9931b847e047ff4df02c407c755f0da`. It contains
+self-hosted PostgreSQL preparation and migration
+`0017_storefront_sale_settlement`; that migration is still not applied to
+production. The storefront-only release passed quality, 110
+disposable-PostgreSQL integration tests, packaging, archive deployment, and
+exact live verification without publishing ops or applying a migration.
 
-Do not deploy `main` until the owner migration gate for `0017` (and restricted
-grants) is explicitly completed. Markdown-only merges still run CI and do not
-publish either surface. Package lock is Better Auth `1.7.2`.
+Do not deploy ops or apply `0017` until its owner migration gate (including
+restricted grants) is explicitly completed. Storefront-only releases may
+publish when the classifier keeps ops and database work excluded. Markdown-only
+merges still run CI and do not publish either surface. Package lock is Better
+Auth `1.7.2`.
 
 Routine storefront path: verified ZIP → Hostinger archive API → exact public
 verification. Routine ops path: verified ZIP → immutable GHCR image →
