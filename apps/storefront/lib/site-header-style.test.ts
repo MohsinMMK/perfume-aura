@@ -126,7 +126,11 @@ describe("storefront header logo", () => {
     assert.match(globals, /@keyframes aura-header-logo-drop/u);
     assert.match(
       globals,
-      /aura-header-logo-drop 700ms cubic-bezier\(0\.16, 1, 0\.3, 1\)[\s\S]*140ms both/u,
+      /aura-header-logo-drop 800ms cubic-bezier\(0\.37, 0, 0\.63, 1\)[\s\S]*100ms both/u,
+    );
+    assert.match(
+      globals,
+      /@keyframes aura-header-logo-drop[\s\S]*translate3d\(0, var\(--aura-logo-enter-y\), 0\)[\s\S]*translate3d\(0, 0, 0\)/u,
     );
   });
 

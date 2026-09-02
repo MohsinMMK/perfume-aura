@@ -73,11 +73,27 @@ describe("storefront WhatsApp contact action", () => {
     assert.match(action, /href=\{productWhatsAppUrl\}/u);
     assert.match(globals, /\.aura-whatsapp-action\s*\{[\s\S]*width: 3\.5rem;[\s\S]*height: 3\.5rem;/u);
     assert.match(globals, /env\(safe-area-inset-bottom, 0px\)/u);
-    assert.match(globals, /bottom: calc\(env\(safe-area-inset-bottom, 0px\) \+ 5\.25rem\)/u);
+    assert.match(
+      globals,
+      /bottom: calc\(env\(safe-area-inset-bottom, 0px\) \+ var\(--aura-gutter\)\)/u,
+    );
     assert.match(globals, /@media \(min-width: 640px\)/u);
+    assert.match(
+      globals,
+      /@media \(min-width: 640px\)[\s\S]*bottom: calc\(env\(safe-area-inset-bottom, 0px\) \+ var\(--aura-gutter-lg\)\)/u,
+    );
     assert.match(globals, /@media \(max-width: 639px\)[\s\S]*\.aura-whatsapp-action--product\s*\{[\s\S]*display: none;/u);
     assert.match(globals, /\.aura-whatsapp-action:focus-visible \.aura-whatsapp-icon/u);
-    assert.match(globals, /@media \(hover: hover\) and \(pointer: fine\)/u);
+    assert.match(
+      globals,
+      /@media \(min-width: 640px\) and \(hover: hover\) and \(pointer: fine\)/u,
+    );
+    assert.match(
+      globals,
+      /\.aura-whatsapp-label\s*\{[\s\S]*right: calc\(100% \+ 0\.5rem\);[\s\S]*min-height: 3rem;[\s\S]*background: var\(--aura-ivory\);[\s\S]*filter: blur\(3px\);[\s\S]*transform: scaleX\(0\.72\);[\s\S]*transform-origin: calc\(100% \+ 0\.75rem\) 50%;/u,
+    );
+    assert.match(globals, /\.aura-whatsapp-label::after\s*\{[\s\S]*right: -0\.75rem;[\s\S]*background: var\(--aura-ivory\);/u);
+    assert.match(globals, /filter: drop-shadow\(0 4px 4px rgb\(0 0 0 \/ 28%\)\)/u);
     assert.match(globals, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.aura-whatsapp-label/u);
   });
 });

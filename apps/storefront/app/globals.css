@@ -82,6 +82,62 @@ body {
   font-weight: 400;
 }
 
+.aura-hero-motion__word {
+  display: inline-block;
+  transform-origin: 50% 100%;
+}
+
+.aura-hero-motion--aura-echo .aura-hero-motion__word {
+  animation: aura-hero-aura-echo 1400ms cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+  animation-delay: calc((5 - var(--aura-hero-word-index)) * 70ms + 180ms);
+}
+
+@keyframes aura-hero-aura-echo {
+  0% {
+    opacity: 0;
+    text-shadow:
+      0.16em 0.08em 0 rgb(190 141 63 / 58%),
+      0.3em 0.14em 0 rgb(245 228 199 / 16%);
+    transform: translate3d(-0.12em, -0.04em, 0);
+  }
+
+  42% {
+    opacity: 0.82;
+    text-shadow:
+      0.09em 0.045em 0 rgb(190 141 63 / 34%),
+      0.17em 0.08em 0 rgb(245 228 199 / 9%);
+    transform: translate3d(-0.035em, -0.012em, 0);
+  }
+
+  72% {
+    opacity: 1;
+    text-shadow:
+      0.025em 0.012em 0 rgb(190 141 63 / 14%),
+      0.05em 0.024em 0 rgb(245 228 199 / 4%);
+    transform: translate3d(-0.008em, 0, 0);
+  }
+
+  100% {
+    opacity: 1;
+    text-shadow:
+      0 0 0 rgb(190 141 63 / 0%),
+      0 0 0 rgb(245 228 199 / 0%);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aura-hero-motion__word {
+    animation: none !important;
+    clip-path: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+    transform: none !important;
+  }
+}
+
 .aura-nav-wave {
   display: inline-grid;
   overflow: hidden;
@@ -297,29 +353,30 @@ body {
 .aura-whatsapp-action {
   position: fixed;
   right: calc(env(safe-area-inset-right, 0px) + var(--aura-gutter));
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 5.25rem);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--aura-gutter));
   z-index: 40;
   display: grid;
   width: 3.5rem;
   height: 3.5rem;
   place-items: center;
   color: white;
+  filter: drop-shadow(0 4px 4px rgb(0 0 0 / 28%));
   isolation: isolate;
   touch-action: manipulation;
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .aura-whatsapp-label {
   position: absolute;
-  right: calc(100% - 0.5rem);
-  z-index: -1;
+  right: calc(100% + 0.5rem);
+  z-index: 0;
   display: inline-flex;
   min-height: 3rem;
   align-items: center;
   border: 1px solid rgb(16 11 6 / 22%);
   border-radius: 9999px;
-  padding: 0 1.5rem 0 1rem;
+  padding: 0 1rem;
   background: var(--aura-ivory);
-  box-shadow: 0 4px 8px rgb(0 0 0 / 24%);
   color: var(--aura-ink);
   font-size: 0.875rem;
   font-weight: 650;
@@ -327,15 +384,29 @@ body {
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
-  clip-path: inset(0 0 0 100% round 9999px);
-  transform: translate3d(0.75rem, 0, 0);
+  filter: blur(3px);
+  transform: scaleX(0.72);
+  transform-origin: calc(100% + 0.75rem) 50%;
   transition:
-    opacity 160ms ease-out,
-    clip-path 280ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 140ms ease-out,
+    filter 240ms ease-out,
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.aura-whatsapp-label::after {
+  position: absolute;
+  top: 50%;
+  right: -0.75rem;
+  width: 0.75rem;
+  height: 0.875rem;
+  background: var(--aura-ivory);
+  content: "";
+  transform: translateY(-50%);
 }
 
 .aura-whatsapp-icon {
+  position: relative;
+  z-index: 1;
   display: grid;
   width: 3.5rem;
   height: 3.5rem;
@@ -343,10 +414,9 @@ body {
   border: 1px solid rgb(16 11 6 / 22%);
   border-radius: 9999px;
   background: #25d366;
-  box-shadow: 0 4px 8px rgb(0 0 0 / 28%);
   transition:
-    transform 240ms cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 240ms ease-out;
+    border-color 180ms ease-out,
+    transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .aura-whatsapp-icon svg {
@@ -363,8 +433,8 @@ body {
   outline-offset: 3px;
 }
 
-.aura-whatsapp-action:active .aura-whatsapp-icon {
-  transform: scale(0.96);
+.aura-whatsapp-action:active {
+  transform: scale(0.97);
 }
 
 @media (max-width: 639px) {
@@ -373,20 +443,20 @@ body {
   }
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media (min-width: 640px) and (hover: hover) and (pointer: fine) {
   .aura-whatsapp-action:is(:hover, :focus-visible) .aura-whatsapp-label {
     opacity: 1;
-    clip-path: inset(0 0 0 0 round 9999px);
-    transform: translate3d(0, 0, 0);
+    filter: blur(0);
+    transform: scaleX(1);
   }
 
   .aura-whatsapp-action:is(:hover, :focus-visible) .aura-whatsapp-icon {
-    transform: scale(1.045);
-    box-shadow: 0 5px 8px rgb(0 0 0 / 32%);
+    border-color: transparent;
+    transform: scale(1.04);
   }
 
-  .aura-whatsapp-action:active .aura-whatsapp-icon {
-    transform: scale(0.96);
+  .aura-whatsapp-action:active {
+    transform: scale(0.97);
   }
 }
 
@@ -398,6 +468,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .aura-whatsapp-action,
   .aura-whatsapp-label,
   .aura-whatsapp-icon {
     transition: none;
@@ -462,6 +533,7 @@ body {
 }
 
 .aura-header-logo {
+  --aura-logo-enter-y: -10rem;
   --aura-logo-icon-exit-y: -24px;
   --aura-logo-wordmark-start-scale: 0.68;
   --aura-logo-wordmark-start-y: 86px;
@@ -494,20 +566,18 @@ body {
 
 @keyframes aura-header-logo-drop {
   from {
-    opacity: 0.2;
-    transform: translate3d(0, -3rem, 0);
+    transform: translate3d(0, var(--aura-logo-enter-y), 0);
   }
 
   to {
-    opacity: 1;
     transform: translate3d(0, 0, 0);
   }
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .aura-header-logo-enter {
-    animation: aura-header-logo-drop 700ms cubic-bezier(0.16, 1, 0.3, 1)
-      140ms both;
+    animation: aura-header-logo-drop 800ms cubic-bezier(0.37, 0, 0.63, 1)
+      100ms both;
   }
 }
 
@@ -541,6 +611,10 @@ body {
 }
 
 @media (max-width: 639px) {
+  .aura-header-logo {
+    --aura-logo-enter-y: -3.5rem;
+  }
+
   .aura-header-logo__icon {
     display: none;
   }
@@ -860,6 +934,7 @@ textarea {
 
 @media (min-width: 640px) and (max-width: 1023px) {
   .aura-header-logo {
+    --aura-logo-enter-y: -7rem;
     --aura-logo-wordmark-start-scale: 0.7;
     --aura-logo-wordmark-start-y: 118px;
     --aura-logo-wordmark-compact-y: 18px;

@@ -53,7 +53,7 @@ describe("storefront typography contract", () => {
     assert.doesNotMatch(home, /--font-playfair/u);
     assert.match(
       home,
-      /<span className="italic text-\[var\(--aura-brass\)\]">arrival<\/span>/u,
+      /word === "arrival" \? " italic text-\[var\(--aura-brass\)\]"/u,
     );
   });
 
