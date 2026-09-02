@@ -247,11 +247,13 @@ Live SHA, Hostinger build id, ops digest, flag values, Neon journal, and
 rollback inventory belong only in [`CURRENT_STATE.md`](CURRENT_STATE.md).
 Repo `main` can be ahead of live when a drizzle changeset fails closed.
 
-Each runtime-affecting main merge must deploy the checksum-verified storefront
+Each runtime-affecting main merge deploys the checksum-verified storefront
 archive through the Hostinger API with Node 24.x, Framework Other, root `./`,
 empty build/output settings, existing environment values, and entry
-`apps/storefront/server.js`, then pass exact HCDN verification. Do not infer
-the live SHA from `git HEAD`.
+`apps/storefront/server.js`, then passes exact HCDN verification — unless the
+classifier marks the changeset `ops_migration_blocked`. In that case both
+runtime deploys stay skipped until the owner migration gate is completed. Do
+not infer the live SHA from `git HEAD`.
 
 ## Ops deployment and recovery
 

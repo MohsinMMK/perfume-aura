@@ -171,7 +171,7 @@ Live ScentGPT re-check on 2026-07-30 found a current competitor pattern only:
 Owner-selected planning direction after reviewing that pattern:
 
 - All 20 owner-supplied Signature Series names remain exact standalone backend/frontend names with no `Inspired by` prefix.
-- Inspired products use listing title format `Inspired by <owner-confirmed reference>` rather than separate Perfume Aura names (COM-ADR-029 / 033).
+- Inspired products use listing title format `Inspired by <brand> <reference>` rather than separate Perfume Aura names (COM-ADR-029 / 033). If the cleaned reference already begins with the brand, do not repeat the brand.
 - Exact reference mapping must be resolved before generating a title; ambiguous source text cannot silently become a famous mark. The current workbook has no remaining unresolved main-list titles.
 - A non-affiliation disclaimer is planned, but its exact text, placement, and surface coverage remain pending official/legal review. The catalog does not encode a disclaimer as clearance.
 - Designer logos, copied bottles/packaging, copied images, and copied descriptions remain forbidden.
@@ -502,8 +502,10 @@ owner-selected inversion preserves brand recognition without copying the
 source mark or its exact animation.
 
 Catalog cards use a second-image reveal, title movement, and collection-aware
-size/price selection. While checkout is closed, Add to cart stays disabled and
-WhatsApp remains the honest order path. Do not fake a working checkout control.
+size/price selection. In production, Add to cart stays disabled unless
+`STOREFRONT_PREVIEW_CATALOG=true`; local development also enables preview
+carts. WhatsApp remains the honest public order path. Do not fake a working
+checkout control.
 
 ### Motion contract
 
