@@ -84,6 +84,13 @@ describe("storefront motion contract", () => {
     assert.match(motion, /\[pathname, searchParamsKey\]/u);
     assert.match(shell, /<Suspense fallback=\{null\}>[\s\S]*<StorefrontMotion \/>/u);
     assert.match(motion, /data-motion-ingredient-drift/);
+    assert.match(home, /data-motion-compose/);
+    assert.match(home, /data-motion-compose-piece/);
+    assert.match(home, /aria-label=\{compositionHeadline\}/u);
+    assert.match(
+      motion,
+      /toArray<HTMLElement>\("\[data-motion-compose\]", contentRoot\)[\s\S]*scaleX: 0\.92,[\s\S]*filter: "blur\(3px\)",[\s\S]*stagger: \{ each: 0\.032, from: "center" \},[\s\S]*start: "top 84%",[\s\S]*once: true/u,
+    );
     assert.match(
       motion,
       /toArray<HTMLElement>\(\s*"\[data-motion-product-card\]"/u,

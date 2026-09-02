@@ -2,7 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { type TouchEvent, useEffect, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  type TouchEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowLeft01Icon,
@@ -50,6 +56,34 @@ const fallbackSlides: readonly HeroProduct[] = [
 ];
 
 const heroSwipeThreshold = 48;
+
+const heroHeadingWords = ["The", "scent", "that", "leaves", "an", "aura"] as const;
+
+function AnimatedHeroHeading() {
+  return (
+    <span
+      aria-label="The scent that leaves an aura"
+      className="aura-hero-motion aura-hero-motion--aura-echo"
+    >
+      {heroHeadingWords.map((word, wordIndex) => (
+        <span
+          key={word}
+          aria-hidden="true"
+          className={cn(
+            "aura-hero-motion__word",
+            word === "aura" ? "font-display" : "text-outline",
+          )}
+          style={{
+            "--aura-hero-word-index": wordIndex,
+          } as CSSProperties}
+        >
+          {word}
+          {wordIndex < heroHeadingWords.length - 1 ? "\u00a0" : ""}
+        </span>
+      ))}
+    </span>
+  );
+}
 
 export function HomeHero({
   products,
@@ -211,7 +245,7 @@ export function HomeHero({
       <div className="relative mx-auto grid min-h-[100svh] max-w-[100rem] grid-rows-[auto_1fr] px-[var(--aura-gutter)] pb-[var(--aura-gutter)] pt-28 lg:px-[var(--aura-gutter-lg)] lg:pb-8 lg:pt-20">
         <div className="relative z-20 mx-auto max-w-[72rem] pb-8 text-center">
           <h1 className="font-display relative mx-auto max-w-[12ch] text-[clamp(3.25rem,6.9444vw,8.3333rem)] leading-[0.88] tracking-[-0.02em] text-balance lg:top-14 lg:leading-[0.84]">
-            The scent <span className="text-outline">that leaves an aura</span>
+            <AnimatedHeroHeading />
           </h1>
         </div>
 

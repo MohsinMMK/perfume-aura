@@ -385,6 +385,33 @@ export function StorefrontMotion() {
                 });
               });
 
+            gsap.utils
+              .toArray<HTMLElement>("[data-motion-compose]", contentRoot)
+              .forEach((element) => {
+                const pieces = gsap.utils.toArray<HTMLElement>(
+                  "[data-motion-compose-piece]",
+                  element,
+                );
+                if (pieces.length === 0) return;
+
+                gsap.from(pieces, {
+                  y: (index) => (index % 2 === 0 ? 18 : -14),
+                  scaleX: 0.92,
+                  rotateX: (index) => (index % 2 === 0 ? -7 : 7),
+                  filter: "blur(3px)",
+                  transformOrigin: "50% 100%",
+                  stagger: { each: 0.032, from: "center" },
+                  duration: 0.96,
+                  ease: "power4.out",
+                  clearProps: "filter,transform",
+                  scrollTrigger: {
+                    trigger: element,
+                    start: "top 84%",
+                    once: true,
+                  },
+                });
+              });
+
             const productCards = gsap.utils.toArray<HTMLElement>(
               "[data-motion-product-card]",
               contentRoot,
