@@ -177,7 +177,7 @@ export default function FragranceGuidePage() {
           </div>
         </section>
 
-        <section className="bg-[var(--aura-ivory)] px-[var(--aura-gutter)] py-20 text-[var(--aura-ink)] lg:px-[var(--aura-gutter-lg)] lg:py-28">
+        <section aria-label="Guides for Hyderabad and India" className="bg-[var(--aura-ivory)] px-[var(--aura-gutter)] py-20 text-[var(--aura-ink)] lg:px-[var(--aura-gutter-lg)] lg:py-28">
           <div className="mx-auto max-w-[82rem]">
             <DiscoveryGuideLinks
               heading="Guides for Hyderabad and India"

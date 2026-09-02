@@ -218,7 +218,6 @@ export default async function HomePage() {
             src="/images/signature-inspired-duo.webp"
             alt="Perfume Aura Signature Series clear glass bottle beside the matte-black Inspired Series bottle"
             fill
-            preload
             unoptimized
             sizes="(max-width: 1024px) 100vw, 50vw"
             className="object-cover object-center"
