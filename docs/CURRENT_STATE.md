@@ -4,7 +4,7 @@ Fresh repository, provider, database, DNS, endpoint, and browser evidence
 outranks this file. Never record secrets, connection strings, credentials, or
 customer data here.
 
-Last refreshed: **2026-09-02 12:10:00 UTC** from public HTTPS, authoritative
+Last refreshed: **2026-09-02 16:55:03 UTC** from public HTTPS, authoritative
 DNS, Hostinger inventory, GitHub Actions, and this checkout. Do not infer live
 SHAs from `git HEAD`.
 
@@ -56,34 +56,41 @@ API listing.
 ## Exact releases and automation
 
 The storefront reports source
-`c921d24ca9931b847e047ff4df02c407c755f0da`; ops remains on
+`3e822a8e3fe389a34652a8e4d6c0cb565533a744`; ops remains on
 `09164609b918cf8c356ec35e42e6d96ff1a25dce`:
 
 | Probe | Result |
 |---|---|
-| `https://perfumeaura.com/api/health/version` | `{"status":"ok","commit":"c921d24…"}` |
+| `https://perfumeaura.com/api/health/version` | `{"status":"ok","commit":"3e822a8…"}` |
 | Homepage `data-perfume-aura-release` | storefront SHA |
 | `https://app.perfumeaura.com/api/health/version` | `{"status":"ok","commit":"09164609…"}` |
 | Ops `/api/health/live` / `/ready` | `ok` / `ready` |
 | `www` `/shop?probe=1` | `308` → `https://perfumeaura.com/shop?probe=1` |
 | Storefront `/api/health/live` and `/ready` | do not exist |
 
-Hostinger storefront build `01a061f2-e8c8-7368-af37-aec3d95b25f6` completed
-2026-09-02 11:49:12 UTC: Node `24`, Framework Other, root `./`, no build or
+Hostinger storefront build `01a0630a-62a3-7036-a965-1360011b94a8` completed
+2026-09-02 16:54:06 UTC: Node `24`, Framework Other, root `./`, no build or
 output directory, entry `apps/storefront/server.js`, `source_type: archive`.
 Workflow run
-[`33625906829`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33625906829)
-is the last successful storefront runtime deploy. Its initial hosted live
-verifier timed out while production was already exact; after all four published
-IPv4 origins and the repository verifier confirmed `c921d24…`, the failed
-verifier-only rerun passed in 19 seconds. Ops deployment remained skipped.
+[`33657044753`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33657044753)
+is the last successful storefront runtime deploy. Its hosted verifier and a
+separate repository verifier both confirmed `3e822a8…`. The workflow published
+an immutable ops image because shared dependency files changed, but the
+Tailscale, VPS deploy, and ops live-verification steps remained skipped; the
+public ops SHA did not change.
 
-Repository `main` is `c921d24ca9931b847e047ff4df02c407c755f0da`. It contains
+Repository `main` is `3e822a8e3fe389a34652a8e4d6c0cb565533a744`. It contains
 self-hosted PostgreSQL preparation and migration
 `0017_storefront_sale_settlement`; that migration is still not applied to
 production. The storefront-only release passed quality, 110
 disposable-PostgreSQL integration tests, packaging, archive deployment, and
-exact live verification without publishing ops or applying a migration.
+exact live verification without deploying ops or applying a migration.
+
+The release keeps two homepage product cards (one Signature and one Inspired),
+moves the detailed guide links to `/fragrance-guide`, adds the responsive
+Signature/Inspired bottle image, and publishes the verified Kondapur address
+and Google Maps destination on About and FAQ. It also pins patched `qs` and
+`fast-uri` transitive dependency versions.
 
 Do not deploy ops or apply `0017` until its owner migration gate (including
 restricted grants) is explicitly completed. Storefront-only releases may
