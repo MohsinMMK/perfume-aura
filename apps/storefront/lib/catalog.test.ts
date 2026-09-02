@@ -41,7 +41,11 @@ describe("storefront public release boundary", () => {
       assert.equal(products.length, 114);
       assert.equal(inspired?.products.length, 79);
       assert.equal(unknown?.products.length, 15);
-      assert.equal(featured.length, 3);
+      assert.equal(featured.length, 2);
+      assert.deepEqual(
+        featured.map((product) => product.collectionSlug),
+        ["signature", "inspired"],
+      );
       assert.equal(
         products.some((product) => product.slug === "standard-preview-1"),
         false,

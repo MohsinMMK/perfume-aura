@@ -33,8 +33,7 @@ export type ListingCollectionSlug = keyof typeof listingCollections;
 
 export const featuredListingSlugs = [
   "regent-noir",
-  "azure-tides",
-  "petalia-noir",
+  "inspired-by-bvlgari-tygar",
 ] as const;
 
 function toStorefrontVariant(

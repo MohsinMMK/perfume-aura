@@ -72,7 +72,15 @@ export async function getFeaturedProducts(): Promise<
     const published = products.filter(
       (product) => product.publicationState === "published",
     );
-    return published.slice(0, 3);
+    const signature = published.find(
+      (product) => product.collectionSlug === "signature",
+    );
+    const inspired = published.find(
+      (product) => product.collectionSlug === "inspired",
+    );
+    return [signature, inspired].filter(
+      (product): product is StorefrontProduct => product !== undefined,
+    );
   }
   return loadFeaturedListingProducts();
 }

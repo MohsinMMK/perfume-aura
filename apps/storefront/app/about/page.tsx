@@ -7,6 +7,11 @@ import {
   createAboutStructuredData,
   serializeJsonLd,
 } from "@/lib/seo";
+import {
+  perfumeAuraGoogleMapsUrl,
+  perfumeAuraStoreAddress,
+  perfumeAuraStoreName,
+} from "@/lib/store-location";
 
 export const metadata: Metadata = {
   title: "Our story",
@@ -73,6 +78,37 @@ export default function AboutPage() {
             <p>Perfume Aura is a fragrance store in Kondapur, Hyderabad, expressed through black glass, rich product color, and a direct path from mood to scent.</p>
             <p>The storefront is a preview of the house taking shape. Product names, performance claims, ingredients, prices, reviews, and policies appear only when they are complete and ready to share.</p>
             <p>The result is intentionally expressive in presentation and conservative in what it claims.</p>
+          </div>
+        </div>
+      </section>
+      <section className="border-t border-[color:var(--aura-rule)] bg-[var(--aura-ink)] px-[var(--aura-gutter)] py-20 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:py-28">
+        <div className="mx-auto grid max-w-[94rem] gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--aura-gold)]">
+              Visit the Hyderabad store
+            </p>
+            <h2 className="font-display mt-5 max-w-[9ch] text-[clamp(4rem,8vw,8rem)] leading-[0.76]">
+              Find the Aura in Kondapur
+            </h2>
+          </div>
+          <div className="max-w-2xl border-l border-[color:var(--aura-rule)] pl-6 sm:pl-10">
+            <p className="font-display text-3xl leading-tight sm:text-4xl">
+              {perfumeAuraStoreName}
+            </p>
+            <address className="mt-5 not-italic text-base leading-8 text-[color:rgb(245_228_199_/_68%)]">
+              {perfumeAuraStoreAddress}
+            </address>
+            <p className="mt-5 text-sm leading-7 text-[color:rgb(245_228_199_/_58%)]">
+              The Google Maps listing for this shop identifies perfumeaura.com as its website.
+            </p>
+            <a
+              href={perfumeAuraGoogleMapsUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-8 inline-flex min-h-12 items-center rounded-[var(--aura-radius)] bg-[var(--aura-ivory)] px-7 font-display text-xl text-[var(--aura-ink)] transition-colors hover:bg-[var(--aura-gold)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-gold)]"
+            >
+              Open in Google Maps
+            </a>
           </div>
         </div>
       </section>
