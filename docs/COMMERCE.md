@@ -15,8 +15,11 @@ design/evidence records belong in [`REFERENCE.md`](REFERENCE.md).
 ## Contract
 
 The storefront and commerce schema are implemented and deployed fail-closed.
-No catalog row, checkout, payment, customer account, inquiry, review, or
-indexing path is public until its release evidence passes.
+Sellable catalog rows, checkout, payment, customer accounts, inquiries, and
+reviews stay closed until their release evidence passes. Brand/guide discovery
+indexing of the seven sitemap URLs is already public and does not open those
+gates. The 114-product `/shop` listing is workbook discovery, not Neon
+publication.
 
 These sections plus [`REFERENCE.md`](REFERENCE.md) are executable specification inputs to `pnpm commerce:verify`:
 
@@ -62,8 +65,12 @@ deployment, migration, and recovery procedures belong in
 
 ### Data boundaries
 
-- Public projection exposes only approved product identity, approved media,
-  approved retail price, and calculated availability.
+- There are three catalog paths: (1) live workbook discovery listing,
+  `publicationState: "listed"`; (2) in-memory preview carts when
+  `STOREFRONT_PREVIEW_CATALOG=true` or local development; (3) gated Neon
+  projection when `STOREFRONT_PUBLIC_RELEASE=true`.
+- The Neon public projection exposes only approved product identity, approved
+  media, approved retail price, and calculated availability.
 - Costs, raw stock, internal notes, archived records, audit records, finance,
   and operations auth records never cross the storefront projection.
 - Storefront carts, checkout sessions, reservations, orders, payment events,
@@ -73,10 +80,14 @@ deployment, migration, and recovery procedures belong in
 
 ### Release behavior
 
-All public commerce flags are closed. Disabled customer-auth routes return 404
-without initializing Better Auth or Neon. Catalog publication, checkout,
-payments, accounts, inquiries, reviews, and indexing open only through their
-separate owner-approved gates.
+All public commerce flags are closed. `/api/customer-auth/*` returns 404
+without initializing Better Auth or Neon. Other gated APIs may 404 after a
+static import; account HTML shells still render. Catalog publication,
+checkout, payments, customer auth, inquiries, and product/collection indexing
+open only through their separate owner-approved gates. Checkout requires both
+`commerce_settings.checkout_enabled` and
+`STOREFRONT_CHECKOUT_RELEASE_APPROVED`. Either plane false keeps checkout
+locked.
 <!-- commerce:architecture:end -->
 
 <!-- commerce:requirements:start -->
@@ -108,9 +119,13 @@ No requirement marked Proposed represents live behavior.
 
 #### Catalog naming state rules
 
-- Signature rows use `name_approval_status=owner_approved` only after an explicit owner decision. Inspired rows with an `owner_approved_title_reference` mapping use `listing_title_recorded` and a generated `Inspired by <brand> <reference>` storefront listing title (COM-ADR-029). Inspired rows without that mapping keep `reference_title_pending_mapping` and a blank public title. Discarded separate-name proposals are not persisted. A listing title is not legal clearance or publication approval.
+Current workbook (COM-ADR-033): 79 Inspired `owner_approved_title_reference`
+rows, 15 temporary `not_applicable_unknown` rows, 20 Signature rows. Zero
+blank public names, zero `family_approved_exact_pending`, zero `unresolved`.
+
+- Signature rows use `name_approval_status=owner_approved` only after an explicit owner decision. Inspired rows with an `owner_approved_title_reference` mapping use `listing_title_recorded` and a generated `Inspired by <brand> <reference>` storefront listing title (COM-ADR-029 / 033). Temporary Unknown rows keep their exact supplied names. Discarded separate-name proposals are not persisted. A listing title is not legal clearance or publication approval.
 - `source_name_review_status` is `not_flagged`, `ambiguity_unresolved`, or `owner_confirmed_as_public_name`. Source transcription never changes in the launch workbook.
-- `reference_mapping_status` may remain `needs_owner_input` or `unresolved`; a broad owner-approved family uses `family_approved_exact_pending`; an owner-approved exact title reference uses `owner_approved_title_reference`; confirmed in-house Signature entries use `not_applicable`. Exact mapping approval needs an explicit owner decision.
+- `reference_mapping_status` may remain `needs_owner_input` or `unresolved`; a broad owner-approved family uses `family_approved_exact_pending`; an owner-approved exact title reference uses `owner_approved_title_reference`; confirmed in-house Signature entries use `not_applicable`; temporary Unknown rows use `not_applicable_unknown`. Exact mapping approval needs an explicit owner decision. Those incomplete statuses are historical rules; the current workbook has none of them.
 - Inspired rows use `reference_display_status=planned_public_pending_review` and `legal_review_status=india_counsel_pending`. These values record commercial intent, not permission or publication readiness. Exact disclaimer text, placement, and allowed surfaces require later review before any public status can be enabled. Signature public names stay `trademark_clearance_pending` until collision review completes.
 - Partial identity or mapping approval never changes overall `approval_status=needs_owner_input`; product and variant publication remains fail-closed until every CAT-002 and CAT-003 gate passes.
 
@@ -156,7 +171,7 @@ No requirement marked Proposed represents live behavior.
 | PAY-002 | Proposed | Process payment callbacks idempotently. | Authentic duplicate or reordered callbacks cannot create duplicate payment, order, invoice, or stock effects. |
 | PAY-003 | Proposed | Never trust browser payment success alone. | Server verifies provider state before marking order paid. |
 | AUTH-001 | Accepted | Keep owner authentication separate from public customer identity. | Customer routes cannot use or weaken owner-only Better Auth configuration. |
-| AUTH-002 | Blocked | Support launch-scope customer accounts without weakening anonymous browsing and cart creation. | Implemented customer mutations require the exact storefront origin and verified session where applicable; disabled routes return `404` before auth/database initialization. Completion remains blocked until Google primary sign-in, verified email/password recovery, privacy, deletion, authorization, and checkout journeys are provider-approved and verified. |
+| AUTH-002 | Blocked | Support launch-scope customer accounts without weakening anonymous browsing and cart creation. | Implemented customer mutations require the exact storefront origin and verified session where applicable; disabled `/api/customer-auth/*` returns `404` before auth/database initialization. Completion remains blocked until Google primary sign-in, verified email/password recovery, privacy, deletion, authorization, and checkout journeys are provider-approved and verified. |
 | TRUST-001 | Blocked | Obtain Indian legal approval for trademark/reference naming before publication. | Exact public reference wording and disclaimer receive counsel approval for every intended surface; designer and inspired-reference names remain disabled on bottle labels and packaging until separate owner approval and India-counsel approval for that surface (COM-ADR-022); no product implies designer affiliation; no designer logo, copied image, copied description, or misleading packaging claim is used. A disclaimer is disclosure only and is not a statutory safe harbor. |
 | TRUST-002 | Accepted | Do not fabricate commerce facts. | No unverified pricing, availability, review, delivery, return, payment, or checkout claim is public. |
 
@@ -177,6 +192,12 @@ No requirement marked Proposed represents live behavior.
 ## Decisions
 
 Only **Accepted** decisions authorize implementation assumptions. Proposed and Pending entries remain unresolved.
+
+Read **COM-ADR-033** as the current catalog identity (114 products, 79 Inspired /
+15 Unknown / 20 Signature, all 322 prices supplied). Earlier Accepted rows keep
+their original decision text because `pnpm commerce:verify` freezes those
+sentences; field-level supersession notes below the table are the current
+reading. Do not silently rewrite a frozen decision cell.
 
 ### Current decisions
 

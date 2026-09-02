@@ -7,9 +7,9 @@ catalog counts, frozen artifact digests, live discovery exposure, missing
 disclaimer finding, and counsel response format are recorded in the
 [`replacement B01 legal-surface inventory`](2026-08-29-b01-114-name-legal-surface-inventory.md).
 The current [`114-name counsel review CSV`](2026-08-29-b01-114-name-review.csv)
-contains the replacement 94-row main list and 20 Signature names. Forty-five
-carried inspired titles and all 20 Signature names are staged for review; the
-other 49 main-list titles remain blank and excluded from publication.
+contains the replacement 94-row main list and 20 Signature names. COM-ADR-033
+staged all 114 products for discovery review: 79 Inspired titles, 15 temporary
+Unknown literal names, and 20 Signature names. No main-list title is blank.
 This preparation does not change the pending status or authorize any release.
 
 ## Requested written opinion

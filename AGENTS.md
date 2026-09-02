@@ -9,6 +9,7 @@ needed for the task:
 | Need | Owner |
 |---|---|
 | Live topology, exact releases, blockers, next actions | `docs/CURRENT_STATE.md` |
+| Commerce launch blockers B01–B07 | `docs/BLOCKERS.md` |
 | Users, routes, behavior, release locks | `docs/PRODUCT.md` |
 | Code, stack, data, tests, CI, performance, telemetry privacy | `docs/ENGINEERING.md` |
 | Hostinger, VPS, DNS, Neon, deployment, recovery, staff release | `docs/OPERATIONS.md` |
@@ -23,9 +24,9 @@ data there.
 
 | Domain | Role | Entry |
 |---|---|---|
-| `perfumeaura.com` | Public storefront | `apps/storefront/server.js` |
-| `www.perfumeaura.com` | Permanent apex redirect | Storefront middleware |
-| `app.perfumeaura.com` | Private operations | `apps/ops/server.js` |
+| `perfumeaura.com` | Public storefront | `apps/storefront/server.js` (pack-time standalone) |
+| `www.perfumeaura.com` | Permanent apex redirect | `apps/storefront/next.config.ts` `redirects()` |
+| `app.perfumeaura.com` | Private operations | `apps/ops/server.js` (pack-time standalone) |
 
 `shop.perfumeaura.com`, `www.app.perfumeaura.com`, and the static marketing app
 must remain absent. Storefront and ops share Neon; never delete or recreate it
@@ -38,8 +39,9 @@ not touch unrelated sites, mail, DNS, databases, or processes.
   TypeScript without implicit `any`.
 - Persist money as server-authoritative integer INR paise. Public catalog data
   excludes cost, raw stock, internal notes, and archives.
-- Keep operations and customer auth separate. Disabled customer-auth routes
-  return `404` without initializing Better Auth or Neon.
+- Keep operations and customer auth separate. Disabled `/api/customer-auth/*`
+  returns `404` without initializing Better Auth or Neon. Other gated APIs may
+  still 404 after a static import; do not “fix” that without review.
 - Preserve labels, visible focus, inert closed drawers, focus restoration, 44px
   targets, and reduced-motion behavior.
 - Use official App Router, shadcn, Better Auth, Drizzle, Neon, Hostinger, pnpm,
@@ -61,7 +63,8 @@ not touch unrelated sites, mail, DNS, databases, or processes.
 
 Read `docs/CURRENT_STATE.md` and `docs/OPERATIONS.md` before any provider,
 database, DNS, secret, or release-flag work. Never infer live SHAs, rollback
-deadlines, or incident status from this file.
+deadlines, or incident status from this file. Live SHAs come from
+`/api/health/version` on both surfaces, not from `git HEAD`.
 
 ```bash
 node scripts/verify-production-deploy.mjs <40-character-sha> \
@@ -86,6 +89,9 @@ Do not infer authority for unrelated recovery or provider actions. Stopping
 plan-wide processes, writing DNS, migrating production, changing secrets, or
 opening release flags still requires explicit authorization and owning-gate
 evidence. Keep storefront commerce and staff security flags closed.
+
+Repo `main` currently contains unapplied migration `0017`. Do not deploy that
+commit until the documented owner migration gate passes.
 
 ## Finish
 

@@ -171,11 +171,11 @@ Live ScentGPT re-check on 2026-07-30 found a current competitor pattern only:
 Owner-selected planning direction after reviewing that pattern:
 
 - All 20 owner-supplied Signature Series names remain exact standalone backend/frontend names with no `Inspired by` prefix.
-- Inspired products are planned for future title format `Inspired by <owner-confirmed reference>` rather than separate Perfume Aura names.
-- Exact reference mapping must be resolved before generating a title; ambiguous source text cannot silently become a famous mark.
+- Inspired products use listing title format `Inspired by <owner-confirmed reference>` rather than separate Perfume Aura names (COM-ADR-029 / 033).
+- Exact reference mapping must be resolved before generating a title; ambiguous source text cannot silently become a famous mark. The current workbook has no remaining unresolved main-list titles.
 - A non-affiliation disclaimer is planned, but its exact text, placement, and surface coverage remain pending official/legal review. The catalog does not encode a disclaimer as clearance.
 - Designer logos, copied bottles/packaging, copied images, and copied descriptions remain forbidden.
-- Designer and inspired-reference names remain disabled on bottle labels and packaging until separate explicit owner approval and India-counsel approval are recorded for that surface (COM-ADR-022). That product policy is fail-closed surface control, not legal clearance. This designer-reference research authorizes catalog planning only; it does not authorize reference-name publication.
+- Designer and inspired-reference names remain disabled on bottle labels and packaging until separate explicit owner approval and India-counsel approval are recorded for that surface (COM-ADR-022). That product policy is fail-closed surface control, not legal clearance. Discovery listing titles are already live on `/shop`. This research does not authorize India-counsel clearance, bottle or packaging references, ads, Neon import, or sellable publication.
 
 ### Perfume Aura catalog source
 
@@ -208,9 +208,14 @@ Status: owner-reviewed mapping register for catalog planning. This file is not p
 ### Rules
 
 - `source_name` remains the exact supplied transcription and never changes here.
-- Approved mappings are internal inputs for the future `Inspired by <owner-confirmed reference>` title policy in COM-ADR-017.
+- Approved mappings feed the live `Inspired by <brand> <reference>` listing
+  titles (COM-ADR-029 / 033). That listing is identity only, not legal
+  clearance or Neon publication.
 - Evidence URLs and evidence metadata support identity research only. They do not grant trademark permission or approve a disclaimer.
-- `owner_approved_title_reference` records the exact brand/reference string approved for title planning; it does not populate a public title or slug.
+- `owner_approved_title_reference` records the exact brand/reference string
+  used to generate the storefront listing title and slug. It is not
+  India-counsel clearance, disclaimer approval, or permission to use
+  references on bottle labels or packaging.
 - `not_applicable_unknown` records the owner's temporary Unknown classification:
   the literal supplied name is listable, while brand/reference fields remain
   blank and permanent naming still needs owner review.
@@ -429,7 +434,7 @@ repository assets.
 | Role | Live source | Perfume Aura decision |
 |---|---|---|
 | Body and UI | `Inter Tight`, variable 100–900, with Arial metric fallback | Use `@fontsource-variable/inter-tight` under SIL OFL 1.1. |
-| Display and buttons | `PeperoncinoSansCustom`, regular 400, with Arial metric fallback | Do not copy the live WOFF. The Resistenza family requires appropriate WebFont rights; retain open-licensed Bebas Neue unless a proper license is purchased and reviewed. |
+| Display and buttons | `PeperoncinoSansCustom`, regular 400, with Arial metric fallback | Do not copy the live WOFF. The Resistenza family requires appropriate WebFont rights. Implemented Perfume Aura display faces are self-hosted Londrina Solid and Londrina Outline; Inter Tight remains body. The original Bebas Neue substitute is historical research, not the live storefront. |
 
 Primary license references:
 
@@ -496,9 +501,9 @@ fades while the `PERFUME AURA` wordmark settles into the compact header. This
 owner-selected inversion preserves brand recognition without copying the
 source mark or its exact animation.
 
-Catalog cards use a second-image reveal, title movement, arrow transition, and
-two actions when the product is purchasable. A locked preview must not expose
-disabled commerce theater: it shows one honest `View scent` action instead.
+Catalog cards use a second-image reveal, title movement, and collection-aware
+size/price selection. While checkout is closed, Add to cart stays disabled and
+WhatsApp remains the honest order path. Do not fake a working checkout control.
 
 ### Motion contract
 
@@ -524,7 +529,7 @@ animations must:
 | Source pattern | Perfume Aura implementation | Boundary |
 |---|---|---|
 | Inter Tight body typography | Exact open font package | OFL attribution retained in the package |
-| Peperoncino display typography | Bebas Neue substitute with matched role, tracking, and leading | No source WOFF copying without WebFont rights |
+| Peperoncino display typography | Self-hosted Londrina Solid / Londrina Outline | No source WOFF copying; Bebas Neue was the earlier open-license substitute |
 | Dark cream/gold/orange/red palette | Exact relationship using Perfume Aura tokens | Perfume Aura imagery and content only |
 | Product-led hero and manual slider | Perfume Aura bottle compositions and labelled controls | No automatic carousel or copied fruit/media |
 | Compact scrolled header | Supplied full mark transitions to the supplied wordmark beside the route-aware CTA, cart, and menu cluster | Existing release locks remain authoritative |
