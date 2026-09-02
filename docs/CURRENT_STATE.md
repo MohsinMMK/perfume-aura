@@ -79,7 +79,9 @@ an immutable ops image because shared dependency files changed, but the
 Tailscale, VPS deploy, and ops live-verification steps remained skipped; the
 public ops SHA did not change.
 
-Repository `main` is `3e822a8e3fe389a34652a8e4d6c0cb565533a744`. It contains
+The deployed storefront source commit
+`3e822a8e3fe389a34652a8e4d6c0cb565533a744` is contained in repository `main`.
+It contains
 self-hosted PostgreSQL preparation and migration
 `0017_storefront_sale_settlement`; that migration is still not applied to
 production. The storefront-only release passed quality, 110
