@@ -62,7 +62,7 @@ const heroHeadingWords = ["The", "scent", "that", "leaves", "an", "aura"] as con
 function AnimatedHeroHeading() {
   return (
     <span
-      aria-label="The scent that leaves an aura"
+      aria-hidden="true"
       className="aura-hero-motion aura-hero-motion--aura-echo"
     >
       {heroHeadingWords.map((word, wordIndex) => (
@@ -244,7 +244,10 @@ export function HomeHero({
       />
       <div className="relative mx-auto grid min-h-[100svh] max-w-[100rem] grid-rows-[auto_1fr] px-[var(--aura-gutter)] pb-[var(--aura-gutter)] pt-28 lg:px-[var(--aura-gutter-lg)] lg:pb-8 lg:pt-20">
         <div className="relative z-20 mx-auto max-w-[72rem] pb-8 text-center">
-          <h1 className="font-display relative mx-auto max-w-[12ch] text-[clamp(3.25rem,6.9444vw,8.3333rem)] leading-[0.88] tracking-[-0.02em] text-balance lg:top-14 lg:leading-[0.84]">
+          <h1
+            aria-label={heroHeadingWords.join(" ")}
+            className="font-display relative mx-auto max-w-[12ch] text-[clamp(3.25rem,6.9444vw,8.3333rem)] leading-[0.88] tracking-[-0.02em] text-balance lg:top-14 lg:leading-[0.84]"
+          >
             <AnimatedHeroHeading />
           </h1>
         </div>
