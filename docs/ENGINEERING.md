@@ -106,6 +106,23 @@ Never use Vercel deploy skills.
 - Legacy COD enum values stay for historical rows only. Active flows must not
   create or advertise COD.
 
+The following database contracts remain operational safeguards; they are not
+legacy deployment behavior:
+
+```sql
+CREATE TRIGGER "stock_movements_append_only"
+BEFORE UPDATE OR DELETE ON "stock_movements"
+FOR EACH ROW EXECUTE FUNCTION "prevent_stock_movement_mutation"();
+
+CHECK ("status" = 'void' AND "amount_paid_cents" = 0);
+CHECK ("variant_id" IS NOT NULL OR "quantity_fulfilled" = 0);
+```
+
+Intentional payment-trigger deferral remains in force: payment mutation is not
+database-trigger-blocked until a linked reversal/credit-note model can preserve
+the authoritative net-sum. Fulfillment is aggregate-only for free-text invoice
+lines. Return movements are not netted into invoice fulfillment, and a draft line with a matching sale movement is rejected by preflight and reconciliation.
+
 ### Auth isolation
 
 - Ops: `apps/ops/lib/auth.ts`. Public sign-up disabled. Roles exact `owner` /
