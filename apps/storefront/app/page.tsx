@@ -9,12 +9,10 @@ import {
   Shield01Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@perfume-aura/ui/components/button";
-import { DiscoveryGuideLinks } from "@/components/discovery-guide-links";
 import { HomeHero } from "@/components/home-hero";
 import { IngredientAtmosphere } from "@/components/ingredient-atmosphere";
 import { ProductCard } from "@/components/product-card";
 import { getFeaturedProducts } from "@/lib/catalog";
-import { isPublicCatalogEnabled } from "@/lib/catalog-policy";
 import {
   createHomeStructuredData,
   serializeJsonLd,
@@ -73,27 +71,6 @@ const proofRows = [
   ["Release", "Every public edition must be complete, reviewed, and ready."],
 ] as const;
 
-const editorialPreviews = [
-  {
-    title: "Velvet",
-    image: "/images/regent-noir-50ml.webp",
-    imageAlt: "Perfume Aura bottle staged with deep burgundy silk",
-    color: "bg-[var(--aura-wine)]",
-  },
-  {
-    title: "Tidal",
-    image: "/images/azure-tides-50ml.webp",
-    imageAlt: "Perfume Aura bottle staged with sculpted blue glass",
-    color: "bg-[#10263c]",
-  },
-  {
-    title: "Petal",
-    image: "/images/petalia-noir-50ml.webp",
-    imageAlt: "Perfume Aura bottle staged with a rose glass form",
-    color: "bg-[#6a3943]",
-  },
-] as const;
-
 const compositionHeadlineWords = [
   "Perfume",
   "lives",
@@ -113,9 +90,7 @@ const compositionHeadlineWords = [
 const compositionHeadline = compositionHeadlineWords.join(" ");
 
 export default async function HomePage() {
-  const featuredProducts = isPublicCatalogEnabled()
-    ? await getFeaturedProducts()
-    : [];
+  const featuredProducts = await getFeaturedProducts();
   const structuredData = createHomeStructuredData();
 
   return (
@@ -174,43 +149,15 @@ export default async function HomePage() {
             <span className="block text-[clamp(4.8rem,13vw,12rem)] leading-[0.68]">Choose your</span>
             <span className="text-outline block text-[clamp(5.2rem,15vw,14rem)] leading-[0.78]">Aura</span>
           </h2>
-          {featuredProducts.length ? (
-            <div className="aura-product-grid grid gap-[var(--aura-gap)] lg:gap-[var(--aura-gap-lg)]">
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          ) : (
-            <div>
-              <div
-                role="region"
-                aria-label="Editorial perfume previews"
-                tabIndex={0}
-                className="aura-snap-row -mx-[var(--aura-gutter)] flex snap-x snap-mandatory gap-[var(--aura-gap)] overflow-x-auto px-[var(--aura-gutter)] pb-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-[var(--aura-gap-lg)] lg:overflow-visible lg:px-0 lg:pb-0"
-              >
-                {editorialPreviews.map((preview, index) => (
-                  <figure key={preview.title} data-motion-product-card className={`relative min-h-[32rem] w-[88vw] shrink-0 snap-center overflow-hidden rounded-[var(--aura-radius)] sm:w-[70vw] lg:w-auto lg:min-w-0 ${preview.color}`}>
-                    <Image
-                      src={preview.image}
-                      alt={preview.imageAlt}
-                      fill
-                      sizes="(max-width: 1024px) 100vw, 33vw"
-                      className="object-cover transition duration-500 ease-out hover:scale-[1.025]"
-                    />
-                    <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_55%,rgba(16,11,6,.84)_100%)]" />
-                    <figcaption className="absolute inset-x-5 bottom-5 flex items-end justify-between border-t border-dashed border-white/35 pt-4">
-                      <span className="font-display text-4xl">{preview.title}</span>
-                      <span className="text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-white/70">Study 0{index + 1}</span>
-                    </figcaption>
-                  </figure>
-                ))}
-              </div>
-              <div className="mt-5 flex flex-col items-center justify-between gap-3 border-y border-dashed border-[color:var(--aura-rule)] px-2 py-5 text-center sm:flex-row sm:text-left">
-                <p className="font-display text-2xl">A preview of the visual world</p>
-                <p className="max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_68%)]">The public collection opens when every product detail is complete and ready to share.</p>
-              </div>
-            </div>
-          )}
+          <div className="aura-product-grid grid gap-[var(--aura-gap)] lg:gap-[var(--aura-gap-lg)]">
+            {featuredProducts.map((product, index) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                eagerImageLoading={index < 2}
+              />
+            ))}
+          </div>
         </div>
       </section>
 
@@ -267,23 +214,23 @@ export default async function HomePage() {
 
       <section className="grid min-h-[44rem] bg-[var(--aura-ivory)] text-[var(--aura-ink)] lg:grid-cols-2">
         <div className="relative min-h-[28rem] overflow-hidden lg:min-h-full">
-          <Image data-motion-parallax src="/images/bottle-detail.webp" alt="Close detail of a Perfume Aura bottle" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
+          <Image
+            src="/images/signature-inspired-duo.webp"
+            alt="Perfume Aura Signature Series clear glass bottle beside the matte-black Inspired Series bottle"
+            fill
+            unoptimized
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            className="object-cover object-center"
+          />
         </div>
         <div className="flex items-center px-6 py-16 sm:px-12 lg:px-16">
           <div className="max-w-xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-black/65">Find the right direction</p>
-            <h2 data-motion-copy className="font-display mt-4 text-[clamp(4.5rem,8vw,8rem)] leading-[0.8]">Start with the feeling</h2>
+            <h2 data-motion-copy className="font-display text-[clamp(4.5rem,8vw,8rem)] leading-[0.8]">Start with the feeling</h2>
             <p className="mt-7 text-base leading-7 text-black/70">Choose mood, intensity, and occasion. The finder stays quiet until there is enough complete scent data to make a recommendation worth trusting.</p>
             <Button render={<Link href="/fragrance-guide" />} nativeButton={false} className="mt-8 min-h-16 rounded-[var(--aura-radius)] bg-[var(--aura-ink)] px-8 font-display text-xl text-[var(--aura-ivory)] hover:bg-black">
               Read the fragrance guide <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={1.8} />
             </Button>
           </div>
-        </div>
-      </section>
-
-      <section className="bg-[var(--aura-ivory)] px-[var(--aura-gutter)] py-16 text-[var(--aura-ink)] lg:px-[var(--aura-gutter-lg)] lg:py-24">
-        <div className="mx-auto max-w-[82rem]">
-          <DiscoveryGuideLinks heading="Guides for Hyderabad and India" />
         </div>
       </section>
 

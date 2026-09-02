@@ -1,8 +1,19 @@
+import {
+  perfumeAuraGoogleMapsUrl,
+  perfumeAuraStoreAddress,
+} from "./store-location";
+
 export const faqItems = [
   {
     question: "What is Perfume Aura?",
     answer:
       "Perfume Aura is a fragrance store in Kondapur, Hyderabad. The public website currently introduces the brand and helps visitors understand how to choose a scent while the first complete collection is being prepared.",
+  },
+  {
+    question: "Where is the Perfume Aura Hyderabad store?",
+    answer: `The store is at ${perfumeAuraStoreAddress}. The official Google Maps listing identifies perfumeaura.com as the store website.`,
+    href: perfumeAuraGoogleMapsUrl,
+    linkLabel: "Open Perfume Aura Hyderabad in Google Maps",
   },
   {
     question: "How do I choose a perfume?",

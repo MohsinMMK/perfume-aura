@@ -8,9 +8,11 @@ import {
 export function DiscoveryGuideLinks({
   currentSlug,
   heading = "Keep choosing with context",
+  showFullGuideLink = true,
 }: Readonly<{
   currentSlug?: EditorialGuideSlug;
   heading?: string;
+  showFullGuideLink?: boolean;
 }>) {
   const guides = editorialGuideSlugs
     .filter((slug) => slug !== currentSlug)
@@ -33,12 +35,14 @@ export function DiscoveryGuideLinks({
           </Link>
         ))}
       </div>
-      <Link
-        href="/fragrance-guide"
-        className="mt-6 inline-flex min-h-14 items-center font-display text-lg underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
-      >
-        Read the full fragrance guide
-      </Link>
+      {showFullGuideLink ? (
+        <Link
+          href="/fragrance-guide"
+          className="mt-6 inline-flex min-h-14 items-center font-display text-lg underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+        >
+          Read the full fragrance guide
+        </Link>
+      ) : null}
     </nav>
   );
 }

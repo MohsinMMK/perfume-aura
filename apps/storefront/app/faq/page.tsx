@@ -39,7 +39,19 @@ export default function FaqPage() {
           {faqItems.map((item, index) => (
             <AccordionItem key={item.question} value={`question-${index}`} className="border-[color:var(--aura-rule)] data-open:bg-white/5">
               <AccordionTrigger className="min-h-20 px-5 font-display text-2xl text-[var(--aura-ivory)] hover:no-underline">{item.question}</AccordionTrigger>
-              <AccordionContent className="px-5 text-[color:rgb(245_228_199_/_58%)]">{item.answer}</AccordionContent>
+              <AccordionContent className="px-5 text-[color:rgb(245_228_199_/_58%)]">
+                <p>{item.answer}</p>
+                {"href" in item ? (
+                  <a
+                    href={item.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-5 inline-flex min-h-11 items-center border-b border-[color:var(--aura-gold)] font-semibold text-[var(--aura-ivory)] transition-colors hover:text-[var(--aura-gold)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-gold)]"
+                  >
+                    {item.linkLabel}
+                  </a>
+                ) : null}
+              </AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>

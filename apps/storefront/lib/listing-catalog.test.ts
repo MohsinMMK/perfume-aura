@@ -126,10 +126,10 @@ describe("storefront listing workbook", () => {
     );
   });
 
-  it("features the three photographed Signature scents", () => {
+  it("features one Signature scent and one Inspired scent", () => {
     assert.deepEqual(
       loadFeaturedListingProducts().map((product) => product.slug),
-      ["regent-noir", "azure-tides", "petalia-noir"],
+      ["regent-noir", "inspired-by-bvlgari-tygar"],
     );
   });
 
