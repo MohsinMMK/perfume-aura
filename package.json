@@ -9,7 +9,7 @@
   "scripts": {
     "dev:storefront": "pnpm --filter @perfume-aura/storefront dev",
     "build:storefront": "pnpm --filter @perfume-aura/storefront build",
-    "build": "pnpm hostinger:build:storefront",
+    "build": "corepack pnpm hostinger:build:storefront",
     "start:storefront": "pnpm --filter @perfume-aura/storefront start",
     "hostinger:build:storefront": "bash scripts/build-hostinger-storefront-source.sh",
     "storefront:measure-client": "node scripts/measure-storefront-route-client-js.mjs",
