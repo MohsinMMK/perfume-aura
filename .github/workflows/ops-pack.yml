@@ -529,6 +529,9 @@ jobs:
   publish-and-deploy-vps-ops:
     name: publish-and-deploy-vps-ops
     if: >-
+      always() &&
+      needs.quality.result == 'success' &&
+      needs.ops-package.result == 'success' &&
       github.ref == 'refs/heads/main' &&
       needs.scope.outputs.publish_ops == 'true' &&
       needs.scope.outputs.ops_migration_blocked != 'true' &&
@@ -673,6 +676,8 @@ jobs:
   block-runtime-deploy-on-database-migration:
     name: block-runtime-deploy-on-database-migration
     if: >-
+      always() &&
+      needs.quality.result == 'success' &&
       github.ref == 'refs/heads/main' &&
       needs.scope.outputs.should_publish == 'true' &&
       needs.scope.outputs.ops_migration_blocked == 'true' &&
@@ -690,6 +695,9 @@ jobs:
   promote-hostinger-storefront-source:
     name: promote-hostinger-storefront-source
     if: >-
+      always() &&
+      needs.quality.result == 'success' &&
+      needs.storefront-source-build.result == 'success' &&
       github.ref == 'refs/heads/main' &&
       needs.scope.outputs.publish_storefront == 'true' &&
       needs.scope.outputs.ops_migration_blocked != 'true' &&
@@ -725,6 +733,8 @@ jobs:
   verify-hostinger-storefront:
     name: verify-hostinger-storefront-live
     if: >-
+      always() &&
+      needs.promote-hostinger-storefront-source.result == 'success' &&
       github.ref == 'refs/heads/main' &&
       needs.scope.outputs.publish_storefront == 'true' &&
       vars.HOSTINGER_STOREFRONT_GIT_DEPLOY_ENABLED == 'true' &&
