@@ -84,8 +84,7 @@ Change stack only through an explicit reviewed decision. No Vercel production.
 evidence, then verify audit, lint, shadcn preset resolution, migrations, both
 builds, and both packages.
 
-Hostinger storefront selects Node `24.x`; the API records major 24 only. The
-repository pin is `24.6.0`.
+Both production images and CI pin Node `24.6.0`.
 
 ## Shared UI contract
 
@@ -256,13 +255,13 @@ CodeQL is a separate workflow. Commerce maintenance cron is flags-off unless
 
 | Script | Command |
 |---|---|
-| `build-hostinger-storefront-source.sh` | `pnpm hostinger:build:storefront` (Linux/Hostinger only) |
+| `build-hostinger-storefront-source.sh` | `pnpm hostinger:build:storefront` (Linux standalone for VPS CI) |
 | `pack-ops-standalone.sh` | `pnpm ops:pack` |
 | `verify-production-deploy.mjs` | `pnpm ops:verify-production-deploy` |
 | `verify-commerce-foundation.mjs` | `pnpm commerce:verify` |
 
 The ops packer pins Node `24.6.0`, npm `11.5.1`, and pnpm `11.25.0`. The
-storefront source build accepts Hostinger Node `24.x` and pins pnpm `11.25.0`.
+storefront source build uses CI Node `24.6.0` and pins pnpm `11.25.0`.
 Both reject secret-shaped output, verify Linux x64/glibc Sharp, and smoke their
 materialized servers.
 
@@ -334,8 +333,7 @@ Activation procedure:
 
 - Use the official shadcn CLI; shared primitives belong in `packages/ui`.
 - Keep secrets only in ignored local env files or the owning platform's secret
-  store: Hostinger settings for storefront and root-owned VPS configuration for
-  ops.
+  store: separate root-owned VPS environment files for storefront and Ops.
 - Use persistent labels, semantic buttons, 44px minimum targets, inert closed
   drawers, focus restoration, and reduced-motion-safe animation.
 - Every public release flag remains false unless its owning acceptance evidence

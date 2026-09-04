@@ -7,16 +7,17 @@ Never infer a live release from Git HEAD. Never record secrets or customer data.
 
 | Surface | Owner | Live source |
 |---|---|---|
-| `perfumeaura.com` | Hostinger Node.js Web App | `3e822a8e3fe389a34652a8e4d6c0cb565533a744` |
-| `www.perfumeaura.com` | Path/query-preserving 308 to apex | Same storefront |
+| `perfumeaura.com` | VPS Caddy → loopback 3031 → storefront | `c9150eeeecacf13a0cd662dc84000e9eb13de3db` |
+| `www.perfumeaura.com` | Caddy HTTPS 308 to apex, preserving path/query | Same storefront |
 | `app.perfumeaura.com` | VPS Caddy → loopback 3020 → Ops | `09164609b918cf8c356ec35e42e6d96ff1a25dce` |
-| Private storefront preview | VPS loopback 3030; no public route or secrets | `f329d2b79174fd3bd79ddc96ce9f1620eb8937e4` |
 
 VPS: Hostinger KVM2, public `194.164.149.3`, Tailscale `100.119.191.103`.
 Admin: `ssh khanect-vps`. SSH is private; only HTTP/HTTPS are public.
 GoDaddy owns registration. Hostinger nameservers `lunar.dns-parking.com` and
-`solar.dns-parking.com` own DNS. Apex/www still use Hostinger CDN; app uses
-the VPS A record. Do not create `shop` or `www.app`.
+`solar.dns-parking.com` own DNS. Apex and app A records point to the VPS;
+www CNAME points to apex. No apex AAAA remains. Hostinger CDN is disabled
+and the storefront is opted out of automatic CDN. Preserve mail records.
+Do not create `shop` or `www.app`.
 
 Storefront and Ops share Neon with separate restricted roles, auth tables,
 secrets and cookies. No database has moved to the VPS. Self-hosted PostgreSQL
@@ -24,21 +25,22 @@ preparation under `deploy/postgres-vps/` is not active production.
 
 ## Deployment status
 
-- Ops: scoped GitHub Actions → immutable GHCR image → Tailscale forced SSH →
-  hardened VPS container → exact public verification.
-- Storefront: the public Hostinger runtime works, but Git deployment is not
-  accepted. Do not assume a push updates the public storefront.
-- VPS storefront implementation is in `deploy/storefront-vps/`; production
-  Compose uses loopback 3031, separate runtime secrets and a separate restricted
-  deploy identity. The public cutover is **not complete**.
-- Root-owned Compose/deploy scripts and the restricted SSH identity are installed;
-  probe succeeds and arbitrary commands are denied. GitHub holds the dedicated
-  `VPS_STOREFRONT_SSH_KEY`. Both VPS storefront switches remain false until the
-  registry and candidate acceptance pass. All 12 storefront settings are preserved
-  in root-owned mode 0600 `/etc/khanect/perfume-aura-storefront.env`. Hostinger source
-  promotion is disabled, preserving the working public runtime without new builds.
-- The private preview passes exact version, homepage, real static asset, locked
-  cart/auth and www redirect checks. It is not production-environment acceptance.
+- Storefront: protected main → scoped checks → checksummed Linux standalone →
+  immutable GHCR image → Tailscale forced SSH → hardened container.
+  `VPS_STOREFRONT_AUTO_DEPLOY_ENABLED=true`. GitHub run `33929159164`
+  successfully deployed the exact live source. Full public acceptance passes;
+  `VPS_STOREFRONT_PUBLIC_VERIFICATION_ENABLED=true` checks future releases.
+- Ops uses an independent image and deploy identity. Its live container is
+  unchanged. `VPS_OPS_AUTO_DEPLOY_ENABLED=false` enforces the pending migration
+  gate; the working Ops runtime remains available.
+- Storefront image digest:
+  `sha256:2b623902c722541759d4e9764031530e1ee6d64980325f10b311e297be2cab4f`.
+  The 12 preserved settings are root-owned mode 0600 in
+  `/etc/khanect/perfume-aura-storefront.env`; no Ops credentials were reused.
+  Forced SSH probe succeeds and arbitrary commands are denied.
+- Private and public acceptance pass: seven discovery URLs, exact source, real
+  static asset, locked commerce and www redirect. Browser checks confirm all
+  114 discovery scents and disabled purchasing. Ops acceptance also passes.
 - Markdown-only changes must not deploy. Storefront-only releases must not
   deploy Ops or apply migrations. Database changes fail closed at the owner gate.
 
@@ -50,10 +52,8 @@ All remain false: `STOREFRONT_PUBLIC_RELEASE`,
 `OPS_TWO_FACTOR_REQUIRED`, and `OPS_STAFF_INVITES_ENABLED`.
 Database checkout must also remain disabled.
 
-Hostinger's environment has `STOREFRONT_PREVIEW_CATALOG=true`; its value is
-preserved in the VPS env backup. Production Compose explicitly overrides it
-to false along with the other storefront release locks. Verify discovery
-catalog behavior before cutover; preview is not public release approval.
+Production Compose explicitly keeps `STOREFRONT_PREVIEW_CATALOG=false` along
+with the other storefront release locks; discovery catalog acceptance passes.
 
 Visitors see 114 discovery products (79 Inspired, 15 Unknown, 20 Signature),
 322 owner-priced variants. WhatsApp is the order/contact path. This is not
@@ -67,15 +67,17 @@ Storefront-only releases may proceed with Ops/database work excluded.
 
 ## Cleanup boundaries
 
-Hostinger has five Web App slots occupied. Perfume Aura removal candidates:
-the storefront after accepted VPS cutover, the off-DNS Ops Web App, and
+Hostinger has five Web App slots occupied. Pending removal after DNS cache
+expiry and explicit irreversible-deletion confirmation: `perfumeaura.com`,
+the off-DNS `app.perfumeaura.com` Web App, and
 `royalblue-dugong-614889.hostingersite.com` (auto-deployment off).
 Keep `mobitron.in`, `khanect.com`, email and the DNS zone.
 
-VPS has 15 running containers: Ops (1), storefront preview (1), Awwal (3),
+VPS has 15 running containers: Ops (1), storefront (1), Awwal (3),
 Awwal Cloud (2), Omni Realty (6), infrastructure (2). Preserve unrelated
 projects, volumes and images. No capacity need justifies deleting them.
-Preview removal follows production acceptance.
+No private preview container/network remains. Its image and Compose template
+are retained as recoverable, inactive build evidence.
 
 Keep `dist/`, credentials, catalog source evidence, migrations and accepted
 recovery artifacts. Remove the Hostinger source branch and obsolete deployment
@@ -83,16 +85,12 @@ credentials only after provider disconnection and VPS acceptance.
 
 ## Next actions
 
-1. Validate the preserved storefront environment through the private candidate;
-   never reuse Ops credentials or overwrite the original provider settings.
-2. Resolve deployment review findings, complete protected GitHub CI and
-   immutable registry pull acceptance, then
-   enable storefront VPS deployment only after the runtime prerequisites pass.
-3. Verify privately, validate/reload scoped Caddy, change only apex/www web
-   records, and pass full public acceptance.
-4. Remove the three obsolete Perfume Aura Web Apps preserving email/DNS,
-   disconnect retired Git triggers, remove the preview, and verify again.
-5. Keep commerce/security gates closed. Owner gates: India counsel, catalog
+1. Keep old hosting during DNS propagation. Verify apex/www resolve only to
+   the VPS, with no retired A/AAAA targets, before removing recovery hosting.
+2. Confirm and remove the three obsolete Perfume Aura Web Apps preserving
+   email/DNS; disconnect retired Git triggers and remove their unused credentials
+   and source branch, then verify live routing and hosting slot counts again.
+3. Keep commerce/security gates closed. Owner gates: India counsel, catalog
    facts/media, CA/tax/delivery policies, Google/SMTP/Cashfree, owner TOTP/staff
    denial, telemetry/maintenance, and explicit launch approval.
 
