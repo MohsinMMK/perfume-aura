@@ -155,6 +155,13 @@ copies `public` and `_next/static`, rejects secret-shaped output, and smoke-test
 the version endpoint, homepage marker, and a real static asset. It does not
 accept a mutable commit override.
 
+The smoke launcher must replace its wrapper shell with `exec env ... node` so
+the recorded PID belongs to Node. Killing only the wrapper can orphan the
+server during provider cleanup. The source-builder self-test executes that
+same launch statement against a disposable fixture and verifies PID ownership
+and termination. A passing script or GitHub check is not Hostinger acceptance:
+confirm the provider build state and exact public SHA independently.
+
 Keep all names in `apps/storefront/.env.example` in Hostinger's environment
 configuration as applicable to the enabled features. In particular, set
 `STOREFRONT_URL` and `CUSTOMER_AUTH_URL` to `https://perfumeaura.com`; keep the

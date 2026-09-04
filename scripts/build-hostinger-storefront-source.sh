@@ -46,6 +46,7 @@ NODE
 
 if [[ "${1:-}" == "self-test" ]]; then
   verify_repository_contract
+  node scripts/test-hostinger-storefront-lifecycle.mjs
   echo "hostinger-storefront-source self-test ok"
   exit 0
 fi
@@ -154,7 +155,7 @@ cp "$RUNTIME_DEPS_DIR/package.json" "$SHARP_TMP/package.json"
 cp "$RUNTIME_DEPS_DIR/package-lock.json" "$SHARP_TMP/package-lock.json"
 (
   cd "$SHARP_TMP"
-  npm ci --omit=dev --ignore-scripts --no-audit --no-fund --os=linux --cpu=x64 --libc=glibc >/dev/null
+  npm ci --loglevel=error --omit=dev --ignore-scripts --no-audit --no-fund --os=linux --cpu=x64 --libc=glibc >/dev/null
 )
 [[ "$(node -p "require('$SHARP_TMP/node_modules/sharp/package.json').version")" == "$EXPECTED_SHARP" ]] || fail "locked Sharp version mismatch"
 
@@ -239,7 +240,8 @@ for required_path in apps/storefront/server.js apps/storefront/.next/static apps
 done
 
 PORT="$(node -e 'const net=require("node:net");const server=net.createServer();server.listen(0,"127.0.0.1",()=>{console.log(server.address().port);server.close()})')"
-(cd "$STAGE" && NODE_ENV=production HOSTNAME=127.0.0.1 PORT="$PORT" node apps/storefront/server.js > "$WORK_DIR/server.log" 2>&1) &
+# Replace the wrapper shell so $! owns Node, not a shell that can orphan Node.
+(cd "$STAGE" && exec env NODE_ENV=production HOSTNAME=127.0.0.1 PORT="$PORT" node apps/storefront/server.js > "$WORK_DIR/server.log" 2>&1) &
 SERVER_PID=$!
 for _ in {1..40}; do
   if curl -fsS --max-time 2 "http://127.0.0.1:$PORT/" >/dev/null 2>&1; then break; fi

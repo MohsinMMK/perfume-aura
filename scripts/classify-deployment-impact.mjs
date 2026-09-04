@@ -15,6 +15,7 @@ const SHARED_RUNTIME_PATHS = new Set([
 const DEPLOYMENT_TOOLING_PATHS = new Set([
   ".gitignore",
   "scripts/build-hostinger-storefront-source.sh",
+  "scripts/test-hostinger-storefront-lifecycle.mjs",
   "scripts/classify-deployment-impact.mjs",
   "scripts/deploy-hostinger-storefront-archive.mjs",
   "scripts/pack-storefront-standalone.sh",
@@ -263,6 +264,7 @@ function runSelfTests() {
       "docs/OPERATIONS.md",
       "package.json",
       "scripts/build-hostinger-storefront-source.sh",
+      "scripts/test-hostinger-storefront-lifecycle.mjs",
       "scripts/deploy-hostinger-storefront-archive.mjs",
       "scripts/pack-storefront-standalone.sh",
       "scripts/verify-ci-workflow.mjs",
