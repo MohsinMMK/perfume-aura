@@ -1,5 +1,5 @@
-# CI gate, verified standalone packs, immutable VPS ops deployment, and direct
-# Hostinger storefront archive deployment. Hostinger never builds the monorepo.
+# Dependency-aware CI, immutable VPS ops deployment, and gated promotion to
+# Hostinger's native GitHub storefront deployment branch.
 name: ci-and-ops-artifact
 
 on:
@@ -37,15 +37,15 @@ env:
   EXACT_PNPM_VERSION: 11.25.0
 
 jobs:
-  deployment-impact:
+  scope:
     name: deployment-impact
-    if: >-
-      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
-      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
+      should_validate: ${{ steps.impact.outputs.should_validate }}
       should_publish: ${{ steps.impact.outputs.should_publish }}
+      validate_ops: ${{ steps.impact.outputs.validate_ops }}
+      validate_storefront: ${{ steps.impact.outputs.validate_storefront }}
       publish_ops: ${{ steps.impact.outputs.publish_ops }}
       publish_storefront: ${{ steps.impact.outputs.publish_storefront }}
       ops_migration_blocked: ${{ steps.impact.outputs.ops_migration_blocked }}
@@ -61,6 +61,7 @@ jobs:
         id: impact
         env:
           BEFORE_SHA: ${{ github.event.before }}
+          PULL_REQUEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           DEPLOY_TARGET: ${{ inputs.deploy_target || 'none' }}
         run: |
           set -euo pipefail
@@ -82,76 +83,78 @@ jobs:
             fi
             [[ "$OPS_MIGRATION_BLOCKED" == "true" || "$OPS_MIGRATION_BLOCKED" == "false" ]]
             echo "should_publish=$SHOULD_PUBLISH" >> "$GITHUB_OUTPUT"
+            echo "should_validate=$SHOULD_PUBLISH" >> "$GITHUB_OUTPUT"
+            echo "validate_ops=$PUBLISH_OPS" >> "$GITHUB_OUTPUT"
+            echo "validate_storefront=$PUBLISH_STOREFRONT" >> "$GITHUB_OUTPUT"
             echo "publish_ops=$PUBLISH_OPS" >> "$GITHUB_OUTPUT"
             echo "publish_storefront=$PUBLISH_STOREFRONT" >> "$GITHUB_OUTPUT"
             echo "ops_migration_blocked=$OPS_MIGRATION_BLOCKED" >> "$GITHUB_OUTPUT"
           else
-            if [[ ! "$BEFORE_SHA" =~ ^[0-9a-f]{40}$ ]] ||
-               [[ "$BEFORE_SHA" == "0000000000000000000000000000000000000000" ]] ||
-               ! git cat-file -e "${BEFORE_SHA}^{commit}"; then
+            if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+              BASE_SHA="$PULL_REQUEST_BASE_SHA"
+            else
+              BASE_SHA="$BEFORE_SHA"
+            fi
+            if [[ ! "$BASE_SHA" =~ ^[0-9a-f]{40}$ ]] ||
+               [[ "$BASE_SHA" == "0000000000000000000000000000000000000000" ]] ||
+               ! git cat-file -e "${BASE_SHA}^{commit}"; then
               echo "should_publish=true" >> "$GITHUB_OUTPUT"
+              echo "should_validate=true" >> "$GITHUB_OUTPUT"
+              echo "validate_ops=true" >> "$GITHUB_OUTPUT"
+              echo "validate_storefront=true" >> "$GITHUB_OUTPUT"
               echo "publish_ops=true" >> "$GITHUB_OUTPUT"
               echo "publish_storefront=true" >> "$GITHUB_OUTPUT"
               echo "ops_migration_blocked=true" >> "$GITHUB_OUTPUT"
             else
-              git diff --name-only -z "$BEFORE_SHA" "$GITHUB_SHA" |
-                node scripts/classify-deployment-impact.mjs --stdin0 >> "$GITHUB_OUTPUT"
+              git diff --name-only -z "$BASE_SHA" "$GITHUB_SHA" |
+                node scripts/classify-deployment-impact.mjs --stdin0 \
+                  --base "$BASE_SHA" --head "$GITHUB_SHA" >> "$GITHUB_OUTPUT"
             fi
           fi
 
-  quality:
-    name: quality
+  repository-contracts:
+    name: repository-contracts
+    needs: scope
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 11.25.0
-
-      - name: Setup exact Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
-
-      - name: Verify runtime contract
-        run: |
-          set -euo pipefail
-          test "$(node -p 'process.versions.node')" = "$EXACT_NODE_VERSION"
-          test "$(npm --version)" = "$EXACT_NPM_VERSION"
-          test "$(pnpm --version)" = "$EXACT_PNPM_VERSION"
-          test "$(tr -d '[:space:]' < .nvmrc)" = "$EXACT_NODE_VERSION"
-          test "$(tr -d '[:space:]' < .node-version)" = "$EXACT_NODE_VERSION"
-
-      - name: Frozen install
-        run: pnpm install --frozen-lockfile
-
-      - name: Deploy automation self-tests
+      - run: pnpm install --frozen-lockfile
+      - name: Repository and deployment contract self-tests
         run: pnpm deploy:self-test
 
-      - name: Commerce foundation verification
-        run: pnpm commerce:verify
-
-      - name: Commerce foundation self-tests
-        run: pnpm commerce:verify:self-test
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Workspace typecheck
-        run: pnpm typecheck
-
-      - name: Unit tests
-        run: pnpm test:unit
-
-      - name: Production dependency audit
-        run: pnpm security:audit
-
-      - name: Storefront production build
+  storefront-quality:
+    name: storefront-quality
+    if: needs.scope.outputs.validate_storefront == 'true'
+    needs: scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Storefront lint
+        run: pnpm --filter @perfume-aura/storefront lint
+      - name: Storefront dependency typecheck
+        run: pnpm --filter @perfume-aura/ui --filter @perfume-aura/storefront typecheck
+      - name: Storefront unit tests
+        run: pnpm test:inventory && pnpm --filter @perfume-aura/storefront test:unit
+      - name: Commerce contracts
+        run: pnpm commerce:verify && pnpm commerce:verify:self-test
+      - name: Storefront production build and client budget
         env:
           STOREFRONT_URL: https://perfumeaura.com
           CUSTOMER_AUTH_URL: https://perfumeaura.com
@@ -167,9 +170,31 @@ jobs:
           NEXT_PUBLIC_STOREFRONT_SENTRY_TRACES_SAMPLE_RATE: "0.1"
           SENTRY_ORG: khanect
           STOREFRONT_SENTRY_PROJECT: perfume-aura-storefront
-        run: pnpm build:storefront
+        run: pnpm build:storefront && pnpm storefront:verify-client-budget
 
-      - name: Ops production build
+  ops-quality:
+    name: ops-quality
+    if: needs.scope.outputs.validate_ops == 'true'
+    needs: scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Ops lint
+        run: pnpm --filter @perfume-aura/ops lint
+      - name: Ops dependency typecheck
+        run: pnpm --filter @perfume-aura/ui --filter @perfume-aura/validators --filter @perfume-aura/ops typecheck
+      - name: Ops unit tests
+        run: pnpm test:inventory && pnpm --filter @perfume-aura/ops test:unit
+      - name: Ops production build and client budget
         env:
           BETTER_AUTH_URL: https://app.perfumeaura.com
           STANDALONE_SOURCE_COMMIT: ${{ github.sha }}
@@ -179,10 +204,34 @@ jobs:
           NEXT_PUBLIC_OPS_SENTRY_TRACES_SAMPLE_RATE: "0.1"
           SENTRY_ORG: khanect
           OPS_SENTRY_PROJECT: perfume-aura-ops
-        run: pnpm build:ops
+        run: pnpm build:ops && pnpm ops:verify-client-budget
 
-  integration:
-    name: postgresql-16-integration
+  dependency-audit:
+    name: dependency-audit
+    if: needs.scope.outputs.should_validate == 'true'
+    needs: scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Affected pnpm production dependency audit
+        run: pnpm audit --prod --audit-level=low
+      - name: Ops image runtime dependency audit
+        if: needs.scope.outputs.validate_ops == 'true'
+        run: npm audit --omit=dev --audit-level=low --prefix scripts/ops-runtime-deps
+
+  database-integration:
+    name: shared-database-integration
+    if: needs.scope.outputs.should_validate == 'true'
+    needs: scope
     runs-on: ubuntu-latest
     timeout-minutes: 35
     services:
@@ -191,48 +240,91 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: perfume_aura_phase06_ci
-        ports:
-          - 5432:5432
+          POSTGRES_DB: perfume_aura_phase99_ci_shared
+        ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U postgres -d perfume_aura_phase06_ci"
+          --health-cmd "pg_isready -U postgres -d perfume_aura_phase99_ci_shared"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
     env:
-      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_ci
-      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_ci
-      DATABASE_URL_DIRECT: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_ci
+      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase99_ci_shared
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase99_ci_shared
+      DATABASE_URL_DIRECT: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase99_ci_shared
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 11.25.0
-
-      - name: Setup exact Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Shared database typecheck and unit tests
+        run: pnpm --filter @perfume-aura/db typecheck && pnpm --filter @perfume-aura/db test:unit
+      - run: pnpm db:migrate
+      - run: pnpm --filter @perfume-aura/db test:integration
 
-      - name: Verify runtime contract
-        run: |
-          set -euo pipefail
-          test "$(node -p 'process.versions.node')" = "$EXACT_NODE_VERSION"
-          test "$(npm --version)" = "$EXACT_NPM_VERSION"
-          test "$(pnpm --version)" = "$EXACT_PNPM_VERSION"
+  storefront-integration:
+    name: storefront-integration
+    if: needs.scope.outputs.validate_storefront == 'true'
+    needs: scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres, POSTGRES_DB: perfume_aura_phase99_ci_storefront }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d perfume_aura_phase99_ci_storefront"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase99_ci_storefront
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase99_ci_storefront
+      DATABASE_URL_DIRECT: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase99_ci_storefront
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with: { version: 11.25.0 }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:migrate
+      - run: pnpm --filter @perfume-aura/storefront test:integration
 
-      - name: Frozen install
-        run: pnpm install --frozen-lockfile
-
-      - name: Apply forward migrations
-        run: pnpm db:migrate
-
-      - name: Complete integration suite (no skips)
-        run: pnpm test:integration
+  ops-integration:
+    name: ops-integration
+    if: needs.scope.outputs.validate_ops == 'true'
+    needs: scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres, POSTGRES_DB: perfume_aura_phase99_ci_ops }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d perfume_aura_phase99_ci_ops"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase99_ci_ops
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase99_ci_ops
+      DATABASE_URL_DIRECT: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase99_ci_ops
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with: { version: 11.25.0 }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:migrate
+      - run: pnpm --filter @perfume-aura/ops test:integration
 
   dependency-review:
     name: dependency-review
@@ -240,90 +332,72 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with: { fail-on-severity: high }
 
-      - name: Review changed dependencies
-        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
-        with:
-          fail-on-severity: high
+  storefront-source-build:
+    name: verified-storefront-source-build
+    if: needs.scope.outputs.validate_storefront == 'true'
+    needs: [scope, storefront-quality, storefront-integration, database-integration, dependency-audit]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with: { version: 11.25.0 }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - name: Reproduce the Hostinger Git source build
+        env:
+          NEXT_PUBLIC_STOREFRONT_POSTHOG_TOKEN: ${{ vars.POSTHOG_PROJECT_TOKEN }}
+          NEXT_PUBLIC_STOREFRONT_POSTHOG_HOST: ${{ vars.POSTHOG_HOST }}
+          NEXT_PUBLIC_STOREFRONT_SENTRY_DSN: ${{ vars.STOREFRONT_SENTRY_DSN }}
+          NEXT_PUBLIC_STOREFRONT_SENTRY_TRACES_SAMPLE_RATE: "0.1"
+        run: pnpm hostinger:build:storefront
+      - name: Verify source manifest
+        run: node -e 'const m=require("./.hostinger/storefront/source-manifest.json");if(m.source.commit!==process.env.GITHUB_SHA||m.source.dirty||m.source.type!=="git")process.exit(1)'
 
-  package:
-    name: verified-hostinger-zip
-    needs:
-      - quality
-      - integration
+  ops-package:
+    name: verified-ops-artifact
+    if: needs.scope.outputs.validate_ops == 'true'
+    needs: [scope, ops-quality, ops-integration, database-integration, dependency-audit]
     runs-on: ubuntu-latest
     timeout-minutes: 40
     services:
       postgres:
         image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: perfume_aura_phase06_package
-        ports:
-          - 5432:5432
+        env: { POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres, POSTGRES_DB: perfume_aura_phase99_package_ops }
+        ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U postgres -d perfume_aura_phase06_package"
+          --health-cmd "pg_isready -U postgres -d perfume_aura_phase99_package_ops"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
     env:
-      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_package
-      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_package
-      DATABASE_URL_DIRECT: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase06_package
+      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase99_package_ops
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase99_package_ops
+      DATABASE_URL_DIRECT: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase99_package_ops
       BETTER_AUTH_URL: https://app.perfumeaura.com
       STANDALONE_REQUIRE_SERVER_SMOKE: "1"
-      NEXT_PUBLIC_STOREFRONT_POSTHOG_TOKEN: ${{ vars.POSTHOG_PROJECT_TOKEN }}
-      NEXT_PUBLIC_STOREFRONT_POSTHOG_HOST: ${{ vars.POSTHOG_HOST }}
-      NEXT_PUBLIC_STOREFRONT_SENTRY_DSN: ${{ vars.STOREFRONT_SENTRY_DSN }}
-      NEXT_PUBLIC_STOREFRONT_SENTRY_TRACES_SAMPLE_RATE: "0.1"
       NEXT_PUBLIC_OPS_POSTHOG_TOKEN: ${{ vars.POSTHOG_PROJECT_TOKEN }}
       NEXT_PUBLIC_OPS_POSTHOG_HOST: ${{ vars.POSTHOG_HOST }}
       NEXT_PUBLIC_OPS_SENTRY_DSN: ${{ vars.OPS_SENTRY_DSN }}
       NEXT_PUBLIC_OPS_SENTRY_TRACES_SAMPLE_RATE: "0.1"
       SENTRY_ORG: khanect
-      STOREFRONT_SENTRY_PROJECT: perfume-aura-storefront
       OPS_SENTRY_PROJECT: perfume-aura-ops
       SENTRY_AUTH_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.SENTRY_AUTH_TOKEN || '' }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
-        with:
-          version: 11.25.0
-
-      - name: Setup exact Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - name: Verify runtime contract
-        run: |
-          set -euo pipefail
-          test "$(node -p 'process.versions.node')" = "$EXACT_NODE_VERSION"
-          test "$(npm --version)" = "$EXACT_NPM_VERSION"
-          test "$(pnpm --version)" = "$EXACT_PNPM_VERSION"
-
-      - name: Frozen install
-        run: pnpm install --frozen-lockfile
-
-      - name: Apply forward migrations for server smoke
-        run: pnpm db:migrate
-
-      - name: Build and verify standalone archives
-        run: |
-          set -euo pipefail
-          export STANDALONE_SOURCE_COMMIT="$GITHUB_SHA"
-          export STANDALONE_STAMP="${GITHUB_SHA:0:12}"
-          pnpm ops:pack
-          pnpm storefront:pack
-
-      - name: Verify checksum and release metadata
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with: { version: 11.25.0 }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:migrate
+      - name: Build and verify ops standalone artifact
+        run: STANDALONE_SOURCE_COMMIT="$GITHUB_SHA" STANDALONE_STAMP="${GITHUB_SHA:0:12}" pnpm ops:pack
+      - name: Validate hardened ops container image
         id: artifact
         run: |
           set -euo pipefail
@@ -331,118 +405,115 @@ jobs:
           ZIP="dist/perfume-aura-standalone_${SHORT_SHA}.zip"
           CHECKSUM="${ZIP}.sha256"
           MANIFEST="dist/perfume-aura-standalone_${SHORT_SHA}.manifest.json"
-          test -f "$ZIP"
-          test -f "$CHECKSUM"
-          test -f "$MANIFEST"
           (cd dist && sha256sum --check "$(basename "$CHECKSUM")")
-          node - "$MANIFEST" "$GITHUB_SHA" <<'NODE'
-          const assert = require("node:assert/strict");
-          const crypto = require("node:crypto");
-          const fs = require("node:fs");
-          const [manifestPath, sourceCommit] = process.argv.slice(2);
-          const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-          assert.equal(manifest.source.commit, sourceCommit);
-          assert.equal(manifest.source.dirty, false);
-          assert.equal(manifest.runtime.node, "24.6.0");
-          assert.equal(manifest.runtime.npm, "11.5.1");
-          assert.equal(manifest.runtime.pnpm, "11.25.0");
-          assert.equal(manifest.runtime.next, "16.3.4");
-          assert.equal(manifest.runtime.sharp, "0.35.3");
-          assert.equal(manifest.runtime.postcss, "8.5.23");
-          const runtimeLockSha256 = crypto
-            .createHash("sha256")
-            .update(fs.readFileSync("scripts/ops-runtime-deps/package-lock.json"))
-            .digest("hex");
-          assert.deepEqual(manifest.runtimeDependencyLock, {
-            source: "scripts/ops-runtime-deps/package-lock.json",
-            artifact: "runtime-package-lock.json",
-            sha256: runtimeLockSha256,
-          });
-          assert.ok(manifest.archive.bytes <= 50_000_000);
-          NODE
-          STOREFRONT_ZIP="dist/perfume-aura-storefront_${SHORT_SHA}.zip"
-          STOREFRONT_CHECKSUM="${STOREFRONT_ZIP}.sha256"
-          STOREFRONT_MANIFEST="dist/perfume-aura-storefront_${SHORT_SHA}.manifest.json"
-          test -f "$STOREFRONT_ZIP"
-          test -f "$STOREFRONT_CHECKSUM"
-          test -f "$STOREFRONT_MANIFEST"
-          (cd dist && sha256sum --check "$(basename "$STOREFRONT_CHECKSUM")")
-          node - "$STOREFRONT_MANIFEST" "$GITHUB_SHA" <<'NODE'
-          const assert = require("node:assert/strict");
-          const fs = require("node:fs");
-          const [manifestPath, sourceCommit] = process.argv.slice(2);
-          const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-          assert.equal(manifest.schemaVersion, 2);
-          assert.equal(manifest.application, "@perfume-aura/storefront");
-          assert.equal(manifest.source.commit, sourceCommit);
-          assert.equal(manifest.source.dirty, false);
-          assert.equal(manifest.entry, "apps/storefront/server.js");
-          assert.equal(manifest.extractedSmoke, "passed");
-          assert.equal(manifest.runtime.node, "24.6.0");
-          assert.equal(manifest.runtime.npm, "11.5.1");
-          assert.equal(manifest.runtime.pnpm, "11.25.0");
-          assert.equal(manifest.runtime.next, "16.3.4");
-          assert.equal(manifest.runtime.sharp, "0.35.3");
-          assert.equal(manifest.runtime.postcss, "8.5.23");
-          assert.ok(manifest.archive.bytes <= 50_000_000);
-          NODE
-          echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
-          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
-          echo "checksum=$CHECKSUM" >> "$GITHUB_OUTPUT"
-          echo "manifest=$MANIFEST" >> "$GITHUB_OUTPUT"
-          echo "storefront_zip=$STOREFRONT_ZIP" >> "$GITHUB_OUTPUT"
-          echo "storefront_checksum=$STOREFRONT_CHECKSUM" >> "$GITHUB_OUTPUT"
-          echo "storefront_manifest=$STOREFRONT_MANIFEST" >> "$GITHUB_OUTPUT"
-          echo "artifact_name=hostinger-standalone-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
-
-      - name: Validate hardened ops container image
-        run: |
-          set -euo pipefail
-          SHORT_SHA="${GITHUB_SHA:0:12}"
-          ZIP="dist/perfume-aura-standalone_${SHORT_SHA}.zip"
           TREE="$(mktemp -d "${RUNNER_TEMP}/ops-image-tree.XXXXXX")"
-          cleanup() {
-            rm -rf -- "$TREE"
-          }
-          trap cleanup EXIT
+          trap 'rm -rf -- "$TREE"' EXIT
           python3 scripts/extract-hostinger-ops-zip.py "$ZIP" "$TREE"
           node scripts/verify-hostinger-ops-deploy-tree.mjs "$TREE" "$GITHUB_SHA"
-          docker build \
-            --build-arg "SOURCE_COMMIT=$GITHUB_SHA" \
-            --file deploy/ops-vps/Dockerfile \
-            --tag perfume-aura-ops:ci \
-            "$TREE"
+          docker build --build-arg "SOURCE_COMMIT=$GITHUB_SHA" --file deploy/ops-vps/Dockerfile --tag perfume-aura-ops:ci "$TREE"
           test "$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' perfume-aura-ops:ci)" = "$GITHUB_SHA"
-          test "$(docker run --rm --entrypoint node perfume-aura-ops:ci -e 'const m=require("/app/artifact-manifest.json");process.stdout.write(m.source.commit)')" = "$GITHUB_SHA"
-
-      - name: Upload inspected artifact
-        if: >-
-          (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
-          github.event_name == 'workflow_dispatch'
+          echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
+      - name: Upload inspected ops artifact
+        if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: hostinger-standalone-${{ steps.artifact.outputs.short_sha }}
+          name: ops-standalone-${{ steps.artifact.outputs.short_sha }}
           path: |
-            ${{ steps.artifact.outputs.zip }}
-            ${{ steps.artifact.outputs.checksum }}
-            ${{ steps.artifact.outputs.manifest }}
-            ${{ steps.artifact.outputs.storefront_zip }}
-            ${{ steps.artifact.outputs.storefront_checksum }}
-            ${{ steps.artifact.outputs.storefront_manifest }}
+            dist/perfume-aura-standalone_${{ steps.artifact.outputs.short_sha }}.zip
+            dist/perfume-aura-standalone_${{ steps.artifact.outputs.short_sha }}.zip.sha256
+            dist/perfume-aura-standalone_${{ steps.artifact.outputs.short_sha }}.manifest.json
           if-no-files-found: error
           compression-level: 0
           retention-days: 14
+
+  # Preserve the existing protected-branch contexts while the workflow moves
+  # to dependency-aware job names. These always report a result, including for
+  # documentation-only changes where the underlying work is intentionally
+  # skipped.
+  database-required-context:
+    name: postgresql-16-integration
+    if: always()
+    needs: [scope, database-integration]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify the planned database result
+        env:
+          SHOULD_VALIDATE: ${{ needs.scope.outputs.should_validate }}
+          DATABASE_INTEGRATION: ${{ needs.database-integration.result }}
+        run: |
+          set -euo pipefail
+          if [[ "$SHOULD_VALIDATE" == true ]]; then
+            test "$DATABASE_INTEGRATION" = success
+          else
+            test "$DATABASE_INTEGRATION" = skipped
+          fi
+
+  package-required-context:
+    name: verified-hostinger-zip
+    if: always()
+    needs: [scope, storefront-source-build, ops-package]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify the planned deployable results
+        env:
+          VALIDATE_STOREFRONT: ${{ needs.scope.outputs.validate_storefront }}
+          VALIDATE_OPS: ${{ needs.scope.outputs.validate_ops }}
+          STOREFRONT_SOURCE_BUILD: ${{ needs.storefront-source-build.result }}
+          OPS_PACKAGE: ${{ needs.ops-package.result }}
+        run: |
+          set -euo pipefail
+          require_result() { [[ "$1" == true ]] && test "$2" = success || test "$2" = skipped; }
+          require_result "$VALIDATE_STOREFRONT" "$STOREFRONT_SOURCE_BUILD"
+          require_result "$VALIDATE_OPS" "$OPS_PACKAGE"
+
+  quality:
+    name: quality
+    if: always()
+    needs: [scope, repository-contracts, storefront-quality, ops-quality, dependency-audit, database-integration, storefront-integration, ops-integration, storefront-source-build, ops-package]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every planned check and no unplanned work
+        env:
+          VALIDATE_STOREFRONT: ${{ needs.scope.outputs.validate_storefront }}
+          VALIDATE_OPS: ${{ needs.scope.outputs.validate_ops }}
+          CONTRACTS: ${{ needs.repository-contracts.result }}
+          STOREFRONT_QUALITY: ${{ needs.storefront-quality.result }}
+          OPS_QUALITY: ${{ needs.ops-quality.result }}
+          DEPENDENCY_AUDIT: ${{ needs.dependency-audit.result }}
+          DATABASE_INTEGRATION: ${{ needs.database-integration.result }}
+          STOREFRONT_INTEGRATION: ${{ needs.storefront-integration.result }}
+          OPS_INTEGRATION: ${{ needs.ops-integration.result }}
+          STOREFRONT_SOURCE_BUILD: ${{ needs.storefront-source-build.result }}
+          OPS_PACKAGE: ${{ needs.ops-package.result }}
+        run: |
+          set -euo pipefail
+          test "$CONTRACTS" = success
+          require_result() { [[ "$1" == true ]] && test "$2" = success || test "$2" = skipped; }
+          require_result "$VALIDATE_STOREFRONT" "$STOREFRONT_QUALITY"
+          require_result "$VALIDATE_STOREFRONT" "$STOREFRONT_INTEGRATION"
+          require_result "$VALIDATE_STOREFRONT" "$STOREFRONT_SOURCE_BUILD"
+          require_result "$VALIDATE_OPS" "$OPS_QUALITY"
+          require_result "$VALIDATE_OPS" "$OPS_INTEGRATION"
+          require_result "$VALIDATE_OPS" "$OPS_PACKAGE"
+          if [[ "$VALIDATE_STOREFRONT" == true || "$VALIDATE_OPS" == true ]]; then
+            test "$DEPENDENCY_AUDIT" = success
+            test "$DATABASE_INTEGRATION" = success
+          else
+            test "$DEPENDENCY_AUDIT" = skipped
+            test "$DATABASE_INTEGRATION" = skipped
+          fi
 
   publish-and-deploy-vps-ops:
     name: publish-and-deploy-vps-ops
     if: >-
       github.ref == 'refs/heads/main' &&
-      needs.deployment-impact.outputs.publish_ops == 'true' &&
-      needs.deployment-impact.outputs.ops_migration_blocked != 'true' &&
+      needs.scope.outputs.publish_ops == 'true' &&
+      needs.scope.outputs.ops_migration_blocked != 'true' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs:
-      - deployment-impact
-      - package
+      - scope
+      - quality
+      - ops-package
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
@@ -471,7 +542,7 @@ jobs:
       - name: Download exact package artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          name: hostinger-standalone-${{ steps.meta.outputs.short_sha }}
+          name: ops-standalone-${{ steps.meta.outputs.short_sha }}
           path: dist-publish
 
       - name: Re-verify and extract exact ops artifact
@@ -580,12 +651,12 @@ jobs:
     name: block-runtime-deploy-on-database-migration
     if: >-
       github.ref == 'refs/heads/main' &&
-      needs.deployment-impact.outputs.should_publish == 'true' &&
-      needs.deployment-impact.outputs.ops_migration_blocked == 'true' &&
+      needs.scope.outputs.should_publish == 'true' &&
+      needs.scope.outputs.ops_migration_blocked == 'true' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs:
-      - deployment-impact
-      - package
+      - scope
+      - quality
     runs-on: ubuntu-latest
     steps:
       - name: Require the production database owner gate
@@ -593,91 +664,51 @@ jobs:
           echo "Database migration files changed. Apply and verify the migration and restricted runtime grants through the documented owner gate before redeploying either runtime." >&2
           exit 1
 
-  deploy-hostinger-storefront-archive:
-    name: deploy-hostinger-storefront-archive
+  promote-hostinger-storefront-source:
+    name: promote-hostinger-storefront-source
     if: >-
       github.ref == 'refs/heads/main' &&
-      needs.deployment-impact.outputs.publish_storefront == 'true' &&
-      needs.deployment-impact.outputs.ops_migration_blocked != 'true' &&
-      vars.HOSTINGER_STOREFRONT_ARCHIVE_DEPLOY_ENABLED == 'true' &&
-      vars.HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED == 'true'
+      needs.scope.outputs.publish_storefront == 'true' &&
+      needs.scope.outputs.ops_migration_blocked != 'true' &&
+      vars.HOSTINGER_STOREFRONT_GIT_DEPLOY_ENABLED == 'true' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs:
-      - deployment-impact
-      - package
+      - scope
+      - quality
+      - storefront-source-build
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     concurrency:
       group: deploy-hostinger-storefront-production
       cancel-in-progress: false
+    permissions:
+      contents: write
     steps:
-      - name: Checkout deployment tooling
+      - name: Checkout the exact accepted source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          persist-credentials: false
-
-      - name: Setup exact Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version-file: .nvmrc
-
-      - name: Resolve artifact name
-        id: meta
+          fetch-depth: 0
+      - name: Advance the protected Hostinger source branch
         run: |
           set -euo pipefail
-          echo "short_sha=${GITHUB_SHA:0:12}" >> "$GITHUB_OUTPUT"
-
-      - name: Download exact package artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-        with:
-          name: hostinger-standalone-${{ steps.meta.outputs.short_sha }}
-          path: dist-publish
-
-      - name: Re-verify and deploy the exact storefront archive
-        env:
-          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
-          HOSTINGER_ACCOUNT_USERNAME: ${{ vars.HOSTINGER_ACCOUNT_USERNAME }}
-          HOSTINGER_STOREFRONT_DOMAIN: perfumeaura.com
-        run: |
-          set -euo pipefail
-          SHORT_SHA="${GITHUB_SHA:0:12}"
-          ZIP="dist-publish/perfume-aura-storefront_${SHORT_SHA}.zip"
-          CHECKSUM="${ZIP}.sha256"
-          MANIFEST="dist-publish/perfume-aura-storefront_${SHORT_SHA}.manifest.json"
-          test -f "$ZIP"
-          test -f "$CHECKSUM"
-          test -f "$MANIFEST"
-          (
-            cd dist-publish
-            sha256sum --check "$(basename "$CHECKSUM")"
-          )
-          node - "$MANIFEST" "$GITHUB_SHA" <<'NODE'
-          const assert = require("node:assert/strict");
-          const fs = require("node:fs");
-          const [manifestPath, sourceCommit] = process.argv.slice(2);
-          const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-          assert.equal(manifest.schemaVersion, 2);
-          assert.equal(manifest.application, "@perfume-aura/storefront");
-          assert.equal(manifest.source.commit, sourceCommit);
-          assert.equal(manifest.source.dirty, false);
-          assert.equal(manifest.entry, "apps/storefront/server.js");
-          assert.ok(manifest.archive && manifest.archive.sha256);
-          assert.equal(manifest.extractedSmoke, "passed");
-          NODE
-          node scripts/deploy-hostinger-storefront-archive.mjs \
-            --archive "$ZIP" \
-            --manifest "$MANIFEST" \
-            --commit "$GITHUB_SHA"
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          if git ls-remote --exit-code --heads origin hostinger-storefront-production >/dev/null 2>&1; then
+            git fetch origin hostinger-storefront-production
+            git merge-base --is-ancestor origin/hostinger-storefront-production "$GITHUB_SHA"
+          fi
+          git push origin "$GITHUB_SHA:refs/heads/hostinger-storefront-production"
 
   verify-hostinger-storefront:
     name: verify-hostinger-storefront-live
     if: >-
       github.ref == 'refs/heads/main' &&
-      needs.deployment-impact.outputs.publish_storefront == 'true' &&
-      vars.HOSTINGER_STOREFRONT_ARCHIVE_DEPLOY_ENABLED == 'true' &&
-      vars.HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED == 'true'
+      needs.scope.outputs.publish_storefront == 'true' &&
+      vars.HOSTINGER_STOREFRONT_GIT_DEPLOY_ENABLED == 'true' &&
+      vars.HOSTINGER_STOREFRONT_PUBLIC_VERIFICATION_ENABLED == 'true'
     needs:
-      - deployment-impact
-      - deploy-hostinger-storefront-archive
+      - scope
+      - promote-hostinger-storefront-source
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

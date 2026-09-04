@@ -67,7 +67,7 @@ TEST_DATABASE_URL="$PERFUME_AURA_TEST_DB_URL" \
   DATABASE_URL="$PERFUME_AURA_TEST_DB_URL" \
   DATABASE_URL_DIRECT="$PERFUME_AURA_TEST_DB_URL" \
   pnpm test:integration
-pnpm storefront:pack
+pnpm hostinger:build:storefront # Linux/Hostinger source build only
 pnpm ops:pack
 node scripts/verify-production-deploy.mjs <40-character-sha> \
   --target ops \

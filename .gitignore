@@ -4,6 +4,7 @@ node_modules
 # builds / caches
 .next
 dist
+.hostinger/
 .turbo
 out
 *.tsbuildinfo

@@ -217,11 +217,14 @@ Owner seeding is atomic and idempotent. Normal recovery uses
 
 | Job | Runs |
 |---|---|
-| `deployment-impact` | Fail-closed classifier. Markdown-only → no publish. drizzle/sql → `ops_migration_blocked` |
-| `quality` | self-tests, commerce verify, lint, typecheck, unit, audit, both production builds. **Does not run `pnpm check` or client-JS budgets** |
-| `postgresql-16-integration` | migrate + all integration tests on `postgres:16` |
-| `verified-hostinger-zip` | both packs, checksums, ops image build |
-| `publish-and-deploy-vps-ops` / `deploy-hostinger-storefront-archive` | only when auto-deploy flags and not migration-blocked |
+| `deployment-impact` | Central fail-closed planner for validation and publication. Markdown-only → neither surface; deployment tooling → validate both/publish neither; drizzle/sql → validate/publish both plus `ops_migration_blocked` |
+| `storefront-quality` / `ops-quality` | Surface lint, shared dependency typecheck/unit tests, production build, and client-JS budget only for the planned surface |
+| `shared-database-integration` | Database integration once when either runtime is affected |
+| `storefront-integration` / `ops-integration` | Application integration tests only for the planned surface |
+| `verified-storefront-source-build` | Linux reproduction of the Hostinger Git source build; creates no ZIP or CI artifact |
+| `verified-ops-artifact` | Ops standalone ZIP, checksum, manifest, and hardened container validation only when ops is affected |
+| `quality` | Stable required-check aggregator; succeeds for Markdown-only changes after repository contract tests and rejects missing/extra surface work |
+| `publish-and-deploy-vps-ops` / `promote-hostinger-storefront-source` | independent, gated releases only after `quality`; migrations block both |
 | `block-runtime-deploy-on-database-migration` | fails closed |
 
 CodeQL is a separate workflow. Commerce maintenance cron is flags-off unless
@@ -229,14 +232,15 @@ CodeQL is a separate workflow. Commerce maintenance cron is flags-off unless
 
 | Script | Command |
 |---|---|
-| `pack-storefront-standalone.sh` | `pnpm storefront:pack` |
+| `build-hostinger-storefront-source.sh` | `pnpm hostinger:build:storefront` (Linux/Hostinger only) |
 | `pack-ops-standalone.sh` | `pnpm ops:pack` |
-| `deploy-hostinger-storefront-archive.mjs` | `pnpm storefront:deploy-archive` |
 | `verify-production-deploy.mjs` | `pnpm ops:verify-production-deploy` |
 | `verify-commerce-foundation.mjs` | `pnpm commerce:verify` |
 
-Packers require Node `24.6.0`, npm `11.5.1`, and pnpm `11.25.0`; reject
-secret-shaped files; verify Linux x64 Sharp; smoke extracted servers.
+The ops packer pins Node `24.6.0`, npm `11.5.1`, and pnpm `11.25.0`. The
+storefront source build accepts Hostinger Node `24.x` and pins pnpm `11.25.0`.
+Both reject secret-shaped output, verify Linux x64/glibc Sharp, and smoke their
+materialized servers.
 
 Search/discovery implementation lives in `apps/storefront/lib/seo.ts`,
 `editorial-guides.ts`, and `public-business.ts`. Product contract:
