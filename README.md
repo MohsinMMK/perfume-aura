@@ -3,8 +3,8 @@
 Perfume Aura is a pnpm monorepo with two web applications backed by one Neon
 PostgreSQL database:
 
-- `perfumeaura.com` — public brand and discovery storefront on a Hostinger
-  Node.js Web App. Online catalog publication and checkout are not open.
+- `perfumeaura.com` — public brand and discovery storefront in a hardened
+  VPS container. Online catalog publication and checkout are not open.
 - `app.perfumeaura.com` — private owner/staff operations in a hardened
   container on a Hostinger VPS behind Caddy.
 
@@ -15,8 +15,8 @@ indexable; shop/product pages stay `noindex`.
 
 ```mermaid
 flowchart LR
-  customer["Customers"] --> hcdn["Hostinger HCDN"]
-  hcdn --> storefront["Storefront Web App<br/>Hostinger managed Node.js"]
+  customer["Customers"] --> caddy["Caddy TLS proxy"]
+  caddy --> storefront["Storefront container<br/>Hostinger VPS · 3031"]
   staff["Owner and staff"] --> caddy["Caddy TLS proxy"]
   caddy --> ops["Ops container<br/>Hostinger VPS"]
   storefront --> neon["Neon PostgreSQL"]
@@ -42,8 +42,7 @@ flowchart LR
 
 ## Local setup
 
-Storefront production selects Hostinger-managed Node `24.x`; repository
-tooling, CI, ops image, and both packers pin Node `24.6.0`. Use disposable
+Repository tooling, CI and both production images pin Node `24.6.0`. Use disposable
 loopback PostgreSQL for integration tests.
 
 ```bash
@@ -67,7 +66,7 @@ TEST_DATABASE_URL="$PERFUME_AURA_TEST_DB_URL" \
   DATABASE_URL="$PERFUME_AURA_TEST_DB_URL" \
   DATABASE_URL_DIRECT="$PERFUME_AURA_TEST_DB_URL" \
   pnpm test:integration
-pnpm hostinger:build:storefront # Linux/Hostinger source build only
+pnpm hostinger:build:storefront # Linux standalone build used by VPS CI
 pnpm ops:pack
 node scripts/verify-production-deploy.mjs <40-character-sha> \
   --target ops \

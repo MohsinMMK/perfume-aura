@@ -17,11 +17,11 @@ Never weaken branch protection, expose SSH publicly or use plan-wide process sto
 
 ## Storefront deployment and recovery
 
-Public hosting and cutover readiness are stated in [Current state](CURRENT_STATE.md).
-The VPS implementation lives in [deploy/storefront-vps](../deploy/storefront-vps/).
-It is not active production merely because its files or CI job exist.
+Both applications run on the VPS. [Current state](CURRENT_STATE.md) owns exact
+releases and any acceptance still pending. Storefront implementation lives in
+[deploy/storefront-vps](../deploy/storefront-vps/).
 
-Production flow when enabled:
+Storefront production flow:
 
 ```text
 protected main merge → scoped quality/integration → clean Linux standalone
@@ -56,7 +56,7 @@ CI changes images only. Compose, SSH/sudo policy and deploy-script changes need
 a reviewed admin installation, syntax validation and scoped reload; the CI user
 must never be able to edit its own root command or authorized key policy.
 
-Initial cutover:
+Provisioning and DNS rules:
 
 1. Preserve current DNS, env and exact accepted recovery artifact. Transfer the
    storefront's own env securely; verify names and flags without printing values.
@@ -66,9 +66,15 @@ Initial cutover:
    `deploy_target=storefront`. Do not deploy Ops or apply `0017`.
 4. Check candidate version, homepage, static asset, flags and production env.
    Back up Caddy configuration; add only apex/www, validate, then reload Caddy.
-5. Change only apex/www web records. Preserve MX/TXT/CAA, app A and nameservers.
+5. Disable Hostinger CDN and opt this site out of automatic CDN before changing
+   its web records. CDN deactivation can restore provider A/AAAA records: remove
+   those retired web targets, then set apex A to the VPS and www CNAME to apex.
+   Change only apex/www web records. Preserve MX/TXT/CAA, app A and nameservers.
    Check authoritative NS plus public resolvers. Do not infer a missing app A
    from the Hostinger API: its zone response may omit that record.
+   DNS validation alone is insufficient: an existing ALIAS must be removed
+   before creating an A record. Use structured MCP arguments for record arrays;
+   Docker's direct tools-call CLI stringifies them. Verify actual DNS afterward.
 6. Pass [public acceptance](#production-acceptance), enable public CI verification,
    then prove a scoped GitHub release reaches the exact public SHA.
 7. Remove obsolete Perfume Aura Web Apps only after backup/acceptance. Preserve
@@ -84,10 +90,10 @@ root-owned SHA/digest and call the same restricted deploy command, then verify.
 DNS rollback additionally requires the retained hosting app and its original
 web records. Never delete recovery material before accepting its replacement.
 
-Until cutover, the Hostinger source branch is
-`hostinger-storefront-production`, gated by
-`HOSTINGER_STOREFRONT_GIT_DEPLOY_ENABLED`. Keep provider env and accepted
-archive recovery available. A green source build is not provider/live acceptance.
+Retired Hostinger integration remains disabled until the pending site cleanup:
+`hostinger-storefront-production` is gated by
+`HOSTINGER_STOREFRONT_GIT_DEPLOY_ENABLED=false`. Keep recovery material until
+provider disconnection and accepted VPS public routing are both verified.
 
 ## Ops deployment and recovery
 
@@ -102,6 +108,11 @@ CI gates: `VPS_OPS_AUTO_DEPLOY_ENABLED` and
 `VPS_OPS_PUBLIC_VERIFICATION_ENABLED`. Recovery:
 `sudo khanect rollback perfume-aura-ops` only after authorization.
 Do not deploy main while the pending migration owner gate is incomplete.
+Keep `VPS_OPS_AUTO_DEPLOY_ENABLED=false` until that gate passes; this does not
+stop the accepted Ops container. Shared-runtime changes do not automatically
+deploy the storefront while they also classify as Ops scope. After review,
+dispatch only `deploy_target=storefront` when a shared change is safe for the
+storefront without updating Ops or applying migrations.
 
 ## Production acceptance
 
