@@ -131,8 +131,11 @@ post-merge CI
 [33918015607](https://github.com/MohsinMMK/perfume-aura/actions/runs/33918015607),
 and storefront-only promotion
 [33918028884](https://github.com/MohsinMMK/perfume-aura/actions/runs/33918028884)
-passed. Ops deployment was skipped. Deployment-tooling changes validate both
-surfaces but publish neither without the explicit storefront dispatch.
+passed. Ops deployment was skipped. For a tooling-only push, the classifier
+validates both surfaces and sets both publication outputs false. The promotion
+job itself accepts either a main push or a manual dispatch when
+`publish_storefront=true` and its quality, source-build, migration, and Git
+enablement gates pass. This tooling-only release used a storefront dispatch.
 
 Hostinger Git build `01a06e34-53bf-73ca-8c97-225bb26cd3cc` still **failed**
 at 2026-09-04 20:57:06 UTC (1m48s). Its 121-line log ends with
