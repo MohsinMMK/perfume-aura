@@ -154,7 +154,7 @@ cp "$RUNTIME_DEPS_DIR/package.json" "$SHARP_TMP/package.json"
 cp "$RUNTIME_DEPS_DIR/package-lock.json" "$SHARP_TMP/package-lock.json"
 (
   cd "$SHARP_TMP"
-  npm ci --omit=dev --ignore-scripts --no-audit --no-fund --os=linux --cpu=x64 --libc=glibc >/dev/null
+  npm ci --loglevel=error --omit=dev --ignore-scripts --no-audit --no-fund --os=linux --cpu=x64 --libc=glibc >/dev/null
 )
 [[ "$(node -p "require('$SHARP_TMP/node_modules/sharp/package.json').version")" == "$EXPECTED_SHARP" ]] || fail "locked Sharp version mismatch"
 
