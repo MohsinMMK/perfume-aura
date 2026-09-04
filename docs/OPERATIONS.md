@@ -32,7 +32,7 @@ previous static storefront exists only in an external backup and Git history.
 | Hostinger managed Node.js Web App | `perfumeaura.com` storefront and the `www` redirect |
 | VPS Caddy and hardened container | `app.perfumeaura.com` private operations |
 | Neon | Shared PostgreSQL, with separate restricted runtime connections and manual owner migrations |
-| GitHub Actions | Build, scan, package, publish, and identify the exact source commit for both deployments |
+| GitHub Actions | Scope and validate each affected surface, package/publish ops, and promote accepted storefront source |
 
 GoDaddy remains registration-only while Hostinger nameservers are
 authoritative. Exact live DNS, IP, SHA, digest, and rollback-window values
@@ -41,9 +41,9 @@ the web deployments and must never be copied into, deleted by, or recreated
 during a deployment.
 
 The storefront selects Hostinger Node `24.x`; live deployment logs established
-Node `24.6.0` as the managed Node baseline. CI and packers use pnpm `11.25.0`.
-Storefront deploys a prebuilt archive, so Hostinger's own pnpm patch is unused.
-Ops uses the repository-pinned Node image in its immutable VPS artifact.
+Node `24.6.0` as the managed Node baseline. CI, the Hostinger source build, and
+the ops packer use pnpm `11.25.0`. Ops uses the repository-pinned Node image in
+its immutable VPS artifact.
 Reinspect the managed logs whenever Hostinger changes the storefront runtime.
 
 The unresolved managed-hosting process incident remains a storefront/shared-plan
@@ -98,54 +98,98 @@ in `CURRENT_STATE.md`.
 
 ## Storefront deployment and recovery
 
-The verified ZIP is both the routine storefront deployment input and the
-emergency recovery artifact. GitHub Actions uploads it directly to Hostinger
-through the official API; Hostinger never builds the monorepo:
+Repository preparation for native Hostinger GitHub deployment is complete in
+this revision. Provider cutover is a separate, explicitly authorized action;
+until live inventory proves `source_type: git`, the currently accepted archive
+deployment remains production truth.
+
+The guarded target flow is:
 
 ```text
-runtime-affecting main push → CI quality/integration/package
-  → Hostinger archive upload and reviewed Node.js build settings
-  → Hostinger Node Web App build
+storefront-impacting main push → scoped CI + Linux source-build smoke
+  → fast-forward hostinger-storefront-production to the accepted SHA
+  → Hostinger GitHub integration builds that branch
   → exact storefront SHA and public-surface verification
 ```
 
-Markdown-only changes do not deploy either runtime. For a controlled
-idempotent republish of the exact `main` source, dispatch `ops-pack.yml` with
-`deploy_target=storefront`. Repository variable
-`HOSTINGER_STOREFRONT_ARCHIVE_DEPLOY_ENABLED=true` enables the direct provider
-deployment only after the dedicated `HOSTINGER_API_TOKEN` GitHub secret and
-`HOSTINGER_ACCOUNT_USERNAME` repository variable exist. Repository variable
-`HOSTINGER_STOREFRONT_AUTO_DEPLOY_ENABLED=true` permits the automated archive
-deployment only when its live-verification job is also enabled; it does not
-weaken the pre-publish gates.
+Hostinger must watch `hostinger-storefront-production`, never `main`. The
+workflow advances that branch only after the stable `quality` gate and the
+verified storefront source build succeed. Markdown-only and ops-only changes do
+not move it. Deployment-tooling-only changes validate both surfaces but publish
+neither; use the manual storefront dispatch for the initial cutover. Migration
+changes fail closed. Set these repository variables only during an authorized
+cutover:
 
-Build the verified ZIP for either a routine deployment or emergency recovery:
-
-```bash
-pnpm check
-PERFUME_AURA_TEST_DB_URL='<migrated-disposable-loopback-url>'
-TEST_DATABASE_URL="$PERFUME_AURA_TEST_DB_URL" \
-  DATABASE_URL="$PERFUME_AURA_TEST_DB_URL" \
-  DATABASE_URL_DIRECT="$PERFUME_AURA_TEST_DB_URL" \
-  pnpm test:integration
-pnpm storefront:pack
+```text
+HOSTINGER_STOREFRONT_GIT_DEPLOY_ENABLED=true
+HOSTINGER_STOREFRONT_PUBLIC_VERIFICATION_ENABLED=true
 ```
 
-The deployment script first asks Hostinger to inspect the uploaded archive,
-then overrides the result with the reviewed contract: Node 24.x, Framework
-Other, root `./`, no build command, empty output directory, and entry
-`apps/storefront/server.js`. If that inspection omits the `start` script,
-the script retries a bounded number of times before fail-closed. Set
-`STOREFRONT_URL` and `CUSTOMER_AUTH_URL` to `https://perfumeaura.com`.
+No Hostinger API token or archive-account variable is used by this path. In
+Hostinger, connect the `MohsinMMK/perfume-aura` repository and configure:
 
-The build request submits no environment values. Before accepting a release,
-confirm the required variable names remain configured in Hostinger and prove
-the application through the exact live checks; restore missing values only
-from the owning secret store. The previous upload-sourced app, the most recent
-accepted verified ZIP, and the fresh pre-cutover backup are rollback state; do
-not reassign the apex, delete a recovery path, or copy mutable source
-identifiers into this runbook. Read [`CURRENT_STATE.md`](CURRENT_STATE.md) for
-current identities.
+| Setting | Required value |
+|---|---|
+| Branch | `hostinger-storefront-production` |
+| Node.js | `24.x` |
+| Framework | Other |
+| Root directory | `./` |
+| Build command | `pnpm hostinger:build:storefront` |
+| Output directory | `.hostinger/storefront` |
+| Entry file | `apps/storefront/server.js` |
+| Start command, if shown | `npm start` |
+| Automatic deployment | Enabled for the selected branch |
+
+`build-hostinger-storefront-source.sh` performs the frozen pnpm install,
+derives the exact full commit from the Git checkout, builds Next standalone,
+materializes pnpm links, installs the locked Linux x64/glibc Sharp runtime,
+copies `public` and `_next/static`, rejects secret-shaped output, and smoke-tests
+the version endpoint, homepage marker, and a real static asset. It does not
+accept a mutable commit override.
+
+Keep all names in `apps/storefront/.env.example` in Hostinger's environment
+configuration as applicable to the enabled features. In particular, set
+`STOREFRONT_URL` and `CUSTOMER_AUTH_URL` to `https://perfumeaura.com`; keep the
+commerce flags below false. `NEXT_PUBLIC_*` values must exist at build time.
+Secret values must exist only in Hostinger's environment store, never GitHub or
+the repository. Preserve these provider-side groups during cutover:
+
+| Purpose | Hostinger variable names |
+|---|---|
+| Database/TLS | `DATABASE_URL`, `STOREFRONT_PAYMENT_FINALIZER_DATABASE_URL`, and, only for self-hosted mTLS, `DATABASE_TLS_CA_PEM_BASE64`, `DATABASE_TLS_CERT_PEM_BASE64`, `DATABASE_TLS_KEY_PEM_BASE64`, `DATABASE_TLS_SERVER_NAME` |
+| Origin/auth | `STOREFRONT_URL`, `CUSTOMER_AUTH_URL`, `CUSTOMER_AUTH_SECRET`, `STOREFRONT_CUSTOMER_AUTH_ENABLED`, `CUSTOMER_GOOGLE_CLIENT_ID`, `CUSTOMER_GOOGLE_CLIENT_SECRET` |
+| Mail/inquiries | `CUSTOMER_SMTP_HOST`, `CUSTOMER_SMTP_PORT`, `CUSTOMER_SMTP_SECURE`, `CUSTOMER_SMTP_USER`, `CUSTOMER_SMTP_PASSWORD`, `CUSTOMER_SMTP_FROM`, `CUSTOMER_INQUIRY_NOTIFICATION_TO`, `STOREFRONT_INQUIRIES_ENABLED`, `STOREFRONT_INQUIRY_CONSENT_VERSION`, `STOREFRONT_INQUIRY_RATE_LIMIT_SECRET`, `STOREFRONT_INQUIRY_TRUSTED_IP_HEADER` |
+| Commerce/support | `CASHFREE_ENV`, `CASHFREE_CLIENT_ID`, `CASHFREE_CLIENT_SECRET`, `CASHFREE_PAYMENT_TTL_MINUTES`, `STOREFRONT_PREVIEW_CATALOG`, `STOREFRONT_PUBLIC_RELEASE`, `STOREFRONT_CHECKOUT_RELEASE_APPROVED`, `STOREFRONT_MAINTENANCE_SECRET`, `STOREFRONT_SUPPORT_PHONE_E164`, `STOREFRONT_SUPPORT_WHATSAPP_E164`, `STOREFRONT_SUPPORT_HOURS` |
+| Observability | `NEXT_PUBLIC_STOREFRONT_POSTHOG_TOKEN`, `NEXT_PUBLIC_STOREFRONT_POSTHOG_HOST`, `NEXT_PUBLIC_STOREFRONT_SENTRY_DSN`, `STOREFRONT_SENTRY_DSN`, `NEXT_PUBLIC_STOREFRONT_SENTRY_TRACES_SAMPLE_RATE`, `STOREFRONT_SENTRY_TRACES_SAMPLE_RATE`, `SENTRY_ORG`, `STOREFRONT_SENTRY_PROJECT` |
+
+Do not set `PORT`, `STANDALONE_SOURCE_COMMIT`, `GITHUB_SHA`, or
+`PERFUME_AURA_BUILD_COMMIT` in Hostinger. The platform supplies `PORT`, and the
+build derives and embeds the commit directly from the selected Git checkout.
+
+Cutover procedure:
+
+1. Capture the current live SHA, archive build id/settings, environment-variable
+   names, and a fresh recoverable backup. Retain the last accepted storefront
+   ZIP/checksum already held in historical CI artifacts or the owning backup;
+   do not regenerate or delete recovery artifacts.
+2. Set `HOSTINGER_STOREFRONT_GIT_DEPLOY_ENABLED=true`, keep public verification
+   disabled, and dispatch `ops-pack.yml` with `deploy_target=storefront`. The
+   gated workflow creates or fast-forwards `hostinger-storefront-production`
+   only after the full storefront checks pass.
+3. Connect Hostinger to that branch with the exact settings above, preserving
+   the existing environment values. Confirm a successful preview/build before
+   changing production routing or source ownership.
+4. Set `HOSTINGER_STOREFRONT_PUBLIC_VERIFICATION_ENABLED=true`, dispatch the
+   same storefront target again, and verify `/api/health/version`, the homepage
+   release marker, a static asset, release locks, and the path/query-preserving
+   `www` redirect.
+5. Only after acceptance, record `source_type: git`, the build id, exact SHA,
+   and time in `CURRENT_STATE.md`; then revoke the obsolete archive token.
+
+Rollback is to reconnect/use the retained archive source and last accepted
+ZIP under the previously recorded settings, then run the same exact-SHA public
+verification. Do not delete the archive app/source or its recovery artifacts
+until an explicit retention decision follows a successful Git cutover.
 
 Keep these flags false until their separate gates pass:
 
@@ -247,13 +291,12 @@ Live SHA, Hostinger build id, ops digest, flag values, Neon journal, and
 rollback inventory belong only in [`CURRENT_STATE.md`](CURRENT_STATE.md).
 Repo `main` can be ahead of live when a drizzle changeset fails closed.
 
-Each runtime-affecting main merge deploys the checksum-verified storefront
-archive through the Hostinger API with Node 24.x, Framework Other, root `./`,
-empty build/output settings, existing environment values, and entry
-`apps/storefront/server.js`, then passes exact HCDN verification — unless the
-classifier marks the changeset `ops_migration_blocked`. In that case both
-runtime deploys stay skipped until the owner migration gate is completed. Do
-not infer the live SHA from `git HEAD`.
+After the provider cutover is accepted, each storefront-impacting main merge
+advances the dedicated Hostinger source branch only after its scoped checks.
+The provider build must then pass exact HCDN verification. Until that cutover,
+`CURRENT_STATE.md` remains authoritative for the live archive source. A change
+marked `ops_migration_blocked` deploys neither runtime. Do not infer the live
+SHA from `git HEAD`.
 
 ## Ops deployment and recovery
 
@@ -672,7 +715,9 @@ The build uploads source maps only when the organization, application project,
 and auth token are all present. Otherwise builds remain valid and source-map
 upload is disabled. Uploaded browser source maps are deleted from the build
 output afterward. The credential is exposed only to the verified package job on
-`main`; pull-request and ordinary quality builds do not receive it.
+`main`; pull-request and ordinary quality builds do not receive it. The native
+Hostinger Git source build does not require this token; without it, source-map
+upload is disabled while the application build remains valid.
 
 On 2026-08-04, controlled non-production connection events reached both
 Sentry projects and the shared PostHog project. PostHog showed one event with
@@ -690,17 +735,17 @@ historical Hostinger duplicate-process/NPROC incident still gates storefront
 provider changes, but it no longer blocks an independently authorized VPS ops
 deployment:
 
-1. Add the storefront server-only Sentry values in Hostinger and the ops
+1. Add all storefront build/runtime Sentry values in Hostinger and the ops
    server-only Sentry values in `/etc/khanect/perfume-aura-ops.env`. The
-   `NEXT_PUBLIC_*` values must be present during the prebuilt CI/package build
-   and cannot be added after the artifact is built.
+   `NEXT_PUBLIC_*` values must be present during the Hostinger source build and
+   cannot be added after the application is built.
 2. Confirm the existing build-only `SENTRY_AUTH_TOKEN` secret is available to
    the trusted main-branch build; never expose it to pull requests from forks
    or through `NEXT_PUBLIC_`.
 3. Run `pnpm check`, then run `pnpm test:integration` with
    `TEST_DATABASE_URL`, `DATABASE_URL`, and `DATABASE_URL_DIRECT` all set to the
-   same migrated disposable loopback URL; run both package commands and
-   `git diff --check`.
+   same migrated disposable loopback URL; run the Hostinger storefront source
+   build on Linux, the ops package command, and `git diff --check`.
 4. Deploy through the existing verified paths and run the exact-SHA production
    verifier plus the full storefront and ops smoke tests.
 5. In a controlled, non-sensitive test route, produce one handled test error
@@ -728,8 +773,9 @@ update `CURRENT_STATE.md`.
 
 Live values belong in [`CURRENT_STATE.md`](CURRENT_STATE.md). Until those next
 actions complete: keep every commerce and staff-security flag closed; do not
-apply `0017` or change runtime `DATABASE_URL`; rotate the Hostinger archive
-token before 2026-09-28; do not use plan-wide process stop.
+apply `0017` or change runtime `DATABASE_URL`; keep the archive recovery path
+intact and rotate its token if cutover has not completed before expiry; do not
+use plan-wide process stop.
 
 ## Official references
 

@@ -107,6 +107,18 @@ The last recorded ops image digest for the live SHA is
 `sha256:077f7017b2ebbb0e5258f7011426143cbd5d913fe2c8507d1e1cddf08c09df54`
 (not re-pulled this refresh).
 
+This repository revision prepares, but does not perform, a deployment-workflow
+cutover. CI now plans storefront and ops validation independently, keeps a
+stable aggregate `quality` check, retains the immutable ops artifact/VPS path,
+and replaces storefront ZIP creation/upload with a verified Linux source build
+plus gated promotion to `hostinger-storefront-production`. Deployment-tooling
+changes validate both surfaces but publish neither, so this preparation cannot
+publish ops. Provider connection,
+branch creation, repository-variable enablement, and the first Git-sourced
+deployment remain pending completion. Production remains the
+archive-sourced build recorded above; do not claim `source_type: git` until
+fresh Hostinger inventory and exact public acceptance prove it.
+
 ## Database
 
 Production is Neon. Last **recorded** owner apply is migration
@@ -199,8 +211,11 @@ Work from [`BLOCKERS.md`](BLOCKERS.md). Order:
    [B03 reconciliation packet](review-packets/2026-08-29-b03-49-name-reconciliation.md).
    The 2026-08-29 legal-surface inventory markdown was rewritten to match
    COM-ADR-033; do not hand counsel the 69-name packets.
-3. Rotate the dedicated Hostinger archive-deployment token before its
-   2026-09-28 expiry. Supply Google OAuth production, Hostinger SMTP delivery
+3. Perform the separately authorized Hostinger GitHub source cutover in
+   [`OPERATIONS.md`](OPERATIONS.md#storefront-deployment-and-recovery), or rotate
+   the dedicated archive-deployment token before its 2026-09-28 expiry if the
+   archive rollback path still requires it. Supply Google OAuth production,
+   Hostinger SMTP delivery
    proof, and Cashfree merchant KYC/UPI-only sandbox credentials, webhooks,
    20-minute transaction TTL, and refunds.
 4. Approve tax, serviceability/courier, shipping fee and threshold, returns,

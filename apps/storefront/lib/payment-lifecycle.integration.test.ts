@@ -78,7 +78,7 @@ async function seedPayment(input: Readonly<{
       approvalReference: `price-${suffix}`,
       active: true,
     });
-    await db.update(commerceSettings).set({
+    const approvedCommerceSettings = {
       flatShippingAmountMinor: 500,
       freeShippingThresholdMinor: 10_000,
       taxTreatment: "prices_include_approved_tax",
@@ -92,7 +92,14 @@ async function seedPayment(input: Readonly<{
       returnsPolicyApproved: true,
       cancellationPolicyApproved: true,
       checkoutEnabled: true,
-    }).where(eq(commerceSettings.id, "primary"));
+    } as const;
+    await db.insert(commerceSettings).values({
+      id: "primary",
+      ...approvedCommerceSettings,
+    }).onConflictDoUpdate({
+      target: commerceSettings.id,
+      set: approvedCommerceSettings,
+    });
   }
   const [cart] = await db.insert(commerceCarts).values({ tokenDigest: `payment-cart-${suffix}`, expiresAt: new Date(Date.now() + 3_600_000) }).returning({ id: commerceCarts.id });
   assert.ok(cart);
