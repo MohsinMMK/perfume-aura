@@ -19,8 +19,9 @@ www CNAME points to apex. No apex AAAA remains. Hostinger CDN is disabled
 and the storefront is opted out of automatic CDN. Preserve mail records.
 Do not create `shop` or `www.app`.
 
-Storefront and Ops share Neon with separate restricted roles, auth tables,
-secrets and cookies. No database has moved to the VPS. Self-hosted PostgreSQL
+Storefront and Ops share Neon and currently use the same runtime database
+role/credential; role isolation is not verified. Auth tables, application auth
+secrets and cookies remain separate. No database has moved to the VPS. Self-hosted PostgreSQL
 preparation under `deploy/postgres-vps/` is not active production.
 
 ## Deployment status
@@ -65,6 +66,20 @@ Production migration `0017_storefront_sale_settlement` is not applied. The
 Do not deploy Ops from main until its manual migration/grant gate passes.
 Storefront-only releases may proceed with Ops/database work excluded.
 
+## Active credential-rotation gate
+
+The shared database credential, `CUSTOMER_AUTH_SECRET` and
+`STOREFRONT_MAINTENANCE_SECRET` require rotation: their values were captured in
+a private browser tool result. Do not share that transcript. No external misuse
+is established; do not treat that as proof the credentials are safe to retain.
+
+Obtain owner approval for coordinated credential changes and runtime restarts.
+Update both root-owned application env files for the shared database credential,
+and the storefront's auth/maintenance secret consumers. Preserve accepted image
+digests, schema and release locks; do not apply migrations or deploy a new Ops
+source as part of rotation. Separating database roles requires its own reviewed
+grants and acceptance, not an assumed credential rename.
+
 ## Cleanup boundaries
 
 Hostinger has five Web App slots occupied. Pending removal after DNS cache
@@ -85,12 +100,13 @@ credentials only after provider disconnection and VPS acceptance.
 
 ## Next actions
 
-1. Keep old hosting during DNS propagation. Verify apex/www resolve only to
+1. Resolve the credential-rotation gate with coordinated owner approval.
+2. Keep old hosting during DNS propagation. Verify apex/www resolve only to
    the VPS, with no retired A/AAAA targets, before removing recovery hosting.
-2. Confirm and remove the three obsolete Perfume Aura Web Apps preserving
+3. Confirm and remove the three obsolete Perfume Aura Web Apps preserving
    email/DNS; disconnect retired Git triggers and remove their unused credentials
    and source branch, then verify live routing and hosting slot counts again.
-3. Keep commerce/security gates closed. Owner gates: India counsel, catalog
+4. Keep commerce/security gates closed. Owner gates: India counsel, catalog
    facts/media, CA/tax/delivery policies, Google/SMTP/Cashfree, owner TOTP/staff
    denial, telemetry/maintenance, and explicit launch approval.
 
