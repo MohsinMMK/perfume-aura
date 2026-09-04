@@ -32,8 +32,8 @@ flowchart LR
 | Need | Owner |
 |---|---|
 | Live topology, exact releases, locks, next actions | [CURRENT_STATE.md](docs/CURRENT_STATE.md) |
-| Commerce launch blockers B01–B07 | [BLOCKERS.md](docs/BLOCKERS.md) |
-| Users, routes, live vs locked behavior | [PRODUCT.md](docs/PRODUCT.md) |
+| Commerce launch blockers B01–B07 | [Launch gates](docs/COMMERCE.md#launch-gates) |
+| Users, routes, live vs locked behavior | [Product behavior](docs/COMMERCE.md#product-behavior) |
 | Code, stack, data, tests, CI | [ENGINEERING.md](docs/ENGINEERING.md) |
 | Hostinger, VPS, DNS, Neon, deploy, recovery | [OPERATIONS.md](docs/OPERATIONS.md) |
 | Commerce requirements, ADRs, checklist | [COMMERCE.md](docs/COMMERCE.md) |

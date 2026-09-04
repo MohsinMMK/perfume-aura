@@ -1,0 +1,2 @@
+Defaults:perfume-storefront-deploy !requiretty
+perfume-storefront-deploy ALL=(root) NOPASSWD: /usr/local/libexec/perfume-aura-storefront-deploy-root *

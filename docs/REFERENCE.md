@@ -1,123 +1,22 @@
 # Catalog, legal, and storefront reference
 
 High-volume catalog identity, legal research, storefront design contract, and
-historical evidence. Current product/release locks belong in
-[`PRODUCT.md`](PRODUCT.md) and [`COMMERCE.md`](COMMERCE.md). Live production
+source evidence. Current product/release locks belong in
+[Product behavior](COMMERCE.md#product-behavior) and [`COMMERCE.md`](COMMERCE.md). Live production
 state belongs in [`CURRENT_STATE.md`](CURRENT_STATE.md). These records are not
 publication approval, trademark clearance, or production authorization.
 
 - [Research](#research): design, payments, trademark sources, and catalog provenance
 - [Mapping register](#mapping-register): status summary, approved rows, exceptions, and pending inputs
 - [Storefront design](#storefront-design): tokens, interaction, motion, and adaptation limits
-- [Historical evidence](#historical-evidence): design QA and dated storefront/ops attestations
+- [Verification](#verification): current acceptance procedure
 
 <!-- reference:research:start -->
 ## Research
 
-General commerce snapshot: 2026-07-29. Bucks Sauce visual-reference snapshot:
-2026-08-12. Public reference sites can change. Observations below are design
-inputs, not claims about their current business operations.
-
-### Method and safety boundary
-
-- Read-only inspection of publicly accessible pages, sitemaps, structured data, search, product, collection, cart-empty, policy, and mobile experiences.
-- No order, payment, checkout submission, account creation, or destructive interaction.
-- Browser resource counts are session observations, not Core Web Vitals measurements.
-- Perfume Aura will not copy foreign branding, assets, descriptions, code, analytics, or customer claims.
-
-### Bucks Sauce storefront reference
-
-The 2026-08-12 read-only crawl covered the public home, shop, representative
-product, about, FAQ, contact, and wholesale routes at desktop and mobile sizes.
-It confirmed Inter Tight body typography, a commercially licensed Peperoncino
-Sans display face, the existing Perfume Aura dark/cream/gold/orange/red palette
-relationship, a 12-column responsive system, compact scroll navigation, cream
-menu/cart sheets, product-led editorial cards, and GSAP/ScrollTrigger-driven
-pinned and scrubbed motion.
-
-The durable measurements, route list, licensing decision, interaction model,
-adaptation matrix, and defects not to copy are recorded in
-[Storefront design](#storefront-design). That file is the current
-visual implementation authority for COM-ADR-026; this broader research record
-continues to own cross-site commerce and legal inputs.
-
-### ScentGPT snapshot
-
-Primary sources:
-
-- [Homepage](https://scentgpt.in/)
-- [Catalog](https://scentgpt.in/collections/all)
-- [Sitemap](https://scentgpt.in/sitemap.xml)
-- [Agent instructions](https://scentgpt.in/agents.md)
-- [UCP profile](https://scentgpt.in/.well-known/ucp)
-- [Representative PDP](https://scentgpt.in/products/inspired-by-creed-aventus)
-
-Observed catalog snapshot:
-
-- 150 products and 880 variants
-- 722 variants reported available by public product data
-- 17 collection routes and 8 informational page routes
-- 149 products described as Eau de Parfum
-- Common size variants: 100, 50, 30, and 10 ml; perfume-oil entries also used 12 and 6 ml
-- Merchandising tags included Men, Women, Best Sellers, Date Night, Wedding, Everyday, Office, New, Trend, and Bundle
-- 146 products exposed fragrance-family text, 137 top/base notes, and 110 middle-note text
-
-Observed positive patterns:
-
-- Predictive search shows suggestions, product imagery, and pricing.
-- Product pages expose size choices as buttons rather than hiding them in a select.
-- Price-per-ml and best-value cues help size comparison.
-- Sticky mobile purchasing keeps selected size and action available.
-- Occasion-led navigation reduces dependence on fragrance vocabulary.
-- Product notes, delivery information, trust content, and bundles support blind-buy decisions.
-- Sitemap, structured product data, `agents.md`, and UCP discovery provide useful future machine-readable patterns.
-
-Observed weaknesses to avoid or improve:
-
-- Public finder/quiz routes appeared empty or unrelated to their stated purpose during inspection.
-- Some promoted collection routes contained no products.
-- Collection filters were limited mainly to availability and price despite rich product tags.
-- Delivery and return language varied between FAQ, policy, product, and bundle content.
-- Empty cart offered a return-to-shop action but no useful recovery recommendations.
-- One inspected session loaded 347 resources and 119 scripts and showed repeated failed legacy WooCommerce cart requests on a Shopify storefront.
-- Promotional popup, announcement content, newsletter controls, chat, and mobile controls competed for attention.
-- Generic testimonials should not substitute for verified, product-linked reviews.
-
-### Award and conversion references
-
-- [Abel Fragrance — Awwwards](https://www.awwwards.com/sites/abel-fragrance): scent selector, product cards, bundle builder, strong mobile execution
-- [KAYALI — Awwwards](https://www.awwwards.com/sites/kayali): fragrance finder, layered scent education, mobile product storytelling
-- [Rahasya Fragrances — Awwwards](https://www.awwwards.com/sites/rahasya-fragrances): cinematic reveal, ingredient storytelling, cultural narrative
-- [Henry Jacques — Awwwards](https://www.awwwards.com/sites/henry-jacques): guided discovery, collection journeys, wishlist patterns
-- [Apotheke Perfume — Awwwards](https://www.awwwards.com/sites/apotheke-perfume): restrained black boutique presentation
-- [Jusbox Perfumes — Awwwards](https://www.awwwards.com/sites/jusbox-perfumes): memorable editorial pairing concept
-- [Baymard size-selection guidance](https://baymard.com/blog/use-buttons-for-size-selection): expose product variations as visible buttons
-
-### Adaptation decision
-
-#### Take
-
-- Predictive search once the catalog is approved
-- Fragrance-family, note, occasion, intensity, size, price, and availability filters
-- Explicit size buttons, price per ml, inventory state, and sticky mobile purchase action
-- Editorial scent-note explanation near the buy box
-- Anonymous cart building, account-gated checkout, transparent delivery, and clear return language
-- Discovery sets and bundles once real operational support exists
-
-#### Improve
-
-- Keep one authoritative policy source reused across PDP, cart, checkout, email, and support.
-- Show only collections containing launch-approved products.
-- Use verified order-linked reviews.
-- Build a real rule-based scent finder from approved metadata before considering AI.
-- Set a strict third-party script budget and measure each integration.
-
-#### Avoid
-
-- Artificial urgency, permanent discount theater, or manipulative opt-out copy
-- Empty routes, dead controls, or finder claims without a working result model
-- Copied brand assets, product descriptions, designer logos, or customer claims
-- Payment, shipping, stock, review, or delivery promises before systems and policies are proven
+Use approved catalog evidence and current source contracts. Do not copy foreign
+branding, assets, code, fonts, analytics or claims. Do not promise payment,
+shipping, stock or reviews before the corresponding gates pass.
 
 ### India payment and trademark sources
 
@@ -161,14 +60,7 @@ Cautious paraphrase only:
 - A non-affiliation disclaimer is not a statutory safe harbor.
 - Competitor behavior is not government guidance and is not proof of permission or absence of disputes.
 
-Live ScentGPT re-check on 2026-07-30 found a current competitor pattern only:
-
-- [`Inspired By Creed Aventus`](https://scentgpt.in/products/inspired-by-creed-aventus) appears in the product title and URL; its public Shopify JSON records vendor `Creed` and the same title.
-- The reviewed product image displays `SCENTGPT` and `AVENTUS` on the bottle, without the word `CREED`.
-- ScentGPT's [About page](https://scentgpt.in/pages/about) states that its products are inspired alternatives, attributes third-party marks to their owners, disclaims affiliation, and describes references as a comparative guide.
-- This observation proves what one seller currently publishes. It does not prove registration status, permission, absence of disputes, or that the same wording/layout satisfies sections 29 and 30 for Perfume Aura.
-
-Owner-selected planning direction after reviewing that pattern:
+Current naming policy:
 
 - All 20 owner-supplied Signature Series names remain exact standalone backend/frontend names with no `Inspired by` prefix.
 - Inspired products use listing title format `Inspired by <brand> <reference>` rather than separate Perfume Aura names (COM-ADR-029 / 033). If the cleaned reference already begins with the brand, do not repeat the brand.
@@ -184,8 +76,6 @@ Replacement sources supplied by the owner on 2026-08-29:
 - [Premium Segment image](../data/catalog/source/Perfume_Aura_Premium_Segment_2026-08-29.png) — SHA-256 `1c6d741ba6231ba5d806cf2044f2bc62d681b0d0c34c6150864ae0abe07fcdcf`
 - [₹450 / ₹650 / ₹1,200 price-list PDF](../data/catalog/source/Perfume_Aura_Price_List_450_650_1200.pdf) — SHA-256 `23f945e637a791cef6078029fd4d69f65e1f99bf05f73f6856e4825c349a133e`
 - [Signature Series image](../data/catalog/source/Perfume_Aura_Signature_Series_2026-08-29.png) — SHA-256 `69cac3ea92827a3baed7274f9f2c1ce92557a3e9a3333f1291a0d102adacb910`
-
-The former [four-page source PDF](../data/catalog/source/Perfume_List_Table.pdf) is retained as historical evidence only; it no longer defines the active catalog sequence.
 
 Transcription facts:
 
@@ -396,45 +286,15 @@ mapping from spelling similarity alone.
 <!-- reference:storefront-design:start -->
 ## Storefront design
 
-Source snapshot: **2026-08-16**, with the storefront fidelity pass in this
-release applied against that recrawl. Public websites and build assets can
-change; re-capture the reference before a later visual rewrite.
-
-This record makes COM-ADR-026 repeatable. It documents the Bucks Sauce design
-system and interaction grammar that Perfume Aura may adapt while keeping its
-own name, photography, fragrance copy, routes, data, and accessibility
-requirements. It is an implementation reference, not permission to copy
-foreign code, media, fonts, branding, claims, analytics, or customer data.
-
-### Source and capture scope
-
-Canonical source: [buckssauce.com](https://buckssauce.com/)
-
-Routes inspected read-only:
-
-- [Home](https://buckssauce.com/)
-- [Shop](https://buckssauce.com/shop)
-- [Representative product](https://buckssauce.com/shop/crushed-pineapple-sriracha)
-- [About](https://buckssauce.com/about)
-- [FAQ](https://buckssauce.com/faq)
-- [Contact](https://buckssauce.com/contact)
-- [Wholesale](https://buckssauce.com/wholesale)
-
-The 2026-08-12 full pass used `1440 × 900` desktop and `390 × 844` mobile
-viewports. It inspected the settled header, compact scrolled header, navigation
-drawer, cart drawer, homepage, catalog, product, FAQ open state, contact,
-wholesale, and about compositions. The 2026-08-13 refresh rechecked the
-expanded and compact homepage headers at the same viewports. No product was
-added, no checkout was entered, and no form was submitted. Screenshots remain
-untracked local QA evidence in the Codex visualization workspace rather than
-repository assets.
+Perfume Aura owns its name, media, copy, routes and accessible interactions.
+The design contract adapts editorial proportions, not third-party assets or code.
 
 ### Typography and licensing
 
 | Role | Live source | Perfume Aura decision |
 |---|---|---|
 | Body and UI | `Inter Tight`, variable 100–900, with Arial metric fallback | Use `@fontsource-variable/inter-tight` under SIL OFL 1.1. |
-| Display and buttons | `PeperoncinoSansCustom`, regular 400, with Arial metric fallback | Do not copy the live WOFF. The Resistenza family requires appropriate WebFont rights. Implemented Perfume Aura display faces are self-hosted Londrina Solid and Londrina Outline; Inter Tight remains body. The original Bebas Neue substitute is historical research, not the live storefront. |
+| Display and buttons | `PeperoncinoSansCustom`, regular 400, with Arial metric fallback | Do not copy the live WOFF. The Resistenza family requires appropriate WebFont rights. Implemented Perfume Aura display faces are self-hosted Londrina Solid and Londrina Outline; Inter Tight remains body.  |
 
 Primary license references:
 
@@ -509,11 +369,6 @@ checkout control.
 
 ### Motion contract
 
-The inspected source loads GSAP 3.14.2, `@gsap/react`, ScrollTrigger,
-SplitText, Draggable, and Lenis 1.3.17. Observed patterns include character and
-line reveals, scrubbed parallax, pinned horizontal sections, layered card
-reveals, draggable review movement, and a slow two-second yoyo product pulse.
-
 Perfume Aura uses its existing GSAP/ScrollTrigger dependency for scoped reveals,
 parallax, a desktop-only pinned journey, and a pausable marquee. Native scrolling
 remains the foundation; no Lenis dependency is added because it is not needed
@@ -531,7 +386,7 @@ animations must:
 | Source pattern | Perfume Aura implementation | Boundary |
 |---|---|---|
 | Inter Tight body typography | Exact open font package | OFL attribution retained in the package |
-| Peperoncino display typography | Self-hosted Londrina Solid / Londrina Outline | No source WOFF copying; Bebas Neue was the earlier open-license substitute |
+| Peperoncino display typography | Self-hosted Londrina Solid / Londrina Outline | No source WOFF copying |
 | Dark cream/gold/orange/red palette | Exact relationship using Perfume Aura tokens | Perfume Aura imagery and content only |
 | Product-led hero and manual slider | Perfume Aura bottle compositions and labelled controls | No automatic carousel or copied fruit/media |
 | Compact scrolled header | Supplied full mark transitions to the supplied wordmark beside the route-aware CTA, cart, and menu cluster | Existing release locks remain authoritative |
@@ -550,147 +405,17 @@ animations must:
 - Placeholder-only forms without persistent labels.
 - A blocking intro or any animation without a reduced-motion alternative.
 
-Fresh browser evidence outranks this document. If a future implementation
-changes the reference relationship, refresh this snapshot and COM-ADR-026 in
-the same review.
+Fresh browser evidence outranks this document. Update this contract when the
+implemented design changes.
 <!-- reference:storefront-design:end -->
 
 <!-- reference:evidence:start -->
-## Historical evidence
+## Verification
 
-Dated attestations only. They do not describe current production, authorize a
-deployment, or open a release flag. Fresh live evidence in
-[`CURRENT_STATE.md`](CURRENT_STATE.md) outranks these ledgers.
-
-### Design QA — 2026-08-12
-
-Prior path: `design-qa.md`.
-
-Historical acceptance record; not current production state or an evergreen
-release gate. Read [`CURRENT_STATE.md`](CURRENT_STATE.md) for live
-state and
-[Storefront design](#storefront-design)
-for the current design/reference contract.
-
-QA date: **2026-08-12**
-
-Implementation source:
-[`b1f5c9cf24c9375446052596870e2bfdf534f422`](https://github.com/MohsinMMK/perfume-aura/commit/b1f5c9cf24c9375446052596870e2bfdf534f422)
-(PR [#11](https://github.com/MohsinMMK/perfume-aura/pull/11)).
-
-### Compared state
-
-- Reference: `https://buckssauce.com/`, settled home hero.
-- Implementation: source commit above, built with every storefront release flag
-  closed. Reproduce it with `pnpm build:storefront`, followed by
-  `pnpm start:storefront`, and use the loopback URL printed by Next.js.
-- Matched viewports: `1440 × 900` and `390 × 844`.
-- Stable evidence identifier: `PR-11/2026-08-12-bucks-home-v1`.
-- Capture procedure: follow [Storefront design](#storefront-design), capture
-  the settled reference and implementation at both matched viewports, then
-  compare desktop and mobile pairs. Screenshot pixels remain untracked local
-  QA evidence under the documented no-copy boundary.
-
-### Captured result
-
-At the recorded source and date, implementation matched reference's
-near-black/cream palette,
-condensed uppercase typographic hierarchy, outlined headline treatment,
-full/compact header rhythm, dashed metadata rule, product-led slider,
-circular controls, light CTA, tight radii, cream navigation/cart sheets, and
-desktop/mobile composition. The verified computed typefaces are Inter Tight
-Variable for body/UI and Bebas Neue for display; the latter is the documented
-open substitute for the reference's commercially licensed display font.
-
-Intentional differences are Perfume Aura identity, original fragrance copy,
-Perfume Aura bottle photography, the absence of copied fruit/brand assets, and
-accessible dialog/focus/reduced-motion behavior. The mobile hero keeps the CTA
-inside the first viewport, menu and cart controls open and close correctly,
-menu links close the controlled sheet on navigation, and continuous marquee
-motion pauses for hover, focus, and hidden-document states. No browser console
-warnings or errors appeared in the final menu/cart pass.
-
-Verification captured on 2026-08-12: `pnpm check`, all 62 tests then reported
-by `pnpm test:integration` against a migrated disposable loopback PostgreSQL
-database, and `git diff --check`. The disposable database was removed. The
-local shell used Node 25.9.0 and therefore emitted the expected engine warning
-for the repository's supported Node 24.x range; compilation and every gate
-still completed successfully.
-
-Recorded result: **passed**. This result does not substitute for current build,
-browser, or production acceptance.
-
-### Storefront local E2E — 2026-08-03
-
-Prior path: `docs/evidence/optimization/STOREFRONT_LOCAL_E2E_2026-08-03.md`
-(moved from `docs/optimization/STOREFRONT_LOCAL_E2E_2026-08-03.md`). The
-[immutable full report](https://github.com/MohsinMMK/perfume-aura/blob/d980af8809689bdcc6e852ce509f8fac508b567f/docs/evidence/optimization/STOREFRONT_LOCAL_E2E_2026-08-03.md)
-retains its sorted file-set hash manifest, browser procedure, responsive and
-a11y journeys, non-actions, and package evidence. Historical local measurement
-only; not production authorization.
-
-- Result: **pass**; baseline SHA
-  `46ad43aebfe8ae670750b4c32f43bf37da34cd25`
-- Implementation file-set SHA-256:
-  `4072e3a7c6cc1c0afc6f842b4956cce584257a462089a12f602d11d0a164a1ea`
-- Conditions: Node `24.18.0`, pnpm `11.1.3`, Next.js `16.2.11`,
-  agent-browser `0.27.0`, HeadlessChrome `150.0.0.0` on macOS
-
-| Route | Before | After | Change |
-|---|---:|---:|---:|
-| `/` | 213,449 B | 213,750 B | +0.14% |
-| `/shop` | 208,064 B | 208,342 B | +0.13% |
-| `/products/[slug]` | 227,126 B | 227,404 B | +0.12% |
-| `/search` | 223,005 B | 223,283 B | +0.12% |
-| `/cart` | 205,543 B | 205,821 B | +0.14% |
-| `/checkout` | 223,290 B | 223,568 B | +0.12% |
-| `/account/sign-in`, `/account/register`, `/account/recover` | 252,997 B | 222,042 B | -12.2% each |
-
-Homepage browser entry recorded 24 → 7 fetches, 387,152 → 363,424 encoded
-resource bytes, 49 → 28 resources, CLS `0`, and no long tasks. Commands were
-`pnpm check`, migrated disposable-loopback `pnpm test:integration` (62 tests),
-`pnpm storefront:pack`, Knip (`{"issues":[]}`), and `git diff --check`.
-
-| Package artifact | Bytes | SHA-256 |
-|---|---:|---|
-| Baseline storefront ZIP | 31,869,235 | `920160df4d0d44fb698ce4c7d1f0e1e4243f3080545b53b8a87249c836749f3f` |
-| Final storefront ZIP | 31,880,510 | `181a95909c86be36c51810e65734b078c46994936fa4504fcff9287577f3bd5e` |
-
-Non-actions: no image rewrite, font removal, or GSAP replacement; cart drawer
-was not lazy-mounted; dynamic Cashfree import was reverted.
-
-### Ops local E2E — 2026-08-03
-
-Prior path: `docs/evidence/optimization/OPS_LOCAL_E2E_2026-08-03.md` (moved from
-`docs/optimization/OPS_LOCAL_E2E_2026-08-03.md`). The
-[immutable full report](https://github.com/MohsinMMK/perfume-aura/blob/d980af8809689bdcc6e852ce509f8fac508b567f/docs/evidence/optimization/OPS_LOCAL_E2E_2026-08-03.md)
-retains its sorted file-set hash manifest, authenticated journeys, responsive
-and reduced-motion checks, package smoke, and screenshot provenance. Historical
-local measurement only; not production authorization.
-
-- Result: **pass**; baseline SHA
-  `d3b95b73b60f74882f205c798d09828cfb127d5e`
-- Implementation file-set SHA-256:
-  `284ed2d7d919fd2a56f043e1622c5594fbe7ec2b8500194df4de3510385898ea`
-- Conditions: agent-browser `0.27.0`, HeadlessChrome `150.0.0.0` on macOS
-
-| Route | Before | After | Change |
-|---|---:|---:|---:|
-| `/login` | 313,965 B | 174,882 B | -44.3% |
-| `/forgot-password` | 310,382 B | 171,299 B | -44.8% |
-| `/reset-password` | 312,817 B | 173,734 B | -44.5% |
-| `/two-factor` | 304,893 B | 165,810 B | -45.6% |
-| `/dashboard` | 376,742 B | 376,657 B | effectively unchanged |
-
-Reduced-motion transitions became `0.01 ms`. Commands were `pnpm check`,
-migrated disposable-loopback `pnpm test:integration`, `pnpm ops:pack`,
-`pnpm storefront:pack`, Knip (`{"issues":[]}`), and `git diff --check`.
-
-| Artifact | Bytes | SHA-256 |
-|---|---:|---|
-| Final ops ZIP | 26,815,421 | `770a2553368733f9f7b00f9ae1077d84d42138dc635706249c8d82839c34871a` |
-| Final storefront ZIP validation | 31,869,041 | `e5c86e09ceae55a17d1d79bd5b33c3dbd5ffb1f33a1c073f7eb531ea461acbba` |
-| `ops-e2e-dashboard-desktop.png` | 78,267 | `20dcec83c4bcea4d87471ba62bc6666e567edbf58dc8aad0b572b9dedb6a7874` |
-| `ops-e2e-product-toast.png` | 80,978 | `a5f5697a396448afe581fd5fd31aabae2e52cb35a6994be18bce0aa2cae2e120` |
-| `ops-e2e-customers-qa.png` | 49,435 | `ed0c2c8f77ecc33a766a27219b6b067b869c0ab7feb36bd34d575a74ea80e3bf` |
+Use current source and fresh endpoint/browser evidence. Run the commands in
+[Engineering](ENGINEERING.md#local-development-and-validation) and the exact
+public gate in [Operations](OPERATIONS.md#production-acceptance). For visual
+changes compare desktop/mobile, keyboard focus, closed dialogs and reduced
+motion. Screenshots stay outside tracked source. A local pass does not establish
+production acceptance or authorize opening a release flag.
 <!-- reference:evidence:end -->

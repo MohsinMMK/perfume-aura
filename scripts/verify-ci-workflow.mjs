@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 const workflow = readFileSync(".github/workflows/ops-pack.yml", "utf8");
 assert.equal(
   [...workflow.matchAll(/persist-credentials: false/g)].length,
-  13,
+  14,
   "every non-publishing checkout must discard credentials",
 );
 
@@ -54,7 +54,9 @@ assert.match(promotion, /hostinger-storefront-production/);
 assert.match(promotion, /HOSTINGER_STOREFRONT_GIT_DEPLOY_ENABLED/);
 
 const sourceBuild = jobBody("storefront-source-build", "ops-package");
-assert.doesNotMatch(sourceBuild, /\.zip|upload-artifact/);
+assert.match(sourceBuild, /upload-artifact/);
+assert.match(sourceBuild, /deploy\/storefront-vps\/Dockerfile/);
+assert.match(sourceBuild, /sha256sum storefront-standalone/);
 
 const databaseContext = jobBody("database-required-context", "package-required-context");
 assert.match(databaseContext, /name: postgresql-16-integration/);
@@ -74,7 +76,7 @@ assert.match(opsDeploy, /needs\.quality\.result == 'success'/);
 assert.match(opsDeploy, /needs\.ops-package\.result == 'success'/);
 assert.match(opsDeploy, /ops-standalone-/);
 
-const migrationBlocker = jobBody("block-runtime-deploy-on-database-migration", "promote-hostinger-storefront-source");
+const migrationBlocker = jobBody("block-runtime-deploy-on-database-migration", "publish-and-deploy-vps-storefront");
 assert.match(migrationBlocker, /always\(\)/);
 assert.match(migrationBlocker, /needs\.quality\.result == 'success'/);
 
@@ -85,5 +87,15 @@ assert.match(storefrontVerification, /needs\.promote-hostinger-storefront-source
 const promotionCheckout = promotion.match(/Checkout the exact accepted source[\s\S]*?Advance the protected Hostinger source branch/)?.[0];
 assert.ok(promotionCheckout, "missing promotion checkout");
 assert.doesNotMatch(promotionCheckout, /persist-credentials: false/);
+
+const storefrontDeploy = jobBody("publish-and-deploy-vps-storefront", "promote-hostinger-storefront-source");
+for (const required of [
+  "needs.quality.result == 'success'", "needs.storefront-source-build.result == 'success'",
+  "needs.scope.outputs.publish_storefront == 'true'", "needs.scope.outputs.ops_migration_blocked != 'true'",
+  "needs.scope.outputs.publish_ops != 'true'",
+  "VPS_STOREFRONT_AUTO_DEPLOY_ENABLED", "VPS_STOREFRONT_SSH_KEY",
+  "perfume-storefront-deploy@", "StrictHostKeyChecking=yes", "--target storefront",
+]) assert.ok(storefrontDeploy.includes(required), `missing storefront gate: ${required}`);
+assert.doesNotMatch(storefrontDeploy, /perfume-deploy@|VPS_OPS_SSH_KEY|--target ops/);
 
 process.stdout.write("ci-workflow contract ok\n");
