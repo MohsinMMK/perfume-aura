@@ -2,6 +2,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const workflow = readFileSync(".github/workflows/ops-pack.yml", "utf8");
+assert.equal(
+  [...workflow.matchAll(/persist-credentials: false/g)].length,
+  13,
+  "every non-publishing checkout must discard credentials",
+);
 
 function jobBody(jobName, nextJobName) {
   const startMarker = `  ${jobName}:\n`;
@@ -57,9 +62,14 @@ assert.match(packageContext, /name: verified-hostinger-zip/);
 assert.match(packageContext, /if: always\(\)/);
 assert.match(packageContext, /STOREFRONT_SOURCE_BUILD/);
 assert.match(packageContext, /OPS_PACKAGE/);
+assert.match(packageContext, /if \[\[ "\$1" == true \]\]; then/);
 
 const opsDeploy = jobBody("publish-and-deploy-vps-ops", "block-runtime-deploy-on-database-migration");
 assert.match(opsDeploy, /needs:\n\s+- scope\n\s+- quality\n\s+- ops-package/);
 assert.match(opsDeploy, /ops-standalone-/);
+
+const promotionCheckout = promotion.match(/Checkout the exact accepted source[\s\S]*?Advance the protected Hostinger source branch/)?.[0];
+assert.ok(promotionCheckout, "missing promotion checkout");
+assert.doesNotMatch(promotionCheckout, /persist-credentials: false/);
 
 process.stdout.write("ci-workflow contract ok\n");

@@ -53,6 +53,7 @@ jobs:
       - name: Checkout deployment classifier
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           # Push events can contain multiple rebased commits, so the event's
           # before SHA is not guaranteed to be within a two-commit checkout.
           fetch-depth: 0
@@ -119,6 +120,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 11.25.0
@@ -138,6 +140,7 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 11.25.0
@@ -180,6 +183,7 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 11.25.0
@@ -214,6 +218,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 11.25.0
@@ -253,6 +258,7 @@ jobs:
       DATABASE_URL_DIRECT: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase99_ci_shared
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 11.25.0
@@ -288,6 +294,7 @@ jobs:
       DATABASE_URL_DIRECT: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase99_ci_storefront
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with: { version: 11.25.0 }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -318,6 +325,7 @@ jobs:
       DATABASE_URL_DIRECT: postgresql://postgres:postgres@127.0.0.1:5432/perfume_aura_phase99_ci_ops
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with: { version: 11.25.0 }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -333,6 +341,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
       - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with: { fail-on-severity: high }
 
@@ -344,6 +353,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with: { version: 11.25.0 }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -389,6 +399,7 @@ jobs:
       SENTRY_AUTH_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.SENTRY_AUTH_TOKEN || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with: { version: 11.25.0 }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -462,7 +473,13 @@ jobs:
           OPS_PACKAGE: ${{ needs.ops-package.result }}
         run: |
           set -euo pipefail
-          require_result() { [[ "$1" == true ]] && test "$2" = success || test "$2" = skipped; }
+          require_result() {
+            if [[ "$1" == true ]]; then
+              test "$2" = success
+            else
+              test "$2" = skipped
+            fi
+          }
           require_result "$VALIDATE_STOREFRONT" "$STOREFRONT_SOURCE_BUILD"
           require_result "$VALIDATE_OPS" "$OPS_PACKAGE"
 
@@ -488,7 +505,13 @@ jobs:
         run: |
           set -euo pipefail
           test "$CONTRACTS" = success
-          require_result() { [[ "$1" == true ]] && test "$2" = success || test "$2" = skipped; }
+          require_result() {
+            if [[ "$1" == true ]]; then
+              test "$2" = success
+            else
+              test "$2" = skipped
+            fi
+          }
           require_result "$VALIDATE_STOREFRONT" "$STOREFRONT_QUALITY"
           require_result "$VALIDATE_STOREFRONT" "$STOREFRONT_INTEGRATION"
           require_result "$VALIDATE_STOREFRONT" "$STOREFRONT_SOURCE_BUILD"
