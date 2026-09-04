@@ -107,17 +107,54 @@ The last recorded ops image digest for the live SHA is
 `sha256:077f7017b2ebbb0e5258f7011426143cbd5d913fe2c8507d1e1cddf08c09df54`
 (not re-pulled this refresh).
 
-This repository revision prepares, but does not perform, a deployment-workflow
-cutover. CI now plans storefront and ops validation independently, keeps a
-stable aggregate `quality` check, retains the immutable ops artifact/VPS path,
-and replaces storefront ZIP creation/upload with a verified Linux source build
-plus gated promotion to `hostinger-storefront-production`. Deployment-tooling
-changes validate both surfaces but publish neither, so this preparation cannot
-publish ops. Provider connection,
-branch creation, repository-variable enablement, and the first Git-sourced
-deployment remain pending completion. Production remains the
-archive-sourced build recorded above; do not claim `source_type: git` until
-fresh Hostinger inventory and exact public acceptance prove it.
+### Git cutover attempt — 2026-09-04 20:59 UTC
+
+The existing storefront app is now connected to `MohsinMMK/perfume-aura`,
+watching `hostinger-storefront-production`. Git promotion is enabled;
+`HOSTINGER_STOREFRONT_PUBLIC_VERIFICATION_ENABLED` remains false until the
+first successful Git deployment. The provider uses Node 24, Framework Other,
+root `./`, `pnpm run build`, output `.hostinger/storefront`, entry
+`apps/storefront/server.js`, and `NPM_CONFIG_IGNORE_SCRIPTS=true`.
+
+PR [#122](https://github.com/MohsinMMK/perfume-aura/pull/122) merged as
+`f329d2b79174fd3bd79ddc96ce9f1620eb8937e4`. It fixes a reproduced smoke-server
+process leak by replacing the wrapper shell with Node, adds a PID/termination
+regression test, and suppresses npm configuration warnings. The old launcher
+left Node alive after wrapper cleanup in a disposable Linux Node 24.6.0
+container; the fixed launcher passed the same lifecycle check. This is a
+confirmed defect, **not a confirmed cause of Hostinger's deployment failure**.
+
+Local `pnpm check`, disposable-loopback `pnpm test:integration`, and
+`git diff --check` passed. PR CI
+[33917659282](https://github.com/MohsinMMK/perfume-aura/actions/runs/33917659282),
+post-merge CI
+[33918015607](https://github.com/MohsinMMK/perfume-aura/actions/runs/33918015607),
+and storefront-only promotion
+[33918028884](https://github.com/MohsinMMK/perfume-aura/actions/runs/33918028884)
+passed. Ops deployment was skipped. Deployment-tooling changes validate both
+surfaces but publish neither without the explicit storefront dispatch.
+
+Hostinger Git build `01a06e34-53bf-73ca-8c97-225bb26cd3cc` still **failed**
+at 2026-09-04 20:57:06 UTC (1m48s). Its 121-line log ends with
+`hostinger-storefront-source: passed source=f329d2b79174fd3bd79ddc96ce9f1620eb8937e4 output=.hostinger/storefront`.
+Both hPanel and the read-only provider API confirm failure, but neither the
+build record nor the build log supplies the terminal reason. Warning
+suppression and smoke-process cleanup did not resolve the provider rejection.
+Do not infer that warnings, output paths, or runtime startup caused it.
+
+Runtime Logs still identifies the last deployment as the accepted archive
+deployment at 2026-09-04 19:14 UTC; it does not show the failed Git attempt
+starting a new runtime. Public version probes at 20:59 UTC still returned
+storefront `3e822a8e3fe389a34652a8e4d6c0cb565533a744` and ops
+`09164609b918cf8c356ec35e42e6d96ff1a25dce`. The candidate live verifier was
+stopped after the provider failure; exact candidate acceptance did not pass.
+Retain the archive fallback, environment values, and closed release flags.
+
+Next: obtain Hostinger's internal terminal build/deployment error for that
+build ID, including the process exit status and output-promotion/entry-file
+validation result, before another provider configuration experiment. Contacting
+support requires owner approval; no support message has been sent. Do not
+claim a successful Git cutover or revoke the archive token yet.
 
 ## Database
 
@@ -184,8 +221,9 @@ it or change public DNS back outside an authorized rollback.
 The prior storefront upload app remains at
 `perfumeaura-com-642844.hostingersite.com`. Do not reassign the apex to it
 outside an authorized rollback. Generated storefront and historical
-`hostinger-*-production` branches are deleted. Remote heads contain only
-`main`.
+`hostinger-*-production` branches were deleted in the earlier cleanup. The
+active `hostinger-storefront-production` source branch has since been recreated
+for the pending Git cutover above; preserve it and the archive recovery state.
 
 The historical Hostinger shared-process/NPROC incident is off the public ops
 path and remains unresolved provider evidence for shared hosting. Do not use
