@@ -144,6 +144,53 @@ grants. Preserve append-only stock/audit/invitation records.
 unrecorded `0016` journal before oil provenance work. Do not change either
 runtime database URL during this web migration.
 
+### Runtime grant verification
+
+Use the reviewed grant scripts and verify their effective result. Any
+unexpected effective privilege fails the handoff. This matrix is a safety
+contract, not an instruction to apply grants during web deployment.
+
+```sql
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
+  "user", "session", "account", "verification", "rate_limit"
+TO :"runtime_role";
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "two_factor"
+TO :"runtime_role";
+
+GRANT SELECT, INSERT ON TABLE
+  "staff_invitation_events", "ops_audit_events"
+TO :"runtime_role";
+
+GRANT SELECT, INSERT, UPDATE ON TABLE
+  "products", "product_variants", "customers", "invoices",
+  "invoice_lines", "document_number_counters"
+TO :"runtime_role";
+
+GRANT SELECT ON TABLE "locations" TO :"runtime_role";
+
+GRANT SELECT, INSERT ON TABLE
+  "stock_movements", "payments"
+TO :"runtime_role";
+
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM PUBLIC;
+
+SELECT has_database_privilege(:"runtime_role", current_database(), 'TEMP')
+  AS can_create_temp_objects;
+SELECT has_table_privilege(:"runtime_role", 'public.products', 'SELECT');
+SELECT has_sequence_privilege(
+  :"runtime_role",
+  'public.document_number_counters_id_seq',
+  'USAGE'
+);
+SELECT has_function_privilege(
+  :"runtime_role",
+  'public.prevent_stock_movement_mutation()',
+  'EXECUTE'
+);
+SELECT * FROM pg_auth_members;
+```
+
 ## Self-hosted PostgreSQL target
 
 [PostgreSQL runbook](../deploy/postgres-vps/RUNBOOK.md) owns this separate,

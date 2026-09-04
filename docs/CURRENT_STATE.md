@@ -80,6 +80,7 @@ credentials only after provider disconnection and VPS acceptance.
 1. **Owner input required:** open the storefront Environment variables page in
    hPanel or provide its secure export through the approved secret store, not chat.
    Navigation is not working in this session and MCP has no export capability.
+   Hostinger's official API returns masked values, not recoverable secrets.
    Transfer to root-owned `/etc/khanect/perfume-aura-storefront.env`; never reuse
    Ops credentials or delete the existing env before preserving it.
 2. Complete protected GitHub CI and immutable registry pull acceptance, then
