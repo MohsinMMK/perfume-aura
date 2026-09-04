@@ -1,107 +1,74 @@
 # Perfume Aura agent instructions
 
-## Read order and owners
+## Read only the owner you need
 
-Read `docs/CURRENT_STATE.md` first. Fresh repository, provider, database, DNS,
-endpoint, and browser evidence outranks documentation. Open only the owner
-needed for the task:
+Start with `docs/CURRENT_STATE.md`: actual topology, releases, locks and next work.
+Fresh source/provider/DNS/endpoint evidence outranks documentation.
 
-| Need | Owner |
+| Task | Owner |
 |---|---|
-| Live topology, exact releases, blockers, next actions | `docs/CURRENT_STATE.md` |
-| Commerce launch blockers B01–B07 | `docs/BLOCKERS.md` |
-| Users, routes, behavior, release locks | `docs/PRODUCT.md` |
-| Code, stack, data, tests, CI, performance, telemetry privacy | `docs/ENGINEERING.md` |
-| Hostinger, VPS, DNS, Neon, deployment, recovery, staff release | `docs/OPERATIONS.md` |
-| Commerce requirements, ADRs, verification, checklist | `docs/COMMERCE.md` |
-| Catalog mappings, legal research, design/QA evidence | `docs/REFERENCE.md` |
+| Code, tests, architecture, UI/data/auth invariants | `docs/ENGINEERING.md` |
+| Hosting, deployment, DNS, secrets, migrations, recovery | `docs/OPERATIONS.md` |
 
-Update `CURRENT_STATE.md` when production, routing, risk, or next action
-changes. Never record secrets, credentials, connection strings, or customer
-data there.
+Engineering routes product/commerce questions to `docs/COMMERCE.md` and exact
+catalog/legal/design evidence to `docs/REFERENCE.md`. Do not load all docs.
 
-## Surface boundaries
+Use the Graphify skill for code relationships. Read its current lessons, expand
+against actual graph vocabulary, then query with a small budget. Confirm the
+returned source paths in this checkout. Missing graph coverage is not proof of
+absence: use the owning doc and targeted `rg`. Live infrastructure is not graph
+truth. Do not rebuild the whole graph for a routine question.
 
-| Domain | Role | Entry |
-|---|---|---|
-| `perfumeaura.com` | Public storefront | `apps/storefront/server.js` (pack-time standalone) |
-| `www.perfumeaura.com` | Permanent apex redirect | `apps/storefront/next.config.ts` `redirects()` |
-| `app.perfumeaura.com` | Private operations | `apps/ops/server.js` (pack-time standalone) |
+## Scope and invariants
 
-`shop.perfumeaura.com`, `www.app.perfumeaura.com`, and the static marketing app
-must remain absent. Storefront and ops share Neon; never delete or recreate it
-during web work. GoDaddy owns registration; Hostinger nameservers own DNS. Do
-not touch unrelated sites, mail, DNS, databases, or processes.
+- Public storefront: `perfumeaura.com`; www permanently redirects preserving
+  path/query. Private Ops: `app.perfumeaura.com`. No shop or www.app domain.
+- Storefront and Ops share Neon but keep roles, auth tables, cookies and secrets
+  separate. Do not delete/recreate Neon or copy Ops credentials into storefront.
+- Preserve unrelated sites, mail, DNS, databases, VPS stacks and processes.
+  GoDaddy owns registration; Hostinger nameservers own DNS.
+- Inspect existing signatures; keep changes minimal and strictly typed.
+- Money is server-authoritative integer INR paise. Public data excludes cost,
+  raw stock, internal notes and archives.
+- Disabled `/api/customer-auth/*` returns 404 before initializing auth/Neon.
+  Other gated routes may statically import auth before 404; do not change casually.
+- Preserve persistent labels, visible focus, inert closed drawers, focus
+  restoration, 44px targets and reduced motion. Shared UI is `packages/ui`;
+  official shadcn preset `b23PPibQOI` must resolve.
+- Runtime writes use pooled pg/Drizzle transactions; manual direct-owner
+  migrations require isolated proof and restricted grants. Tests use only
+  disposable loopback PostgreSQL, never Neon.
+- Secrets stay in ignored local env or owning platform/root-owned runtime stores.
+  No secret values, connection strings or customer data in docs/artifacts/logs.
+- Prove cleanup targets retired/duplicated/generated first. Preserve `dist/`,
+  credentials, source evidence, migrations, recovery artifacts and session state.
+  Never globally prune Docker or stop a shared hosting plan.
 
-## Invariants
+## Release and verification
 
-- Inspect existing types/signatures, keep changes minimal, and use strict
-  TypeScript without implicit `any`.
-- Persist money as server-authoritative integer INR paise. Public catalog data
-  excludes cost, raw stock, internal notes, and archives.
-- Keep operations and customer auth separate. Disabled `/api/customer-auth/*`
-  returns `404` without initializing Better Auth or Neon. Other gated APIs may
-  still 404 after a static import; do not “fix” that without review.
-- Preserve labels, visible focus, inert closed drawers, focus restoration, 44px
-  targets, and reduced-motion behavior.
-- Use official App Router, shadcn, Better Auth, Drizzle, Neon, Hostinger, pnpm,
-  PostHog, and Sentry paths. Shared UI belongs in `packages/ui`; preset
-  `b23PPibQOI` must resolve.
-- Keep secrets only in ignored local env files or the owning platform's secret
-  store: Hostinger settings for storefront and root-owned VPS configuration for
-  ops.
-- Runtime writes use pooled `pg` and Drizzle transactions. Direct Neon owner
-  connections own migrations/grants; test first on an isolated Neon branch and
-  reapply restricted runtime grants after schema changes.
-- Integration tests use disposable loopback PostgreSQL only.
-- Remove files only after proving they are generated, duplicated, retired, or
-  unreachable. Preserve `dist/` recovery artifacts, migrations, ignored secret
-  state, provider branches, and agent/session state unless explicit cleanup
-  authority and owning evidence permit removal.
+Read Current state + Operations before any provider action. Prefer Hostinger MCP,
+GitHub CLI and private SSH; use hPanel only for missing API capabilities.
+Do not infer authority for unrelated writes, production migrations, secrets,
+DNS, recovery or release flags. Commerce and staff flags stay closed.
 
-## Authorization and release
+Live SHAs come from each surface's `/api/health/version`, never Git HEAD.
+Verify exact SHA, real static asset, www redirect, storefront locks, and Ops
+live/ready/unauthenticated session. Follow Operations for full acceptance.
 
-Read `docs/CURRENT_STATE.md` and `docs/OPERATIONS.md` before any provider,
-database, DNS, secret, or release-flag work. Never infer live SHAs, rollback
-deadlines, or incident status from this file. Live SHAs come from
-`/api/health/version` on both surfaces, not from `git HEAD`.
+Ops deployment is blocked until its pending migration/grant owner gate passes.
+Storefront-only releases may proceed only with Ops/database work excluded.
+Markdown-only changes must not publish or deploy.
 
-```bash
-node scripts/verify-production-deploy.mjs <40-character-sha> \
-  --target ops --public-surface storefront \
-  --public-base https://perfumeaura.com --timeout-ms 1200000
-```
-
-Also verify the exact `www` redirect, storefront locks, ops live/ready/version,
-unauthenticated session, and a real static asset; `/login` alone is insufficient.
-
-Solo-maintainer review approval is not required, while strict checks,
-conversation resolution, linear history, administrator enforcement, and
-force-push/deletion denial remain protected.
-
-Publication language is outcome-oriented: when the user asks to `commit and
-push`, complete the normal protected flow through commit, push, required checks,
-conversation resolution, and merge. For a production-facing runtime change,
-continue through its owning deployment automation and exact live acceptance;
-Markdown-only changes must remain deployment-free.
-
-Do not infer authority for unrelated recovery or provider actions. Stopping
-plan-wide processes, writing DNS, migrating production, changing secrets, or
-opening release flags still requires explicit authorization and owning-gate
-evidence. Keep storefront commerce and staff security flags closed.
-
-Repo `main` currently contains unapplied migration `0017`. Do not deploy that
-commit until the documented owner migration gate passes.
+For publication use conventional commits, scoped staging, protected PR checks,
+conversation resolution and merge, then owning deployment and public acceptance.
+Preserve strict checks, linear history, admin enforcement and force-push denial.
 
 ## Finish
 
-Run only relevant final checks; the complete gate is:
+Run relevant checks; full gate is `pnpm check`, `pnpm test:integration` with all
+three database URL variables set to the same disposable loopback database, and
+`git diff --check`. Report exact commands, release status and new env names.
 
-```bash
-pnpm check
-pnpm test:integration
-git diff --check
-```
-
-Use conventional commits, preserve unrelated work, and report exact verification
-commands plus new environment-variable names.
+Update Current state when topology, risk or next work changes. Keep docs concise
+and current-only: no session narratives or completed incident/release ledgers.
+Preserve active requirements and approval evidence; do not confuse them with logs.

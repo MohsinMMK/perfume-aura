@@ -20,6 +20,7 @@ const DEPLOYMENT_TOOLING_PATHS = new Set([
   "scripts/deploy-hostinger-storefront-archive.mjs",
   "scripts/pack-storefront-standalone.sh",
   "scripts/verify-ci-workflow.mjs",
+  "scripts/verify-commerce-foundation.mjs",
 ]);
 
 function isMarkdown(changedPath) {
@@ -115,6 +116,7 @@ export function classifyDeploymentImpact(
     if (
       startsWithAny(changedPath, [
         "apps/storefront/",
+        "deploy/storefront-vps/",
       ])
     ) {
       publishStorefront = true;
@@ -168,6 +170,8 @@ function boolean(value) {
 }
 
 function runSelfTests() {
+  assert.equal(classifyDeploymentImpact(["deploy/storefront-vps/compose.yaml"]).publishOps, false);
+  assert.equal(classifyDeploymentImpact(["deploy/storefront-vps/compose.yaml"]).publishStorefront, true);
   assert.deepEqual(classifyDeploymentImpact([]), {
     shouldValidate: true,
     shouldPublish: true,

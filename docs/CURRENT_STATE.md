@@ -1,284 +1,100 @@
 # Current state
 
-Fresh repository, provider, database, DNS, endpoint, and browser evidence
-outranks this file. Never record secrets, connection strings, credentials, or
-customer data here.
+Fresh provider, DNS, endpoint and repository evidence outranks this file.
+Never infer a live release from Git HEAD. Never record secrets or customer data.
 
-Last refreshed: **2026-09-02 16:55:03 UTC** from public HTTPS, authoritative
-DNS, Hostinger inventory, GitHub Actions, and this checkout. Do not infer live
-SHAs from `git HEAD`.
+## Live system
 
-## How to read the project
-
-Perfume Aura is live as a **brand and discovery website**. Ecommerce, customer
-accounts, inquiries, sellable catalog publication, and staff 2FA/invites are
-**implemented and fail-closed**. The next session should assume:
-
-1. Visitors can browse the 114-product discovery shop. They cannot buy online.
-2. Production still runs Neon. Self-hosted PostgreSQL is approved and not cut
-   over. Repo `main` is ahead of live because of an unapplied migration.
-3. Do not open a release flag, import catalog into Neon, apply `0017`, write
-   DNS, rotate secrets, or touch unrelated Hostinger sites without explicit
-   authorization and the owning gate in [`OPERATIONS.md`](OPERATIONS.md).
-
-| Need | Owner |
-|---|---|
-| Users, routes, live vs locked UX | [`PRODUCT.md`](PRODUCT.md) |
-| Stack, tests, CI, data/auth invariants | [`ENGINEERING.md`](ENGINEERING.md) |
-| Deploy, migrate, recover, staff release | [`OPERATIONS.md`](OPERATIONS.md) |
-| Commerce ADRs, requirements, checklist | [`COMMERCE.md`](COMMERCE.md) |
-| Launch blockers B01–B07 | [`BLOCKERS.md`](BLOCKERS.md) |
-| Mapping register and design tokens | [`REFERENCE.md`](REFERENCE.md) |
-
-## Production topology
-
-| Surface | Production state |
-|---|---|
-| `perfumeaura.com` | Hostinger Node.js Web App, archive deploy, HCDN |
-| `www.perfumeaura.com` | Path- and query-preserving `308` to the apex |
-| `app.perfumeaura.com` | VPS container behind Caddy on `194.164.149.3` |
-| `www.app.perfumeaura.com` | Absent (NXDOMAIN) |
-| `shop.perfumeaura.com` | Absent (NXDOMAIN); do not recreate |
-
-GoDaddy remains registration-only. Hostinger nameservers
-`lunar.dns-parking.com` / `solar.dns-parking.com` are authoritative. Apex is
-ALIAS to Hostinger CDN; `www` is CNAME to Hostinger CDN. The `app` record is
-TTL-300 `A` `194.164.149.3` with no `AAAA` on authoritative NS and public
-resolvers. Caddy terminates TLS and proxies only to `127.0.0.1:3020`.
-
-Storefront and ops share Neon PostgreSQL. Auth tables, secrets, cookies,
-origins, and recovery stay separate. No database moved to the VPS.
-
-The Hostinger DNS zone API listing can omit the `app` A record. Authoritative
-NS is the authority; do not add a duplicate `app` record from an incomplete
-API listing.
-
-## Exact releases and automation
-
-The storefront reports source
-`3e822a8e3fe389a34652a8e4d6c0cb565533a744`; ops remains on
-`09164609b918cf8c356ec35e42e6d96ff1a25dce`:
-
-| Probe | Result |
-|---|---|
-| `https://perfumeaura.com/api/health/version` | `{"status":"ok","commit":"3e822a8…"}` |
-| Homepage `data-perfume-aura-release` | storefront SHA |
-| `https://app.perfumeaura.com/api/health/version` | `{"status":"ok","commit":"09164609…"}` |
-| Ops `/api/health/live` / `/ready` | `ok` / `ready` |
-| `www` `/shop?probe=1` | `308` → `https://perfumeaura.com/shop?probe=1` |
-| Storefront `/api/health/live` and `/ready` | do not exist |
-
-Hostinger storefront build `01a0630a-62a3-7036-a965-1360011b94a8` completed
-2026-09-02 16:54:06 UTC: Node `24`, Framework Other, root `./`, no build or
-output directory, entry `apps/storefront/server.js`, `source_type: archive`.
-Workflow run
-[`33657044753`](https://github.com/MohsinMMK/perfume-aura/actions/runs/33657044753)
-is the last successful storefront runtime deploy. Its hosted verifier and a
-separate repository verifier both confirmed `3e822a8…`. The workflow published
-an immutable ops image because shared dependency files changed, but the
-Tailscale, VPS deploy, and ops live-verification steps remained skipped; the
-public ops SHA did not change.
-
-The deployed storefront source commit
-`3e822a8e3fe389a34652a8e4d6c0cb565533a744` is contained in repository `main`.
-It contains
-self-hosted PostgreSQL preparation and migration
-`0017_storefront_sale_settlement`; that migration is still not applied to
-production. The storefront-only release passed quality, 110
-disposable-PostgreSQL integration tests, packaging, archive deployment, and
-exact live verification without deploying ops or applying a migration.
-
-The release keeps two homepage product cards (one Signature and one Inspired),
-moves the detailed guide links to `/fragrance-guide`, adds the responsive
-Signature/Inspired bottle image, and publishes the verified Kondapur address
-and Google Maps destination on About and FAQ. It also pins patched `qs` and
-`fast-uri` transitive dependency versions.
-
-Do not deploy ops or apply `0017` until its owner migration gate (including
-restricted grants) is explicitly completed. Storefront-only releases may
-publish when the classifier keeps ops and database work excluded. Markdown-only
-merges still run CI and do not publish either surface. Package lock is Better
-Auth `1.7.2`.
-
-Routine storefront path: verified ZIP → Hostinger archive API → exact public
-verification. Routine ops path: verified ZIP → immutable GHCR image →
-Tailscale forced SSH → hardened VPS container → exact public verification.
-The last recorded ops image digest for the live SHA is
-`sha256:077f7017b2ebbb0e5258f7011426143cbd5d913fe2c8507d1e1cddf08c09df54`
-(not re-pulled this refresh).
-
-### Git cutover attempt — 2026-09-04 20:59 UTC
-
-The existing storefront app is now connected to `MohsinMMK/perfume-aura`,
-watching `hostinger-storefront-production`. Git promotion is enabled;
-`HOSTINGER_STOREFRONT_PUBLIC_VERIFICATION_ENABLED` remains false until the
-first successful Git deployment. The provider uses Node 24, Framework Other,
-root `./`, `pnpm run build`, output `.hostinger/storefront`, entry
-`apps/storefront/server.js`, and `NPM_CONFIG_IGNORE_SCRIPTS=true`.
-
-PR [#122](https://github.com/MohsinMMK/perfume-aura/pull/122) merged as
-`f329d2b79174fd3bd79ddc96ce9f1620eb8937e4`. It fixes a reproduced smoke-server
-process leak by replacing the wrapper shell with Node, adds a PID/termination
-regression test, and suppresses npm configuration warnings. The old launcher
-left Node alive after wrapper cleanup in a disposable Linux Node 24.6.0
-container; the fixed launcher passed the same lifecycle check. This is a
-confirmed defect, **not a confirmed cause of Hostinger's deployment failure**.
-
-Local `pnpm check`, disposable-loopback `pnpm test:integration`, and
-`git diff --check` passed. PR CI
-[33917659282](https://github.com/MohsinMMK/perfume-aura/actions/runs/33917659282),
-post-merge CI
-[33918015607](https://github.com/MohsinMMK/perfume-aura/actions/runs/33918015607),
-and storefront-only promotion
-[33918028884](https://github.com/MohsinMMK/perfume-aura/actions/runs/33918028884)
-passed. Ops deployment was skipped. For a tooling-only push, the classifier
-validates both surfaces and sets both publication outputs false. The promotion
-job itself accepts either a main push or a manual dispatch when
-`publish_storefront=true` and its quality, source-build, migration, and Git
-enablement gates pass. This tooling-only release used a storefront dispatch.
-
-Hostinger Git build `01a06e34-53bf-73ca-8c97-225bb26cd3cc` still **failed**
-at 2026-09-04 20:57:06 UTC (1m48s). Its 121-line log ends with
-`hostinger-storefront-source: passed source=f329d2b79174fd3bd79ddc96ce9f1620eb8937e4 output=.hostinger/storefront`.
-Both hPanel and the read-only provider API confirm failure, but neither the
-build record nor the build log supplies the terminal reason. Warning
-suppression and smoke-process cleanup did not resolve the provider rejection.
-Do not infer that warnings, output paths, or runtime startup caused it.
-
-Runtime Logs still identifies the last deployment as the accepted archive
-deployment at 2026-09-04 19:14 UTC; it does not show the failed Git attempt
-starting a new runtime. Public version probes at 20:59 UTC still returned
-storefront `3e822a8e3fe389a34652a8e4d6c0cb565533a744` and ops
-`09164609b918cf8c356ec35e42e6d96ff1a25dce`. The candidate live verifier was
-stopped after the provider failure; exact candidate acceptance did not pass.
-Retain the archive fallback, environment values, and closed release flags.
-
-Next: obtain Hostinger's internal terminal build/deployment error for that
-build ID, including the process exit status and output-promotion/entry-file
-validation result, before another provider configuration experiment. The owner
-approved contacting support. On 2026-09-04 at approximately 21:11 UTC, the
-support conversation was queued for human review and a sanitized build-ID,
-settings, and log-evidence note was submitted directly to the reviewer. The
-request explicitly prohibits redeploys, restarts, configuration changes, DNS,
-secrets, databases, release flags, or changes to other sites. The support AI
-confirmed it cannot access the internal terminal event; its finalization
-explanation is not an independently verified root cause. No ticket reference or
-human diagnosis has been provided yet. The installed MCP server inventory has
-no support-chat or internal-error tool, so only this approved support handoff
-used the browser; provider build/log reads used Docker Gateway MCP. Do not
-claim a successful Git cutover or revoke the archive token yet.
-
-## Database
-
-Production is Neon. Last **recorded** owner apply is migration
-`0015_catalog-publication-profile` (journal count 16). `commerce_settings`
-was empty at that apply, so application defaults stay flags-off.
-
-| Migration | In live source `09164609…` | Production apply |
+| Surface | Owner | Live source |
 |---|---|---|
-| `0000`–`0015` | Yes | Recorded applied |
-| `0016_even_silk_fever` | Yes | **Unrecorded** — confirm the Neon journal before any oil-provenance work |
-| `0017_storefront_sale_settlement` | No | **Not applied**; present only on `main` |
+| `perfumeaura.com` | Hostinger Node.js Web App | `3e822a8e3fe389a34652a8e4d6c0cb565533a744` |
+| `www.perfumeaura.com` | Path/query-preserving 308 to apex | Same storefront |
+| `app.perfumeaura.com` | VPS Caddy → loopback 3020 → Ops | `09164609b918cf8c356ec35e42e6d96ff1a25dce` |
+| Private storefront preview | VPS loopback 3030; no public route or secrets | `f329d2b79174fd3bd79ddc96ce9f1620eb8937e4` |
 
-`0017` adds FIFO oil reservations and the table-grant-free payment-finalizer
-routines. Do not apply it as a side effect of docs or storefront work.
+VPS: Hostinger KVM2, public `194.164.149.3`, Tailscale `100.119.191.103`.
+Admin: `ssh khanect-vps`. SSH is private; only HTTP/HTTPS are public.
+GoDaddy owns registration. Hostinger nameservers `lunar.dns-parking.com` and
+`solar.dns-parking.com` own DNS. Apex/www still use Hostinger CDN; app uses
+the VPS A record. Do not create `shop` or `www.app`.
 
-Self-hosted PostgreSQL 17.10 under [`deploy/postgres-vps/`](../deploy/postgres-vps/)
-is the approved target and is **not cut over**. The VPS has no
-`/srv/perfume-aura` checkout, Postgres/pooler containers, or pgBackRest
-repository. Pre-cutover remains blocked by independently managed encrypted
-off-VPS backup material, a successful on-VPS restore drill, and an
-authenticated Hostinger update path for both restricted storefront database
-URLs plus mutual-TLS material. Do not change either runtime `DATABASE_URL` or
-open port 6432 until every pre-cutover gate passes.
+Storefront and Ops share Neon with separate restricted roles, auth tables,
+secrets and cookies. No database has moved to the VPS. Self-hosted PostgreSQL
+preparation under `deploy/postgres-vps/` is not active production.
 
-## Release locks
+## Deployment status
 
-Keep every commerce and staff-security flag closed. Green health is not
-authorization.
+- Ops: scoped GitHub Actions → immutable GHCR image → Tailscale forced SSH →
+  hardened VPS container → exact public verification.
+- Storefront: the public Hostinger runtime works, but Git deployment is not
+  accepted. Do not assume a push updates the public storefront.
+- VPS storefront implementation is in `deploy/storefront-vps/`; production
+  Compose uses loopback 3031, separate runtime secrets and a separate restricted
+  deploy identity. The public cutover is **not complete**.
+- Root-owned Compose/deploy scripts and the restricted SSH identity are installed;
+  probe succeeds and arbitrary commands are denied. GitHub holds the dedicated
+  `VPS_STOREFRONT_SSH_KEY`. Both VPS storefront switches remain false until the
+  runtime environment is securely transferred and verified. Hostinger source
+  promotion is disabled, preserving the working public runtime without new builds.
+- The private preview passes exact version, homepage, real static asset, locked
+  cart/auth and www redirect checks. It is not production-environment acceptance.
+- Markdown-only changes must not deploy. Storefront-only releases must not
+  deploy Ops or apply migrations. Database changes fail closed at the owner gate.
 
-| Flag | Live effect |
-|---|---|
-| `STOREFRONT_PUBLIC_RELEASE` | Off. Shop is the workbook listing, not the Neon projection. Shop/product URLs stay `noindex`. |
-| `STOREFRONT_PREVIEW_CATALOG` | Off in production. Add to cart disabled; cart totals stay zero. |
-| `STOREFRONT_CUSTOMER_AUTH_ENABLED` | Off. `/api/customer-auth/*` returns `404` before Better Auth/Neon. |
-| `STOREFRONT_CHECKOUT_RELEASE_APPROVED` and DB `checkout_enabled` | Off. `/checkout` is `404`. Either plane false keeps checkout locked. |
-| `STOREFRONT_INQUIRIES_ENABLED` | Off. Contact/wholesale stay disabled. |
-| `STOREFRONT_COMMERCE_MAINTENANCE_ENABLED` | Off. |
-| `OPS_TWO_FACTOR_REQUIRED` | Off. |
-| `OPS_STAFF_INVITES_ENABLED` | Off. |
+## Active release locks
 
-Discovery listing is **not** catalog publication. Live `/shop` shows 114
-workbook products: 79 Inspired, 15 temporary Unknown, 20 Signature; 322
-variants; owner-supplied prices. SKU, cost, stock, media, and legal clearance
-are incomplete. Inspired-by titles are listing identity, not India-counsel
-approval.
+All remain false: `STOREFRONT_PUBLIC_RELEASE`, `STOREFRONT_PREVIEW_CATALOG`,
+`STOREFRONT_CUSTOMER_AUTH_ENABLED`, `STOREFRONT_CHECKOUT_RELEASE_APPROVED`,
+`STOREFRONT_INQUIRIES_ENABLED`, `STOREFRONT_COMMERCE_MAINTENANCE_ENABLED`,
+`OPS_TWO_FACTOR_REQUIRED`, and `OPS_STAFF_INVITES_ENABLED`.
+Database checkout must also remain disabled.
 
-Public crawling is allowed. The sitemap has exactly `/`, `/fragrance-guide`,
-`/about`, `/faq`, `/guides/perfume-for-hyderabad-weather`,
-`/guides/fragrance-families`, and `/guides/perfume-for-occasions`. Preview
-commerce and incomplete policy pages stay `noindex`. `robots.txt` disallows
-account, API, cart, checkout, and order paths. `/llms.txt` is public.
+Visitors see 114 discovery products (79 Inspired, 15 Unknown, 20 Signature),
+322 owner-priced variants. WhatsApp is the order/contact path. This is not
+approved sellable catalog publication. Shop/products stay noindex; checkout
+is unavailable. Customer auth returns 404 before initializing auth/Neon.
 
-## Rollback inventory
+Production migration `0017_storefront_sale_settlement` is not applied. The
+`0016` apply is unrecorded: check the journal before related work.
+Do not deploy Ops from main until its manual migration/grant gate passes.
+Storefront-only releases may proceed with Ops/database work excluded.
 
-The old Hostinger Node.js app for `app.perfumeaura.com` is **still enabled**
-as provider inventory (`source_type: git`, last deploy 2026-08-14 15:11:17 UTC,
-entry `apps/ops/server.js`). Public DNS no longer points at it. The 48-hour
-retention after the 2026-08-14 DNS-cutover acceptance expired on
-2026-08-16 14:47:58 UTC. Treat it as leftover rollback inventory eligible for
-authorized removal, not an open countdown. Do not publish new ops releases to
-it or change public DNS back outside an authorized rollback.
+## Cleanup boundaries
 
-The prior storefront upload app remains at
-`perfumeaura-com-642844.hostingersite.com`. Do not reassign the apex to it
-outside an authorized rollback. Generated storefront and historical
-`hostinger-*-production` branches were deleted in the earlier cleanup. The
-active `hostinger-storefront-production` source branch has since been recreated
-for the pending Git cutover above; preserve it and the archive recovery state.
+Hostinger has five Web App slots occupied. Perfume Aura removal candidates:
+the storefront after accepted VPS cutover, the off-DNS Ops Web App, and
+`royalblue-dugong-614889.hostingersite.com` (auto-deployment off).
+Keep `mobitron.in`, `khanect.com`, email and the DNS zone.
 
-The historical Hostinger shared-process/NPROC incident is off the public ops
-path and remains unresolved provider evidence for shared hosting. Do not use
-plan-wide process controls as a workaround.
+VPS has 15 running containers: Ops (1), storefront preview (1), Awwal (3),
+Awwal Cloud (2), Omni Realty (6), infrastructure (2). Preserve unrelated
+projects, volumes and images. No capacity need justifies deleting them.
+Preview removal follows production acceptance.
+
+Keep `dist/`, credentials, catalog source evidence, migrations and accepted
+recovery artifacts. Remove the Hostinger source branch and obsolete deployment
+credentials only after provider disconnection and VPS acceptance.
 
 ## Next actions
 
-Work from [`BLOCKERS.md`](BLOCKERS.md). Order:
+1. **Owner input required:** open the storefront Environment variables page in
+   hPanel or provide its secure export through the approved secret store, not chat.
+   Navigation is not working in this session and MCP has no export capability.
+   Transfer to root-owned `/etc/khanect/perfume-aura-storefront.env`; never reuse
+   Ops credentials or delete the existing env before preserving it.
+2. Complete protected GitHub CI and immutable registry pull acceptance, then
+   enable storefront VPS deployment only after the runtime prerequisites pass.
+3. Verify privately, validate/reload scoped Caddy, change only apex/www web
+   records, and pass full public acceptance.
+4. Remove the three obsolete Perfume Aura Web Apps preserving email/DNS,
+   disconnect retired Git triggers, remove the preview, and verify again.
+5. Keep commerce/security gates closed. Owner gates: India counsel, catalog
+   facts/media, CA/tax/delivery policies, Google/SMTP/Cashfree, owner TOTP/staff
+   denial, telemetry/maintenance, and explicit launch approval.
 
-1. Confirm the complete public Kondapur NAP, geo, hours, category,
-   accessibility/parking, store photography, and official profile URLs before
-   any gated location page or Store schema. Recover the existing Google
-   Business Profile; do not create a duplicate. In Google Search Console,
-   resubmit the seven-URL sitemap and inspect those URLs. Verify or import the
-   property in Bing Webmaster Tools and submit the same sitemap.
-2. Obtain India-counsel clearance on the **live 79 Inspired titles** (already
-   on `/shop`, no disclaimer implemented) and remaining owner catalog facts:
-   permanent names for the 15 Unknown rows, the 3 evidence gaps, SKUs, costs,
-   opening stock, media, and structured scent content. All 322 retail prices
-   are owner-supplied. Use the
-   [114-name review CSV](review-packets/2026-08-29-b01-114-name-review.csv)
-   and
-   [B03 reconciliation packet](review-packets/2026-08-29-b03-49-name-reconciliation.md).
-   The 2026-08-29 legal-surface inventory markdown was rewritten to match
-   COM-ADR-033; do not hand counsel the 69-name packets.
-3. Perform the separately authorized Hostinger GitHub source cutover in
-   [`OPERATIONS.md`](OPERATIONS.md#storefront-deployment-and-recovery), or rotate
-   the dedicated archive-deployment token before its 2026-09-28 expiry if the
-   archive rollback path still requires it. Supply Google OAuth production,
-   Hostinger SMTP delivery
-   proof, and Cashfree merchant KYC/UPI-only sandbox credentials, webhooks,
-   20-minute transaction TTL, and refunds.
-4. Approve tax, serviceability/courier, shipping fee and threshold, returns,
-   cancellations, and support staffing. Locked ₹99/₹999 values are
-   implementation inputs, not CA/counsel approval.
-5. Complete owner TOTP/recovery and the staff denial journey, then separately
-   authorize customer-auth, catalog publication, checkout, inquiries, and one
-   low-value live UPI purchase/refund. Until then keep every commerce and
-   staff-security flag closed.
-6. Complete the self-hosted PostgreSQL rehearsal: independently encrypted
-   off-VPS pgBackRest material, a disposable restore, then a controlled write
-   freeze to update runtime secrets. Keep Neon as rollback until the recovery
-   window and exact acceptance complete.
-7. Decide whether to keep or authorize deletion of the leftover Hostinger ops
-   Web App. Confirm the production Neon journal for `0016` before oil-provenance
-   work.
+## Find the owner
+
+- [Operations](OPERATIONS.md): deployment, provider changes, recovery and acceptance.
+- [Engineering](ENGINEERING.md): code navigation, Graphify, tests and invariants.
+- [Commerce](COMMERCE.md): product behavior, business requirements and launch gates.
+- [Reference](REFERENCE.md): catalog evidence and design constraints.

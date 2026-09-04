@@ -1,5 +1,24 @@
 # Engineering
 
+## Find the implementation
+
+Start with Current state. Use Graphify's current lessons and a small vocabulary-
+expanded query for code relationships, then verify the returned paths with `rg`.
+The graph does not currently cover VPS/provider deployment; go directly to
+[Operations](OPERATIONS.md) for that work. Do not rebuild the graph for routine questions.
+
+| Need | Source |
+|---|---|
+| Product routes, flags, launch gates, business policies | [Commerce](COMMERCE.md#product-behavior) |
+| Catalog identities, legal/source evidence, visual constraints | [Reference](REFERENCE.md) |
+| Storefront deployment | `.github/workflows/ops-pack.yml`, `deploy/storefront-vps/` |
+| Deployment scope and CI gates | `scripts/classify-deployment-impact.mjs`, `scripts/verify-ci-workflow.mjs` |
+| Exact release acceptance | `scripts/verify-production-deploy.mjs`, app `lib/build-version.ts` and `lib/health.ts` |
+
+Keep generated Graphify output untracked. After source changes, refresh only the
+affected graph scope using the skill's update procedure; retain healthy graphs
+when extraction is incomplete. Documentation is the fallback for missing edges.
+
 - [Repository and boundaries](#repository-layout-and-boundaries)
 - [Runtime and tooling](#locked-runtime-and-tooling)
 - [Shared UI](#shared-ui-contract)
@@ -11,7 +30,7 @@
 
 Live SHAs, deploy flags, and rollback belong in
 [`CURRENT_STATE.md`](CURRENT_STATE.md). Product routes and release locks belong
-in [`PRODUCT.md`](PRODUCT.md).
+in [Product behavior](COMMERCE.md#product-behavior).
 
 ## Repository layout and boundaries
 
@@ -23,6 +42,7 @@ packages/ui/      shadcn/Base UI primitives
 packages/validators/  Zod schemas used by ops
 scripts/          pack, deploy, verify, commerce, client-JS budgets
 deploy/ops-vps/   ops image/compose
+deploy/storefront-vps/  isolated storefront image, Compose and forced SSH deployment
 deploy/postgres-vps/  approved self-hosted PG target (not cut over)
 ```
 
@@ -184,7 +204,11 @@ TEST_DATABASE_URL="$PERFUME_AURA_TEST_DB_URL" \
   DATABASE_URL="$PERFUME_AURA_TEST_DB_URL" \
   DATABASE_URL_DIRECT="$PERFUME_AURA_TEST_DB_URL" \
   pnpm db:migrate
-pnpm test:integration
+TEST_DATABASE_URL="$PERFUME_AURA_TEST_DB_URL" \
+  DATABASE_URL="$PERFUME_AURA_TEST_DB_URL" \
+  DATABASE_URL_DIRECT="$PERFUME_AURA_TEST_DB_URL" \
+  pnpm test:integration
+node deploy/storefront-vps/test-contract.mjs
 git diff --check
 ```
 
@@ -221,7 +245,7 @@ Owner seeding is atomic and idempotent. Normal recovery uses
 | `storefront-quality` / `ops-quality` | Surface lint, shared dependency typecheck/unit tests, production build, and client-JS budget only for the planned surface |
 | `shared-database-integration` | Database integration once when either runtime is affected |
 | `storefront-integration` / `ops-integration` | Application integration tests only for the planned surface |
-| `verified-storefront-source-build` | Linux reproduction of the Hostinger Git source build; creates no ZIP or CI artifact |
+| `verified-storefront-source-build` | Linux standalone build, smoke, container validation and checksummed artifact |
 | `verified-ops-artifact` | Ops standalone ZIP, checksum, manifest, and hardened container validation only when ops is affected |
 | `quality` | Stable required-check aggregator; succeeds for Markdown-only changes after repository contract tests and rejects missing/extra surface work |
 | `publish-and-deploy-vps-ops` / `promote-hostinger-storefront-source` | independent, gated releases only after `quality`; migrations block both |
@@ -244,7 +268,7 @@ materialized servers.
 
 Search/discovery implementation lives in `apps/storefront/lib/seo.ts`,
 `editorial-guides.ts`, and `public-business.ts`. Product contract:
-[`PRODUCT.md`](PRODUCT.md). Do not publish Store schema until NAP facts are
+[Product behavior](COMMERCE.md#product-behavior). Do not publish Store schema until NAP facts are
 confirmed.
 
 ## Performance engineering
@@ -266,9 +290,7 @@ contracts. Client-JS budgets are asserted by `pnpm check`, not by CI `quality`.
 | Ops | dashboard | 396_000 |
 
 Animate only `transform` and `opacity` where behavior remains equivalent;
-preserve reduced motion. Generated traces stay untracked. Dated attestations
-in [`REFERENCE.md`](REFERENCE.md#historical-evidence) never override this
-policy or `CURRENT_STATE.md`.
+preserve reduced motion. Generated traces stay untracked. Fresh measurements and `CURRENT_STATE.md` own acceptance; do not reuse old attestations.
 
 ## Observability code and privacy
 

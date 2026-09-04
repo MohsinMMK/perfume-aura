@@ -1,0 +1,58 @@
+name: perfume-aura-storefront-preview
+
+services:
+  app:
+    image: ${PERFUME_AURA_STOREFRONT_IMAGE:?immutable image digest is required}
+    restart: unless-stopped
+    init: true
+    user: "10001:10001"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      EXPECTED_SOURCE_SHA: ${PERFUME_AURA_STOREFRONT_SOURCE_SHA:?exact source SHA is required}
+      STOREFRONT_URL: https://perfumeaura.com
+      CUSTOMER_AUTH_URL: https://perfumeaura.com
+      STOREFRONT_CUSTOMER_AUTH_ENABLED: "false"
+      STOREFRONT_INQUIRIES_ENABLED: "false"
+      STOREFRONT_PREVIEW_CATALOG: "false"
+      STOREFRONT_PUBLIC_RELEASE: "false"
+      STOREFRONT_CHECKOUT_RELEASE_APPROVED: "false"
+    ports:
+      - 127.0.0.1:3030:3000
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m
+      - /app/apps/storefront/.next/cache:rw,noexec,nosuid,nodev,size=128m,uid=10001,gid=10001,mode=0770
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    cpus: 0.75
+    mem_limit: 768m
+    mem_reservation: 256m
+    pids_limit: 256
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3000/api/health/version').then(async r=>{const b=await r.json();if(!r.ok||b.status!=='ok'||b.commit!==process.env.EXPECTED_SOURCE_SHA)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    labels:
+      com.khanect.owner: Perfume-Aura
+      com.khanect.service: storefront-preview
+      com.khanect.exposure: loopback-only
+
+networks:
+  default:
+    name: perfume-aura-storefront-preview-internal
