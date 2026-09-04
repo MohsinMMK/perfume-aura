@@ -111,9 +111,11 @@ mkdir -p "$STAGE" "$SHARP_TMP"
 
 # Hostinger moves the selected output directory after the build, so materialize
 # pnpm links and make the standalone tree independent from the checkout.
+STANDALONE_LINKS_FILE="$WORK_DIR/standalone-links"
+find "$STANDALONE" -type l -print0 > "$STANDALONE_LINKS_FILE"
 while IFS= read -r -d '' traced_link; do
   [[ -e "$traced_link" ]] || rm -f -- "$traced_link"
-done < <(find "$STANDALONE" -type l -print0)
+done < "$STANDALONE_LINKS_FILE"
 cp -RL "$STANDALONE"/. "$STAGE"/
 mkdir -p "$STAGE/apps/storefront/.next"
 rm -rf -- "$STAGE/apps/storefront/.next/static" "$STAGE/apps/storefront/public"
@@ -121,12 +123,14 @@ cp -R "$ROOT/apps/storefront/.next/static" "$STAGE/apps/storefront/.next/static"
 cp -R "$ROOT/apps/storefront/public" "$STAGE/apps/storefront/public"
 
 NEXT_NEIGHBORHOOD=""
+NEXT_NEIGHBORHOODS_FILE="$WORK_DIR/next-neighborhoods"
+find "$STAGE/node_modules/.pnpm" -mindepth 2 -maxdepth 2 -type d -path '*/next@*/node_modules' | sort > "$NEXT_NEIGHBORHOODS_FILE"
 while IFS= read -r candidate; do
   if [[ -f "$candidate/next/package.json" ]]; then
     NEXT_NEIGHBORHOOD="$candidate"
     break
   fi
-done < <(find "$STAGE/node_modules/.pnpm" -mindepth 2 -maxdepth 2 -type d -path '*/next@*/node_modules' | sort)
+done < "$NEXT_NEIGHBORHOODS_FILE"
 [[ -n "$NEXT_NEIGHBORHOOD" ]] || fail "Next dependency neighborhood is missing"
 mkdir -p "$STAGE/apps/storefront/node_modules"
 for dependency in "$NEXT_NEIGHBORHOOD"/*; do
@@ -154,14 +158,14 @@ cp "$RUNTIME_DEPS_DIR/package-lock.json" "$SHARP_TMP/package-lock.json"
 )
 [[ "$(node -p "require('$SHARP_TMP/node_modules/sharp/package.json').version")" == "$EXPECTED_SHARP" ]] || fail "locked Sharp version mismatch"
 
+SHARP_PLATFORM_DIRS_FILE="$WORK_DIR/sharp-platform-dirs"
+find "$STAGE" -type d \
+  \( -name 'sharp-*-*' -o -name 'sharp-libvips-*-*' \
+     -o -name '@img+sharp-*@*' -o -name '@img+sharp-libvips-*@*' \) \
+  -prune -print0 > "$SHARP_PLATFORM_DIRS_FILE"
 while IFS= read -r -d '' traced_sharp_platform_directory; do
   rm -rf -- "$traced_sharp_platform_directory"
-done < <(
-  find "$STAGE" -type d \
-    \( -name 'sharp-*-*' -o -name 'sharp-libvips-*-*' \
-       -o -name '@img+sharp-*@*' -o -name '@img+sharp-libvips-*@*' \) \
-    -prune -print0
-)
+done < "$SHARP_PLATFORM_DIRS_FILE"
 for destination in "$STAGE/apps/storefront/node_modules" "$STAGE/node_modules"; do
   mkdir -p "$destination"
   rm -rf -- "$destination/sharp" "$destination/@img"
@@ -224,7 +228,9 @@ fs.writeFileSync(outputPath, `${JSON.stringify(manifest, null, 2)}\n`);
 NODE
 
 find "$STAGE" -type f -name '*.map' -delete
-while IFS= read -r -d '' bin_directory; do rm -rf -- "$bin_directory"; done < <(find "$STAGE" -type d -name '.bin' -print0)
+BIN_DIRS_FILE="$WORK_DIR/bin-dirs"
+find "$STAGE" -type d -name '.bin' -print0 > "$BIN_DIRS_FILE"
+while IFS= read -r -d '' bin_directory; do rm -rf -- "$bin_directory"; done < "$BIN_DIRS_FILE"
 if find "$STAGE" -type l -print -quit | grep -q .; then fail "Hostinger output contains symlinks"; fi
 FORBIDDEN_OUTPUT="$(find "$STAGE" -type f \( -name '.env' -o -name '.env.*' -o -name '*.pem' -o -name '*.key' -o -name '*credentials*.json' -o -name 'service-account*.json' \) -print)"
 [[ -z "$FORBIDDEN_OUTPUT" ]] || fail "secret-shaped files found in Hostinger output"
