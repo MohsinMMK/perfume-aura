@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const prefix = "deploy/storefront-vps/";
 const compose = readFileSync(`${prefix}compose.yaml`, "utf8");
@@ -25,4 +27,31 @@ const root = readFileSync(`${prefix}deploy-root.sh`, "utf8");
 for (const contract of ["flock -w 900", "--network none", "m.source.dirty, false", 'compose "$state/current.env"', "--wait --wait-timeout 150"])
   assert.ok(root.includes(contract), `missing root deployment contract: ${contract}`);
 assert.doesNotMatch(root, /eval |source \"|docker (system|volume) prune|perfume-aura-ops/);
+const rejectedCandidate = root.match(/if ! compose "\$candidate"; then\n[\s\S]*?\nfi/);
+assert.ok(rejectedCandidate, "candidate failure branch must exist");
+// Execute the real failure branch with harmless command doubles, never Docker.
+for (const hasAcceptedImage of [false, true]) {
+  const state = mkdtempSync(join(tmpdir(), "storefront-rejection-test-"));
+  try {
+    if (hasAcceptedImage) writeFileSync(join(state, "current.env"), "fixture\n");
+    const result = spawnSync("bash", ["-c", `
+      set -euo pipefail
+      state=$1
+      candidate=candidate-fixture
+      stack=compose-fixture
+      compose() { printf 'compose:%s\\n' "$1"; [[ "$1" != "$candidate" ]]; }
+      docker() { printf 'docker:%s\\n' "$*"; }
+      ${rejectedCandidate[0]}
+    `, "test", state], { encoding: "utf8" });
+    assert.equal(result.status, 1);
+    if (hasAcceptedImage) {
+      assert.ok(result.stdout.includes(`compose:${state}/current.env`));
+      assert.doesNotMatch(result.stdout, /docker:/);
+    } else {
+      assert.match(result.stdout, /docker:compose --env-file candidate-fixture -f compose-fixture stop app/);
+    }
+  } finally {
+    rmSync(state, { recursive: true });
+  }
+}
 console.log("storefront VPS contract ok");

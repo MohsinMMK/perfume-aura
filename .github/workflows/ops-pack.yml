@@ -723,6 +723,7 @@ jobs:
       needs.storefront-source-build.result == 'success' &&
       github.ref == 'refs/heads/main' &&
       needs.scope.outputs.publish_storefront == 'true' &&
+      needs.scope.outputs.publish_ops != 'true' &&
       needs.scope.outputs.ops_migration_blocked != 'true' &&
       vars.VPS_STOREFRONT_AUTO_DEPLOY_ENABLED == 'true' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')

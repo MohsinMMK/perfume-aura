@@ -34,7 +34,8 @@ preparation under `deploy/postgres-vps/` is not active production.
 - Root-owned Compose/deploy scripts and the restricted SSH identity are installed;
   probe succeeds and arbitrary commands are denied. GitHub holds the dedicated
   `VPS_STOREFRONT_SSH_KEY`. Both VPS storefront switches remain false until the
-  runtime environment is securely transferred and verified. Hostinger source
+  registry and candidate acceptance pass. All 12 storefront settings are preserved
+  in root-owned mode 0600 `/etc/khanect/perfume-aura-storefront.env`. Hostinger source
   promotion is disabled, preserving the working public runtime without new builds.
 - The private preview passes exact version, homepage, real static asset, locked
   cart/auth and www redirect checks. It is not production-environment acceptance.
@@ -43,11 +44,16 @@ preparation under `deploy/postgres-vps/` is not active production.
 
 ## Active release locks
 
-All remain false: `STOREFRONT_PUBLIC_RELEASE`, `STOREFRONT_PREVIEW_CATALOG`,
+All remain false: `STOREFRONT_PUBLIC_RELEASE`,
 `STOREFRONT_CUSTOMER_AUTH_ENABLED`, `STOREFRONT_CHECKOUT_RELEASE_APPROVED`,
 `STOREFRONT_INQUIRIES_ENABLED`, `STOREFRONT_COMMERCE_MAINTENANCE_ENABLED`,
 `OPS_TWO_FACTOR_REQUIRED`, and `OPS_STAFF_INVITES_ENABLED`.
 Database checkout must also remain disabled.
+
+Hostinger's environment has `STOREFRONT_PREVIEW_CATALOG=true`; its value is
+preserved in the VPS env backup. Production Compose explicitly overrides it
+to false along with the other storefront release locks. Verify discovery
+catalog behavior before cutover; preview is not public release approval.
 
 Visitors see 114 discovery products (79 Inspired, 15 Unknown, 20 Signature),
 322 owner-priced variants. WhatsApp is the order/contact path. This is not
@@ -77,13 +83,10 @@ credentials only after provider disconnection and VPS acceptance.
 
 ## Next actions
 
-1. **Owner input required:** open the storefront Environment variables page in
-   hPanel or provide its secure export through the approved secret store, not chat.
-   Navigation is not working in this session and MCP has no export capability.
-   Hostinger's official API returns masked values, not recoverable secrets.
-   Transfer to root-owned `/etc/khanect/perfume-aura-storefront.env`; never reuse
-   Ops credentials or delete the existing env before preserving it.
-2. Complete protected GitHub CI and immutable registry pull acceptance, then
+1. Validate the preserved storefront environment through the private candidate;
+   never reuse Ops credentials or overwrite the original provider settings.
+2. Resolve deployment review findings, complete protected GitHub CI and
+   immutable registry pull acceptance, then
    enable storefront VPS deployment only after the runtime prerequisites pass.
 3. Verify privately, validate/reload scoped Caddy, change only apex/www web
    records, and pass full public acceptance.

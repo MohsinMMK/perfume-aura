@@ -40,6 +40,11 @@ if ! compose "$candidate"; then
   echo 'Candidate unhealthy; restoring the last accepted storefront image.' >&2
   if [[ -f "$state/current.env" ]]; then
     compose "$state/current.env" || { echo 'Storefront recovery needs operator attention.' >&2; exit 3; }
+  else
+    docker compose --env-file "$candidate" -f "$stack" stop app || {
+      echo 'Rejected storefront candidate could not be stopped; operator attention required.' >&2
+      exit 3
+    }
   fi
   exit 1
 fi

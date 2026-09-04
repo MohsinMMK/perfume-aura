@@ -744,23 +744,23 @@ approval.
 
 ### Deterministic catalog intake
 
-Run the planner first:
+Load `CATALOG_MANIFEST_SIGNING_SECRET` from the approved secret store or a
+protected environment file, never as an inline shell value. Run the planner:
 
 ```bash
-CATALOG_MANIFEST_SIGNING_SECRET='<owner-held-32+-character-secret>' \
-  pnpm catalog:import -- --dry-run
+pnpm catalog:import -- --dry-run
 ```
 
 It validates and hashes the four review templates without connecting to a
 database. Applying reviewed rows requires an owner/direct database connection
-and an exact confirmation phrase:
+and an exact confirmation phrase. Load `DATABASE_URL_DIRECT` through the same
+protected environment mechanism before applying; never put credentials in
+shell history or command-capture logs:
 
 ```bash
 CONFIRM_CATALOG_IMPORT=APPLY_REVIEWED_CATALOG \
   CONFIRM_CATALOG_DIGEST='<reviewed-digest>' \
   CONFIRM_CATALOG_SIGNATURE='<reviewed-signature>' \
-  CATALOG_MANIFEST_SIGNING_SECRET='<same-owner-held-secret>' \
-  DATABASE_URL_DIRECT='<owner-direct-url>' \
   pnpm catalog:import -- --apply
 ```
 

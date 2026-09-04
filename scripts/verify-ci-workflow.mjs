@@ -92,6 +92,7 @@ const storefrontDeploy = jobBody("publish-and-deploy-vps-storefront", "promote-h
 for (const required of [
   "needs.quality.result == 'success'", "needs.storefront-source-build.result == 'success'",
   "needs.scope.outputs.publish_storefront == 'true'", "needs.scope.outputs.ops_migration_blocked != 'true'",
+  "needs.scope.outputs.publish_ops != 'true'",
   "VPS_STOREFRONT_AUTO_DEPLOY_ENABLED", "VPS_STOREFRONT_SSH_KEY",
   "perfume-storefront-deploy@", "StrictHostKeyChecking=yes", "--target storefront",
 ]) assert.ok(storefrontDeploy.includes(required), `missing storefront gate: ${required}`);
