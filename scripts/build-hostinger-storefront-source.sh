@@ -61,6 +61,13 @@ node -e 'const report=process.report?.getReport();if(!report?.header?.glibcVersi
 
 SOURCE_COMMIT="$(git rev-parse HEAD)"
 [[ "$SOURCE_COMMIT" =~ ^[0-9a-f]{40}$ ]] || fail "Git checkout does not have a full source commit"
+PROVIDER_TRACKED_DRIFT="$(git status --porcelain --untracked-files=no)"
+if [[ "$ROOT" == */hbuilds/source/repository &&
+      "${NPM_CONFIG_IGNORE_SCRIPTS:-}" == "true" &&
+      "$PROVIDER_TRACKED_DRIFT" == " M pnpm-lock.yaml" ]]; then
+  echo "==> Restoring pnpm 11 lockfile syntax after Hostinger's pnpm 10 preinstall"
+  git restore --source=HEAD --worktree -- pnpm-lock.yaml
+fi
 if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
   fail "tracked source files are dirty before the Hostinger build"
 fi
