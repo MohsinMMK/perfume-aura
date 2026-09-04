@@ -21,6 +21,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const rootPackage = JSON.parse(fs.readFileSync("package.json", "utf8"));
 assert.equal(rootPackage.packageManager, "pnpm@11.25.0");
+assert.equal(rootPackage.scripts.build, "pnpm hostinger:build:storefront");
 assert.equal(
   rootPackage.scripts["hostinger:build:storefront"],
   "bash scripts/build-hostinger-storefront-source.sh",

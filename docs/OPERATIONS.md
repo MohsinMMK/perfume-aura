@@ -134,11 +134,15 @@ Hostinger, connect the `MohsinMMK/perfume-aura` repository and configure:
 | Node.js | `24.x` |
 | Framework | Other |
 | Root directory | `./` |
-| Build command | `pnpm hostinger:build:storefront` |
+| Build command | `pnpm run build` |
 | Output directory | `.hostinger/storefront` |
 | Entry file | `apps/storefront/server.js` |
 | Start command, if shown | `npm start` |
 | Automatic deployment | Enabled for the selected branch |
+
+Hostinger's native selector only exposes the conventional `pnpm run build`
+command. The root `build` script is a provider adapter that delegates directly
+to `pnpm hostinger:build:storefront`; do not broaden it to build ops.
 
 `build-hostinger-storefront-source.sh` performs the frozen pnpm install,
 derives the exact full commit from the Git checkout, builds Next standalone,
