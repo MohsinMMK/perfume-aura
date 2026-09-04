@@ -242,7 +242,7 @@ PORT="$(node -e 'const net=require("node:net");const server=net.createServer();s
 (cd "$STAGE" && NODE_ENV=production HOSTNAME=127.0.0.1 PORT="$PORT" node apps/storefront/server.js > "$WORK_DIR/server.log" 2>&1) &
 SERVER_PID=$!
 for _ in {1..40}; do
-  if curl -fsS --max-time 2 "http://127.0.0.1:$PORT/" >/dev/null; then break; fi
+  if curl -fsS --max-time 2 "http://127.0.0.1:$PORT/" >/dev/null 2>&1; then break; fi
   sleep 0.25
 done
 curl -fsS --max-time 5 "http://127.0.0.1:$PORT/" >/dev/null || { cat "$WORK_DIR/server.log" >&2; fail "Hostinger storefront smoke failed"; }
