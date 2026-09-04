@@ -47,6 +47,9 @@ assert.match(quality, /OPS_PACKAGE/);
 
 const promotion = jobBody("promote-hostinger-storefront-source", "verify-hostinger-storefront");
 assert.match(promotion, /needs:\n\s+- scope\n\s+- quality\n\s+- storefront-source-build/);
+assert.match(promotion, /always\(\)/);
+assert.match(promotion, /needs\.quality\.result == 'success'/);
+assert.match(promotion, /needs\.storefront-source-build\.result == 'success'/);
 assert.match(promotion, /hostinger-storefront-production/);
 assert.match(promotion, /HOSTINGER_STOREFRONT_GIT_DEPLOY_ENABLED/);
 
@@ -66,7 +69,18 @@ assert.match(packageContext, /if \[\[ "\$1" == true \]\]; then/);
 
 const opsDeploy = jobBody("publish-and-deploy-vps-ops", "block-runtime-deploy-on-database-migration");
 assert.match(opsDeploy, /needs:\n\s+- scope\n\s+- quality\n\s+- ops-package/);
+assert.match(opsDeploy, /always\(\)/);
+assert.match(opsDeploy, /needs\.quality\.result == 'success'/);
+assert.match(opsDeploy, /needs\.ops-package\.result == 'success'/);
 assert.match(opsDeploy, /ops-standalone-/);
+
+const migrationBlocker = jobBody("block-runtime-deploy-on-database-migration", "promote-hostinger-storefront-source");
+assert.match(migrationBlocker, /always\(\)/);
+assert.match(migrationBlocker, /needs\.quality\.result == 'success'/);
+
+const storefrontVerification = jobBody("verify-hostinger-storefront", null);
+assert.match(storefrontVerification, /always\(\)/);
+assert.match(storefrontVerification, /needs\.promote-hostinger-storefront-source\.result == 'success'/);
 
 const promotionCheckout = promotion.match(/Checkout the exact accepted source[\s\S]*?Advance the protected Hostinger source branch/)?.[0];
 assert.ok(promotionCheckout, "missing promotion checkout");
