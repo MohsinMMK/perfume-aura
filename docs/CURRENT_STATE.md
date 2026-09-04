@@ -155,8 +155,17 @@ Retain the archive fallback, environment values, and closed release flags.
 
 Next: obtain Hostinger's internal terminal build/deployment error for that
 build ID, including the process exit status and output-promotion/entry-file
-validation result, before another provider configuration experiment. Contacting
-support requires owner approval; no support message has been sent. Do not
+validation result, before another provider configuration experiment. The owner
+approved contacting support. On 2026-09-04 at approximately 21:11 UTC, the
+support conversation was queued for human review and a sanitized build-ID,
+settings, and log-evidence note was submitted directly to the reviewer. The
+request explicitly prohibits redeploys, restarts, configuration changes, DNS,
+secrets, databases, release flags, or changes to other sites. The support AI
+confirmed it cannot access the internal terminal event; its finalization
+explanation is not an independently verified root cause. No ticket reference or
+human diagnosis has been provided yet. The installed MCP server inventory has
+no support-chat or internal-error tool, so only this approved support handoff
+used the browser; provider build/log reads used Docker Gateway MCP. Do not
 claim a successful Git cutover or revoke the archive token yet.
 
 ## Database
