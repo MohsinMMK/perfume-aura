@@ -53,7 +53,7 @@ fi
 
 verify_repository_contract
 [[ "$(node -p 'process.versions.node.split(`.`)[0]')" == "24" ]] || fail "Hostinger storefront build requires Node 24.x"
-[[ "$(corepack pnpm --version)" == "$EXPECTED_PNPM" ]] || fail "Hostinger storefront build requires pnpm $EXPECTED_PNPM"
+[[ "$(corepack pnpm@"$EXPECTED_PNPM" --version)" == "$EXPECTED_PNPM" ]] || fail "Hostinger storefront build requires pnpm $EXPECTED_PNPM"
 [[ "$(node -p 'process.platform')" == "linux" ]] || fail "Hostinger storefront output must be built on Linux"
 [[ "$(node -p 'process.arch')" == "x64" ]] || fail "Hostinger storefront output must target linux/x64"
 node -e 'const report=process.report?.getReport();if(!report?.header?.glibcVersionRuntime)process.exit(1)' || fail "Hostinger storefront output requires glibc"
@@ -66,7 +66,7 @@ if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
 fi
 
 echo "==> Installing the locked pnpm workspace"
-corepack pnpm install --frozen-lockfile
+corepack pnpm@"$EXPECTED_PNPM" install --frozen-lockfile
 [[ -z "$(git status --porcelain --untracked-files=no)" ]] || fail "frozen install changed tracked source files"
 
 echo "==> Building @perfume-aura/storefront from $SOURCE_COMMIT"
@@ -79,7 +79,7 @@ STOREFRONT_PUBLIC_RELEASE="${STOREFRONT_PUBLIC_RELEASE:-false}" \
 STOREFRONT_CHECKOUT_RELEASE_APPROVED="${STOREFRONT_CHECKOUT_RELEASE_APPROVED:-false}" \
 STOREFRONT_INQUIRIES_ENABLED="${STOREFRONT_INQUIRIES_ENABLED:-false}" \
 STANDALONE_SOURCE_COMMIT="$SOURCE_COMMIT" \
-  corepack pnpm --filter @perfume-aura/storefront build
+  corepack pnpm@"$EXPECTED_PNPM" --filter @perfume-aura/storefront build
 
 STANDALONE="$ROOT/apps/storefront/.next/standalone"
 APP_ROOT="$STANDALONE/apps/storefront"
