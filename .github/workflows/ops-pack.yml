@@ -360,11 +360,16 @@ jobs:
         with: { node-version-file: .nvmrc, cache: pnpm }
       - name: Reproduce the Hostinger Git source build
         env:
+          # Hostinger performs a provider-managed install before this command.
+          # Its shared pnpm 10 store cannot execute the dev-only esbuild
+          # lifecycle reliably, so production source builds must not depend on
+          # dependency lifecycle scripts.
+          NPM_CONFIG_IGNORE_SCRIPTS: "true"
           NEXT_PUBLIC_STOREFRONT_POSTHOG_TOKEN: ${{ vars.POSTHOG_PROJECT_TOKEN }}
           NEXT_PUBLIC_STOREFRONT_POSTHOG_HOST: ${{ vars.POSTHOG_HOST }}
           NEXT_PUBLIC_STOREFRONT_SENTRY_DSN: ${{ vars.STOREFRONT_SENTRY_DSN }}
           NEXT_PUBLIC_STOREFRONT_SENTRY_TRACES_SAMPLE_RATE: "0.1"
-        run: pnpm hostinger:build:storefront
+        run: pnpm run build
       - name: Verify source manifest
         run: node -e 'const m=require("./.hostinger/storefront/source-manifest.json");if(m.source.commit!==process.env.GITHUB_SHA||m.source.dirty||m.source.type!=="git")process.exit(1)'
 

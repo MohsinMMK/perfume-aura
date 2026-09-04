@@ -142,7 +142,11 @@ Hostinger, connect the `MohsinMMK/perfume-aura` repository and configure:
 
 Hostinger's native selector only exposes the conventional `pnpm run build`
 command. The root `build` script is a provider adapter that delegates directly
-to `pnpm hostinger:build:storefront`; do not broaden it to build ops.
+through Corepack to `pnpm hostinger:build:storefront`; do not broaden it to
+build ops. Set `NPM_CONFIG_IGNORE_SCRIPTS=true` in the storefront environment:
+Hostinger's provider-managed pnpm 10 install otherwise executes a dev-only
+esbuild lifecycle from its shared store before the reviewed build command runs.
+The verified source-build job reproduces this constraint on Linux.
 
 `build-hostinger-storefront-source.sh` performs the frozen pnpm install,
 derives the exact full commit from the Git checkout, builds Next standalone,
