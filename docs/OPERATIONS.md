@@ -148,11 +148,36 @@ without printing values. Generate independent 32+ character secrets; pre-stage
 mode-0600 candidates before changing the database password through Neon's official
 API or SQL path. Change only the password, not role identity, grants or schema.
 
-Atomically promote both env files and recreate only their Compose services using
-the accepted immutable images and source SHAs. A container restart alone does not
-load changed env files. Verify fresh new-credential connections, rejection of the
-old password on direct/pooled endpoints, unchanged effective flags and images,
-then full public acceptance. Remove temporary old-secret copies after acceptance.
+Coordinate promotion of both env files: each rename is atomic, the pair is not.
+Before changing the password, validate both candidates as root:root 0600, preserve
+all non-rotated settings and confirm the accepted image/SHA state. After the new
+password succeeds on a fresh connection, run on the VPS:
+
+```bash
+sudo mv -- /etc/khanect/perfume-aura-ops.env.rotation-candidate /etc/khanect/perfume-aura-ops.env
+sudo mv -- /etc/khanect/perfume-aura-storefront.env.rotation-candidate /etc/khanect/perfume-aura-storefront.env
+sudo docker compose --env-file /etc/khanect/perfume-aura-ops.env \
+  -f /srv/khanect/stacks/perfume-aura-ops/compose.yaml \
+  up -d --no-build --pull never --force-recreate --wait --wait-timeout 150 app
+sudo docker compose --env-file /srv/khanect/data/perfume-aura-storefront/current.env \
+  -f /srv/khanect/stacks/perfume-aura-storefront/compose.yaml \
+  up -d --no-build --pull never --force-recreate --wait --wait-timeout 150 app
+```
+
+A restart alone does not load changed env files. In a values-hidden process, use
+each container's actual `DATABASE_URL` for a fresh `SELECT 1`; independently test
+the old password on direct/pooled endpoints and require authentication rejection
+(`28P01`), not a timeout. Check unchanged image IDs/effective flags, then run both
+[public acceptance commands](#production-acceptance). Remove temporary old-secret
+copies only after all checks pass.
+
+On an ambiguous password-change response, test the staged credential before any
+retry. If promotion or recreation fails after the password changed, keep the new
+credential: finish the missing env promotion and retry only the failed service
+with its accepted image. Never restore an old env file containing the rejected
+password. Keep protected candidate material until both services recover; do not
+claim completion while either service still has stale credentials.
+
 Customer auth-secret rotation must account for existing sessions and encrypted
 OAuth tokens; do not discard those dependencies silently. Maintenance runtime and
 GitHub secrets must match when the worker is explicitly approved for activation.

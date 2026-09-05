@@ -76,8 +76,9 @@ the separate owner connection and Ops auth secret are unchanged.
 
 Both apps pass public acceptance on their accepted images, with schema, grants
 and release locks unchanged. The shared role has no superuser, role creation,
-database creation, BYPASSRLS or Neon administrator membership. This does not prove
-complete least-privilege grants; separating roles remains a reviewed follow-up.
+database creation, BYPASSRLS or membership in the PostgreSQL `neon_superuser` role.
+Neon account/project administration is separate and was not audited. Complete
+least-privilege grants and role separation remain reviewed follow-ups.
 GitHub has no maintenance secret configured and its maintenance enablement is
 unset, so scheduled workers remain inactive. Do not reuse retired hosting envs
 for recovery: their credentials are stale; current VPS envs own recovery.
