@@ -85,6 +85,11 @@ for recovery: their credentials are stale; current VPS envs own recovery.
 
 ## Cleanup boundaries
 
+Repository working policy: one primary checkout on `main`, no retained feature
+or deployment branches and no extra worktrees. Integrate useful changes through
+protected PRs, then remove their branches. GitHub deploys accepted images to the
+VPS; no workflow creates or advances a Hostinger source branch.
+
 Hostinger has five Web App slots occupied. Pending removal after DNS cache
 expiry and explicit irreversible-deletion confirmation: `perfumeaura.com`,
 the off-DNS `app.perfumeaura.com` Web App, and
@@ -98,16 +103,17 @@ No private preview container/network remains. Its image and Compose template
 are retained as recoverable, inactive build evidence.
 
 Keep `dist/`, credentials, catalog source evidence, migrations and accepted
-recovery artifacts. Remove the Hostinger source branch and obsolete deployment
-credentials only after provider disconnection and VPS acceptance.
+recovery artifacts. Retired Hostinger Web Apps are off the public routing path;
+their remaining provider Git connections/unused credentials belong to site cleanup,
+not to the current VPS release flow.
 
 ## Next actions
 
 1. Verify apex/www resolve only to the VPS, with no retired A/AAAA targets,
    before removing recovery hosting.
 2. Confirm and remove the three obsolete Perfume Aura Web Apps preserving
-   email/DNS; disconnect retired Git triggers and remove their unused credentials
-   and source branch, then verify live routing and hosting slot counts again.
+   email/DNS; disconnect retired provider Git triggers and remove their unused
+   credentials, then verify live routing and hosting slot counts again.
 3. Keep commerce/security gates closed. Owner gates: India counsel, catalog
    facts/media, CA/tax/delivery policies, Google/SMTP/Cashfree, owner TOTP/staff
    denial, telemetry/maintenance, and explicit launch approval.

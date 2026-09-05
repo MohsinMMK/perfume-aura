@@ -91,6 +91,7 @@ export function classifyDeploymentImpact(
       SHARED_RUNTIME_PATHS.has(changedPath) ||
       startsWithAny(changedPath, [
         "packages/",
+        "scripts/ops-runtime-deps/",
         "scripts/extract-hostinger-ops-zip.py",
         "scripts/verify-hostinger-ops-deploy-tree.mjs",
       ])
@@ -105,7 +106,6 @@ export function classifyDeploymentImpact(
       startsWithAny(changedPath, [
         "apps/ops/",
         "deploy/ops-vps/",
-        "scripts/ops-runtime-deps/",
         "scripts/pack-ops-standalone.sh",
       ])
     ) {
@@ -238,6 +238,21 @@ function runSelfTests() {
     publishStorefront: true,
     opsMigrationBlocked: false,
   });
+  for (const runtimeManifest of ["package.json", "package-lock.json"]) {
+    assert.deepEqual(
+      classifyDeploymentImpact([`scripts/ops-runtime-deps/${runtimeManifest}`]),
+      {
+        shouldValidate: true,
+        shouldPublish: true,
+        validateOps: true,
+        validateStorefront: true,
+        publishOps: true,
+        publishStorefront: true,
+        opsMigrationBlocked: false,
+      },
+      "the Sharp runtime manifests are consumed by both standalone builders",
+    );
+  }
   assert.deepEqual(classifyDeploymentImpact([".github/workflows/codeql.yml"]), {
     shouldValidate: true,
     shouldPublish: false,

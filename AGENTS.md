@@ -23,8 +23,9 @@ truth. Do not rebuild the whole graph for a routine question.
 
 - Public storefront: `perfumeaura.com`; www permanently redirects preserving
   path/query. Private Ops: `app.perfumeaura.com`. No shop or www.app domain.
-- Storefront and Ops share Neon but keep roles, auth tables, cookies and secrets
-  separate. Do not delete/recreate Neon or copy Ops credentials into storefront.
+- Storefront and Ops share Neon and currently share one runtime database role.
+  Keep app auth tables, cookies and auth secrets separate; never copy Ops auth
+  credentials into storefront or delete/recreate Neon. Role separation needs review.
 - Preserve unrelated sites, mail, DNS, databases, VPS stacks and processes.
   GoDaddy owns registration; Hostinger nameservers own DNS.
 - Inspect existing signatures; keep changes minimal and strictly typed.
