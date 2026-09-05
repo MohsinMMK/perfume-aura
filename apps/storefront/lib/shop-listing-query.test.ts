@@ -406,4 +406,33 @@ describe("shop listing query", () => {
     assert.equal(withShopListingSort(ascending, "catalog").sort, "catalog");
     assert.equal(withShopListingSort(ascending, "name-desc").sort, "name-desc");
   });
+  it("round-trips brand slugs containing non-Latin letters", () => {
+    const brand = shopListingBrandSlug("عطر");
+    assert.equal(brand, "عطر");
+    assert.equal(parseShopListingQuery(serializeShopListingQuery({
+      ...emptyShopListingQuery,
+      brand,
+    })).brand, brand);
+  });
+
+  it("counts brands across collections while preserving search and size filters", () => {
+    const query = {
+      ...emptyShopListingQuery,
+      collection: "signature" as const,
+      brand: "dior",
+      q: "oud",
+      sizes: [30] as const,
+    };
+    const brands = listShopListingBrands(products, query);
+    assert.equal(brands.length, 39);
+    for (const brand of brands) {
+      assert.equal(brand.count, applyShopListingQuery(products, {
+        ...query,
+        collection: "all",
+        brand: brand.value,
+        sort: "catalog",
+      }).length);
+    }
+  });
+
 });

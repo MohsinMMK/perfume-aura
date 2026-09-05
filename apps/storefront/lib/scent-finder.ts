@@ -73,8 +73,10 @@ export function recommendScentProfiles(
     ] as const;
     const reasons = axes.flatMap((axis) => {
       const matchedSource = axis.sources.find((source) => {
-        const searchable = source.value.toLocaleLowerCase("en-IN");
-        return axis.tokens.some((token) => searchable.includes(token));
+        const words = new Set(
+          source.value.toLocaleLowerCase("en-IN").split(/[^\p{L}\p{N}]+/u),
+        );
+        return axis.tokens.some((token) => words.has(token));
       });
       return matchedSource
         ? [`${axis.key}: ${axis.answer} matches product ${matchedSource.label}`]

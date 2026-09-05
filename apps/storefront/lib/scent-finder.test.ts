@@ -55,4 +55,32 @@ describe("scent finder", () => {
       occasion: "Evening",
     }), []);
   });
+  it("does not treat informal as a formal occasion match", () => {
+    assert.deepEqual(recommendScentProfiles([{
+      ...products[0]!,
+      family: "Fresh citrus",
+      intensity: "Close",
+      occasion: "Informal",
+      notes: { top: [], heart: [], base: [] },
+    }], {
+      mood: "Radiant",
+      intensity: "Commanding",
+      occasion: "Occasion",
+    }), []);
+  });
+
+  it("recognizes whole tokens separated by punctuation", () => {
+    const result = recommendScentProfiles([{
+      ...products[0]!,
+      family: "Fresh/citrus",
+      intensity: "BALANCED—moderate",
+      occasion: "Special-event",
+    }], {
+      mood: "Radiant",
+      intensity: "Balanced",
+      occasion: "Occasion",
+    });
+    assert.equal(result[0]?.reasons.length, 3);
+  });
+
 });
