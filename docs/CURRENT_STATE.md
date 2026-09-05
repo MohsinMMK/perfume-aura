@@ -7,7 +7,7 @@ Never infer a live release from Git HEAD. Never record secrets or customer data.
 
 | Surface | Owner | Live source |
 |---|---|---|
-| `perfumeaura.com` | VPS Caddy → loopback 3031 → storefront | `c9150eeeecacf13a0cd662dc84000e9eb13de3db` |
+| `perfumeaura.com` | VPS Caddy → loopback 3031 → storefront | `f3cc5b9e6b5a38e3e4ec26011cf2b84b9b2ce350` |
 | `www.perfumeaura.com` | Caddy HTTPS 308 to apex, preserving path/query | Same storefront |
 | `app.perfumeaura.com` | VPS Caddy → loopback 3020 → Ops | `09164609b918cf8c356ec35e42e6d96ff1a25dce` |
 
@@ -28,14 +28,14 @@ preparation under `deploy/postgres-vps/` is not active production.
 
 - Storefront: protected main → scoped checks → checksummed Linux standalone →
   immutable GHCR image → Tailscale forced SSH → hardened container.
-  `VPS_STOREFRONT_AUTO_DEPLOY_ENABLED=true`. GitHub run `33929159164`
+  `VPS_STOREFRONT_AUTO_DEPLOY_ENABLED=true`. GitHub run `33953802523`
   successfully deployed the exact live source. Full public acceptance passes;
   `VPS_STOREFRONT_PUBLIC_VERIFICATION_ENABLED=true` checks future releases.
 - Ops uses an independent image and deploy identity. Its accepted runtime source
   is unchanged. `VPS_OPS_AUTO_DEPLOY_ENABLED=false` enforces the pending migration
   gate; the working Ops runtime remains available.
 - Storefront image digest:
-  `sha256:2b623902c722541759d4e9764031530e1ee6d64980325f10b311e297be2cab4f`.
+  `sha256:49c27f3e1b2d54eac64c723fb561036b90850673af1a60eeed0a1529d26d014b`.
   The 12 preserved settings are root-owned mode 0600 in
   `/etc/khanect/perfume-aura-storefront.env`; app auth secrets remain separate.
   Forced SSH probe succeeds and arbitrary commands are denied.
