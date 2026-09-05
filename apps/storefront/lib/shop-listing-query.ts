@@ -126,7 +126,7 @@ export function shopListingBrandSlug(brand: string): string {
 
 function parseBrandToken(value: string): string {
   const trimmed = value.trim();
-  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(trimmed) ? trimmed : "";
+  return shopListingBrandSlug(trimmed) === trimmed ? trimmed : "";
 }
 
 export function parseShopListingQuery(
@@ -285,16 +285,24 @@ export function listShopListingBrands(
     if (value && !labelsByValue.has(value)) labelsByValue.set(value, product.brand);
   }
 
+  const countsByValue = new Map<string, number>();
+  const matchingProducts = applyShopListingQuery(products, {
+    ...query,
+    collection: "all",
+    brand: "",
+    sort: "catalog",
+  });
+  for (const product of matchingProducts) {
+    if (!product.brand) continue;
+    const value = shopListingBrandSlug(product.brand);
+    countsByValue.set(value, (countsByValue.get(value) ?? 0) + 1);
+  }
+
   return [...labelsByValue]
     .map(([value, label]) => ({
       value,
       label,
-      count: applyShopListingQuery(products, {
-        ...query,
-        collection: "all",
-        brand: value,
-        sort: "catalog",
-      }).length,
+      count: countsByValue.get(value) ?? 0,
     }))
     .sort((left, right) => left.label.localeCompare(right.label, "en"));
 }
