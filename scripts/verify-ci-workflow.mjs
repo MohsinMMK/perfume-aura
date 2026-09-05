@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 const workflow = readFileSync(".github/workflows/ops-pack.yml", "utf8");
 assert.equal(
   [...workflow.matchAll(/persist-credentials: false/g)].length,
-  14,
+  13,
   "every non-publishing checkout must discard credentials",
 );
 
@@ -21,6 +21,7 @@ function jobBody(jobName, nextJobName) {
 
 assert.match(workflow, /^name: ci-and-ops-artifact$/m);
 assert.doesNotMatch(workflow, /deploy-hostinger-storefront-archive|storefront:pack|HOSTINGER_STOREFRONT_ARCHIVE/);
+assert.doesNotMatch(workflow, /hostinger-storefront-production|promote-hostinger-storefront-source|HOSTINGER_STOREFRONT_GIT_DEPLOY_ENABLED|git push/);
 for (const [, databaseName] of workflow.matchAll(/POSTGRES_DB:\s*([^\s},]+)/g)) {
   assert.match(databaseName, /^perfume_aura_phase\d{2}_[a-z0-9]+(?:_[a-z0-9]+)*$/);
 }
@@ -44,14 +45,6 @@ const quality = jobBody("quality", "publish-and-deploy-vps-ops");
 assert.match(quality, /if: always\(\)/);
 assert.match(quality, /STOREFRONT_SOURCE_BUILD/);
 assert.match(quality, /OPS_PACKAGE/);
-
-const promotion = jobBody("promote-hostinger-storefront-source", "verify-hostinger-storefront");
-assert.match(promotion, /needs:\n\s+- scope\n\s+- quality\n\s+- storefront-source-build/);
-assert.match(promotion, /always\(\)/);
-assert.match(promotion, /needs\.quality\.result == 'success'/);
-assert.match(promotion, /needs\.storefront-source-build\.result == 'success'/);
-assert.match(promotion, /hostinger-storefront-production/);
-assert.match(promotion, /HOSTINGER_STOREFRONT_GIT_DEPLOY_ENABLED/);
 
 const sourceBuild = jobBody("storefront-source-build", "ops-package");
 assert.match(sourceBuild, /upload-artifact/);
@@ -80,15 +73,7 @@ const migrationBlocker = jobBody("block-runtime-deploy-on-database-migration", "
 assert.match(migrationBlocker, /always\(\)/);
 assert.match(migrationBlocker, /needs\.quality\.result == 'success'/);
 
-const storefrontVerification = jobBody("verify-hostinger-storefront", null);
-assert.match(storefrontVerification, /always\(\)/);
-assert.match(storefrontVerification, /needs\.promote-hostinger-storefront-source\.result == 'success'/);
-
-const promotionCheckout = promotion.match(/Checkout the exact accepted source[\s\S]*?Advance the protected Hostinger source branch/)?.[0];
-assert.ok(promotionCheckout, "missing promotion checkout");
-assert.doesNotMatch(promotionCheckout, /persist-credentials: false/);
-
-const storefrontDeploy = jobBody("publish-and-deploy-vps-storefront", "promote-hostinger-storefront-source");
+const storefrontDeploy = jobBody("publish-and-deploy-vps-storefront", null);
 for (const required of [
   "needs.quality.result == 'success'", "needs.storefront-source-build.result == 'success'",
   "needs.scope.outputs.publish_storefront == 'true'", "needs.scope.outputs.ops_migration_blocked != 'true'",

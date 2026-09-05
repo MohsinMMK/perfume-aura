@@ -91,10 +91,10 @@ root-owned SHA/digest and call the same restricted deploy command, then verify.
 DNS rollback additionally requires the retained hosting app and its original
 web records. Never delete recovery material before accepting its replacement.
 
-Retired Hostinger integration remains disabled until the pending site cleanup:
-`hostinger-storefront-production` is gated by
-`HOSTINGER_STOREFRONT_GIT_DEPLOY_ENABLED=false`. Keep recovery material until
-provider disconnection and accepted VPS public routing are both verified.
+GitHub releases target the VPS only. There is no Hostinger source-promotion job
+or deployment branch; retain accepted image/state recovery rather than a provider
+Git branch. Remove remaining off-DNS Hostinger Web Apps and their provider Git
+connections only within the separately approved site-cleanup procedure.
 
 ## Ops deployment and recovery
 

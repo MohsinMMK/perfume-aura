@@ -247,11 +247,15 @@ Owner seeding is atomic and idempotent. Normal recovery uses
 | `verified-storefront-source-build` | Linux standalone build, smoke, container validation and checksummed artifact |
 | `verified-ops-artifact` | Ops standalone ZIP, checksum, manifest, and hardened container validation only when ops is affected |
 | `quality` | Stable required-check aggregator; succeeds for Markdown-only changes after repository contract tests and rejects missing/extra surface work |
-| `publish-and-deploy-vps-ops` / `promote-hostinger-storefront-source` | independent, gated releases only after `quality`; migrations block both |
+| `publish-and-deploy-vps-ops` / `publish-and-deploy-vps-storefront` | independent, gated releases only after `quality`; migrations block both |
 | `block-runtime-deploy-on-database-migration` | fails closed |
 
 CodeQL is a separate workflow. Commerce maintenance cron is flags-off unless
 `STOREFRONT_COMMERCE_MAINTENANCE_ENABLED=true`.
+
+The manifests under `scripts/ops-runtime-deps/` supply Sharp to both standalone
+builders, so changes select both surfaces. Deployment-tooling edits validate both
+without publishing. CI never creates a secondary deployment branch.
 
 | Script | Command |
 |---|---|
