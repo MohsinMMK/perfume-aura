@@ -31,13 +31,13 @@ preparation under `deploy/postgres-vps/` is not active production.
   `VPS_STOREFRONT_AUTO_DEPLOY_ENABLED=true`. GitHub run `33929159164`
   successfully deployed the exact live source. Full public acceptance passes;
   `VPS_STOREFRONT_PUBLIC_VERIFICATION_ENABLED=true` checks future releases.
-- Ops uses an independent image and deploy identity. Its live container is
-  unchanged. `VPS_OPS_AUTO_DEPLOY_ENABLED=false` enforces the pending migration
+- Ops uses an independent image and deploy identity. Its accepted runtime source
+  is unchanged. `VPS_OPS_AUTO_DEPLOY_ENABLED=false` enforces the pending migration
   gate; the working Ops runtime remains available.
 - Storefront image digest:
   `sha256:2b623902c722541759d4e9764031530e1ee6d64980325f10b311e297be2cab4f`.
   The 12 preserved settings are root-owned mode 0600 in
-  `/etc/khanect/perfume-aura-storefront.env`; no Ops credentials were reused.
+  `/etc/khanect/perfume-aura-storefront.env`; app auth secrets remain separate.
   Forced SSH probe succeeds and arbitrary commands are denied.
 - Private and public acceptance pass: seven discovery URLs, exact source, real
   static asset, locked commerce and www redirect. Browser checks confirm all
@@ -66,19 +66,21 @@ Production migration `0017_storefront_sale_settlement` is not applied. The
 Do not deploy Ops from main until its manual migration/grant gate passes.
 Storefront-only releases may proceed with Ops/database work excluded.
 
-## Active credential-rotation gate
+## Credential state
 
-The shared database credential, `CUSTOMER_AUTH_SECRET` and
-`STOREFRONT_MAINTENANCE_SECRET` require rotation: their values were captured in
-a private browser tool result. Do not share that transcript. No external misuse
-is established; do not treat that as proof the credentials are safe to retain.
+Both root-owned application env files use the rotated shared database credential.
+Fresh direct and pooled connections reject its predecessor. Storefront auth and
+maintenance secrets are independently generated; customer accounts/sessions are
+empty and auth remains disabled. Matching ignored local runtime URLs are synced;
+the separate owner connection and Ops auth secret are unchanged.
 
-Obtain owner approval for coordinated credential changes and runtime restarts.
-Update both root-owned application env files for the shared database credential,
-and the storefront's auth/maintenance secret consumers. Preserve accepted image
-digests, schema and release locks; do not apply migrations or deploy a new Ops
-source as part of rotation. Separating database roles requires its own reviewed
-grants and acceptance, not an assumed credential rename.
+Both apps pass public acceptance on their accepted images, with schema, grants
+and release locks unchanged. The shared role has no superuser, role creation,
+database creation, BYPASSRLS or Neon administrator membership. This does not prove
+complete least-privilege grants; separating roles remains a reviewed follow-up.
+GitHub has no maintenance secret configured and its maintenance enablement is
+unset, so scheduled workers remain inactive. Do not reuse retired hosting envs
+for recovery: their credentials are stale; current VPS envs own recovery.
 
 ## Cleanup boundaries
 
@@ -100,13 +102,12 @@ credentials only after provider disconnection and VPS acceptance.
 
 ## Next actions
 
-1. Resolve the credential-rotation gate with coordinated owner approval.
-2. Keep old hosting during DNS propagation. Verify apex/www resolve only to
-   the VPS, with no retired A/AAAA targets, before removing recovery hosting.
-3. Confirm and remove the three obsolete Perfume Aura Web Apps preserving
+1. Verify apex/www resolve only to the VPS, with no retired A/AAAA targets,
+   before removing recovery hosting.
+2. Confirm and remove the three obsolete Perfume Aura Web Apps preserving
    email/DNS; disconnect retired Git triggers and remove their unused credentials
    and source branch, then verify live routing and hosting slot counts again.
-4. Keep commerce/security gates closed. Owner gates: India counsel, catalog
+3. Keep commerce/security gates closed. Owner gates: India counsel, catalog
    facts/media, CA/tax/delivery policies, Google/SMTP/Cashfree, owner TOTP/staff
    denial, telemetry/maintenance, and explicit launch approval.
 

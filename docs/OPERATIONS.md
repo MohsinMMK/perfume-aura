@@ -7,8 +7,9 @@ or release work. This file owns procedures, not live SHAs.
 
 Only Perfume Aura is in scope. Preserve unrelated VPS stacks, Hostinger sites,
 email, DNS records, Neon, recovery artifacts and closed release flags.
-GoDaddy owns registration; Hostinger owns DNS. App credentials, tables, cookies
-and runtime roles stay separate. Never copy Ops credentials into storefront.
+GoDaddy owns registration; Hostinger owns DNS. App auth secrets, tables and cookies
+stay separate. The current database role/credential is shared by both runtimes;
+do not assume role isolation. Never copy Ops auth credentials into storefront.
 
 Prefer Hostinger MCP through Docker Gateway, GitHub CLI and private SSH.
 Use hPanel only for capabilities absent from the installed MCP tool inventory.
@@ -139,6 +140,26 @@ also require `--seo-mode public-catalog --expected-sitemap-manifest <reviewed-js
 
 ## Migrations and runtime grants
 
+### Credential rotation
+
+Obtain authorization for credential changes and coordinated restarts. Inventory
+both root-owned env files, matching ignored local URLs and configured CI consumers
+without printing values. Generate independent 32+ character secrets; pre-stage
+mode-0600 candidates before changing the database password through Neon's official
+API or SQL path. Change only the password, not role identity, grants or schema.
+
+Atomically promote both env files and recreate only their Compose services using
+the accepted immutable images and source SHAs. A container restart alone does not
+load changed env files. Verify fresh new-credential connections, rejection of the
+old password on direct/pooled endpoints, unchanged effective flags and images,
+then full public acceptance. Remove temporary old-secret copies after acceptance.
+Customer auth-secret rotation must account for existing sessions and encrypted
+OAuth tokens; do not discard those dependencies silently. Maintenance runtime and
+GitHub secrets must match when the worker is explicitly approved for activation.
+Never reuse stale credentials from retired Hostinger envs during recovery.
+
+### Schema changes
+
 Production is Neon. Runtime uses pooled `pg`; migrations use the direct owner
 connection. Never run integration tests on Neon or migrate as a deployment side
 effect. Confirm the journal, prove the intended changes on an isolated Neon
@@ -268,3 +289,4 @@ Cashfree TTL must remain 20 minutes; Ops refunds use the same reviewed merchant.
 - [Hostinger DNS editor](https://www.hostinger.com/support/how-to-use-hostingers-dns-zone-editor/)
 - [Docker Compose health wait](https://docs.docker.com/reference/cli/docker/compose/up/)
 - [Private GitHub runners with Tailscale](https://tailscale.com/kb/1586/secure-github-runners)
+- [Neon role password rotation](https://neon.com/docs/manage/roles#reset-a-password)
