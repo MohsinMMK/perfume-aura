@@ -36,7 +36,7 @@ preparation under `deploy/postgres-vps/` is not active production.
   gate; the working Ops runtime remains available.
 - Storefront image digest:
   `sha256:49c27f3e1b2d54eac64c723fb561036b90850673af1a60eeed0a1529d26d014b`.
-  The 12 preserved settings are root-owned mode 0600 in
+  The runtime settings are root-owned mode 0600 in
   `/etc/khanect/perfume-aura-storefront.env`; app auth secrets remain separate.
   Forced SSH probe succeeds and arbitrary commands are denied.
 - Private and public acceptance pass: seven discovery URLs, exact source, real
@@ -82,6 +82,14 @@ least-privilege grants and role separation remain reviewed follow-ups.
 GitHub has no maintenance secret configured and its maintenance enablement is
 unset, so scheduled workers remain inactive. Do not reuse retired hosting envs
 for recovery: their credentials are stale; current VPS envs own recovery.
+
+Google OAuth project `perfume-aura-signin` has the `Perfume Aura Storefront`
+web client for apex origin and `/api/customer-auth/callback/google`. Google
+remains in testing mode. Its client ID/secret are staged in the ignored local
+storefront env and root-owned VPS storefront env; the running container has not
+been recreated to load them. SMTP host/user/password/from are absent from that
+VPS env. Customer auth stays disabled pending provider testing, email delivery,
+privacy/deletion acceptance and the existing activation gates.
 
 ## Cleanup boundaries
 
