@@ -44,6 +44,11 @@ preparation under `deploy/postgres-vps/` is not active production.
   114 discovery scents and disabled purchasing. Ops acceptance also passes.
 - Markdown-only changes must not deploy. Storefront-only releases must not
   deploy Ops or apply migrations. Database changes fail closed at the owner gate.
+- Source pin is Node `24.20.0` / npm `11.19.0` on
+  `node:24.20.0-bookworm-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e`.
+  Live accepted images still run the previous `24.6.0` base until the next
+  storefront/Ops image rebuild. `.nvmrc` is shared runtime, so this pin change
+  selects both surfaces; Ops auto-deploy stays gated.
 
 ## Active release locks
 
@@ -90,6 +95,7 @@ storefront env and root-owned VPS storefront env; the running container has not
 been recreated to load them. SMTP host/user/password/from are absent from that
 VPS env. Customer auth stays disabled pending provider testing, email delivery,
 privacy/deletion acceptance and the existing activation gates.
+Deferred follow-up: [Google customer sign-in blockers](BLOCKERS.md#google-customer-sign-in--deferred).
 
 ## Cleanup boundaries
 
