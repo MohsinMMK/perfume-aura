@@ -95,7 +95,6 @@ storefront env and root-owned VPS storefront env; the running container has not
 been recreated to load them. SMTP host/user/password/from are absent from that
 VPS env. Customer auth stays disabled pending provider testing, email delivery,
 privacy/deletion acceptance and the existing activation gates.
-Deferred follow-up: [Google customer sign-in blockers](BLOCKERS.md#google-customer-sign-in--deferred).
 
 ## Cleanup boundaries
 
