@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@11.25.0",
   "engines": {
-    "node": ">=24.6.0 <25"
+    "node": ">=24.20.0 <25"
   },
   "description": "Perfume Aura monorepo — public storefront and owner operations",
   "scripts": {

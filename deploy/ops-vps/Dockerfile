@@ -1,4 +1,4 @@
-FROM node:24.6.0-bookworm-slim@sha256:9b741b28148b0195d62fa456ed84dd6c953c1f17a3761f3e6e6797a754d9edff
+FROM node:24.20.0-bookworm-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e
 
 ARG SOURCE_COMMIT
 LABEL org.opencontainers.image.source="https://github.com/MohsinMMK/perfume-aura" \

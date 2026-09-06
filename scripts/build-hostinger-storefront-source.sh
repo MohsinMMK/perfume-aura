@@ -200,7 +200,7 @@ cat > "$STAGE/package.json" <<'JSON'
 {
   "name": "perfume-aura-storefront-hostinger-source",
   "private": true,
-  "engines": { "node": ">=24.6.0 <25" },
+  "engines": { "node": ">=24.20.0 <25" },
   "scripts": { "start": "node apps/storefront/server.js" }
 }
 JSON

@@ -64,8 +64,8 @@ Change stack only through an explicit reviewed decision. No Vercel production.
 
 | Area | Choice |
 |---|---|
-| Workspace | pnpm `11.25.0` (`packageManager`), engines Node `>=24.6.0 <25` |
-| Pins | Node `24.6.0`, npm `11.5.1` (`.nvmrc`, CI, ops image, packers) |
+| Workspace | pnpm `11.25.0` (`packageManager`), engines Node `>=24.20.0 <25` |
+| Pins | Node `24.20.0`, npm `11.19.0` (`.nvmrc`, CI, ops image, packers) |
 | Apps | Next.js `16.3.4`, React `19.2.8`, App Router, `output: "standalone"` |
 | TypeScript | `tsc` is `7.0.2` via `@typescript/native`. Package named `typescript` is `@typescript/typescript6@6.0.2` for eslint/Next compiler API. `strict: true` |
 | UI | shadcn `^4.19.1`, `@base-ui/react` `^1.7.0`, Tailwind `4.3.3`, Hugeicons. No Radix runtime |
@@ -84,7 +84,7 @@ Change stack only through an explicit reviewed decision. No Vercel production.
 evidence, then verify audit, lint, shadcn preset resolution, migrations, both
 builds, and both packages.
 
-Both production images and CI pin Node `24.6.0`.
+Both production images and CI pin Node `24.20.0`.
 
 ## Shared UI contract
 
@@ -264,8 +264,8 @@ without publishing. CI never creates a secondary deployment branch.
 | `verify-production-deploy.mjs` | `pnpm ops:verify-production-deploy` |
 | `verify-commerce-foundation.mjs` | `pnpm commerce:verify` |
 
-The ops packer pins Node `24.6.0`, npm `11.5.1`, and pnpm `11.25.0`. The
-storefront source build uses CI Node `24.6.0` and pins pnpm `11.25.0`.
+The ops packer pins Node `24.20.0`, npm `11.19.0`, and pnpm `11.25.0`. The
+storefront source build uses CI Node `24.20.0` and pins pnpm `11.25.0`.
 Both reject secret-shaped output, verify Linux x64/glibc Sharp, and smoke their
 materialized servers.
 
