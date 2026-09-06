@@ -7,7 +7,7 @@ Never infer a live release from Git HEAD. Never record secrets or customer data.
 
 | Surface | Owner | Live source |
 |---|---|---|
-| `perfumeaura.com` | VPS Caddy → loopback 3031 → storefront | `f3cc5b9e6b5a38e3e4ec26011cf2b84b9b2ce350` |
+| `perfumeaura.com` | VPS Caddy → loopback 3031 → storefront | `0b69118a699500898838c18f3f727e7a0819751b` |
 | `www.perfumeaura.com` | Caddy HTTPS 308 to apex, preserving path/query | Same storefront |
 | `app.perfumeaura.com` | VPS Caddy → loopback 3020 → Ops | `09164609b918cf8c356ec35e42e6d96ff1a25dce` |
 
@@ -28,14 +28,15 @@ preparation under `deploy/postgres-vps/` is not active production.
 
 - Storefront: protected main → scoped checks → checksummed Linux standalone →
   immutable GHCR image → Tailscale forced SSH → hardened container.
-  `VPS_STOREFRONT_AUTO_DEPLOY_ENABLED=true`. GitHub run `33953802523`
-  successfully deployed the exact live source. Full public acceptance passes;
-  `VPS_STOREFRONT_PUBLIC_VERIFICATION_ENABLED=true` checks future releases.
+  `VPS_STOREFRONT_AUTO_DEPLOY_ENABLED=true`. GitHub run `34059406835`
+  (`deploy_target=storefront`) deployed the exact live source. Full public
+  acceptance passes; `VPS_STOREFRONT_PUBLIC_VERIFICATION_ENABLED=true` checks
+  future releases.
 - Ops uses an independent image and deploy identity. Its accepted runtime source
   is unchanged. `VPS_OPS_AUTO_DEPLOY_ENABLED=false` enforces the pending migration
   gate; the working Ops runtime remains available.
 - Storefront image digest:
-  `sha256:49c27f3e1b2d54eac64c723fb561036b90850673af1a60eeed0a1529d26d014b`.
+  `sha256:b23c5ff22dc4f0b269a77527e1aa572e38bb7645f423d536becd2a2f67f15bb7`.
   The runtime settings are root-owned mode 0600 in
   `/etc/khanect/perfume-aura-storefront.env`; app auth secrets remain separate.
   Forced SSH probe succeeds and arbitrary commands are denied.
@@ -46,9 +47,8 @@ preparation under `deploy/postgres-vps/` is not active production.
   deploy Ops or apply migrations. Database changes fail closed at the owner gate.
 - Source pin is Node `24.20.0` / npm `11.19.0` on
   `node:24.20.0-bookworm-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e`.
-  Live accepted images still run the previous `24.6.0` base until the next
-  storefront/Ops image rebuild. `.nvmrc` is shared runtime, so this pin change
-  selects both surfaces; Ops auto-deploy stays gated.
+  Live storefront runs that base. Ops still runs its previous accepted image;
+  auto-deploy stays gated.
 
 ## Active release locks
 
