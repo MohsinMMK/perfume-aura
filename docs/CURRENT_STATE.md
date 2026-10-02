@@ -7,7 +7,7 @@ Never infer a live release from Git HEAD. Never record secrets or customer data.
 
 | Surface | Owner | Live source |
 |---|---|---|
-| `perfumeaura.com` | VPS Caddy → loopback 3031 → storefront | `0b69118a699500898838c18f3f727e7a0819751b` |
+| `perfumeaura.com` | VPS Caddy → loopback 3031 → storefront | `58c70d535b40d58c98e52f1f7c07e2f62ffa867c` |
 | `www.perfumeaura.com` | Caddy HTTPS 308 to apex, preserving path/query | Same storefront |
 | `app.perfumeaura.com` | VPS Caddy → loopback 3020 → Ops | `09164609b918cf8c356ec35e42e6d96ff1a25dce` |
 
@@ -28,7 +28,7 @@ preparation under `deploy/postgres-vps/` is not active production.
 
 - Storefront: protected main → scoped checks → checksummed Linux standalone →
   immutable GHCR image → Tailscale forced SSH → hardened container.
-  `VPS_STOREFRONT_AUTO_DEPLOY_ENABLED=true`. GitHub run `34059406835`
+  `VPS_STOREFRONT_AUTO_DEPLOY_ENABLED=true`. GitHub run `37038313449`
   (`deploy_target=storefront`) deployed the exact live source. Full public
   acceptance passes; `VPS_STOREFRONT_PUBLIC_VERIFICATION_ENABLED=true` checks
   future releases.
@@ -36,13 +36,17 @@ preparation under `deploy/postgres-vps/` is not active production.
   is unchanged. `VPS_OPS_AUTO_DEPLOY_ENABLED=false` enforces the pending migration
   gate; the working Ops runtime remains available.
 - Storefront image digest:
-  `sha256:b23c5ff22dc4f0b269a77527e1aa572e38bb7645f423d536becd2a2f67f15bb7`.
+  `sha256:8110cbc0ba75939936b9f7274f721b39520160e85f0ceaf189c673c79e6114cb`.
   The runtime settings are root-owned mode 0600 in
   `/etc/khanect/perfume-aura-storefront.env`; app auth secrets remain separate.
   Forced SSH probe succeeds and arbitrary commands are denied.
 - Private and public acceptance pass: seven discovery URLs, exact source, real
   static asset, locked commerce and www redirect. Browser checks confirm all
   114 discovery scents and disabled purchasing. Ops acceptance also passes.
+- The homepage hero cycles only through Inspired Series and Signature Series.
+  The cream guide section is removed; the two featured cards are centered on
+  desktop. Desktop/tablet/mobile browser checks pass. Ops container identity,
+  start time and image remain unchanged.
 - Markdown-only changes must not deploy. Storefront-only releases must not
   deploy Ops or apply migrations. Database changes fail closed at the owner gate.
 - Source pin is Node `24.20.0` / npm `11.19.0` on
