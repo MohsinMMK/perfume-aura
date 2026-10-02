@@ -57,6 +57,9 @@ ten high, nineteen moderate and four low. `pnpm check` passes its earlier
 checks but fails at the security audit. Review the affected dependency paths
 and fixes before the next runtime release; passing documentation-only CI
 does not clear this gate.
+The separate production-only audit,
+`npm audit --omit=dev --prefix scripts/ops-runtime-deps`, reports one high-severity
+advisory; this result is separate from the root audit's 34-advisory count.
 
 All remain false: `STOREFRONT_PUBLIC_RELEASE`,
 `STOREFRONT_CUSTOMER_AUTH_ENABLED`, `STOREFRONT_CHECKOUT_RELEASE_APPROVED`,
