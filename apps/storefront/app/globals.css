@@ -930,6 +930,12 @@ textarea {
   .aura-product-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+
+  .aura-home-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 64rem;
+    margin-inline: auto;
+  }
 }
 
 @media (min-width: 640px) and (max-width: 1023px) {

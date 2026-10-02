@@ -99,7 +99,7 @@ export default async function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }}
       />
-      <HomeHero products={featuredProducts} />
+      <HomeHero />
 
       <section className="relative min-h-[86svh] overflow-hidden bg-[var(--aura-ink)] px-5 py-24 text-[var(--aura-ivory)] sm:px-8 lg:py-36">
         <IngredientAtmosphere />
@@ -149,7 +149,7 @@ export default async function HomePage() {
             <span className="block text-[clamp(4.8rem,13vw,12rem)] leading-[0.68]">Choose your</span>
             <span className="text-outline block text-[clamp(5.2rem,15vw,14rem)] leading-[0.78]">Aura</span>
           </h2>
-          <div className="aura-product-grid grid gap-[var(--aura-gap)] lg:gap-[var(--aura-gap-lg)]">
+          <div className="aura-product-grid aura-home-product-grid grid gap-[var(--aura-gap)] lg:gap-[var(--aura-gap-lg)]">
             {featuredProducts.map((product, index) => (
               <ProductCard
                 key={product.id}
@@ -208,28 +208,6 @@ export default async function HomePage() {
                 </div>
               </article>
             ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="grid min-h-[44rem] bg-[var(--aura-ivory)] text-[var(--aura-ink)] lg:grid-cols-2">
-        <div className="relative min-h-[28rem] overflow-hidden lg:min-h-full">
-          <Image
-            src="/images/signature-inspired-duo.webp"
-            alt="Perfume Aura Signature Series clear glass bottle beside the matte-black Inspired Series bottle"
-            fill
-            unoptimized
-            sizes="(max-width: 1024px) 100vw, 50vw"
-            className="object-cover object-center"
-          />
-        </div>
-        <div className="flex items-center px-6 py-16 sm:px-12 lg:px-16">
-          <div className="max-w-xl">
-            <h2 data-motion-copy className="font-display text-[clamp(4.5rem,8vw,8rem)] leading-[0.8]">Start with the feeling</h2>
-            <p className="mt-7 text-base leading-7 text-black/70">Choose mood, intensity, and occasion. The finder stays quiet until there is enough complete scent data to make a recommendation worth trusting.</p>
-            <Button render={<Link href="/fragrance-guide" />} nativeButton={false} className="mt-8 min-h-16 rounded-[var(--aura-radius)] bg-[var(--aura-ink)] px-8 font-display text-xl text-[var(--aura-ivory)] hover:bg-black">
-              Read the fragrance guide <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={1.8} />
-            </Button>
           </div>
         </div>
       </section>

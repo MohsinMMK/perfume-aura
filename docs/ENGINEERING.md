@@ -66,7 +66,7 @@ Change stack only through an explicit reviewed decision. No Vercel production.
 |---|---|
 | Workspace | pnpm `11.25.0` (`packageManager`), engines Node `>=24.20.0 <25` |
 | Pins | Node `24.20.0`, npm `11.19.0` (`.nvmrc`, CI, ops image, packers) |
-| Apps | Next.js `16.3.4`, React `19.2.8`, App Router, `output: "standalone"` |
+| Apps | Next.js `16.3.6`, React `19.2.8`, App Router, `output: "standalone"` |
 | TypeScript | `tsc` is `7.0.2` via `@typescript/native`. Package named `typescript` is `@typescript/typescript6@6.0.2` for eslint/Next compiler API. `strict: true` |
 | UI | shadcn `^4.19.1`, `@base-ui/react` `^1.7.0`, Tailwind `4.3.3`, Hugeicons. No Radix runtime |
 | Fonts | Ops: IBM Plex Sans + Raleway. Storefront: self-hosted Londrina Solid/Outline + Inter Tight |
@@ -76,10 +76,10 @@ Change stack only through an explicit reviewed decision. No Vercel production.
 | Telemetry | `posthog-js` `1.424.0`, `@sentry/nextjs` `10.73.0` |
 | Payments | Cashfree JS `^1.0.7`; dashboard TTL 20 minutes; provider order expiry 15 minutes |
 
-`pnpm-workspace.yaml` overrides: `sharp@0.35.3`, `postcss@8.5.23`,
-`@hono/node-server@1.19.14 → 2.0.10`, `brace-expansion@5.0.9`,
-`esbuild@0.18.20 → 0.25.12`, `fast-uri@3.1.5`, `hono@4.12.34`,
-`ip-address@10.3.1`, `js-yaml@4.3.1`, `nanoid@3.3.18`, `undici@7.29.0`. Patch:
+`pnpm-workspace.yaml` overrides: `sharp@0.35.5`, `postcss@8.5.23`,
+`@hono/node-server@1.19.14 → 2.0.10`, `brace-expansion@5.0.12`,
+`esbuild@0.18.20 → 0.25.12`, `fast-uri@3.1.8`, `hono@4.13.7`,
+`ip-address@10.7.1`, `js-yaml@4.3.2`, `nanoid@3.3.18`, `undici@7.29.1`, `dompurify@3.4.16`. Patch:
 `patches/minimatch@3.1.5.patch`. Change an override only with dependency-path
 evidence, then verify audit, lint, shadcn preset resolution, migrations, both
 builds, and both packages.
