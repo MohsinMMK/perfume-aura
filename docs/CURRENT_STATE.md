@@ -52,6 +52,12 @@ preparation under `deploy/postgres-vps/` is not active production.
 
 ## Active release locks
 
+Local dependency audit on 2026-10-02 reports 34 advisories: one critical,
+ten high, nineteen moderate and four low. `pnpm check` passes its earlier
+checks but fails at the security audit. Review the affected dependency paths
+and fixes before the next runtime release; passing documentation-only CI
+does not clear this gate.
+
 All remain false: `STOREFRONT_PUBLIC_RELEASE`,
 `STOREFRONT_CUSTOMER_AUTH_ENABLED`, `STOREFRONT_CHECKOUT_RELEASE_APPROVED`,
 `STOREFRONT_INQUIRIES_ENABLED`, `STOREFRONT_COMMERCE_MAINTENANCE_ENABLED`,
