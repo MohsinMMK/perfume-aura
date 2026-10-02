@@ -85,13 +85,8 @@ function AnimatedHeroHeading() {
   );
 }
 
-export function HomeHero({
-  products,
-}: Readonly<{ products: readonly HeroProduct[] }>) {
-  const slides =
-    products.length > 0
-      ? [fallbackProduct, signatureSeriesProduct, ...products]
-      : fallbackSlides;
+export function HomeHero() {
+  const slides = fallbackSlides;
   const [activeIndex, setActiveIndex] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);

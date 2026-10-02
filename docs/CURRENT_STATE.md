@@ -52,14 +52,11 @@ preparation under `deploy/postgres-vps/` is not active production.
 
 ## Active release locks
 
-Local dependency audit on 2026-10-02 reports 34 advisories: one critical,
-ten high, nineteen moderate and four low. `pnpm check` passes its earlier
-checks but fails at the security audit. Review the affected dependency paths
-and fixes before the next runtime release; passing documentation-only CI
-does not clear this gate.
-The separate production-only audit,
-`npm audit --omit=dev --prefix scripts/ops-runtime-deps`, reports one high-severity
-advisory; this result is separate from the root audit's 34-advisory count.
+Source dependencies use security-patched Next.js `16.3.6`, Sharp `0.35.5`,
+Nodemailer `10.0.9` and reviewed transitive overrides. `pnpm check` and
+110 disposable-database integration tests pass; both dependency audits report
+zero known vulnerabilities. This validates source, not the still-accepted Ops
+image: its patched release remains subject to the migration gate.
 
 All remain false: `STOREFRONT_PUBLIC_RELEASE`,
 `STOREFRONT_CUSTOMER_AUTH_ENABLED`, `STOREFRONT_CHECKOUT_RELEASE_APPROVED`,
@@ -111,6 +108,10 @@ Repository working policy: one primary checkout on `main`, no retained feature
 or deployment branches and no extra worktrees. Integrate useful changes through
 protected PRs, then remove their branches. GitHub deploys accepted images to the
 VPS; no workflow creates or advances a Hostinger source branch.
+
+The retired storefront Web App still displays failed Git builds against
+`hostinger-storefront-production`. That deleted branch is not part of the
+current GitHub-to-VPS deployment path.
 
 Hostinger has five Web App slots occupied. Pending removal after DNS cache
 expiry and explicit irreversible-deletion confirmation: `perfumeaura.com`,

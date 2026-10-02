@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 EXPECTED_PNPM="11.25.0"
-EXPECTED_SHARP="0.35.3"
+EXPECTED_SHARP="0.35.5"
 OUTPUT_DIR="$ROOT/.hostinger/storefront"
 RUNTIME_DEPS_DIR="$ROOT/scripts/ops-runtime-deps"
 

@@ -143,7 +143,7 @@ describe("storefront motion contract", () => {
     );
     assert.match(
       hero,
-      /\[fallbackProduct, signatureSeriesProduct, \.\.\.products\]/u,
+      /const slides = fallbackSlides;/u,
     );
     assert.match(
       hero,
