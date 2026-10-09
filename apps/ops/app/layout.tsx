@@ -19,6 +19,7 @@ export const metadata: Metadata = {
     template: "%s · Perfume Aura Ops",
   },
   description: "Internal inventory, invoicing, and finance for Perfume Aura.",
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({
