@@ -5,7 +5,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-EXPECTED_PNPM="11.25.0"
+EXPECTED_NODE="24.21.0"
+EXPECTED_PNPM="11.28.5"
 EXPECTED_SHARP="0.35.5"
 OUTPUT_DIR="$ROOT/.hostinger/storefront"
 RUNTIME_DEPS_DIR="$ROOT/scripts/ops-runtime-deps"
@@ -20,7 +21,7 @@ verify_repository_contract() {
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const rootPackage = JSON.parse(fs.readFileSync("package.json", "utf8"));
-assert.equal(rootPackage.packageManager, "pnpm@11.25.0");
+assert.equal(rootPackage.packageManager, "pnpm@11.28.5");
 assert.equal(rootPackage.scripts.build, "corepack pnpm hostinger:build:storefront");
 assert.equal(
   rootPackage.scripts["hostinger:build:storefront"],
@@ -53,7 +54,7 @@ fi
 [[ $# -eq 0 ]] || fail "Usage: build-hostinger-storefront-source.sh [self-test]"
 
 verify_repository_contract
-[[ "$(node -p 'process.versions.node.split(`.`)[0]')" == "24" ]] || fail "Hostinger storefront build requires Node 24.x"
+[[ "$(node -p 'process.versions.node')" == "$EXPECTED_NODE" ]] || fail "Hostinger storefront build requires Node $EXPECTED_NODE"
 [[ "$(corepack pnpm@"$EXPECTED_PNPM" --version)" == "$EXPECTED_PNPM" ]] || fail "Hostinger storefront build requires pnpm $EXPECTED_PNPM"
 [[ "$(node -p 'process.platform')" == "linux" ]] || fail "Hostinger storefront output must be built on Linux"
 [[ "$(node -p 'process.arch')" == "x64" ]] || fail "Hostinger storefront output must target linux/x64"
@@ -200,7 +201,7 @@ cat > "$STAGE/package.json" <<'JSON'
 {
   "name": "perfume-aura-storefront-hostinger-source",
   "private": true,
-  "engines": { "node": ">=24.20.0 <25" },
+  "engines": { "node": ">=24.21.0 <25" },
   "scripts": { "start": "node apps/storefront/server.js" }
 }
 JSON

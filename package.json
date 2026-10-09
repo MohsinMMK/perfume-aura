@@ -1,11 +1,11 @@
 {
   "name": "perfume-aura",
   "private": true,
-  "packageManager": "pnpm@11.25.0",
+  "packageManager": "pnpm@11.28.5",
   "engines": {
-    "node": ">=24.20.0 <25"
+    "node": ">=24.21.0 <25"
   },
-  "description": "Perfume Aura monorepo — public storefront and owner operations",
+  "description": "Perfume Aura monorepo \u2014 public storefront and owner operations",
   "scripts": {
     "dev:storefront": "pnpm --filter @perfume-aura/storefront dev",
     "build:storefront": "pnpm --filter @perfume-aura/storefront build",

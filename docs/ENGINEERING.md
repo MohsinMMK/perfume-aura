@@ -64,19 +64,19 @@ Change stack only through an explicit reviewed decision. No Vercel production.
 
 | Area | Choice |
 |---|---|
-| Workspace | pnpm `11.25.0` (`packageManager`), engines Node `>=24.20.0 <25` |
-| Pins | Node `24.20.0`, npm `11.19.0` (`.nvmrc`, CI, ops image, packers) |
+| Workspace | pnpm `11.28.5` (`packageManager`), engines Node `>=24.21.0 <25` |
+| Pins | Node `24.21.0`, npm `11.19.0` (`.nvmrc`, CI, ops image, packers) |
 | Apps | Next.js `16.3.8`, React `19.2.8`, App Router, `output: "standalone"` |
 | TypeScript | `tsc` is `7.0.2` via `@typescript/native`. Package named `typescript` is `@typescript/typescript6@6.0.2` for eslint/Next compiler API. `strict: true` |
 | UI | shadcn `^4.19.1`, `@base-ui/react` `^1.7.0`, Tailwind `4.3.3`, Hugeicons. No Radix runtime |
 | Fonts | Ops: IBM Plex Sans + Raleway. Storefront: self-hosted Londrina Solid/Outline + Inter Tight |
 | Auth | Better Auth `1.7.2`, two Drizzle adapters |
-| Database | drizzle-orm `0.45.2`, drizzle-kit `^0.31.10`, `pg` `8.23.0` Pool (`max: 10`) |
-| Validation | Zod `4.5.4` |
+| Database | drizzle-orm `0.45.4`, drizzle-kit `^0.31.11`, `pg` `8.23.1` Pool (`max: 10`) |
+| Validation | Zod `4.6.5` |
 | Telemetry | `posthog-js` `1.424.0`, `@sentry/nextjs` `10.73.0` |
 | Payments | Cashfree JS `^1.0.7`; dashboard TTL 20 minutes; provider order expiry 15 minutes |
 
-`pnpm-workspace.yaml` overrides: `sharp@0.35.5`, `postcss@8.5.23`,
+`pnpm-workspace.yaml` overrides: `sharp@0.35.5`, `postcss@8.5.29`,
 `@hono/node-server@1.19.14 → 2.0.10`, `brace-expansion@5.0.12`,
 `esbuild@0.18.20 → 0.25.12`, `fast-uri@3.1.8`, `hono@4.13.7`,
 `ip-address@10.7.1`, `js-yaml@4.3.2`, `nanoid@3.3.18`, `qs@6.16.0`,
@@ -86,7 +86,29 @@ Change stack only through an explicit reviewed decision. No Vercel production.
 evidence, then verify audit, lint, shadcn preset resolution, migrations, both
 builds, and both packages.
 
-Both production images and CI pin Node `24.20.0`.
+Both source Dockerfiles and CI pin Node `24.21.0`.
+
+These are maintenance source pins, not a deployed runtime claim. Better Auth
+remains `1.7.2`: testing `1.7.7` failed initialization because both auth tables
+retain the required `issuer` column. The [official upgrade guide](https://better-auth.com/docs/guides/1-7-upgrade-guide)
+requires relaxing that constraint and reviewing provider/account identity after
+`1.7.2`. This patch does not change schemas or migration gates. The PostgreSQL
+concurrent rate-limit fix in [the release](https://github.com/better-auth/better-auth/releases/tag/v1.7.7)
+remains deferred with the auth upgrade. Neither app enables Magic Link or OAuth
+Proxy; exposure to GHSA-965c-763c-88jm is not established by these configurations.
+
+Sentry remains `10.73.0`. Testing `10.76.2` increased measured `/shop` client
+JavaScript from 216,770 to 222,306 bytes, exceeding the unchanged 220,000-byte
+guard. Retaining `10.73.0` with the other proposed updates restored the budget.
+The telemetry upgrade is deferred until its client cost is resolved.
+
+ESLint remains `9.39.5`, which is [end of life](https://eslint.org/version-support/).
+ESLint `10.12.0` is blocked by the retained React `7.37.5`, JSX accessibility
+`6.10.2` and import `2.32.0` plugins. React still calls the removed
+`context.getFilename()` API; [upstream compatibility](https://github.com/jsx-eslint/eslint-plugin-react/issues/3977)
+is unresolved. Next `16.4.0` retains that plugin. Do not force peers, replace
+recommended rules or suppress the finding to claim a supported upgrade.
+Next `16.3.8` and React `19.2.8` remain unchanged in this patch.
 
 ## Shared UI contract
 
@@ -104,7 +126,12 @@ pnpm dlx shadcn@latest add button -c apps/ops -y
 pnpm dlx shadcn@latest preset resolve -c apps/storefront
 ```
 
-Preset resolve must return `b23PPibQOI` without fallback.
+Ops preset resolve must return `b23PPibQOI` without fallback. The accepted
+storefront uses custom Inter Tight / Londrina fonts unavailable in shadcn/create:
+its resolver reports `b7W7uXZvG` with font/fontHeading fallbacks while its shared
+tokens retain `b23PPibQOI`. This is an existing resolver discrepancy, not a
+validated match. Preserve the approved brand fonts; resolving that contract
+requires an explicit design decision, not a silent preset overwrite.
 
 Skills live under `.agents/skills/` and are locked by `skills-lock.json`.
 Never use Vercel deploy skills.
@@ -266,8 +293,8 @@ without publishing. CI never creates a secondary deployment branch.
 | `verify-production-deploy.mjs` | `pnpm ops:verify-production-deploy` |
 | `verify-commerce-foundation.mjs` | `pnpm commerce:verify` |
 
-The ops packer pins Node `24.20.0`, npm `11.19.0`, and pnpm `11.25.0`. The
-storefront source build uses CI Node `24.20.0` and pins pnpm `11.25.0`.
+The ops packer pins Node `24.21.0`, npm `11.19.0`, and pnpm `11.28.5`. The
+storefront source build uses CI Node `24.21.0` and pins pnpm `11.28.5`.
 Both reject secret-shaped output, verify Linux x64/glibc Sharp, and smoke their
 materialized servers.
 
