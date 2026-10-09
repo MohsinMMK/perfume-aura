@@ -24,6 +24,8 @@ export const metadata: Metadata = {
     "Discover Perfume Aura, a fragrance store in Kondapur, Hyderabad, and learn how to choose perfume by mood, intensity, occasion, and composition.",
   alternates: { canonical: "/" },
   openGraph: {
+    siteName: "Perfume Aura",
+    locale: "en_IN",
     type: "website",
     url: "/",
     title: "Perfume Aura | Perfume store in Kondapur, Hyderabad",
@@ -149,6 +151,12 @@ export default async function HomePage() {
             <span className="block text-[clamp(4.8rem,13vw,12rem)] leading-[0.68]">Choose your</span>
             <span className="text-outline block text-[clamp(5.2rem,15vw,14rem)] leading-[0.78]">Aura</span>
           </h2>
+          <p className="mx-auto mb-10 max-w-2xl text-center text-base leading-8 text-[color:rgb(245_228_199_/_74%)]">
+            Perfume Aura is a fragrance store in Kondapur, Hyderabad. Explore the Inspired Series and Signature Series, then compare the mood, notes, and intensity that suit you.
+            {" "}<Link href="/fragrance-guide" className="underline underline-offset-4 hover:text-[var(--aura-ivory)]">Read our perfume selection guide</Link>
+            {" "}or <Link href="/about" className="underline underline-offset-4 hover:text-[var(--aura-ivory)]">find the Kondapur store</Link>.
+            Contact us on WhatsApp to confirm product details; online checkout is not available.
+          </p>
           <div className="aura-product-grid aura-home-product-grid grid gap-[var(--aura-gap)] lg:gap-[var(--aura-gap-lg)]">
             {featuredProducts.map((product, index) => (
               <ProductCard

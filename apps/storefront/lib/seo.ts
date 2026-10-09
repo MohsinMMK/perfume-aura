@@ -7,15 +7,15 @@ export const discoveryLastModified = "2026-09-01";
 export const fragranceGuidePublishedDate = "2026-08-28";
 
 export const discoverySitemapEntries = [
-  { path: "", changeFrequency: "weekly", priority: 1, lastModified: discoveryLastModified },
+  { path: "", changeFrequency: "weekly", priority: 1, lastModified: "2026-10-09" },
   {
     path: "/fragrance-guide",
     changeFrequency: "monthly",
     priority: 0.9,
     lastModified: discoveryLastModified,
   },
-  { path: "/about", changeFrequency: "monthly", priority: 0.7, lastModified: discoveryLastModified },
-  { path: "/faq", changeFrequency: "monthly", priority: 0.6, lastModified: discoveryLastModified },
+  { path: "/about", changeFrequency: "monthly", priority: 0.7, lastModified: "2026-10-09" },
+  { path: "/faq", changeFrequency: "monthly", priority: 0.6, lastModified: "2026-10-09" },
   {
     path: "/guides/perfume-for-hyderabad-weather",
     changeFrequency: "monthly",
@@ -81,7 +81,7 @@ export function createHomeStructuredData(origin = getStorefrontOrigin()) {
         name: siteName,
         alternateName: "Perfume Aura Hyderabad",
         url: origin,
-        logo: `${origin}/brand/perfume-aura-icon.svg`,
+        logo: `${origin}/brand/perfume-aura-icon-512.png`,
         image: `${origin}/images/hero-bottle-still-life.webp`,
         description: defaultSiteDescription,
         sameAs: ["https://www.instagram.com/perfume.aura.hyd/"],
@@ -139,8 +139,8 @@ export function createEditorialStructuredData(
         description: input.description,
         url: pageUrl,
         mainEntityOfPage: pageUrl,
-        author: { "@id": `${origin}/#organization` },
-        publisher: { "@id": `${origin}/#organization` },
+        author: { "@type": "Organization", "@id": `${origin}/#organization`, name: siteName, url: origin },
+        publisher: { "@type": "Organization", "@id": `${origin}/#organization`, name: siteName, url: origin },
         image: new URL(input.image, origin).toString(),
         datePublished: input.publishedDate,
         dateModified: input.reviewedDate,
@@ -238,8 +238,8 @@ export function createFragranceGuideStructuredData(
           "Choose a perfume by mood, fragrance family, intensity, occasion, and a careful skin test.",
         url: pageUrl,
         mainEntityOfPage: pageUrl,
-        author: { "@id": `${origin}/#organization` },
-        publisher: { "@id": `${origin}/#organization` },
+        author: { "@type": "Organization", "@id": `${origin}/#organization`, name: siteName, url: origin },
+        publisher: { "@type": "Organization", "@id": `${origin}/#organization`, name: siteName, url: origin },
         image: `${origin}/images/hero-bottle-still-life.webp`,
         datePublished: fragranceGuidePublishedDate,
         dateModified: discoveryLastModified,
@@ -268,7 +268,7 @@ export function createFragranceGuideStructuredData(
 }
 
 export const aboutPageDescription =
-  "Meet Perfume Aura, a fragrance store in Kondapur, Hyderabad, built around expressive presentation and careful, verified product claims.";
+  "Find Perfume Aura in Kondapur, Hyderabad. Explore the Inspired Series and Signature Series, plan your store visit, and learn how to choose a perfume.";
 
 export function createAboutStructuredData(origin = getStorefrontOrigin()) {
   const pageUrl = `${origin}/about`;

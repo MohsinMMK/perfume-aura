@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { StorefrontProduct } from "@/lib/catalog";
-import { discoveryLastModified } from "@/lib/seo";
+import { discoverySitemapEntries } from "@/lib/seo";
 import { buildStorefrontSitemap, dynamic } from "../app/sitemap";
 
 const publishedProduct = {
@@ -21,7 +21,7 @@ describe("runtime storefront sitemap", () => {
     const empty = buildStorefrontSitemap({ baseUrl: "https://perfumeaura.com", publicCatalogEnabled: true, publishedProducts: [] });
     assert.deepEqual(closed, empty);
     assert.equal(closed.some((entry) => entry.url.endsWith("/shop")), false);
-    assert.ok(closed.every((entry) => entry.lastModified === discoveryLastModified));
+    assert.deepEqual(closed.map((entry) => entry.lastModified), discoverySitemapEntries.map((entry) => entry.lastModified));
   });
 
   it("adds only approved nonempty catalog paths with database timestamps", () => {

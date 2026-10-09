@@ -51,7 +51,7 @@ describe("storefront SEO contracts", () => {
     );
     assert.ok(!discoveryPaths.has("/shop"));
     assert.ok(
-      discoverySitemapEntries.every((entry) => entry.lastModified === discoveryLastModified),
+      discoverySitemapEntries.every((entry) => /^\d{4}-\d{2}-\d{2}$/.test(entry.lastModified)),
     );
   });
 
