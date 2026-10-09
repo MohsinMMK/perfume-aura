@@ -66,7 +66,7 @@ Change stack only through an explicit reviewed decision. No Vercel production.
 |---|---|
 | Workspace | pnpm `11.25.0` (`packageManager`), engines Node `>=24.20.0 <25` |
 | Pins | Node `24.20.0`, npm `11.19.0` (`.nvmrc`, CI, ops image, packers) |
-| Apps | Next.js `16.3.6`, React `19.2.8`, App Router, `output: "standalone"` |
+| Apps | Next.js `16.3.8`, React `19.2.8`, App Router, `output: "standalone"` |
 | TypeScript | `tsc` is `7.0.2` via `@typescript/native`. Package named `typescript` is `@typescript/typescript6@6.0.2` for eslint/Next compiler API. `strict: true` |
 | UI | shadcn `^4.19.1`, `@base-ui/react` `^1.7.0`, Tailwind `4.3.3`, Hugeicons. No Radix runtime |
 | Fonts | Ops: IBM Plex Sans + Raleway. Storefront: self-hosted Londrina Solid/Outline + Inter Tight |
