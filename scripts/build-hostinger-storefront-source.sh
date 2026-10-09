@@ -151,6 +151,9 @@ if [[ -d "$STAGE/node_modules/.pnpm/node_modules" ]]; then
   done
 fi
 
+# Preserve pg's exact runtime graph, including conditional export entrypoints.
+node "$ROOT/scripts/materialize-pg-runtime.mjs" "$ROOT/apps/storefront" "$STAGE/apps/storefront"
+
 echo "==> Installing the locked Linux x64/glibc Sharp runtime"
 cp "$RUNTIME_DEPS_DIR/package.json" "$SHARP_TMP/package.json"
 cp "$RUNTIME_DEPS_DIR/package-lock.json" "$SHARP_TMP/package-lock.json"

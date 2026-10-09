@@ -86,7 +86,10 @@ Change stack only through an explicit reviewed decision. No Vercel production.
 evidence, then verify audit, lint, shadcn preset resolution, migrations, both
 builds, and both packages.
 
-Both source Dockerfiles and CI pin Node `24.21.0`.
+Both source Dockerfiles and CI pin Node `24.21.0`. Both standalone builders
+materialize the exact installed pg runtime dependency closure, so relocated runtime
+aliases cannot resolve a partial or differently versioned hoisted pg-protocol
+trace. Archive smoke checks remain mandatory.
 
 These are maintenance source pins, not a deployed runtime claim. Better Auth
 remains `1.7.2`: testing `1.7.7` failed initialization because both auth tables

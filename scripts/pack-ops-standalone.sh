@@ -583,6 +583,9 @@ if [[ -d "$STAGE/node_modules/.pnpm/node_modules" ]]; then
   done
 fi
 
+# Repair partial or differently versioned hoisted traces from pg's exact graph.
+node "$ROOT/scripts/materialize-pg-runtime.mjs" "$ROOT/apps/ops" "$STAGE/apps/ops"
+
 # Turbopack can emit hashed ESM external aliases under .next/node_modules
 # (for example, pg-<hash> or @scope/pkg-<hash>). Hostinger's extractor does
 # not preserve these symlinks reliably, so materialize every generated alias
