@@ -1,10 +1,4 @@
 import type { Metadata } from "next";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@perfume-aura/ui/components/accordion";
 import { DiscoveryGuideLinks } from "@/components/discovery-guide-links";
 import { EditorialPage } from "@/components/editorial-page";
 import { faqItems } from "@/lib/faq";
@@ -13,9 +7,11 @@ import { createFaqStructuredData, serializeJsonLd } from "@/lib/seo";
 export const metadata: Metadata = {
   title: "Perfume questions and answers",
   description:
-    "Clear answers about Perfume Aura, choosing a fragrance, planned sizes, payments, and delivery in India.",
+    "Find Perfume Aura in Kondapur, Hyderabad, learn how to compare perfumes and notes, and check the current online checkout and delivery status.",
   alternates: { canonical: "/faq" },
   openGraph: {
+    siteName: "Perfume Aura",
+    locale: "en_IN",
     type: "website",
     url: "/faq",
     title: "Perfume questions and answers | Perfume Aura",
@@ -35,11 +31,15 @@ export default function FaqPage() {
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }}
       />
       <EditorialPage eyebrow="Clear answers" title="Frequently asked questions" intro="Only confirmed shopping details appear here. Policies will be added when they are complete and ready to publish.">
-        <Accordion className="rounded-none border-[color:var(--aura-rule)]">
-          {faqItems.map((item, index) => (
-            <AccordionItem key={item.question} value={`question-${index}`} className="border-[color:var(--aura-rule)] data-open:bg-white/5">
-              <AccordionTrigger className="min-h-20 px-5 font-display text-2xl text-[var(--aura-ivory)] hover:no-underline">{item.question}</AccordionTrigger>
-              <AccordionContent className="px-5 text-[color:rgb(245_228_199_/_58%)]">
+        <div className="divide-y divide-[color:var(--aura-rule)] border-y border-[color:var(--aura-rule)]">
+          {faqItems.map((item) => (
+            <details key={item.question} className="group open:bg-white/5">
+              <summary className="flex min-h-20 cursor-pointer items-center justify-between gap-6 px-5 py-5 font-display text-2xl text-[var(--aura-ivory)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-gold)]">
+                {item.question}
+                <span aria-hidden="true" className="shrink-0 group-open:hidden">+</span>
+                <span aria-hidden="true" className="hidden shrink-0 group-open:inline">−</span>
+              </summary>
+              <div className="px-5 pb-6 text-sm leading-7 text-[color:rgb(245_228_199_/_74%)]">
                 <p>{item.answer}</p>
                 {"href" in item ? (
                   <a
@@ -51,10 +51,10 @@ export default function FaqPage() {
                     {item.linkLabel}
                   </a>
                 ) : null}
-              </AccordionContent>
-            </AccordionItem>
+              </div>
+            </details>
           ))}
-        </Accordion>
+        </div>
       </EditorialPage>
       <section className="bg-[var(--aura-ivory)] px-[var(--aura-gutter)] py-16 text-[var(--aura-ink)] lg:px-[var(--aura-gutter-lg)] lg:py-24">
         <div className="mx-auto max-w-[82rem]">

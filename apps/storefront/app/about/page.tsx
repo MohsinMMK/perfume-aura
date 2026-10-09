@@ -18,6 +18,8 @@ export const metadata: Metadata = {
   description: aboutPageDescription,
   alternates: { canonical: "/about" },
   openGraph: {
+    siteName: "Perfume Aura",
+    locale: "en_IN",
     type: "website",
     url: "/about",
     title: "Our story | Perfume Aura",
@@ -76,8 +78,8 @@ export default function AboutPage() {
           <h2 data-motion-copy className="font-display text-[clamp(5.5rem,12vw,12rem)] leading-[0.72]">A focused house for India</h2>
           <div className="space-y-7 pt-4 text-base leading-8 text-[color:rgb(245_228_199_/_62%)]">
             <p>Perfume Aura is a fragrance store in Kondapur, Hyderabad, expressed through black glass, rich product color, and a direct path from mood to scent.</p>
-            <p>The storefront is a preview of the house taking shape. Product names, performance claims, ingredients, prices, reviews, and policies appear only when they are complete and ready to share.</p>
-            <p>The result is intentionally expressive in presentation and conservative in what it claims.</p>
+            <p>Explore the Inspired Series and Signature Series on the website to make a shortlist. Compare the fragrance family, notes, and intensity with the settings where you expect to wear it, then contact the store on WhatsApp for current product details. Online checkout is not available.</p>
+            <p>A useful shortlist starts with what you enjoy: a fresh opening, a floral centre, warmer woods, or a quieter presence. Our fragrance guides explain how to compare these directions and test a perfume on paper and skin without relying on a promised wear time.</p>
           </div>
         </div>
       </section>

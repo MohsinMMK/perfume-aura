@@ -84,7 +84,14 @@ export const metadata: Metadata = {
     description: defaultSiteDescription,
     images: ["/images/hero-bottle-still-life.webp"],
   },
-  icons: { icon: "/favicon.svg" },
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/favicon-96.png", type: "image/png", sizes: "96x96" },
+      { url: "/favicon.svg", type: "image/svg+xml", sizes: "any" },
+    ],
+    apple: { url: "/apple-touch-icon.png", type: "image/png", sizes: "180x180" },
+  },
 };
 
 export default function RootLayout({

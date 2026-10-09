@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Perfume Aura",
     short_name: "Perfume Aura",
     description:
-      "An India-focused fragrance house helping people choose perfume by mood, intensity, occasion, and composition.",
+      "Perfume Aura is a fragrance store in Kondapur, Hyderabad, helping people choose perfume by mood, intensity, occasion, and composition.",
     start_url: "/",
     display: "standalone",
     background_color: "#100b06",
@@ -13,9 +13,16 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: "en-IN",
     icons: [
       {
-        src: "/favicon.svg",
-        sizes: "any",
-        type: "image/svg+xml",
+        src: "/brand/perfume-aura-icon-192.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/brand/perfume-aura-icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any",
       },
     ],
   };

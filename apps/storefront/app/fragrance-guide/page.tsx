@@ -16,6 +16,8 @@ export const metadata: Metadata = {
     "A practical fragrance guide to choosing perfume by mood, fragrance family, intensity, occasion, and a careful skin test.",
   alternates: { canonical: "/fragrance-guide" },
   openGraph: {
+    siteName: "Perfume Aura",
+    locale: "en_IN",
     type: "article",
     url: "/fragrance-guide",
     title: "How to choose a perfume | Perfume Aura",

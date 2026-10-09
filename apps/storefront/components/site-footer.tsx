@@ -4,6 +4,9 @@ import Link from "next/link";
 const navigation = [
   ["Shop", "/shop"],
   ["Scent guide", "/fragrance-guide"],
+  ["Perfume for Hyderabad weather", "/guides/perfume-for-hyderabad-weather"],
+  ["Fragrance families and notes", "/guides/fragrance-families"],
+  ["Perfume for occasions", "/guides/perfume-for-occasions"],
   ["Wholesale", "/wholesale"],
   ["About", "/about"],
   ["FAQ", "/faq"],
