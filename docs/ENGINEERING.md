@@ -79,7 +79,9 @@ Change stack only through an explicit reviewed decision. No Vercel production.
 `pnpm-workspace.yaml` overrides: `sharp@0.35.5`, `postcss@8.5.23`,
 `@hono/node-server@1.19.14 → 2.0.10`, `brace-expansion@5.0.12`,
 `esbuild@0.18.20 → 0.25.12`, `fast-uri@3.1.8`, `hono@4.13.7`,
-`ip-address@10.7.1`, `js-yaml@4.3.2`, `nanoid@3.3.18`, `undici@7.29.1`, `dompurify@3.4.16`. Patch:
+`ip-address@10.7.1`, `js-yaml@4.3.2`, `nanoid@3.3.18`, `qs@6.16.0`,
+`source-map-js@1.2.2`, `proxy-addr@2.0.8`, `postcss-selector-parser@7.1.6`,
+`@modelcontextprotocol/sdk@1.31.0`, `undici@7.29.1`, `dompurify@3.4.16`. Patch:
 `patches/minimatch@3.1.5.patch`. Change an override only with dependency-path
 evidence, then verify audit, lint, shadcn preset resolution, migrations, both
 builds, and both packages.
