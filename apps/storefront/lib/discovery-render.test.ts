@@ -11,14 +11,14 @@ import { faqItems } from "./faq";
 
 it("renders every structured FAQ answer as readable HTML without JavaScript", () => {
   const html = renderToStaticMarkup(createElement(FaqPage));
-  const content = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gu, "");
-  assert.equal((content.match(/<details\b/gu) ?? []).length, faqItems.length);
-  assert.equal((content.match(/<summary\b/gu) ?? []).length, faqItems.length);
-  for (const item of faqItems) {
+  const details = html.split("<details ").slice(1).map((part) => part.split("</details>")[0]);
+  assert.equal(details.length, faqItems.length);
+  assert.equal((html.match(/<summary\b/gu) ?? []).length, faqItems.length);
+  for (const [index, item] of faqItems.entries()) {
     const escapedAnswer = renderToStaticMarkup(createElement("p", null, item.answer));
-    assert.ok(content.includes(escapedAnswer), `Missing HTML answer: ${item.question}`);
+    assert.ok(details[index].includes(escapedAnswer), `Missing HTML answer: ${item.question}`);
   }
-  assert.ok(content.includes('href="/fragrance-guide"'));
+  assert.ok(html.includes('href="/fragrance-guide"'));
 });
 
 it("uses the exact header bottle geometry for the square favicon", async () => {
