@@ -49,10 +49,14 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/(.*)",
-        headers: securityHeaders({
-          reportOnly: false,
-          development: process.env.NODE_ENV === "development",
-        }),
+        headers: [
+          ...securityHeaders({
+            reportOnly: false,
+            development: process.env.NODE_ENV === "development",
+          }),
+          // Ops is private, including its publicly reachable sign-in pages.
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+        ],
       },
     ];
   },
