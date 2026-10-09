@@ -56,11 +56,13 @@ preparation under `deploy/postgres-vps/` is not active production.
 
 ## Active release locks
 
-Source dependencies use security-patched Next.js `16.3.6`, Sharp `0.35.5`,
-Nodemailer `10.0.9` and reviewed transitive overrides. `pnpm check` and
-110 disposable-database integration tests pass; both dependency audits report
-zero known vulnerabilities. This validates source, not the still-accepted Ops
-image: its patched release remains subject to the migration gate.
+Source dependencies use security-patched Next.js `16.3.8`, Sharp `0.35.5`,
+Nodemailer `10.0.9` and reviewed transitive overrides. Lint, type checks, unit tests, both builds/client budgets and
+110 disposable-database integration tests pass. Production dependency audits
+report zero known vulnerabilities. The full `pnpm check` stops at the development-only
+`braces@3.0.3` advisory GHSA-vfj7-8cjw-p6xm (no upstream patched release).
+Do not suppress the audit; revisit when the upstream toolchain removes it.
+This validates source, not the still-accepted Ops image: its patched release remains subject to the migration gate.
 
 All remain false: `STOREFRONT_PUBLIC_RELEASE`,
 `STOREFRONT_CUSTOMER_AUTH_ENABLED`, `STOREFRONT_CHECKOUT_RELEASE_APPROVED`,
