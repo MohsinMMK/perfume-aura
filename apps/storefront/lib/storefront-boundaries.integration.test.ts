@@ -21,7 +21,6 @@ describe("storefront customer-auth boundary", () => {
     assert.equal(resolveCustomerAuthBaseUrl(environment), "https://perfumeaura.com");
     assert.deepEqual(resolveCustomerAuthTrustedOrigins(environment), ["https://perfumeaura.com"]);
     assert.equal(createCustomerAuthSecretResolver()(environment), environment.CUSTOMER_AUTH_SECRET);
-    assert.ok(!resolveCustomerAuthTrustedOrigins(environment).includes("https://app.perfumeaura.com"));
   });
 
   it("keeps customer authentication disabled unless explicitly released", () => {

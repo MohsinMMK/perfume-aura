@@ -53,13 +53,9 @@ export function requireDisposableTestDatabaseUrl(
     );
   }
 
-  const normalized = value.toLowerCase();
-  if (
-    normalized.includes("neon.tech") ||
-    normalized.includes("hostinger") ||
-    normalized.includes("perfumeaura.com") ||
-    /(?:^|[_-])prod(?:uction)?(?:[_-]|$)/.test(databaseName.toLowerCase())
-  ) {
+  // The parsed hostname allowlist above rejects every remote provider. Checking
+  // a hostname substring in the whole URL also inspects passwords and paths.
+  if (/(?:^|[_-])prod(?:uction)?(?:[_-]|$)/.test(databaseName.toLowerCase())) {
     throw new Error(
       "Refusing TEST_DATABASE_URL: provider or production-like target detected",
     );

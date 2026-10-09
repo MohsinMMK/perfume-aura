@@ -48,6 +48,17 @@ describe("requireDisposableTestDatabaseUrl", () => {
     );
   });
 
+  it("checks the parsed hostname rather than trusting loopback text elsewhere", () => {
+    for (const hostname of ["localhost.evil.example", "evil.localhost", "127.0.0.1.evil.example", "perfumeaura.com"]) {
+      assert.throws(
+        () => requireDisposableTestDatabaseUrl(`postgresql://localhost:local-only@${hostname}/perfume_aura_phase02_fresh`),
+        /loopback PostgreSQL/,
+      );
+    }
+    const local = "postgresql://test:perfumeaura.com@127.0.0.1/perfume_aura_phase02_fresh";
+    assert.equal(requireDisposableTestDatabaseUrl(local), local);
+  });
+
   it("rejects local URLs with ambiguous or malformed database names", () => {
     const urls = [
       "postgresql://phase03_test:local-only@localhost:55432/postgres",
