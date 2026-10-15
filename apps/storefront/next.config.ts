@@ -1,7 +1,7 @@
 import path from "node:path";
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs/config";
-import { securityHeaders } from "./lib/security-headers";
+import { securityHeaderRules } from "./lib/security-headers";
 
 const monorepoRoot = path.join(__dirname, "../..");
 const sentryOrg = process.env.SENTRY_ORG?.trim();
@@ -47,15 +47,10 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
-    return [
-      {
-        source: "/(.*)",
-        headers: securityHeaders({
-          reportOnly: false,
-          development: process.env.NODE_ENV !== "production",
-        }),
-      },
-    ];
+    return securityHeaderRules({
+      reportOnly: false,
+      development: process.env.NODE_ENV !== "production",
+    });
   },
 };
 

@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { contentSecurityPolicy, securityHeaders } from "./security-headers";
+import {
+  contentSecurityPolicy,
+  PORTFOLIO_PREVIEW_PATH,
+  securityHeaderRules,
+  securityHeaders,
+} from "./security-headers";
 
 describe("storefront security headers", () => {
   it("enforces the production browser and transport boundary", () => {
@@ -12,7 +17,7 @@ describe("storefront security headers", () => {
     const policy = headers.get("Content-Security-Policy") ?? "";
 
     assert.match(policy, /default-src 'self'/);
-    assert.match(policy, /frame-ancestors 'none'/);
+    assert.match(policy, /frame-ancestors 'none'(;|$)/);
     assert.match(policy, /script-src[^;]+https:\/\/sdk\.cashfree\.com/);
     assert.match(
       policy,
@@ -36,6 +41,23 @@ describe("storefront security headers", () => {
     assert.equal(
       headers.get("Cross-Origin-Opener-Policy"),
       "same-origin-allow-popups",
+    );
+  });
+
+  it("lets only the home page into Khanect's portfolio preview frame", () => {
+    const rules = securityHeaderRules({ reportOnly: false, development: false });
+    const policyFor = (source: string) =>
+      rules
+        .filter((rule) => rule.source === source)
+        .at(-1)
+        ?.headers.find(({ key }) => key === "Content-Security-Policy")?.value ?? "";
+
+    assert.equal(PORTFOLIO_PREVIEW_PATH, "/");
+    assert.equal(rules.at(-1)?.source, PORTFOLIO_PREVIEW_PATH);
+    assert.match(policyFor("/(.*)"), /frame-ancestors 'none'(;|$)/);
+    assert.match(
+      policyFor(PORTFOLIO_PREVIEW_PATH),
+      /frame-ancestors 'self' https:\/\/khanect\.com https:\/\/www\.khanect\.com(;|$)/,
     );
   });
 
