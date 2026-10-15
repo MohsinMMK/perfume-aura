@@ -1,9 +1,17 @@
 export type SecurityHeaderOptions = {
   reportOnly: boolean;
   development: boolean;
+  /** Lets Khanect's portfolio show this page in its preview frame. */
+  portfolioPreview?: boolean;
 };
 
-export function contentSecurityPolicy(development: boolean): string {
+// Only the home page may be framed, so account and checkout routes stay out of any third-party frame.
+export const PORTFOLIO_PREVIEW_PATH = "/";
+
+export function contentSecurityPolicy(
+  development: boolean,
+  portfolioPreview = false,
+): string {
   const directives = [
     "default-src 'self'",
     `script-src 'self' 'unsafe-inline'${development ? " 'unsafe-eval'" : ""} https://sdk.cashfree.com https://accounts.google.com/gsi/client`,
@@ -15,8 +23,9 @@ export function contentSecurityPolicy(development: boolean): string {
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    // Khanect's portfolio shows the live storefront in a preview frame.
-    "frame-ancestors 'self' https://khanect.com https://www.khanect.com",
+    portfolioPreview
+      ? "frame-ancestors 'self' https://khanect.com https://www.khanect.com"
+      : "frame-ancestors 'none'",
     "manifest-src 'self'",
     "media-src 'self'",
     "worker-src 'self' blob:",
@@ -26,9 +35,23 @@ export function contentSecurityPolicy(development: boolean): string {
   return directives.join("; ");
 }
 
+// Next.js applies every matching rule and the later one wins per header, so the preview rule comes last.
+export function securityHeaderRules(
+  options: Omit<SecurityHeaderOptions, "portfolioPreview">,
+): Array<{ source: string; headers: ReturnType<typeof securityHeaders> }> {
+  return [
+    { source: "/(.*)", headers: securityHeaders(options) },
+    {
+      source: PORTFOLIO_PREVIEW_PATH,
+      headers: securityHeaders({ ...options, portfolioPreview: true }),
+    },
+  ];
+}
+
 export function securityHeaders({
   reportOnly,
   development,
+  portfolioPreview = false,
 }: SecurityHeaderOptions): Array<{
   key: string;
   value: string;
@@ -38,7 +61,7 @@ export function securityHeaders({
       key: reportOnly
         ? "Content-Security-Policy-Report-Only"
         : "Content-Security-Policy",
-      value: contentSecurityPolicy(development),
+      value: contentSecurityPolicy(development, portfolioPreview),
     },
     {
       key: "Referrer-Policy",
