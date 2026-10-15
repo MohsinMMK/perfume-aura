@@ -12,7 +12,10 @@ describe("storefront security headers", () => {
     const policy = headers.get("Content-Security-Policy") ?? "";
 
     assert.match(policy, /default-src 'self'/);
-    assert.match(policy, /frame-ancestors 'none'/);
+    assert.match(
+      policy,
+      /frame-ancestors 'self' https:\/\/khanect\.com https:\/\/www\.khanect\.com(;|$)/,
+    );
     assert.match(policy, /script-src[^;]+https:\/\/sdk\.cashfree\.com/);
     assert.match(
       policy,

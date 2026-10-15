@@ -15,7 +15,8 @@ export function contentSecurityPolicy(development: boolean): string {
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "frame-ancestors 'none'",
+    // Khanect's portfolio shows the live storefront in a preview frame.
+    "frame-ancestors 'self' https://khanect.com https://www.khanect.com",
     "manifest-src 'self'",
     "media-src 'self'",
     "worker-src 'self' blob:",
@@ -48,6 +49,7 @@ export function securityHeaders({
       value: "nosniff",
     },
     {
+      // Browsers that honour frame-ancestors ignore this; it only guards the rest.
       key: "X-Frame-Options",
       value: "DENY",
     },
