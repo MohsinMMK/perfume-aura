@@ -42,7 +42,7 @@ flowchart LR
 
 ## Local setup
 
-Repository tooling, CI and both production images pin Node `24.20.0`. Use disposable
+Repository tooling, CI and both source Dockerfiles pin Node `24.21.0`. Use disposable
 loopback PostgreSQL for integration tests.
 
 ```bash
