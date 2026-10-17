@@ -7,7 +7,7 @@ Never infer a live release from Git HEAD. Never record secrets or customer data.
 
 | Surface | Owner | Live source |
 |---|---|---|
-| `perfumeaura.com` | VPS Caddy → loopback 3031 → storefront | `58c70d535b40d58c98e52f1f7c07e2f62ffa867c` |
+| `perfumeaura.com` | VPS Caddy → loopback 3031 → storefront | `ec77452475820ce7865b45a35bb251b771bc9bee` |
 | `www.perfumeaura.com` | Caddy HTTPS 308 to apex, preserving path/query | Same storefront |
 | `app.perfumeaura.com` | VPS Caddy → loopback 3020 → Ops | `09164609b918cf8c356ec35e42e6d96ff1a25dce` |
 
@@ -28,7 +28,7 @@ preparation under `deploy/postgres-vps/` is not active production.
 
 - Storefront: protected main → scoped checks → checksummed Linux standalone →
   immutable GHCR image → Tailscale forced SSH → hardened container.
-  `VPS_STOREFRONT_AUTO_DEPLOY_ENABLED=true`. GitHub run `37038313449`
+  `VPS_STOREFRONT_AUTO_DEPLOY_ENABLED=true`. GitHub run `37984537683`
   (`deploy_target=storefront`) deployed the exact live source. Full public
   acceptance passes; `VPS_STOREFRONT_PUBLIC_VERIFICATION_ENABLED=true` checks
   future releases.
@@ -36,7 +36,7 @@ preparation under `deploy/postgres-vps/` is not active production.
   is unchanged. `VPS_OPS_AUTO_DEPLOY_ENABLED=false` enforces the pending migration
   gate; the working Ops runtime remains available.
 - Storefront image digest:
-  `sha256:8110cbc0ba75939936b9f7274f721b39520160e85f0ceaf189c673c79e6114cb`.
+  `sha256:916b91a3f09192cfe92f58a3115410fb984be478fcbc613a239d753e82ee7ef8`.
   The runtime settings are root-owned mode 0600 in
   `/etc/khanect/perfume-aura-storefront.env`; app auth secrets remain separate.
   Forced SSH probe succeeds and arbitrary commands are denied.
@@ -45,8 +45,13 @@ preparation under `deploy/postgres-vps/` is not active production.
   114 discovery scents and disabled purchasing. Ops acceptance also passes.
 - The homepage hero cycles only through Inspired Series and Signature Series.
   The cream guide section is removed; the two featured cards are centered on
-  desktop. Desktop/tablet/mobile browser checks pass. Ops container identity,
-  start time and image remain unchanged.
+  desktop. Desktop/tablet/mobile browser checks pass. Ops public version
+  remains unchanged.
+- Official bottle favicon, PNG/Apple icons and manifest are live and match source.
+  All nine FAQ answers are in server HTML. Seven public discovery URLs pass
+  independent crawlability/schema checks and 14 desktop/mobile browser checks.
+  IndexNow accepted all seven deployed sitemap URLs (HTTP 200); this is a receipt,
+  not evidence of search indexing or rankings.
 - Markdown-only changes must not deploy. Storefront-only releases must not
   deploy Ops or apply migrations. Database changes fail closed at the owner gate.
 - Source pin is Node `24.20.0` / npm `11.19.0` on
@@ -82,6 +87,13 @@ Production migration `0017_storefront_sale_settlement` is not applied. The
 `0016` apply is unrecorded: check the journal before related work.
 Do not deploy Ops from main until its manual migration/grant gate passes.
 Storefront-only releases may proceed with Ops/database work excluded.
+
+The accepted Ops sign-in pages currently have no indexing exclusion. The separate
+source `noindex` patch remains draft and must be reconstructed on current main
+before required CI review. Publishing Ops stays subject to the existing owner
+gate. A host-only Caddy exclusion header is a separate, unapproved provider change;
+it requires no migration or additional persistent grant. Do not submit private
+Ops URLs for indexing.
 
 ## Credential state
 
@@ -119,10 +131,13 @@ The retired storefront Web App still displays failed Git builds against
 `hostinger-storefront-production`. That deleted branch is not part of the
 current GitHub-to-VPS deployment path.
 
-Hostinger has five Web App slots occupied. Pending removal after DNS cache
-expiry and explicit irreversible-deletion confirmation: `perfumeaura.com`,
-the off-DNS `app.perfumeaura.com` Web App, and
-`royalblue-dugong-614889.hostingersite.com` (auto-deployment off).
+Fresh Hostinger inventory shows four of five Business Web App slots occupied.
+The separate `perfumeaura.com` and `app.perfumeaura.com` entries both show
+disconnected domains and obsolete Hostinger deployment branches; both retain
+auto-deployment connections. Their recorded builds are stale, not serving-origin
+evidence. Pending removal after backup/attachment review and explicit
+irreversible-deletion approval: these two retired entries. The historical
+`royalblue-dugong-614889.hostingersite.com` entry needs fresh verification.
 Keep `mobitron.in`, `khanect.com`, email and the DNS zone.
 
 VPS has 15 running containers: Ops (1), storefront (1), Awwal (3),
@@ -140,7 +155,7 @@ not to the current VPS release flow.
 
 1. Verify apex/www resolve only to the VPS, with no retired A/AAAA targets,
    before removing recovery hosting.
-2. Confirm and remove the three obsolete Perfume Aura Web Apps preserving
+2. Confirm and remove only verified obsolete Perfume Aura Web Apps preserving
    email/DNS; disconnect retired provider Git triggers and remove their unused
    credentials, then verify live routing and hosting slot counts again.
 3. Keep commerce/security gates closed. Owner gates: India counsel, catalog
