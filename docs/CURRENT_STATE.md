@@ -83,6 +83,10 @@ Production migration `0017_storefront_sale_settlement` is not applied. The
 Do not deploy Ops from main until its manual migration/grant gate passes.
 Storefront-only releases may proceed with Ops/database work excluded.
 
+The accepted Ops login currently lacks an indexing exclusion. Source adds
+`noindex, nofollow` metadata and an all-route `X-Robots-Tag`; these are pending
+the gated Ops release. Do not submit private Ops URLs for indexing.
+
 ## Credential state
 
 Both root-owned application env files use the rotated shared database credential.
