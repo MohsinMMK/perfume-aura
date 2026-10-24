@@ -186,9 +186,3 @@ export const editorialGuides: Readonly<Record<EditorialGuideSlug, EditorialGuide
     ],
   },
 };
-
-export function getEditorialGuide(slug: string): EditorialGuide | null {
-  return editorialGuideSlugs.includes(slug as EditorialGuideSlug)
-    ? editorialGuides[slug as EditorialGuideSlug]
-    : null;
-}

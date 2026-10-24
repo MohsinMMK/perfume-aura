@@ -7,6 +7,7 @@ import {
   isShopListingQueryActive,
   parseShopListingQuery,
 } from "@/lib/shop-listing-query";
+import { isPublicCatalogEnabled } from "@/lib/catalog-policy";
 
 export async function generateMetadata({
   searchParams,
@@ -16,7 +17,7 @@ export async function generateMetadata({
   const query = parseShopListingQuery(await searchParams);
   const publicProducts = await getStorefrontProducts();
   const indexable =
-    process.env.STOREFRONT_PUBLIC_RELEASE === "true" &&
+    isPublicCatalogEnabled() &&
     publicProducts.some((product) => product.publicationState === "published") &&
     !isShopListingQueryActive(query);
   const description = "Explore published Perfume Aura scents, sizes, and fragrance details in India.";

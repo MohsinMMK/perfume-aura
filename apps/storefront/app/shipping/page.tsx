@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { EditorialPage } from "@/components/editorial-page";
 import { loadApprovedCommercePolicy } from "@/lib/commerce-policy";
 import { formatMoney } from "@/lib/money";
+import { noIndexRobots } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Shipping policy", alternates: { canonical: "/shipping" }, robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Shipping policy", alternates: { canonical: "/shipping" }, robots: noIndexRobots };
 
 export default async function ShippingPage() {
   const policy = await loadApprovedCommercePolicy();

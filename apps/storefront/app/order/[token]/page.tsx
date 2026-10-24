@@ -5,9 +5,10 @@ import { notFound } from "next/navigation";
 import { commerceOrderItems, commerceOrders, db, eq, shipments } from "@perfume-aura/db";
 import { Button } from "@perfume-aura/ui/components/button";
 import { formatMoney } from "@/lib/money";
+import { noIndexRobots } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Order status", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Order status", robots: noIndexRobots };
 
 function digest(token: string): string {
   return createHash("sha256").update(token).digest("hex");

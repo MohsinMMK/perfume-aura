@@ -12,7 +12,6 @@ export const shopListingSorts = ["catalog", "name-asc", "name-desc"] as const;
 export type ShopListingSize = (typeof shopListingSizes)[number];
 export type ShopListingSegment = (typeof shopListingSegments)[number];
 export type ShopListingSort = (typeof shopListingSorts)[number];
-export type ShopListingNameSort = Exclude<ShopListingSort, "catalog">;
 export type ShopListingBrandOption = Readonly<{
   value: string;
   label: string;
@@ -205,6 +204,11 @@ export function applyShopListingQuery<T extends ShopListingRecord>(
     ? foldShopListingText(query.q).split(/\s+/u).filter(Boolean)
     : [];
   const wantedSizes = new Set(query.sizes);
+  // A query of only punctuation folds to no tokens; it names nothing, so it
+  // matches nothing instead of silently showing the whole catalog.
+  if (query.q && searchTokens.length === 0) {
+    return [];
+  }
   const filtered = products.filter((product) => {
     const searchableProductText = searchableText(product);
     if (

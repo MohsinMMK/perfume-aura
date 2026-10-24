@@ -25,7 +25,7 @@ export function inquiryRateLimitDigest(value: string, secret: string): string {
 }
 
 /**
- * Hostinger's forwarding header remains untrusted by default. Operators may
+ * The Caddy edge forwarding header remains untrusted by default. Operators may
  * set one exact header name only after proving the edge removes any
  * client-supplied copy. Invalid or multi-address values are ignored.
  */

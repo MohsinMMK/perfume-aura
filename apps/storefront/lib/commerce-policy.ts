@@ -1,4 +1,5 @@
 import { commerceSettings, db, eq } from "@perfume-aura/db";
+import { isPublicCatalogEnabled } from "./catalog-policy";
 
 export type ApprovedCommercePolicy = Readonly<{
   flatShippingAmountMinor: number;
@@ -58,7 +59,7 @@ export function resolveApprovedCommercePolicy(
 export async function loadApprovedCommercePolicy(): Promise<ApprovedCommercePolicy | null> {
   if (
     !process.env.DATABASE_URL ||
-    process.env.STOREFRONT_PUBLIC_RELEASE !== "true" ||
+    !isPublicCatalogEnabled() ||
     process.env.STOREFRONT_CHECKOUT_RELEASE_APPROVED !== "true"
   ) return null;
 
@@ -80,7 +81,7 @@ export async function loadApprovedCommercePolicy(): Promise<ApprovedCommercePoli
     .limit(1);
 
   return resolveApprovedCommercePolicy(settings, {
-    publicRelease: process.env.STOREFRONT_PUBLIC_RELEASE === "true",
+    publicRelease: isPublicCatalogEnabled(),
     checkoutReleaseApproved: process.env.STOREFRONT_CHECKOUT_RELEASE_APPROVED === "true",
   });
 }

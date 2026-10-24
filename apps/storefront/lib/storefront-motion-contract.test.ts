@@ -224,4 +224,16 @@ describe("storefront motion contract", () => {
     assert.match(continuous, /focusin/);
     assert.match(continuous, /removeEventListener/);
   });
+
+  it("records scroll history after scrolling settles and plays entrances once", async () => {
+    const motion = await readStorefront("../components/storefront-motion.tsx");
+
+    assert.doesNotMatch(motion, /requestAnimationFrame\(\(\) => \{\s*recordFrame/u);
+    assert.match(motion, /window\.setTimeout\(writeScrollPosition, scrollRecordDelayMs\)/u);
+    assert.match(motion, /document\.addEventListener\("click", flushScrollPosition, \{ capture: true \}\)/u);
+    assert.match(motion, /window\.addEventListener\("pagehide", flushScrollPosition\)/u);
+    assert.match(motion, /\.toArray<HTMLElement>\("\[data-motion-copy\]", contentRoot\)\s*\.filter\(hasPendingMotion\)/u);
+    assert.match(motion, /const row = cardRow\.filter\(hasPendingMotion\);/u);
+    assert.match(motion, /onEnter: \(\) => markEnteredMotion\(row\)/u);
+  });
 });

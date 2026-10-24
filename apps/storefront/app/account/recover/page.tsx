@@ -3,12 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AccountAuthShell } from "@/components/account-auth-shell";
 import { AccountForm } from "@/components/account-form";
-import { customerAuthProviderReadiness } from "@/lib/customer-auth-policy";
+import { customerAuthProviderReadiness, isCustomerAuthEnabled } from "@/lib/customer-auth-policy";
+import { noIndexRobots } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Account recovery", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Account recovery", robots: noIndexRobots };
 
 export default function RecoverPage() {
-  const enabled = process.env.STOREFRONT_CUSTOMER_AUTH_ENABLED === "true";
+  const enabled = isCustomerAuthEnabled();
   if (!enabled) notFound();
 
   return (

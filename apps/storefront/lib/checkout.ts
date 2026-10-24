@@ -34,6 +34,7 @@ import {
   compareCheckoutCartSet,
 } from "./checkout-cart-eligibility";
 import { deliveryProfileInputSchema } from "./customer-profile";
+import { isCustomerAuthEnabled } from "./customer-auth-policy";
 
 const checkoutInputSchema = deliveryProfileInputSchema.extend({
   requestId: z.string().uuid(),
@@ -136,7 +137,7 @@ export async function placeCheckoutOrder(
     email: z.string().email().max(320).parse(identity.email).toLowerCase(),
   };
   const requestPayloadDigest = payloadDigest(input, customer, cartToken);
-  if (process.env.STOREFRONT_CUSTOMER_AUTH_ENABLED !== "true") {
+  if (!isCustomerAuthEnabled()) {
     throw new Error("Customer authentication is not available yet");
   }
   if (process.env.STOREFRONT_CHECKOUT_RELEASE_APPROVED !== "true") {

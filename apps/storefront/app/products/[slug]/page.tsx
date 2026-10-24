@@ -20,6 +20,7 @@ import {
   createProductStructuredData,
   serializeJsonLd,
 } from "@/lib/seo";
+import { isPublicCatalogEnabled } from "@/lib/catalog-policy";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,7 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
   const { slug } = await params;
   const product = await findStorefrontProduct(slug);
   if (!product) return { title: "Product unavailable" };
-  const publicRelease = process.env.STOREFRONT_PUBLIC_RELEASE === "true";
+  const publicRelease = isPublicCatalogEnabled();
   return {
     title: product.seoTitle ?? product.name,
     description: product.seoDescription ?? product.summary,
@@ -107,12 +108,11 @@ export default async function ProductPage({ params }: Readonly<{ params: Promise
         >
           <div
             data-product-image-frame
-            className="absolute inset-x-2 bottom-2 top-[72px] overflow-hidden rounded-[var(--aura-radius)] bg-cover bg-center sm:inset-0 sm:rounded-none"
-            style={{
-              backgroundColor: galleryColors[product.accent],
-              backgroundImage: `url("${product.image}")`,
-            }}
+            className="absolute inset-x-2 bottom-2 top-[72px] overflow-hidden rounded-[var(--aura-radius)] sm:inset-0 sm:rounded-none"
+            style={{ backgroundColor: galleryColors[product.accent] }}
           >
+            {/* A small optimized copy fills the blurred mobile backdrop instead of the full-size original. */}
+            <Image data-product-backdrop src={product.image} alt="" aria-hidden="true" fill sizes="64px" className="object-cover object-center sm:hidden" />
             <div className="absolute inset-0 bg-black/20 backdrop-blur-xl sm:hidden" aria-hidden="true" />
             <Image src={product.image} alt={product.imageAlt} fill loading="eager" fetchPriority="high" sizes="(max-width: 639px) calc(100vw - 0.5rem), (max-width: 1024px) 100vw, 50vw" className="object-contain object-center sm:object-cover" />
           </div>

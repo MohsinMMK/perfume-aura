@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Money } from "./money";
 import { isPublicCatalogEnabled } from "./catalog-policy";
 import {
@@ -54,7 +55,7 @@ export type StorefrontProduct = Readonly<{
   variants: readonly StorefrontVariant[];
 }>;
 
-export async function getStorefrontProducts(): Promise<
+async function loadStorefrontProducts(): Promise<
   readonly StorefrontProduct[]
 > {
   if (isPublicCatalogEnabled()) {
@@ -63,6 +64,9 @@ export async function getStorefrontProducts(): Promise<
   }
   return loadListedWorkbookProducts();
 }
+
+// Metadata, the page and related products share one catalog load per request.
+export const getStorefrontProducts = cache(loadStorefrontProducts);
 
 export async function getFeaturedProducts(): Promise<
   readonly StorefrontProduct[]

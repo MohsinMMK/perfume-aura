@@ -9,6 +9,7 @@ const historyScrollStateKey = "__perfumeAuraScroll";
 const mobileProductCardQuery = "(max-width: 639px)";
 const mobileProductCardRevealRootMargin = "-49% 0px -49% 0px";
 const mobileProductCardRevealThreshold = 0;
+const scrollRecordDelayMs = 150;
 
 type HistoryScrollPosition = Readonly<{
   x: number;
@@ -28,6 +29,18 @@ function groupElementsByOffsetTop(
   });
 
   return Array.from(rows.values());
+}
+
+// Entrance tweens play once per element; filter or search updates re-run the
+// motion effect, and replaying them would make visible content jump.
+function hasPendingMotion(element: HTMLElement): boolean {
+  return element.dataset.motionEntered !== "true";
+}
+
+function markEnteredMotion(elements: readonly HTMLElement[]): void {
+  elements.forEach((element) => {
+    element.dataset.motionEntered = "true";
+  });
 }
 
 function readHistoryScrollPosition(state: unknown): HistoryScrollPosition | null {
@@ -51,22 +64,32 @@ export function StorefrontMotion() {
 
   useEffect(() => {
     const previousScrollRestoration = window.history.scrollRestoration;
-    let recordFrame: number | null = null;
+    let recordTimer: number | null = null;
 
+    const writeScrollPosition = () => {
+      recordTimer = null;
+      const state = window.history.state;
+      if (!state || typeof state !== "object") return;
+      window.history.replaceState(
+        {
+          ...state,
+          [historyScrollStateKey]: { x: window.scrollX, y: window.scrollY },
+        },
+        "",
+      );
+    };
+
+    // Browsers rate-limit history writes, so record once scrolling settles
+    // and flush before a click can navigate away from this entry.
     const recordScrollPosition = () => {
-      if (recordFrame !== null) return;
-      recordFrame = window.requestAnimationFrame(() => {
-        recordFrame = null;
-        const state = window.history.state;
-        if (!state || typeof state !== "object") return;
-        window.history.replaceState(
-          {
-            ...state,
-            [historyScrollStateKey]: { x: window.scrollX, y: window.scrollY },
-          },
-          "",
-        );
-      });
+      if (recordTimer !== null) window.clearTimeout(recordTimer);
+      recordTimer = window.setTimeout(writeScrollPosition, scrollRecordDelayMs);
+    };
+
+    const flushScrollPosition = () => {
+      if (recordTimer === null) return;
+      window.clearTimeout(recordTimer);
+      writeScrollPosition();
     };
 
     const markPopstateNavigation = (event: PopStateEvent) => {
@@ -78,13 +101,17 @@ export function StorefrontMotion() {
     };
 
     window.history.scrollRestoration = "manual";
-    recordScrollPosition();
+    writeScrollPosition();
     window.addEventListener("scroll", recordScrollPosition, { passive: true });
+    document.addEventListener("click", flushScrollPosition, { capture: true });
+    window.addEventListener("pagehide", flushScrollPosition);
     window.addEventListener("popstate", markPopstateNavigation);
     return () => {
-      if (recordFrame !== null) window.cancelAnimationFrame(recordFrame);
+      if (recordTimer !== null) window.clearTimeout(recordTimer);
       window.history.scrollRestoration = previousScrollRestoration;
       window.removeEventListener("scroll", recordScrollPosition);
+      document.removeEventListener("click", flushScrollPosition, { capture: true });
+      window.removeEventListener("pagehide", flushScrollPosition);
       window.removeEventListener("popstate", markPopstateNavigation);
     };
   }, []);
@@ -218,7 +245,7 @@ export function StorefrontMotion() {
       );
       clearMobileCardState();
     };
-  }, [pathname, searchParamsKey]);
+  }, [pathname]);
 
   useEffect(() => {
     let active = true;
@@ -372,6 +399,7 @@ export function StorefrontMotion() {
 
             gsap.utils
               .toArray<HTMLElement>("[data-motion-copy]", contentRoot)
+              .filter(hasPendingMotion)
               .forEach((element) => {
                 gsap.from(element, {
                   y: 36,
@@ -381,12 +409,14 @@ export function StorefrontMotion() {
                     trigger: element,
                     start: "top 88%",
                     once: true,
+                    onEnter: () => markEnteredMotion([element]),
                   },
                 });
               });
 
             gsap.utils
               .toArray<HTMLElement>("[data-motion-compose]", contentRoot)
+              .filter(hasPendingMotion)
               .forEach((element) => {
                 const pieces = gsap.utils.toArray<HTMLElement>(
                   "[data-motion-compose-piece]",
@@ -408,6 +438,7 @@ export function StorefrontMotion() {
                     trigger: element,
                     start: "top 84%",
                     once: true,
+                    onEnter: () => markEnteredMotion([element]),
                   },
                 });
               });
@@ -427,7 +458,8 @@ export function StorefrontMotion() {
                 );
                 cards.forEach((card) => griddedProductCards.add(card));
 
-                groupElementsByOffsetTop(cards).forEach((row) => {
+                groupElementsByOffsetTop(cards).forEach((cardRow) => {
+                  const row = cardRow.filter(hasPendingMotion);
                   const trigger = row[0];
                   if (!trigger) return;
 
@@ -439,6 +471,7 @@ export function StorefrontMotion() {
                       trigger,
                       start: "top 91%",
                       once: true,
+                      onEnter: () => markEnteredMotion(row),
                     },
                   });
                 });
@@ -446,6 +479,7 @@ export function StorefrontMotion() {
 
             productCards
               .filter((element) => !griddedProductCards.has(element))
+              .filter(hasPendingMotion)
               .forEach((element) => {
                 gsap.from(element, {
                   y: 56,
@@ -455,6 +489,7 @@ export function StorefrontMotion() {
                     trigger: element,
                     start: "top 91%",
                     once: true,
+                    onEnter: () => markEnteredMotion([element]),
                   },
                 });
               });
@@ -478,10 +513,9 @@ export function StorefrontMotion() {
                 );
               });
 
-            const stackedPanels = gsap.utils.toArray<HTMLElement>(
-              "[data-motion-stack]",
-              contentRoot,
-            );
+            const stackedPanels = gsap.utils
+              .toArray<HTMLElement>("[data-motion-stack]", contentRoot)
+              .filter(hasPendingMotion);
             if (stackedPanels.length > 0) {
               gsap.from(stackedPanels, {
                 y: 36,
@@ -492,6 +526,7 @@ export function StorefrontMotion() {
                   trigger: stackedPanels[0]?.parentElement ?? stackedPanels[0],
                   start: "top 84%",
                   once: true,
+                  onEnter: () => markEnteredMotion(stackedPanels),
                 },
               });
             }
@@ -572,8 +607,9 @@ export function StorefrontMotion() {
               .toArray<HTMLElement>("[data-motion-stage]", contentRoot)
               .filter(
                 (element) =>
-                  !context.conditions?.isDesktop ||
-                  !element.closest("[data-motion-journey]"),
+                  hasPendingMotion(element) &&
+                  (!context.conditions?.isDesktop ||
+                    !element.closest("[data-motion-journey]")),
               )
               .forEach((element, index) => {
                 gsap.from(element, {
@@ -585,6 +621,7 @@ export function StorefrontMotion() {
                     trigger: element,
                     start: "top 90%",
                     once: true,
+                    onEnter: () => markEnteredMotion([element]),
                   },
                 });
               });

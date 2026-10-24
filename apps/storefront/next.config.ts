@@ -19,7 +19,7 @@ const uploadSentrySourceMaps = Boolean(
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  // Hostinger publishes this standalone tree from the protected storefront source branch.
+  // Standalone output is packaged into the GHCR image deployed to the VPS.
   output: "standalone",
   outputFileTracingRoot: monorepoRoot,
   env: releaseName

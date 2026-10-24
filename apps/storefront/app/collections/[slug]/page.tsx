@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/product-card";
 import { getStorefrontCollection } from "@/lib/catalog";
 import { isPublicCatalogEnabled } from "@/lib/catalog-policy";
-import { getStorefrontOrigin, serializeJsonLd } from "@/lib/seo";
+import { getStorefrontOrigin, serializeJsonLd, noIndexRobots } from "@/lib/seo";
 
 export async function generateMetadata({ params }: Readonly<{ params: Promise<{ slug: string }> }>): Promise<Metadata> {
   const { slug } = await params;
@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
         openGraph: { type: "website", url: `/collections/${slug}`, title: collection.seoTitle, description: collection.seoDescription },
         twitter: { card: "summary_large_image", title: collection.seoTitle, description: collection.seoDescription },
       }
-    : { title: collection?.title ?? "Collection unavailable", robots: { index: false, follow: false } };
+    : { title: collection?.title ?? "Collection unavailable", robots: noIndexRobots };
 }
 
 export default async function CollectionPage({ params }: Readonly<{ params: Promise<{ slug: string }> }>) {
