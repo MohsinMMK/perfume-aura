@@ -214,11 +214,41 @@ smoke_next_external_aliases() {
       echo "ERROR: ${label}: external alias still contains symlinks: ${specifier}" >&2
       return 1
     fi
+    # Load each alias exactly as the server chunks do: Turbopack's .x() requires
+    # and .y() imports, and a traced package may ship only that condition.
     (
       cd "$chunks_dir"
-      node --input-type=module -e 'await import(process.argv[1]);' "$specifier"
+      node -e '
+const fs = require("node:fs");
+const path = require("node:path");
+const [serverDir, specifier] = process.argv.slice(1);
+const escaped = specifier.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const pattern = new RegExp(`\\.([xy])\\("(${escaped}(?:/[^"]*)?)"`, "g");
+const refs = new Set();
+const walk = (dir) => {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const file = path.join(dir, entry.name);
+    if (entry.isDirectory()) walk(file);
+    else if (entry.name.endsWith(".js")) {
+      for (const match of fs.readFileSync(file, "utf8").matchAll(pattern)) refs.add(`${match[1]} ${match[2]}`);
+    }
+  }
+};
+walk(serverDir);
+if (refs.size === 0) refs.add(`y ${specifier}`);
+(async () => {
+  for (const ref of refs) {
+    const [kind, request] = ref.split(" ");
+    if (kind === "x") require(request);
+    else await import(request);
+  }
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+' "$app_root/.next/server" "$specifier"
     )
-    echo "${label}: external alias import ok (${specifier})"
+    echo "${label}: external alias load ok (${specifier})"
   done < <(enumerate_next_external_alias_leaves "$aliases_dir")
 
   if [[ "$count" -eq 0 ]]; then
@@ -302,7 +332,17 @@ run_packer_alias_self_tests() {
   fi
   rm -rf "$stage/apps/ops/.next/node_modules" "$stage/apps/ops/node_modules"
 
-  # 6) zero-alias success
+  # 6) require-only alias loads as the chunk requires it, not by bare import
+  mkdir -p "$stage/apps/ops/node_modules/cjs-pkg" "$stage/apps/ops/.next/node_modules" "$stage/apps/ops/.next/server/chunks"
+  printf '%s\n' '{"name":"cjs-pkg","version":"1.0.0","exports":{"./register":{"require":"./register.js"}}}' >"$stage/apps/ops/node_modules/cjs-pkg/package.json"
+  printf '%s\n' 'exports.registered = true;' >"$stage/apps/ops/node_modules/cjs-pkg/register.js"
+  printf '%s\n' 'module.exports = (a) => a.x("cjs-pkg-hash/register", () => require("cjs-pkg-hash/register"));' >"$stage/apps/ops/.next/server/chunks/cjs.js"
+  ln -s "$stage/apps/ops/node_modules/cjs-pkg" "$stage/apps/ops/.next/node_modules/cjs-pkg-hash"
+  materialize_next_external_aliases "$stage"
+  smoke_next_external_aliases "$stage/apps/ops" "self-test-require"
+  rm -rf "$stage/apps/ops/.next/node_modules" "$stage/apps/ops/node_modules" "$stage/apps/ops/.next/server/chunks/cjs.js"
+
+  # 7) zero-alias success
   mkdir -p "$stage/apps/ops/.next/server/chunks"
   rm -rf "$stage/apps/ops/.next/node_modules"
   materialize_next_external_aliases "$stage"
