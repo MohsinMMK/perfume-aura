@@ -10,15 +10,16 @@ VPS storefront app -- Docker-only SCRAM --> pgbouncer-storefront :6432 -+
 VPS ops app -------- Docker-only SCRAM ----> pgbouncer-ops :6432 ------+--> PostgreSQL :5432
 root-controlled VPS -- loopback-only SCRAM ----------------------------+
 pgAdmin ---------- Docker-internal connection -------------------------+
-PostgreSQL ------- encrypted pgBackRest -------------------------------> off-host repository
+PostgreSQL ------- encrypted pgBackRest -------------------------------> local repository volume
 ```
 
 - PostgreSQL publishes its direct owner listener only as
   `127.0.0.1:${POSTGRES_OWNER_LOOPBACK_PORT}`. It is for a root-controlled VPS
   session and SSH tunnels only, never a public listener. PostgreSQL also joins
-  the private `perfume-aura-postgres-internal` Docker network and the dedicated
-  `perfume-aura-postgres-backup-egress` network; no application service joins
-  the backup network.
+  the private `perfume-aura-postgres-internal` Docker network and the
+  non-masquerading `perfume-aura-postgres-owner-loopback` network that carries
+  only that publish, so it has no outbound route; no application service joins
+  either network.
 - `pgbouncer-ops` is reachable only through the existing
   `perfume-aura-ops-internal` network, and `pgbouncer-storefront` only through
   the existing `perfume-aura-storefront-internal` network. Each is aliased
@@ -56,7 +57,7 @@ PostgreSQL ------- encrypted pgBackRest -------------------------------> off-hos
   storefront, and payment-finalizer secret files must all contain different
   values; distinct role names do not isolate the two storefront credentials when
   their password material matches.
-- PostgreSQL, pgBackRest, pgAdmin and off-host repository material remain in
+- PostgreSQL, pgBackRest and pgAdmin material remain in
   root-owned files outside Git. Compose bind-mounts file secrets with host
   ownership, so the four files non-root services read are `root:<gid> 0640` for
   a memberless `POSTGRES_SECRETS_GID`; only the poolers, pgAdmin and the
@@ -70,13 +71,14 @@ PostgreSQL ------- encrypted pgBackRest -------------------------------> off-hos
 
 ## Backup and recovery rules
 
-- A local Docker volume is not a backup. `repo1` must be a separate, encrypted
-  off-host storage account or repository controlled independently of the VPS.
-- The non-internal Docker `backup_egress` network is an egress path, not a
-  firewall. Before cutover, enforce and test an outbound allowlist for the
-  PostgreSQL container to the independently managed repository endpoint on TCP
-  443 at the VPS/provider firewall layer. Docker bridge traffic can bypass a
-  host's default UFW policy, so a rule that merely exists is not evidence.
+- `repo1` is an encrypted pgBackRest repository on the dedicated
+  `perfume-aura-pgbackrest-repo` volume. It is separate from the data volume
+  but shares the VPS disk, so it does not survive loss of the VPS. Keep a second
+  copy outside the VPS, and never remove the repository volume with the data
+  volume.
+- The owner-loopback bridge disables masquerading, so PostgreSQL cannot reach
+  the internet. That relies on Docker managing iptables; verify on the VPS that
+  PostgreSQL cannot reach an outside address.
 - Do not import or cut over production data until `stanza-create`, `check`, one
   full backup, one differential backup, and an isolated restore drill pass.
 - Treat every backup cipher passphrase as recovery-critical material. Store it

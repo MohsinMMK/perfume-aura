@@ -65,9 +65,11 @@ COPY --from=pgbackrest-build /tmp/pgbackrest-install/usr/local/bin/pgbackrest /u
 
 RUN set -eux; \
     /usr/local/bin/pgbackrest version; \
-    # A fresh spool volume copies these from the image; pgBackRest creates neither.
+    # Fresh spool and repository volumes copy these from the image; pgBackRest
+    # creates none of them.
     install --directory --owner=postgres --group=postgres --mode=0700 \
-      /var/lib/pgbackrest /var/lib/pgbackrest/log /var/lib/pgbackrest/spool; \
+      /var/lib/pgbackrest /var/lib/pgbackrest/log /var/lib/pgbackrest/spool \
+      /var/lib/pgbackrest-repo; \
     # The entrypoint's gosu drop keeps only /etc/group memberships, so Compose
     # group_add cannot reach archive_command. Bake the secret-reader group in.
     test -n "${POSTGRES_SECRETS_GID}"; \

@@ -23,15 +23,16 @@ plan first; no command here deletes the Neon source.
 2. Copy `.env.example` to `/etc/perfume-aura-postgres/compose.env`, set only
    the non-secret values, and keep it `0600 root:root`.
 3. Create the `POSTGRES_SECRETS_GID` group and every file from
-   `secrets/README.md`, copying no secrets into the repository. Set the S3-compatible `repo1` details in `pgbackrest.conf`.
+   `secrets/README.md`, copying no secrets into the repository. `repo1` is the
+   local `perfume-aura-pgbackrest-repo` volume; set only its cipher passphrase,
+   and store a copy of that passphrase off the VPS.
 4. Confirm `perfume-aura-ops-internal` and `perfume-aura-storefront-internal`
    already exist from the independent app stacks. This database stack consumes
    those networks but never manages them.
-5. Keep inbound port 6432 closed; no pooler publishes a host port. Enforce
-   outbound TCP 443 from the PostgreSQL backup-egress path to the independently
-   managed pgBackRest repository endpoint only. Verify that enforcement from
-   the PostgreSQL container; Docker bridge traffic can bypass a default UFW
-   policy.
+5. Keep inbound port 6432 closed; no pooler publishes a host port. PostgreSQL
+   needs no outbound access: its only non-internal network is the
+   non-masquerading owner-loopback bridge. Verify from the PostgreSQL container
+   that an outside address is unreachable.
 
 Validate the fully expanded Compose definition without starting containers:
 
@@ -69,7 +70,7 @@ and lock together with passing verifier evidence; never update only the tag or
 bypass the verifier.
 
 Do not import source data into this container-and-backup smoke target. It
-proves only the image, pgAdmin isolation, and off-host backup wiring. The
+proves only the image, pgAdmin isolation, and backup wiring. The
 poolers are created by the controlled role bootstrap after their exact verifier
 files exist.
 For a schema-and-data logical export, use a fresh target volume/database, not
@@ -149,7 +150,7 @@ dirty, non-root-owned, group/other-writable, or untracked checkout, and checks
 every tracked artifact plus the migration/grant/bootstrap files. Do not point
 the root bootstrap at an ad hoc worktree or copy.
 
-## 3. Test off-host recovery before any cutover
+## 3. Test backup recovery before any cutover
 
 Run a full backup, then a differential backup after an intentional rehearsal
 write. Enable the supplied timer only after both succeed:
@@ -188,6 +189,12 @@ Require `pg_stat_archiver.failed_count = 0` on the fresh rehearsal target and
 record both the PostgreSQL data-volume and Docker-filesystem free space. Repeat
 these two checks throughout load rehearsal and the controlled cutover; any
 increase in `failed_count` or exhausted-space trajectory stops the window.
+
+The repository shares the VPS disk, so it covers mistakes, corruption and
+point-in-time recovery but not loss of the VPS. Keep a second copy outside the
+VPS, such as the hosting provider's VPS backup or an administrator-pulled copy
+of the encrypted repository volume, and never keep the only copy of the cipher
+passphrase on the VPS.
 
 Restore into a separate disposable volume or VPS before production. Stop only
 the disposable target, run pgBackRest restore with its exact target config, and

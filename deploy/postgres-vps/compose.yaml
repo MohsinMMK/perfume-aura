@@ -33,6 +33,7 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql
       - pgbackrest-spool:/var/lib/pgbackrest
+      - pgbackrest-repo:/var/lib/pgbackrest-repo
       - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
       - ./postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
       - ./postgres/pg_ident.conf:/etc/postgresql/pg_ident.conf:ro
@@ -41,7 +42,7 @@ services:
       - pgbackrest_config
     networks:
       - database_internal
-      - backup_egress
+      - owner_loopback
     # This direct owner listener is intentionally host-loopback-only. It is
     # needed by the root-run bootstrap and is not a public database exposure.
     ports:
@@ -76,8 +77,8 @@ services:
       com.khanect.stack: perfume-aura-postgres
       com.khanect.service: postgres
       com.khanect.owner: Perfume-Aura
-      com.khanect.backup: pgbackrest-off-host-required
-      com.khanect.exposure: docker-internal-plus-loopback-owner-and-backup-egress
+      com.khanect.backup: pgbackrest-vps-local-repository
+      com.khanect.exposure: docker-internal-plus-loopback-owner
 
   pgbouncer-ops:
     image: edoburu/pgbouncer:v1.26.1-p0@sha256:488422e38cff912895d0d65d8963fcd306e6ac589a724398b6eb8e294e94d624
@@ -225,11 +226,13 @@ networks:
     name: perfume-aura-postgres-pgadmin-loopback
     driver_opts:
       com.docker.network.bridge.enable_ip_masquerade: "false"
-  # PostgreSQL reaches only the independently managed pgBackRest repository
-  # through this dedicated outbound network. Keep host firewall egress rules
-  # restricted to the repository endpoint on TCP 443; never attach app stacks.
-  backup_egress:
-    name: perfume-aura-postgres-backup-egress
+  # Carries only the raw owner listener's loopback publish. Backups go to a
+  # local volume, so without masquerading PostgreSQL has no outbound route.
+  # Never attach app stacks.
+  owner_loopback:
+    name: perfume-aura-postgres-owner-loopback
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "false"
   # Existing, external Compose network from deploy/ops-vps/compose.yaml.
   # This declaration cannot create, alter, or remove the ops network.
   ops_internal:
@@ -247,6 +250,9 @@ volumes:
     name: perfume-aura-postgres-pg18-data
   pgbackrest-spool:
     name: perfume-aura-pgbackrest-spool
+  # The encrypted pgBackRest repository. Never remove it with the data volume.
+  pgbackrest-repo:
+    name: perfume-aura-pgbackrest-repo
   pgadmin-data:
     name: perfume-aura-pgadmin-data
 

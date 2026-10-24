@@ -58,6 +58,6 @@ the file labels if a collision is found; a shared storefront/finalizer secret
 would otherwise allow the normal storefront credential to authenticate as the
 payment-finalizer role.
 
-`pgbackrest.conf` contains the off-host repository credentials and its backup
-cipher passphrase. It is not an application connection string and must never be
+`pgbackrest.conf` contains the local repository path and its backup cipher
+passphrase. It is not an application connection string and must never be
 copied into a GitHub secret, deployment archive, logs, or `CURRENT_STATE.md`.
