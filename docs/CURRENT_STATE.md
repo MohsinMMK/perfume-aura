@@ -60,7 +60,7 @@ preparation under `deploy/postgres-vps/` is not active production.
 Source dependencies are at latest: Next.js `16.4.3`, React `19.3.1`, Better
 Auth `1.7.12`, ESLint `10`, Sentry `11.8.0`, Sharp `0.35.5`, Nodemailer `10.2.1`
 and reviewed transitive overrides. The full `pnpm check` (including both audits)
-and 110 disposable-database integration tests pass. CI integration stays on
+and 113 disposable-database integration tests pass. CI integration stays on
 PostgreSQL `16.15` to match the protected `postgresql-16-integration` check;
 moving majors needs Neon version evidence. Better Auth 1.7.3+ needs migration
 `0018_better_auth_provider_identity`; Ops must not run the new auth code before
