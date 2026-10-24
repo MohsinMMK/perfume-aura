@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 import { createCustomerAuth } from "@/lib/customer-auth";
 import { deleteDeliveryProfile, saveDeliveryProfile } from "@/lib/customer-profile";
 import { isTrustedStorefrontMutation } from "@/lib/customer-request-security";
+import { isCustomerAuthEnabled } from "@/lib/customer-auth-policy";
 
 async function customer(request: NextRequest) {
   const session = await createCustomerAuth().api.getSession({ headers: request.headers });
@@ -10,7 +11,7 @@ async function customer(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest): Promise<NextResponse> {
-  if (process.env.STOREFRONT_CUSTOMER_AUTH_ENABLED !== "true") {
+  if (!isCustomerAuthEnabled()) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   if (!isTrustedStorefrontMutation(request.headers)) {
@@ -33,7 +34,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
 }
 
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
-  if (process.env.STOREFRONT_CUSTOMER_AUTH_ENABLED !== "true") {
+  if (!isCustomerAuthEnabled()) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   if (!isTrustedStorefrontMutation(request.headers)) {

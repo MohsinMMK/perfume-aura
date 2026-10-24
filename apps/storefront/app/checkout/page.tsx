@@ -5,8 +5,9 @@ import { CheckoutForm } from "@/components/checkout-form";
 import { createCustomerAuth } from "@/lib/customer-auth";
 import { isCustomerAuthEnabled } from "@/lib/customer-auth-policy";
 import { getDeliveryProfile } from "@/lib/customer-profile";
+import { noIndexRobots } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Checkout", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Checkout", robots: noIndexRobots };
 
 export const dynamic = "force-dynamic";
 

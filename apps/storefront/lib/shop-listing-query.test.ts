@@ -288,6 +288,13 @@ describe("shop listing query", () => {
     );
   });
 
+  it("matches nothing for a search made only of punctuation", () => {
+    assert.equal(
+      applyShopListingQuery(products, { ...emptyShopListingQuery, q: "%%% --" }).length,
+      0,
+    );
+  });
+
   it("sorts by name only when requested and keeps catalog order by default", () => {
     const signature = products.filter((product) => product.collectionSlug === "signature");
     const filtered = applyShopListingQuery(products, {

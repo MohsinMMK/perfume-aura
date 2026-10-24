@@ -2,8 +2,10 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Button } from "@perfume-aura/ui/components/button";
+import { isCustomerAuthEnabled } from "@/lib/customer-auth-policy";
+import { noIndexRobots } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Account", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Account", robots: noIndexRobots };
 export const dynamic = "force-dynamic";
 
 const accountDestinations = [
@@ -25,7 +27,7 @@ const accountDestinations = [
 ] as const;
 
 export default async function AccountPage() {
-  const enabled = process.env.STOREFRONT_CUSTOMER_AUTH_ENABLED === "true";
+  const enabled = isCustomerAuthEnabled();
   const session = enabled
     ? await import("@/lib/customer-auth").then(async ({ createCustomerAuth }) =>
         createCustomerAuth().api.getSession({ headers: await headers() }),

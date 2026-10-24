@@ -9,8 +9,10 @@ import { createCustomerAuth } from "@/lib/customer-auth";
 import { getCustomerOrder } from "@/lib/customer-orders";
 import { reconcileCustomerOrderPayment } from "@/lib/customer-payment-reconciliation";
 import { formatMoney } from "@/lib/money";
+import { isCustomerAuthEnabled } from "@/lib/customer-auth-policy";
+import { noIndexRobots } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Order details", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Order details", robots: noIndexRobots };
 export const dynamic = "force-dynamic";
 
 function addressLines(value: unknown): string[] {
@@ -34,7 +36,7 @@ export default async function CustomerOrderPage({
 }>) {
   const { orderNumber } = await params;
   const query = await searchParams;
-  const session = process.env.STOREFRONT_CUSTOMER_AUTH_ENABLED === "true"
+  const session = isCustomerAuthEnabled()
     ? await createCustomerAuth().api.getSession({ headers: await headers() })
     : null;
   if (!session?.user) {

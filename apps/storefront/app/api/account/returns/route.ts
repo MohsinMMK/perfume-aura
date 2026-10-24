@@ -3,9 +3,10 @@ import { ZodError } from "zod";
 import { createCustomerAuth } from "@/lib/customer-auth";
 import { requestCustomerOrderReturn } from "@/lib/customer-returns";
 import { isTrustedStorefrontMutation } from "@/lib/customer-request-security";
+import { isCustomerAuthEnabled } from "@/lib/customer-auth-policy";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  if (process.env.STOREFRONT_CUSTOMER_AUTH_ENABLED !== "true") {
+  if (!isCustomerAuthEnabled()) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   if (!isTrustedStorefrontMutation(request.headers)) {

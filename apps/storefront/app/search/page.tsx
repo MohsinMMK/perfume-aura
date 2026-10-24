@@ -8,8 +8,9 @@ import {
   emptyShopListingQuery,
   parseShopListingQuery,
 } from "@/lib/shop-listing-query";
+import { noIndexRobots } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Search", alternates: { canonical: "/search" }, robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Search", alternates: { canonical: "/search" }, robots: noIndexRobots };
 
 export default async function SearchPage({
   searchParams,

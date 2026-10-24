@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { GatedInquiryForm } from "@/components/gated-inquiry-form";
 import { resolvePublicSupportConfig } from "@/lib/support-config";
+import { noIndexRobots } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Contact", alternates: { canonical: "/contact" }, robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Contact", alternates: { canonical: "/contact" }, robots: noIndexRobots };
 
 export default function ContactPage() {
   const enabled = process.env.STOREFRONT_INQUIRIES_ENABLED === "true";

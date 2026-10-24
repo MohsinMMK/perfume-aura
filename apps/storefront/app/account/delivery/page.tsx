@@ -4,12 +4,14 @@ import { redirect } from "next/navigation";
 import { DeliveryProfileForm } from "@/components/delivery-profile-form";
 import { createCustomerAuth } from "@/lib/customer-auth";
 import { getDeliveryProfile } from "@/lib/customer-profile";
+import { isCustomerAuthEnabled } from "@/lib/customer-auth-policy";
+import { noIndexRobots } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Delivery details", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Delivery details", robots: noIndexRobots };
 export const dynamic = "force-dynamic";
 
 export default async function DeliveryPage() {
-  const session = process.env.STOREFRONT_CUSTOMER_AUTH_ENABLED === "true"
+  const session = isCustomerAuthEnabled()
     ? await createCustomerAuth().api.getSession({ headers: await headers() })
     : null;
   if (!session?.user) redirect("/account/sign-in?callbackURL=/account/delivery");

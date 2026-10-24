@@ -3,9 +3,10 @@ import { ZodError } from "zod";
 import { createCustomerAuth } from "@/lib/customer-auth";
 import { submitCustomerReview } from "@/lib/customer-reviews";
 import { isTrustedStorefrontMutation } from "@/lib/customer-request-security";
+import { isCustomerAuthEnabled } from "@/lib/customer-auth-policy";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  if (process.env.STOREFRONT_CUSTOMER_AUTH_ENABLED !== "true") return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!isCustomerAuthEnabled()) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (!isTrustedStorefrontMutation(request.headers)) return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
   const session = await createCustomerAuth().api.getSession({ headers: request.headers });
   if (!session?.user || session.user.emailVerified !== true) return NextResponse.json({ error: "A verified customer session is required." }, { status: 401 });

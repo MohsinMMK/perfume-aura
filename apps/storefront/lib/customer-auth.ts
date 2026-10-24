@@ -123,5 +123,3 @@ export function createCustomerAuth() {
     ],
   });
 }
-
-export type CustomerAuth = ReturnType<typeof createCustomerAuth>;

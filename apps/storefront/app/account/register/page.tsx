@@ -7,14 +7,16 @@ import {
   customerAuthProviderReadiness,
   normalizeCustomerCallbackURL,
   resolveCustomerGoogleClientId,
+  isCustomerAuthEnabled,
 } from "@/lib/customer-auth-policy";
+import { noIndexRobots } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Create account", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Create account", robots: noIndexRobots };
 
 export default async function RegisterPage({
   searchParams,
 }: Readonly<{ searchParams: Promise<{ callbackURL?: string }> }>) {
-  const enabled = process.env.STOREFRONT_CUSTOMER_AUTH_ENABLED === "true";
+  const enabled = isCustomerAuthEnabled();
   if (!enabled) notFound();
 
   const callbackURL = normalizeCustomerCallbackURL((await searchParams).callbackURL);

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { CartPageContent } from "@/components/cart-page-content";
+import { noIndexRobots } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Cart", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Cart", robots: noIndexRobots };
 
 export default function CartPage() {
   return (

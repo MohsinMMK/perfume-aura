@@ -65,7 +65,7 @@ describe("storefront customer-auth boundary", () => {
     );
   });
 
-  it("does not load Better Auth or Neon before the release gate", async () => {
+  it("does not load Better Auth or the database before the release gate", async () => {
     const route = await readFile(
       new URL("../app/api/customer-auth/[...all]/route.ts", import.meta.url),
       "utf8",

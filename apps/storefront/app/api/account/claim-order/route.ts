@@ -8,13 +8,14 @@ import {
 } from "@perfume-aura/db";
 import { createCustomerAuth } from "@/lib/customer-auth";
 import { isTrustedStorefrontMutation } from "@/lib/customer-request-security";
+import { isCustomerAuthEnabled } from "@/lib/customer-auth-policy";
 
 function digest(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  if (process.env.STOREFRONT_CUSTOMER_AUTH_ENABLED !== "true") {
+  if (!isCustomerAuthEnabled()) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   if (!isTrustedStorefrontMutation(request.headers)) {

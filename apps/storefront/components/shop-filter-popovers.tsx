@@ -97,6 +97,8 @@ function FilterChevron({ open }: Readonly<{ open: boolean }>) {
   );
 }
 
+// Closed panels stay laid out while invisible, so their option links opt out of
+// viewport prefetch instead of requesting every filter combination on load.
 function FilterPanel({
   id,
   label,
@@ -243,6 +245,7 @@ export function ShopFilterPopovers({
           type="button"
           variant="outline"
           size="lg"
+          aria-label={`Collection, ${selectedCollection.label}`}
           aria-expanded={openMenu === "collection"}
           aria-controls={collectionMenuId}
           onClick={(event) => toggleMenu("collection", event)}
@@ -270,6 +273,7 @@ export function ShopFilterPopovers({
               <Link
                 key={option.value}
                 href={shopListingHref(withShopListingSegment(query, option.value))}
+                prefetch={false}
                 aria-current={selected ? "page" : undefined}
                 tabIndex={openMenu === "collection" ? undefined : -1}
                 onClick={closeMenus}
@@ -315,6 +319,7 @@ export function ShopFilterPopovers({
         >
           <Link
             href={shopListingHref(withShopListingBrand(query))}
+            prefetch={false}
             aria-current={!query.brand ? "true" : undefined}
             tabIndex={openMenu === "brand" ? undefined : -1}
             onClick={closeMenus}
@@ -329,6 +334,7 @@ export function ShopFilterPopovers({
               <Link
                 key={option.value}
                 href={shopListingHref(withShopListingBrand(query, option.value))}
+                prefetch={false}
                 aria-current={selected ? "true" : undefined}
                 tabIndex={openMenu === "brand" ? undefined : -1}
                 onClick={closeMenus}
@@ -352,6 +358,7 @@ export function ShopFilterPopovers({
           type="button"
           variant="outline"
           size="lg"
+          aria-label={query.sizes.length > 0 ? `Size, ${sizeLabel}` : "Choose a size"}
           aria-expanded={openMenu === "size"}
           aria-controls={sizeMenuId}
           onClick={(event) => toggleMenu("size", event)}
@@ -373,6 +380,7 @@ export function ShopFilterPopovers({
         >
           <Link
             href={shopListingHref(withShopListingSize(query))}
+            prefetch={false}
             aria-current={!hasSelectedSize ? "true" : undefined}
             tabIndex={openMenu === "size" ? undefined : -1}
             onClick={closeMenus}
@@ -387,6 +395,7 @@ export function ShopFilterPopovers({
               <Link
                 key={size}
                 href={shopListingHref(withShopListingSize(query, size))}
+                prefetch={false}
                 aria-current={selected ? "true" : undefined}
                 tabIndex={openMenu === "size" ? undefined : -1}
                 onClick={closeMenus}
@@ -410,6 +419,7 @@ export function ShopFilterPopovers({
           type="button"
           variant="outline"
           size="lg"
+          aria-label={query.sort === "catalog" ? "Choose a sort order" : `Sort, ${sortLabel}`}
           aria-expanded={openMenu === "sort"}
           aria-controls={sortMenuId}
           onClick={(event) => toggleMenu("sort", event)}
@@ -435,6 +445,7 @@ export function ShopFilterPopovers({
               <Link
                 key={option.value}
                 href={shopListingHref(withShopListingSort(query, option.value))}
+                prefetch={false}
                 aria-current={selected ? "true" : undefined}
                 tabIndex={openMenu === "sort" ? undefined : -1}
                 onClick={closeMenus}

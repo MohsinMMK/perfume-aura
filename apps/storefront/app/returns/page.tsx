@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { EditorialPage } from "@/components/editorial-page";
 import { loadApprovedCommercePolicy } from "@/lib/commerce-policy";
+import { noIndexRobots } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Returns policy", alternates: { canonical: "/returns" }, robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Returns policy", alternates: { canonical: "/returns" }, robots: noIndexRobots };
 
 export default async function ReturnsPage() {
   const policy = await loadApprovedCommercePolicy();

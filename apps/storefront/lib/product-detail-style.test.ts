@@ -16,8 +16,9 @@ describe("mobile product detail design contract", () => {
     assert.match(page, /data-product-gallery/u);
     assert.match(page, /data-product-image-frame/u);
     assert.match(globals, /\.aura-product-hero\s*\{[\s\S]*height: 100svh;[\s\S]*grid-template-rows: clamp\(11rem, 42svh, 35rem\) minmax\(0, 1fr\);/u);
-    assert.match(page, /backgroundImage: `url\("\$\{product\.image\}"\)`/u);
-    assert.match(page, /inset-x-2 bottom-2 top-\[72px\][^"]*rounded-\[var\(--aura-radius\)\][^"]*bg-cover bg-center/u);
+    assert.doesNotMatch(page, /backgroundImage/u);
+    assert.match(page, /inset-x-2 bottom-2 top-\[72px\][^"]*rounded-\[var\(--aura-radius\)\]/u);
+    assert.match(page, /<Image data-product-backdrop src=\{product\.image\} alt="" aria-hidden="true" fill sizes="64px" className="object-cover object-center sm:hidden" \/>/u);
     assert.match(page, /object-contain object-center sm:object-cover/u);
     assert.match(page, /data-product-gallery[\s\S]{0,180}bg-\[var\(--aura-ink\)\]/u);
     assert.doesNotMatch(page, /data-product-gallery[\s\S]{0,180}bg-white/u);

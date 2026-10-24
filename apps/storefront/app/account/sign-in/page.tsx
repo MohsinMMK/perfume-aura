@@ -6,16 +6,18 @@ import {
   customerAuthProviderReadiness,
   normalizeCustomerCallbackURL,
   resolveCustomerGoogleClientId,
+  isCustomerAuthEnabled,
 } from "@/lib/customer-auth-policy";
+import { noIndexRobots } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Sign in", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Sign in", robots: noIndexRobots };
 
 export default async function SignInPage({
   searchParams,
 }: Readonly<{
   searchParams: Promise<{ callbackURL?: string; verification?: string }>;
 }>) {
-  const enabled = process.env.STOREFRONT_CUSTOMER_AUTH_ENABLED === "true";
+  const enabled = isCustomerAuthEnabled();
   const params = await searchParams;
   const callbackURL = normalizeCustomerCallbackURL(params.callbackURL);
   const registerHref = callbackURL === "/account"
