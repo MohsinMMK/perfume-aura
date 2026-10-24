@@ -1,7 +1,7 @@
 # Perfume Aura
 
-Perfume Aura is a pnpm monorepo with two web applications backed by one Neon
-PostgreSQL database:
+Perfume Aura is a pnpm monorepo with two web applications backed by one self-hosted
+PostgreSQL database on the same VPS:
 
 - `perfumeaura.com` — public brand and discovery storefront in a hardened
   VPS container. Online catalog publication and checkout are not open.
@@ -19,8 +19,8 @@ flowchart LR
   caddy --> storefront["Storefront container<br/>Hostinger VPS · 3031"]
   staff["Owner and staff"] --> caddy["Caddy TLS proxy"]
   caddy --> ops["Ops container<br/>Hostinger VPS"]
-  storefront --> neon["Neon PostgreSQL"]
-  ops --> neon
+  storefront --> postgres["VPS PostgreSQL<br/>per-app poolers"]
+  ops --> postgres
 ```
 
 ## Start here
@@ -35,7 +35,7 @@ flowchart LR
 | Commerce launch blockers B01–B07 | [Launch gates](docs/COMMERCE.md#launch-gates) |
 | Users, routes, live vs locked behavior | [Product behavior](docs/COMMERCE.md#product-behavior) |
 | Code, stack, data, tests, CI | [ENGINEERING.md](docs/ENGINEERING.md) |
-| Hostinger, VPS, DNS, Neon, deploy, recovery | [OPERATIONS.md](docs/OPERATIONS.md) |
+| Hostinger, VPS, DNS, database, deploy, recovery | [OPERATIONS.md](docs/OPERATIONS.md) |
 | Commerce requirements, ADRs, checklist | [COMMERCE.md](docs/COMMERCE.md) |
 | Catalog mappings, legal research, design evidence | [REFERENCE.md](docs/REFERENCE.md) |
 | Agent invariants and finish gates | [AGENTS.md](AGENTS.md) |

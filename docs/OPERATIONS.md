@@ -6,10 +6,10 @@ or release work. This file owns procedures, not live SHAs.
 ## Authority, topology, and safety boundaries
 
 Only Perfume Aura is in scope. Preserve unrelated VPS stacks, Hostinger sites,
-email, DNS records, Neon, recovery artifacts and closed release flags.
-GoDaddy owns registration; Hostinger owns DNS. App auth secrets, tables and cookies
-stay separate. The current database role/credential is shared by both runtimes;
-do not assume role isolation. Never copy Ops auth credentials into storefront.
+email, DNS records, the unused Neon project, recovery artifacts and closed
+release flags. GoDaddy owns registration; Hostinger owns DNS. App auth secrets,
+tables and cookies stay separate. Each runtime has its own database role; never
+copy Ops auth credentials or database URLs into storefront.
 
 Prefer Hostinger MCP through Docker Gateway, GitHub CLI and private SSH.
 Use hPanel only for capabilities absent from the installed MCP tool inventory.
@@ -147,8 +147,9 @@ also require `--seo-mode public-catalog --expected-sitemap-manifest <reviewed-js
 Obtain authorization for credential changes and coordinated restarts. Inventory
 both root-owned env files, matching ignored local URLs and configured CI consumers
 without printing values. Generate independent 32+ character secrets; pre-stage
-mode-0600 candidates before changing the database password through Neon's official
-API or SQL path. Change only the password, not role identity, grants or schema.
+mode-0600 candidates before changing the role password with `ALTER ROLE` as the
+VPS owner and updating its `/etc/perfume-aura-postgres/secrets/` file and pooler.
+Change only the password, not role identity, grants or schema.
 
 Coordinate promotion of both env files: each rename is atomic, the pair is not.
 Before changing the password, validate both candidates as root:root 0600, preserve
@@ -187,12 +188,13 @@ Never reuse stale credentials from retired Hostinger envs during recovery.
 
 ### Schema changes
 
-Production is Neon. Runtime uses pooled `pg`; migrations use the direct owner
-connection. Never run integration tests on Neon. Until the
+Production is the [self-hosted VPS PostgreSQL](#self-hosted-postgresql). Runtime
+uses pooled `pg` through each app's PgBouncer; migrations use the loopback owner
+connection on the VPS. Never run integration tests on production. Until the
 [automated database release](#automated-database-release) is enabled, never
 migrate as a deployment side effect: confirm the journal, prove the intended
-changes on an isolated Neon branch, test on disposable loopback PostgreSQL, then
-obtain owner apply approval.
+changes on disposable loopback PostgreSQL, take a pgBackRest backup, then obtain
+owner apply approval.
 
 Use `pnpm db:prove-isolated-migration` with the reviewed migration tag and roles.
 After apply, reapply `packages/db/sql/ops-runtime-grants.sql`,
@@ -201,13 +203,10 @@ Unexpected effective privileges fail acceptance: no runtime DDL, TEMP, role
 membership or broad sequence power. Finalizer has function-only access, no table
 grants. Preserve append-only stock/audit/invitation records.
 
-`0017` adds oil reservations/FIFO settlement and is not applied. `0018` keys
-Better Auth accounts by provider identity (required by Better Auth 1.7.3+) and
-is not applied; it stops on duplicate provider identities. `0019` revokes
-PUBLIC EXECUTE from the two `0010` trigger functions the storefront grant check
-reports as drift; not applied. Confirm the
-unrecorded `0016` journal before oil provenance work. Do not change either
-runtime database URL during this web migration.
+Migrations `0000`–`0019` are applied and recorded in the production journal.
+`0018` keys Better Auth accounts by provider identity and stops on duplicate
+provider identities; `0019` revokes PUBLIC EXECUTE from the `0010` trigger
+functions.
 
 ### Automated database release
 
@@ -230,11 +229,10 @@ neither runtime deploys. See [the runner contract](../deploy/database-release-vp
 
 Prerequisites:
 
-1. Distinct login roles for Ops, storefront and, when used, the payment finalizer.
-   Each has no DDL, TEMP or membership, including through PUBLIC (Neon grants
-   PUBLIC TEMP by default; revoke it). The runner refuses a shared role.
-2. Confirmed recorded history: the unrecorded `0016` apply must be reconciled
-   first, or the release fails and rolls back.
+1. Distinct login roles for Ops, storefront and the payment finalizer, each with
+   no DDL, TEMP or membership, including through PUBLIC. The runner refuses a
+   shared role. Met on the VPS PostgreSQL.
+2. Complete recorded history. Met: `0000`–`0019` are recorded.
 3. Reviewed admin install on the VPS: the `perfume-database-release` user with only
    the CI public key and a forced command, root-owned `release-ssh.sh` and
    `release-root.sh` in `/usr/local/libexec/`, the `sudoers` and `sshd.conf`
@@ -295,20 +293,23 @@ SELECT has_function_privilege(
 SELECT * FROM pg_auth_members;
 ```
 
-## Self-hosted PostgreSQL target
+## Self-hosted PostgreSQL
 
-[PostgreSQL runbook](../deploy/postgres-vps/RUNBOOK.md) owns this separate,
-not-live project: PostgreSQL 18.6 with pgBackRest, and a private per-app
-PgBouncer (`postgres-pooler:6432`) on each app's existing Docker network. It
-keeps encrypted pgBackRest backups on a dedicated VPS volume (no paid storage
-provider) and requires an isolated restore drill before cutover. Never publish a database port or change runtime
-connections merely because templates exist.
+[PostgreSQL runbook](../deploy/postgres-vps/RUNBOOK.md) owns the production
+database: PostgreSQL 18.6 with pgBackRest, and a private per-app PgBouncer
+(`postgres-pooler:6432`) on each app's existing Docker network. Encrypted
+pgBackRest backups stay on a dedicated VPS volume (no paid storage provider).
+Never publish a database or pooler port; pgAdmin stays on loopback.
 
-Ordering: source export → disposable restore/parity → migrations/grants →
-backup → isolated restore → controlled write freeze/cutover →
-exact acceptance. Retain Neon until the accepted recovery window completes.
-The read-only `pnpm db:verify-self-hosted-migration` uses explicit direct source
-and target URLs and rejects Neon/pooler targets; never print data or URLs.
+Runtime URLs: Ops `DATABASE_URL` uses `ops_runtime`; storefront `DATABASE_URL`
+uses `storefront_runtime` and `STOREFRONT_PAYMENT_FINALIZER_DATABASE_URL` uses
+`storefront_payment_finalizer`, each through its app's pooler. Role passwords
+live only in `/etc/perfume-aura-postgres/secrets/`.
+
+Ops owner account: the owner runs `sudo /usr/local/libexec/perfume-aura-seed-owner`
+on the VPS. It prompts for email and password without echo and runs
+`apps/ops/scripts/seed-owner.ts` against the loopback owner connection; it
+never takes secrets as arguments.
 
 ## Staff operations release procedure
 
@@ -363,4 +364,4 @@ Cashfree TTL must remain 20 minutes; Ops refunds use the same reviewed merchant.
 - [Hostinger DNS editor](https://www.hostinger.com/support/how-to-use-hostingers-dns-zone-editor/)
 - [Docker Compose health wait](https://docs.docker.com/reference/cli/docker/compose/up/)
 - [Private GitHub runners with Tailscale](https://tailscale.com/kb/1586/secure-github-runners)
-- [Neon role password rotation](https://neon.com/docs/manage/roles#reset-a-password)
+- [PostgreSQL ALTER ROLE](https://www.postgresql.org/docs/18/sql-alterrole.html)

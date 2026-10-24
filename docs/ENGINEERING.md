@@ -120,9 +120,8 @@ Never use Vercel deploy skills.
 - Money persists as integer INR paise. Ops/invoice columns often `*_cents`;
   commerce columns often `amount_minor`. Same unit. No browser float is
   authoritative.
-- Repo migrations: `0000`–`0019` (20 files). Production has not applied
-  `0017`, `0018` or `0019`. `0016` is in the live source; its Neon apply is unrecorded — confirm
-  the journal before oil-provenance work. See [`CURRENT_STATE.md`](CURRENT_STATE.md).
+- Repo migrations: `0000`–`0019` (20 files). Production (VPS PostgreSQL) has applied and recorded all of them.
+  See [`CURRENT_STATE.md`](CURRENT_STATE.md).
 - `oil_reservations` and settlement routines are SQL in `0017`, not Drizzle TS
   tables. Finalizer env: `STOREFRONT_PAYMENT_FINALIZER_DATABASE_URL`. That role
   has no table grants.

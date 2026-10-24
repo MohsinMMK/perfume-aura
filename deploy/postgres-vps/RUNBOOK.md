@@ -2,7 +2,9 @@
 
 Use this runbook only after the source Neon inventory, target VPS admission,
 and a scheduled cutover window are recorded. It is deliberately a rehearsal
-plan first; no command here deletes the Neon source.
+plan first; no command here deletes the Neon source. Production was cut over
+with a fresh schema instead of a copy: the Neon export, parity and rollback-to-Neon
+steps no longer apply.
 
 ## 1. Prepare target configuration
 

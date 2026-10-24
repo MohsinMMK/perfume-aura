@@ -9,7 +9,7 @@ Never infer a live release from Git HEAD. Never record secrets or customer data.
 |---|---|---|
 | `perfumeaura.com` | VPS Caddy → loopback 3031 → storefront | `c6b0db0e3327f1d7e8b414b17692622aac2da727` |
 | `www.perfumeaura.com` | Caddy HTTPS 308 to apex, preserving path/query | Same storefront |
-| `app.perfumeaura.com` | VPS Caddy → loopback 3020 → Ops | `09164609b918cf8c356ec35e42e6d96ff1a25dce` |
+| `app.perfumeaura.com` | VPS Caddy → loopback 3020 → Ops | `7b8349f1f9f3214edfe17f64548c507725e4d9ad` |
 
 VPS: Hostinger KVM2, public `194.164.149.3`, Tailscale `100.119.191.103`.
 Admin: `ssh khanect-vps`. SSH is private; only HTTP/HTTPS are public.
@@ -19,26 +19,24 @@ www CNAME points to apex. No apex AAAA remains. Hostinger CDN is disabled
 and the storefront is opted out of automatic CDN. Preserve mail records.
 Do not create `shop` or `www.app`.
 
-Neon (free plan) rejects connections with `53000` (quota exceeded) until its
-quota resets on 2026-11-01, so Ops readiness returns 503. The storefront
-discovery catalog does not use Neon and stays available. The owner declined
-paid plans: Neon will be replaced by the self-hosted VPS PostgreSQL, with no
-paid backup provider.
+Both apps use the self-hosted VPS PostgreSQL; Neon is no longer used by any
+runtime. The Neon project still exists unused; it was not copied (quota-locked),
+so production started from a fresh schema: migrations `0000`–`0019` applied and
+recorded, the `MAIN` location seeded, no products, customers or Ops users yet.
 
-Storefront and Ops share Neon and currently use the same runtime database
-role/credential; role isolation is not verified. Auth tables, application auth
-secrets and cookies remain separate.
-
-The VPS PostgreSQL target from `deploy/postgres-vps/` runs but holds no
-production data and serves no app: PostgreSQL 18.6 on loopback
-`127.0.0.1:55442` (55432 belongs to another project) and pgAdmin on loopback
-5050. Its root-owned checkout is `/srv/perfume-aura`, settings and secrets are
-in `/etc/perfume-aura-postgres/`, and the trusted Node is
+PostgreSQL 18.6 from `deploy/postgres-vps/` listens on loopback
+`127.0.0.1:55442` (55432 belongs to another project); pgAdmin is on loopback
+5050. Each app reaches it only through its own PgBouncer
+(`postgres-pooler:6432`, no host port) on its existing Docker network, with
+distinct roles `ops_runtime`, `storefront_runtime` and
+`storefront_payment_finalizer`; the bootstrap verified their grants. Its
+root-owned checkout is `/srv/perfume-aura`, settings and secrets are in
+`/etc/perfume-aura-postgres/`, and the trusted Node is
 `/opt/perfume-aura-node/bin/node`. pgBackRest keeps encrypted backups in the
-`perfume-aura-pgbackrest-repo` volume; stanza, full/differential backup,
-`failed_count = 0`, an isolated restore drill and the backup timers pass.
-These backups do not survive loss of the VPS; a free second copy outside it is
-still open. Poolers and runtime roles are not created yet.
+`perfume-aura-pgbackrest-repo` volume; a full backup after cutover, WAL
+archiving with `failed_count = 0`, an isolated restore drill and the backup
+timers pass. These backups do not survive loss of the VPS; a free second copy
+outside it is still open.
 
 ## Deployment status
 
@@ -48,9 +46,10 @@ still open. Poolers and runtime roles are not created yet.
   (`deploy_target=storefront`) deployed the exact live source. Full public
   acceptance passes; `VPS_STOREFRONT_PUBLIC_VERIFICATION_ENABLED=true` checks
   future releases.
-- Ops uses an independent image and deploy identity. Its accepted runtime source
-  is unchanged. `VPS_OPS_AUTO_DEPLOY_ENABLED=false` enforces the pending migration
-  gate; the working Ops runtime remains available.
+- Ops uses an independent image and deploy identity.
+  `VPS_OPS_AUTO_DEPLOY_ENABLED=true`. GitHub run `40088270173`
+  (`deploy_target=ops`) deployed the exact live source; Ops acceptance (live,
+  ready, version, unauthenticated session) and storefront checks pass.
 - Storefront image digest:
   `sha256:25a93afe5c73a022523d40ff0d6f99b10fb213c8d2833f17b1fa634740b08ff5`.
   The runtime settings are root-owned mode 0600 in
@@ -61,14 +60,12 @@ still open. Poolers and runtime roles are not created yet.
   114 discovery scents and disabled purchasing. Ops acceptance also passes.
 - The homepage hero cycles only through Inspired Series and Signature Series.
   The cream guide section is removed; the two featured cards are centered on
-  desktop. Desktop/tablet/mobile browser checks pass. Ops container identity,
-  start time and image remain unchanged.
+  desktop. Desktop/tablet/mobile browser checks pass.
 - Markdown-only changes must not deploy. Storefront-only releases must not
   deploy Ops or apply migrations. Database changes fail closed at the owner gate.
 - Source pin is Node `26.12.1` / npm `11.20.0` / pnpm `12.15.0` on
   `node:26.12.1-trixie-slim@sha256:36793bcbb160a6a16cede1e62b93f84e26b78a972a8a4c0b879c1c12f22761ec`.
-  The live storefront runs this source. Ops still runs its previous accepted
-  image; auto-deploy stays gated.
+  Both live apps are built on this pin.
 
 ## Active release locks
 
@@ -77,10 +74,7 @@ Auth `1.7.12`, ESLint `10`, Sentry `11.8.0`, Sharp `0.35.5`, Nodemailer `10.2.1`
 and reviewed transitive overrides. The full `pnpm check` (including both audits)
 and 113 disposable-database integration tests pass. CI integration stays on
 PostgreSQL `16.15` to match the protected `postgresql-16-integration` check;
-moving majors needs Neon version evidence. Better Auth 1.7.3+ needs migration
-`0018_better_auth_provider_identity`; Ops must not run the new auth code before
-the owner gate applies it.
-This validates source, not the still-accepted Ops image: its patched release remains subject to the migration gate.
+production now runs 18.6, so moving CI to 18 is an open follow-up.
 
 All remain false: `STOREFRONT_PUBLIC_RELEASE`,
 `STOREFRONT_CUSTOMER_AUTH_ENABLED`, `STOREFRONT_CHECKOUT_RELEASE_APPROVED`,
@@ -94,28 +88,22 @@ with the other storefront release locks; discovery catalog acceptance passes.
 Visitors see 114 discovery products (79 Inspired, 15 Unknown, 20 Signature),
 322 owner-priced variants. WhatsApp is the order/contact path. This is not
 approved sellable catalog publication. Shop/products stay noindex; checkout
-is unavailable. Customer auth returns 404 before initializing auth/Neon.
+is unavailable. Customer auth returns 404 before initializing auth/database.
 
-Production migrations `0017_storefront_sale_settlement`,
-`0018_better_auth_provider_identity` and
-`0019_revoke_public_trigger_execute` are not applied. The
-`0016` apply is unrecorded: check the journal before related work.
-Do not deploy Ops from main until its manual migration/grant gate passes.
-Storefront-only releases may proceed with Ops/database work excluded.
+Future migrations stay manual until the automated database release is installed
+and enabled; `block-runtime-deploy-on-database-migration` stops runtime deploys
+of migration changes meanwhile.
 
 ## Credential state
 
-Both root-owned application env files use the rotated shared database credential.
-Fresh direct and pooled connections reject its predecessor. Storefront auth and
-maintenance secrets are independently generated; customer accounts/sessions are
-empty and auth remains disabled. Matching ignored local runtime URLs are synced;
-the separate owner connection and Ops auth secret are unchanged.
-
-Both apps pass public acceptance on their accepted images, with schema, grants
-and release locks unchanged. The shared role has no superuser, role creation,
-database creation, BYPASSRLS or membership in the PostgreSQL `neon_superuser` role.
-Neon account/project administration is separate and was not audited. Complete
-least-privilege grants and role separation remain reviewed follow-ups.
+Both root-owned application env files point only at their VPS poolers with
+their own roles; the pre-cutover copies (`*.pre-vps-postgres-*`, root:root 0600)
+still hold the retired Neon URLs and should be removed after acceptance. Storefront
+auth and maintenance secrets are independently generated; customer accounts and
+sessions are empty and auth remains disabled. Ignored local env files may still
+reference Neon; local work must use disposable loopback PostgreSQL. The Ops owner
+account does not exist yet: the owner creates it with
+`sudo /usr/local/libexec/perfume-aura-seed-owner` (see Operations).
 GitHub has no maintenance secret configured and its maintenance enablement is
 unset, so scheduled workers remain inactive. Do not reuse retired hosting envs
 for recovery: their credentials are stale; current VPS envs own recovery.
@@ -159,20 +147,18 @@ not to the current VPS release flow.
 
 ## Next actions
 
-1. On 2026-11-01, after the Neon quota resets: freeze writes, dump Neon,
-   restore into a fresh VPS data volume, apply 0016–0019, run the runtime-role
-   bootstrap, prove row counts and grants, back up, switch both app env URLs to
-   the poolers, deploy and accept. Keep Neon until the rollback window ends,
-   then rotate its credential.
+1. Owner: create the Ops owner account with the VPS seed helper, then sign in.
+   Remove the `*.pre-vps-postgres-*` env copies. Optionally delete the unused
+   Neon project. Make a free backup copy and the pgBackRest cipher passphrase
+   available outside the VPS.
 2. Verify apex/www resolve only to the VPS, with no retired A/AAAA targets,
    before removing recovery hosting.
 3. Confirm and remove the three obsolete Perfume Aura Web Apps preserving
    email/DNS; disconnect retired provider Git triggers and remove their unused
    credentials, then verify live routing and hosting slot counts again.
 4. Autonomous main releases: `database-release` (migrate → Ops → storefront) is
-   built but disabled. It needs distinct runtime roles, `0016` reconciliation,
-   the VPS admin install and `VPS_DATABASE_AUTO_RELEASE_ENABLED` plus
-   `VPS_OPS_AUTO_DEPLOY_ENABLED`; see Operations.
+   built but disabled. Roles and history are ready; it still needs the VPS admin
+   install and `VPS_DATABASE_AUTO_RELEASE_ENABLED`; see Operations.
 5. Keep commerce/security gates closed. Owner gates: India counsel, catalog
    facts/media, CA/tax/delivery policies, Google/SMTP/Cashfree, owner TOTP/staff
    denial, telemetry/maintenance, and explicit launch approval.

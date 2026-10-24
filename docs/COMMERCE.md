@@ -18,7 +18,7 @@ The storefront and commerce schema are implemented and deployed fail-closed.
 Sellable catalog rows, checkout, payment, customer accounts, inquiries, and
 reviews stay closed until their release evidence passes. Brand/guide discovery
 indexing of the seven sitemap URLs is already public and does not open those
-gates. The 114-product `/shop` listing is workbook discovery, not Neon
+gates. The 114-product `/shop` listing is workbook discovery, not the database
 publication.
 
 These sections plus [`REFERENCE.md`](REFERENCE.md) are executable specification inputs to `pnpm commerce:verify`:
@@ -55,7 +55,7 @@ Next.js storefront              Next.js owner/staff operations
         ├── controlled catalog projection ─┤
         ├── HttpOnly cart token             ├── private owner/staff actions
         ├── separate customer-auth boundary ├── independent Better Auth boundary
-        └────────────── Neon PostgreSQL ────┘
+        └────────────── VPS PostgreSQL ─────┘
 ```
 
 This document owns commerce data, authentication, and release boundaries only.
@@ -67,9 +67,9 @@ deployment, migration, and recovery procedures belong in
 
 - There are three catalog paths: (1) live workbook discovery listing,
   `publicationState: "listed"`; (2) in-memory preview carts when
-  `STOREFRONT_PREVIEW_CATALOG=true` or local development; (3) gated Neon
+  `STOREFRONT_PREVIEW_CATALOG=true` or local development; (3) gated database
   projection when `STOREFRONT_PUBLIC_RELEASE=true`.
-- The Neon public projection exposes only approved product identity, approved
+- The database public projection exposes only approved product identity, approved
   media, approved retail price, and calculated availability.
 - Costs, raw stock, internal notes, archived records, audit records, finance,
   and operations auth records never cross the storefront projection.
@@ -81,7 +81,7 @@ deployment, migration, and recovery procedures belong in
 ### Release behavior
 
 All public commerce flags are closed. `/api/customer-auth/*` returns 404
-without initializing Better Auth or Neon. Other gated APIs may 404 after a
+without initializing Better Auth or the database. Other gated APIs may 404 after a
 static import; account HTML shells still render. Catalog publication,
 checkout, payments, customer auth, inquiries, and product/collection indexing
 open only through their separate owner-approved gates. Checkout requires both
@@ -239,7 +239,7 @@ reading. Do not silently rewrite a frozen decision cell.
 
 Field-level supersession rules: COM-ADR-027 replaces only COM-ADR-023's
 temporary `shop.perfumeaura.com` staging-domain field. COM-ADR-023's separate
-storefront application, shared Neon source of truth, and private ops boundary
+storefront application, shared PostgreSQL source of truth, and private ops boundary
 remain accepted. COM-ADR-030 fully replaces COM-ADR-025. Anonymous browsing and
 cart creation, separate customer identity, configurable shipping, and manual
 courier remain; guest checkout, COD, and Apple launch sign-in are no longer
@@ -527,7 +527,7 @@ HTML `404` while flags are closed: `/checkout`, `/account/register`,
 
 `robots.txt` allows `/` and disallows `/account`, `/api/`, `/cart`,
 `/checkout`, `/order/`. Product and collection URLs enter the sitemap only
-after Neon publication and `STOREFRONT_PUBLIC_RELEASE=true`.
+after database publication and `STOREFRONT_PUBLIC_RELEASE=true`.
 
 Header: Shop, Scent guide, About, FAQ, Account, cart popover, WhatsApp “Get
 scent”. Mobile menu also has Search, Instagram `@perfume.aura.hyd`, and
@@ -538,14 +538,14 @@ NAP, hours, or an open online store.
 ### Locked vs visible
 
 Discovery listing does **not** require `STOREFRONT_PREVIEW_CATALOG` or
-`STOREFRONT_PUBLIC_RELEASE`. Those flags gate preview carts and Neon-published
+`STOREFRONT_PUBLIC_RELEASE`. Those flags gate preview carts and database-published
 sellable products.
 
 | Flag | Visitor/staff effect while false |
 |---|---|
-| `STOREFRONT_PUBLIC_RELEASE` | Workbook listing, not Neon projection. Shop/product stay `noindex`. No Product/Offer JSON-LD. |
+| `STOREFRONT_PUBLIC_RELEASE` | Workbook listing, not the database projection. Shop/product stay `noindex`. No Product/Offer JSON-LD. |
 | `STOREFRONT_PREVIEW_CATALOG` | Add to cart disabled. Cart lines empty, subtotal zero, checkout unavailable. Also true automatically in local `development`. |
-| `STOREFRONT_CUSTOMER_AUTH_ENABLED` | `/api/customer-auth/*` returns `404` before Better Auth or Neon. `/account` and `/account/sign-in` still render “not open yet”. Register/recover are `404`. |
+| `STOREFRONT_CUSTOMER_AUTH_ENABLED` | `/api/customer-auth/*` returns `404` before Better Auth or the database. `/account` and `/account/sign-in` still render “not open yet”. Register/recover are `404`. |
 | `STOREFRONT_CHECKOUT_RELEASE_APPROVED` and DB `checkout_enabled` | `/checkout` is `404`. Either plane false keeps checkout locked. |
 | `STOREFRONT_INQUIRIES_ENABLED` | Contact/wholesale forms disabled. Posted inquiries return `503`. |
 | `OPS_TWO_FACTOR_REQUIRED` / `OPS_STAFF_INVITES_ENABLED` | Ops login works; mandatory 2FA and staff invites stay off. |
@@ -580,7 +580,7 @@ SKU, cost, opening stock, media, and structured scent copy are incomplete.
 Composition shows “Details coming soon”. 10 ml and discovery sets stay out of
 public commerce until a separate sample format is approved. COD is not offered.
 
-When `STOREFRONT_PUBLIC_RELEASE=true`, the storefront switches to the Neon
+When `STOREFRONT_PUBLIC_RELEASE=true`, the storefront switches to the database
 projection and unpublished products must `404`. Until then the homepage does
 not feature the 114 workbook products; the hero is Inspired + Signature bottle
 slides plus editorial studies.
