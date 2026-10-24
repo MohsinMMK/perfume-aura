@@ -23,22 +23,23 @@ truth. Do not rebuild the whole graph for a routine question.
 
 - Public storefront: `perfumeaura.com`; www permanently redirects preserving
   path/query. Private Ops: `app.perfumeaura.com`. No shop or www.app domain.
-- Storefront and Ops share Neon and currently share one runtime database role.
-  Keep app auth tables, cookies and auth secrets separate; never copy Ops auth
-  credentials into storefront or delete/recreate Neon. Role separation needs review.
+- Storefront and Ops share the self-hosted VPS PostgreSQL, each through its own
+  pooler and runtime role. Keep app auth tables, cookies, auth secrets and
+  database roles separate; never copy Ops credentials into storefront or delete
+  its data volumes. Neon is no longer used; leave the unused project alone.
 - Preserve unrelated sites, mail, DNS, databases, VPS stacks and processes.
   GoDaddy owns registration; Hostinger nameservers own DNS.
 - Inspect existing signatures; keep changes minimal and strictly typed.
 - Money is server-authoritative integer INR paise. Public data excludes cost,
   raw stock, internal notes and archives.
-- Disabled `/api/customer-auth/*` returns 404 before initializing auth/Neon.
+- Disabled `/api/customer-auth/*` returns 404 before initializing auth/database.
   Other gated routes may statically import auth before 404; do not change casually.
 - Preserve persistent labels, visible focus, inert closed drawers, focus
   restoration, 44px targets and reduced motion. Shared UI is `packages/ui`;
   official shadcn preset `b23PPibQOI` must resolve.
 - Runtime writes use pooled pg/Drizzle transactions; manual direct-owner
   migrations require isolated proof and restricted grants. Tests use only
-  disposable loopback PostgreSQL, never Neon.
+  disposable loopback PostgreSQL, never production.
 - Secrets stay in ignored local env or owning platform/root-owned runtime stores.
   No secret values, connection strings or customer data in docs/artifacts/logs.
 - Prove cleanup targets retired/duplicated/generated first. Preserve `dist/`,
@@ -56,8 +57,8 @@ Live SHAs come from each surface's `/api/health/version`, never Git HEAD.
 Verify exact SHA, real static asset, www redirect, storefront locks, and Ops
 live/ready/unauthenticated session. Follow Operations for full acceptance.
 
-Ops deployment is blocked until its pending migration/grant owner gate passes.
-Storefront-only releases may proceed only with Ops/database work excluded.
+Migration changes stay blocked from runtime deploys until the automated database
+release is installed and enabled; apply them manually per Operations.
 Markdown-only changes must not publish or deploy.
 
 For publication use conventional commits, scoped staging, protected PR checks,

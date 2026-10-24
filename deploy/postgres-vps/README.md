@@ -1,7 +1,8 @@
-# Perfume Aura self-hosted PostgreSQL target
+# Perfume Aura self-hosted PostgreSQL
 
-This directory is the version-controlled target infrastructure for the chosen
-VPS migration path. It does **not** deploy a database on its own and it does
+This directory is the version-controlled infrastructure for the production
+database; both apps use it and Neon is retired. Production was created from a
+fresh schema rather than a Neon copy. It does **not** deploy a database on its own and it does
 not change the existing ops or storefront Compose stacks, application code,
 Neon project, production DNS, or credentials.
 
