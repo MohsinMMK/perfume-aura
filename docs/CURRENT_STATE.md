@@ -22,7 +22,8 @@ Do not create `shop` or `www.app`.
 Both apps use the self-hosted VPS PostgreSQL; Neon is no longer used by any
 runtime. The Neon project still exists unused; it was not copied (quota-locked),
 so production started from a fresh schema: migrations `0000`–`0019` applied and
-recorded, the `MAIN` location seeded, no products, customers or Ops users yet.
+recorded, the `MAIN` location seeded and one Ops owner seeded; no products or
+customers yet.
 
 PostgreSQL 18.6 from `deploy/postgres-vps/` listens on loopback
 `127.0.0.1:55442` (55432 belongs to another project); pgAdmin is on loopback
@@ -101,9 +102,8 @@ their own roles; the pre-cutover copies (`*.pre-vps-postgres-*`, root:root 0600)
 still hold the retired Neon URLs and should be removed after acceptance. Storefront
 auth and maintenance secrets are independently generated; customer accounts and
 sessions are empty and auth remains disabled. Ignored local env files may still
-reference Neon; local work must use disposable loopback PostgreSQL. The Ops owner
-account does not exist yet: the owner creates it with
-`sudo /usr/local/libexec/perfume-aura-seed-owner` (see Operations).
+reference Neon; local work must use disposable loopback PostgreSQL. The owner
+created the single Ops owner account with the VPS seed helper (see Operations).
 GitHub has no maintenance secret configured and its maintenance enablement is
 unset, so scheduled workers remain inactive. Do not reuse retired hosting envs
 for recovery: their credentials are stale; current VPS envs own recovery.
@@ -119,7 +119,9 @@ privacy/deletion acceptance and the existing activation gates.
 ## Cleanup boundaries
 
 Repository working policy: one primary checkout on `main`, no retained feature
-or deployment branches and no extra worktrees. Integrate useful changes through
+or deployment branches and no extra worktrees. No third-party review bots
+(CodeRabbit and the ChatGPT Codex connector were uninstalled); GitHub Actions
+and CodeQL own PR checks. Integrate useful changes through
 protected PRs, then remove their branches. GitHub deploys accepted images to the
 VPS; no workflow creates or advances a Hostinger source branch.
 
@@ -147,8 +149,8 @@ not to the current VPS release flow.
 
 ## Next actions
 
-1. Owner: create the Ops owner account with the VPS seed helper, then sign in.
-   Remove the `*.pre-vps-postgres-*` env copies. Optionally delete the unused
+1. Owner: sign in to Ops and enroll TOTP. Remove the `*.pre-vps-postgres-*` env
+   copies. Optionally delete the unused
    Neon project. Make a free backup copy and the pgBackRest cipher passphrase
    available outside the VPS.
 2. Verify apex/www resolve only to the VPS, with no retired A/AAAA targets,
