@@ -1,0 +1,2 @@
+Defaults:perfume-database-release !requiretty
+perfume-database-release ALL=(root) NOPASSWD: /usr/local/libexec/perfume-aura-database-release-root *

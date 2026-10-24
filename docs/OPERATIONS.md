@@ -110,10 +110,12 @@ CI gates: `VPS_OPS_AUTO_DEPLOY_ENABLED` and
 `sudo khanect rollback perfume-aura-ops` only after authorization.
 Do not deploy main while the pending migration owner gate is incomplete.
 Keep `VPS_OPS_AUTO_DEPLOY_ENABLED=false` until that gate passes; this does not
-stop the accepted Ops container. Shared-runtime changes do not automatically
-deploy the storefront while they also classify as Ops scope. After review,
-dispatch only `deploy_target=storefront` when a shared change is safe for the
-storefront without updating Ops or applying migrations.
+stop the accepted Ops container. Main publishes run in order: the
+[database release](#automated-database-release) (when enabled) → Ops → storefront.
+A shared change deploys the storefront only after Ops succeeds, so with Ops
+auto-deploy off it stays undeployed. After review, dispatch only
+`deploy_target=storefront` when a shared change is safe for the storefront
+without updating Ops or applying migrations.
 
 ## Production acceptance
 
@@ -186,9 +188,11 @@ Never reuse stale credentials from retired Hostinger envs during recovery.
 ### Schema changes
 
 Production is Neon. Runtime uses pooled `pg`; migrations use the direct owner
-connection. Never run integration tests on Neon or migrate as a deployment side
-effect. Confirm the journal, prove the intended changes on an isolated Neon
-branch, test on disposable loopback PostgreSQL, then obtain owner apply approval.
+connection. Never run integration tests on Neon. Until the
+[automated database release](#automated-database-release) is enabled, never
+migrate as a deployment side effect: confirm the journal, prove the intended
+changes on an isolated Neon branch, test on disposable loopback PostgreSQL, then
+obtain owner apply approval.
 
 Use `pnpm db:prove-isolated-migration` with the reviewed migration tag and roles.
 After apply, reapply `packages/db/sql/ops-runtime-grants.sql`,
@@ -204,6 +208,45 @@ PUBLIC EXECUTE from the two `0010` trigger functions the storefront grant check
 reports as drift; not applied. Confirm the
 unrecorded `0016` journal before oil provenance work. Do not change either
 runtime database URL during this web migration.
+
+### Automated database release
+
+Disabled until every prerequisite below passes. Gate:
+`VPS_DATABASE_AUTO_RELEASE_ENABLED=true`. GitHub environment `production-database`
+(main only) holds secret `VPS_DATABASE_RELEASE_SSH_KEY`; it reuses the Tailscale
+secrets, `VPS_OPS_KNOWN_HOSTS` and `VPS_OPS_TAILSCALE_IP`. The owner URL never
+leaves the VPS.
+
+Every main publish runs `database-release` before either runtime deploys. It builds
+`ghcr.io/mohsinmmk/perfume-aura-database-release:<sha>` and calls the
+`perfume-database-release` forced command. That command pulls by digest, checks
+provenance and plans. With pending migrations it dumps to
+`/srv/khanect/data/perfume-aura-database-release/backups` (newest 10 kept), then
+applies them in one transaction. It reapplies every grant script and verifies
+runtime privileges before and after; any drift row a grant script returns fails it.
+It refuses an image older than the recorded history. While enabled, migration changes no longer
+hit `block-runtime-deploy-on-database-migration`. A refusal fails the job, and
+neither runtime deploys. See [the runner contract](../deploy/database-release-vps/README.md).
+
+Prerequisites:
+
+1. Distinct login roles for Ops, storefront and, when used, the payment finalizer.
+   Each has no DDL, TEMP or membership, including through PUBLIC (Neon grants
+   PUBLIC TEMP by default; revoke it). The runner refuses a shared role.
+2. Confirmed recorded history: the unrecorded `0016` apply must be reconciled
+   first, or the release fails and rolls back.
+3. Reviewed admin install on the VPS: the `perfume-database-release` user with only
+   the CI public key and a forced command, root-owned `release-ssh.sh` and
+   `release-root.sh` in `/usr/local/libexec/`, the `sudoers` and `sshd.conf`
+   fragments, and `/etc/khanect/perfume-aura-database-release.env` (root:root 0600,
+   names in `release.env.example`). The VPS registry login must read the new
+   package. Probe it with `ssh perfume-database-release@<tailscale-ip> probe`.
+4. The environment, secret and variable created, then `VPS_OPS_AUTO_DEPLOY_ENABLED=true`
+   for a full migrate → Ops → storefront chain.
+
+Recovery: a failed migration leaves nothing applied. For a bad applied migration,
+disable the variable, keep the runtimes on their accepted images and restore from
+the pre-release dump only with owner approval.
 
 ### Runtime grant verification
 

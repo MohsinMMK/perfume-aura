@@ -67,6 +67,10 @@ export function classifyDeploymentImpact(
     }
     if (
       changedPath.startsWith(".github/workflows/") ||
+      // The database release image ships with the next runtime publish.
+      changedPath.startsWith("deploy/database-release-vps/") ||
+      // Self-hosted PostgreSQL is installed by a reviewed admin, never by CI.
+      changedPath.startsWith("deploy/postgres-vps/") ||
       DEPLOYMENT_TOOLING_PATHS.has(changedPath) ||
       (changedPath === "package.json" && !rootPackageRuntimeChanged)
     ) {
@@ -253,6 +257,24 @@ function runSelfTests() {
       "the Sharp runtime manifests are consumed by both standalone builders",
     );
   }
+  assert.deepEqual(classifyDeploymentImpact(["deploy/database-release-vps/runner/release.mjs"]), {
+    shouldValidate: true,
+    shouldPublish: false,
+    validateOps: true,
+    validateStorefront: true,
+    publishOps: false,
+    publishStorefront: false,
+    opsMigrationBlocked: false,
+  });
+  assert.deepEqual(classifyDeploymentImpact(["deploy/postgres-vps/compose.yaml"]), {
+    shouldValidate: true,
+    shouldPublish: false,
+    validateOps: true,
+    validateStorefront: true,
+    publishOps: false,
+    publishStorefront: false,
+    opsMigrationBlocked: false,
+  });
   assert.deepEqual(classifyDeploymentImpact([".github/workflows/codeql.yml"]), {
     shouldValidate: true,
     shouldPublish: false,
