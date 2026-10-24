@@ -120,8 +120,8 @@ Never use Vercel deploy skills.
 - Money persists as integer INR paise. Ops/invoice columns often `*_cents`;
   commerce columns often `amount_minor`. Same unit. No browser float is
   authoritative.
-- Repo migrations: `0000`–`0018` (19 files). Production has not applied
-  `0017` or `0018`. `0016` is in the live source; its Neon apply is unrecorded — confirm
+- Repo migrations: `0000`–`0019` (20 files). Production has not applied
+  `0017`, `0018` or `0019`. `0016` is in the live source; its Neon apply is unrecorded — confirm
   the journal before oil-provenance work. See [`CURRENT_STATE.md`](CURRENT_STATE.md).
 - `oil_reservations` and settlement routines are SQL in `0017`, not Drizzle TS
   tables. Finalizer env: `STOREFRONT_PAYMENT_FINALIZER_DATABASE_URL`. That role
@@ -351,7 +351,7 @@ Activation procedure:
 
 ## Pending outcome
 
-Do not apply `0016`, `0017` or `0018` to production without the owner migration gate.
+Do not apply `0016`, `0017`, `0018` or `0019` to production without the owner migration gate.
 Do not treat CI `quality` as `pnpm check`. Capture privacy-safe Core Web Vitals
 only after approved catalog content is live. Next production actions live in
 [`CURRENT_STATE.md`](CURRENT_STATE.md).
