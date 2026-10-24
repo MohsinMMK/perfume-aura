@@ -12,7 +12,7 @@ Neon project, production DNS, or credentials.
 | PostgreSQL | primary database | `postgres:18.6-trixie` pinned to the reviewed immutable index in `postgres/postgres-image.lock`; root-controlled loopback owner port only |
 | PgBouncer for ops | private app pool | `edoburu/pgbouncer:v1.26.1-p0` pinned to the reviewed immutable index; existing ops Docker network only |
 | PgBouncer for storefront | private app pool | same pinned image; existing storefront Docker network only |
-| pgBackRest | PITR and recovery | `2.60.0`, built from the checksummed release; runs beside PostgreSQL; encrypted, off-host `repo1` required |
+| pgBackRest | PITR and recovery | `2.60.0`, built from the checksummed release; runs beside PostgreSQL; encrypted `repo1` on its own VPS volume |
 | pgAdmin | break-glass UI | `dpage/pgadmin4:9.18` pinned to the reviewed immutable index; `127.0.0.1` only |
 
 `compose.yaml` intentionally uses two poolers, each attached to exactly one
@@ -24,7 +24,8 @@ other. No database port is public.
 
 1. Complete the source inventory and target capacity/SSH admission.
 2. Rehearse an import and restore with anonymized or disposable data first.
-3. Provision an independent, encrypted off-host pgBackRest repository.
+3. Set the pgBackRest cipher passphrase, keep a copy of it off the VPS, and
+   arrange a second backup copy outside the VPS.
 4. Create distinct direct-owner, operations-runtime, storefront-runtime, and
    storefront-payment-finalizer roles and prove the complete grant matrix. Use
    `bootstrap/bootstrap-runtime-roles.sh`; it migrates first, then invokes the

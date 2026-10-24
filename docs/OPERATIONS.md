@@ -300,12 +300,12 @@ SELECT * FROM pg_auth_members;
 [PostgreSQL runbook](../deploy/postgres-vps/RUNBOOK.md) owns this separate,
 not-live project: PostgreSQL 18.6 with pgBackRest, and a private per-app
 PgBouncer (`postgres-pooler:6432`) on each app's existing Docker network. It
-requires independent encrypted off-VPS pgBackRest backup and an on-VPS restore
-drill before cutover. Never publish a database port or change runtime
+keeps encrypted pgBackRest backups on a dedicated VPS volume (no paid storage
+provider) and requires an isolated restore drill before cutover. Never publish a database port or change runtime
 connections merely because templates exist.
 
 Ordering: source export → disposable restore/parity → migrations/grants →
-off-host backup → independent restore → controlled write freeze/cutover →
+backup → isolated restore → controlled write freeze/cutover →
 exact acceptance. Retain Neon until the accepted recovery window completes.
 The read-only `pnpm db:verify-self-hosted-migration` uses explicit direct source
 and target URLs and rejects Neon/pooler targets; never print data or URLs.
