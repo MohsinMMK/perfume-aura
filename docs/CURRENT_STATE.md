@@ -19,18 +19,26 @@ www CNAME points to apex. No apex AAAA remains. Hostinger CDN is disabled
 and the storefront is opted out of automatic CDN. Preserve mail records.
 Do not create `shop` or `www.app`.
 
-Neon currently rejects connections with `53000` (project quota exceeded), so
-Ops readiness returns 503. The storefront discovery catalog does not use Neon
-and stays available. Restoring the quota is an owner Neon plan action.
+Neon (free plan) rejects connections with `53000` (quota exceeded) until its
+quota resets on 2026-11-01, so Ops readiness returns 503. The storefront
+discovery catalog does not use Neon and stays available. The owner declined
+paid plans: Neon will be replaced by the self-hosted VPS PostgreSQL, with no
+paid backup provider.
 
 Storefront and Ops share Neon and currently use the same runtime database
 role/credential; role isolation is not verified. Auth tables, application auth
-secrets and cookies remain separate. No database has moved to the VPS. Self-hosted PostgreSQL
-preparation under `deploy/postgres-vps/` is not active production. Its
-PostgreSQL 18.6 private-pooler stack passes a local disposable rehearsal
-(bootstrap, network/privilege isolation, transaction pooling, archiving,
-full/diff backup and isolated restore) against a local posix repository;
-the S3 repository, VPS rehearsal, data export and cutover remain unapproved.
+secrets and cookies remain separate.
+
+The VPS PostgreSQL target from `deploy/postgres-vps/` runs but holds no
+production data and serves no app: PostgreSQL 18.6 on loopback
+`127.0.0.1:55442` (55432 belongs to another project) and pgAdmin on loopback
+5050. Its root-owned checkout is `/srv/perfume-aura`, settings and secrets are
+in `/etc/perfume-aura-postgres/`, and the trusted Node is
+`/opt/perfume-aura-node/bin/node`. pgBackRest keeps encrypted backups in the
+`perfume-aura-pgbackrest-repo` volume; stanza, full/differential backup,
+`failed_count = 0`, an isolated restore drill and the backup timers pass.
+These backups do not survive loss of the VPS; a free second copy outside it is
+still open. Poolers and runtime roles are not created yet.
 
 ## Deployment status
 
@@ -137,8 +145,9 @@ the off-DNS `app.perfumeaura.com` Web App, and
 `royalblue-dugong-614889.hostingersite.com` (auto-deployment off).
 Keep `mobitron.in`, `khanect.com`, email and the DNS zone.
 
-VPS has 15 running containers: Ops (1), storefront (1), Awwal (3),
-Awwal Cloud (2), Omni Realty (6), infrastructure (2). Preserve unrelated
+VPS runs Ops (1), storefront (1), Perfume Aura PostgreSQL (2), Omni Realty
+(6), Khanect Kawave PostgreSQL (1) and infrastructure (2); the Awwal stacks are
+no longer present. Preserve unrelated
 projects, volumes and images. No capacity need justifies deleting them.
 No private preview container/network remains. Its image and Compose template
 are retained as recoverable, inactive build evidence.
@@ -150,7 +159,11 @@ not to the current VPS release flow.
 
 ## Next actions
 
-1. Restore the Neon quota, then confirm Ops readiness before any database work.
+1. On 2026-11-01, after the Neon quota resets: freeze writes, dump Neon,
+   restore into a fresh VPS data volume, apply 0016–0019, run the runtime-role
+   bootstrap, prove row counts and grants, back up, switch both app env URLs to
+   the poolers, deploy and accept. Keep Neon until the rollback window ends,
+   then rotate its credential.
 2. Verify apex/www resolve only to the VPS, with no retired A/AAAA targets,
    before removing recovery hosting.
 3. Confirm and remove the three obsolete Perfume Aura Web Apps preserving

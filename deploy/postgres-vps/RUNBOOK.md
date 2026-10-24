@@ -201,6 +201,27 @@ the disposable target, run pgBackRest restore with its exact target config, and
 prove row counts, migration journal, runtime grants, application login, and an
 operations workflow. Record no customer data in the evidence.
 
+This drill restores into a throwaway volume with no network, mounting the
+repository read-only so the restored cluster cannot archive into it. Use the
+production `postgresql.conf`: recovery refuses settings below the primary's.
+
+```bash
+docker volume create perfume-aura-restore-drill
+docker run --rm --network none --user postgres \
+  -v perfume-aura-restore-drill:/var/lib/postgresql \
+  -v perfume-aura-pgbackrest-repo:/var/lib/pgbackrest-repo:ro \
+  -v /etc/perfume-aura-postgres/secrets/pgbackrest.conf:/run/secrets/pgbackrest_config:ro \
+  -v /srv/perfume-aura/deploy/postgres-vps/postgres:/etc/postgresql:ro \
+  --entrypoint bash perfume-aura-postgres:18.6-pgbackrest-2.60.0 -ceu '
+    d=/var/lib/postgresql/18/docker; mkdir -p -m 0700 "$d"
+    pgbackrest --config=/run/secrets/pgbackrest_config --stanza=perfume_aura --archive-mode=off restore
+    echo "local all all trust" > /tmp/hba
+    pg_ctl -D "$d" -l /tmp/pg.log -w -t 180 -o "-c config_file=/etc/postgresql/postgresql.conf -c hba_file=/tmp/hba -c listen_addresses= -c unix_socket_directories=/tmp -c archive_mode=off" start
+    psql -h /tmp -U perfume_aura_owner -d perfume_aura -Atc "SELECT marker FROM backup_rehearsal.probe"
+    pg_ctl -D "$d" -w stop'
+docker volume rm perfume-aura-restore-drill
+```
+
 ## 4. Rehearse application connections
 
 - Each app uses `postgres-pooler:6432/perfume_aura` on its own existing Docker
