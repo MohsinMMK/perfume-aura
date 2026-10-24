@@ -2,7 +2,7 @@ import Link from "next/link";
 import { LoginForm } from "./login-form";
 
 export const metadata = {
-  title: "Sign in · Perfume Aura Ops",
+  title: "Sign in",
   description: "Owner and staff sign-in for Perfume Aura operations",
 };
 

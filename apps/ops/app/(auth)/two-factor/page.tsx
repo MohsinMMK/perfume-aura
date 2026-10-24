@@ -10,7 +10,7 @@ import { TwoFactorChallengeForm } from "@/components/auth/two-factor-challenge-f
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Verify sign-in · Perfume Aura Ops",
+  title: "Verify sign-in",
   description: "Verify your Perfume Aura operations sign-in",
 };
 

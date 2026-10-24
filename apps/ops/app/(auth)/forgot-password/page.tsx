@@ -1,7 +1,7 @@
 import { ForgotPasswordForm } from "./forgot-password-form";
 
 export const metadata = {
-  title: "Forgot password · Perfume Aura Ops",
+  title: "Forgot password",
   description: "Request a secure owner password reset",
 };
 
