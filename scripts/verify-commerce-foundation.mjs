@@ -212,7 +212,7 @@ const expectedComAdr022Decision =
 const expectedComAdr022Reason =
   "Owner-selected fail-closed product policy after REQUIREMENTS and RESEARCH conflicted on bottle-label readiness. This is packaging/surface control only. It is not trademark clearance, disclaimer approval, title clearance, or permission to use references on any other surface.";
 const requiredComAdr023FieldSupersession =
-  /Field-level supersession rules: COM-ADR-027 replaces only COM-ADR-023's\s+temporary `shop\.perfumeaura\.com` staging-domain field\. COM-ADR-023's separate\s+storefront application, shared Neon source of truth, and private ops boundary\s+remain accepted\./;
+  /Field-level supersession rules: COM-ADR-027 replaces only COM-ADR-023's\s+temporary `shop\.perfumeaura\.com` staging-domain field\. COM-ADR-023's separate\s+storefront application, shared PostgreSQL source of truth, and private ops boundary\s+remain accepted\./;
 const requiredComAdr030Supersession =
   /COM-ADR-030 fully replaces COM-ADR-025\. Anonymous browsing and\s+cart creation, separate customer identity, configurable shipping, and manual\s+courier remain; guest checkout, COD, and Apple launch sign-in are no longer\s+selected launch requirements\./;
 const forbiddenLegalContradictionPattern =
