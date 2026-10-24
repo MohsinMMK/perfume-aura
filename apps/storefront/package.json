@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=24.20.0 <25"
+    "node": ">=26.12.1 <27"
   },
   "scripts": {
     "dev": "next dev",
@@ -20,34 +20,34 @@
     "@fontsource-variable/inter-tight": "5.3.0",
     "@fontsource/londrina-outline": "5.3.0",
     "@fontsource/londrina-solid": "5.3.0",
-    "@hugeicons/core-free-icons": "^4.3.0",
+    "@hugeicons/core-free-icons": "^4.3.5",
     "@hugeicons/react": "^1.1.10",
     "@perfume-aura/db": "workspace:*",
     "@perfume-aura/ui": "workspace:*",
-    "@sentry/nextjs": "10.73.0",
-    "better-auth": "1.7.2",
-    "drizzle-orm": "0.45.2",
+    "@sentry/nextjs": "11.8.0",
+    "better-auth": "1.7.12",
+    "drizzle-orm": "0.45.4",
     "gsap": "^3.15.0",
-    "next": "16.3.8",
-    "nodemailer": "^10.0.9",
-    "pg": "^8.23.0",
-    "posthog-js": "1.424.0",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "zod": "^4.5.4"
+    "next": "16.4.3",
+    "nodemailer": "^10.2.1",
+    "pg": "^8.23.1",
+    "posthog-js": "1.438.19",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^24.13.3",
-    "@types/nodemailer": "^8.0.1",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^26.6.5",
+    "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@typescript/native": "npm:typescript@7.0.2",
-    "eslint": "^9.39.5",
-    "eslint-config-next": "16.3.8",
-    "tailwindcss": "^4",
-    "tsx": "^4.23.13",
+    "eslint": "^10.13.0",
+    "eslint-config-next": "16.4.3",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
     "typescript": "npm:@typescript/typescript6@6.0.2"
   }
 }

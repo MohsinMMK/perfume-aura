@@ -96,22 +96,25 @@ describe("Better Auth 1.7 operations identity migration", () => {
     await rm(through0012, { recursive: true, force: true });
   });
 
-  it("creates the required operations account issuer identity", async () => {
+  it("keys operations account identity by provider for Better Auth 1.7.3+", async () => {
     const url = urlFor(databaseNames[0]);
     await migrateAt(url);
     const pool = new Pool({ connectionString: url, max: 1 });
     try {
       const result = await pool.query<{
-        issuer_required: string;
+        issuer_nullable: string;
         issuer_identity_index: boolean;
+        provider_identity_index: boolean;
       }>(`
         SELECT
-          (SELECT is_nullable FROM information_schema.columns WHERE table_name = 'account' AND column_name = 'issuer') AS issuer_required,
-          to_regclass('public.account_issuer_account_id_unique') IS NOT NULL AS issuer_identity_index
+          (SELECT is_nullable FROM information_schema.columns WHERE table_name = 'account' AND column_name = 'issuer') AS issuer_nullable,
+          to_regclass('public.account_issuer_account_id_unique') IS NOT NULL AS issuer_identity_index,
+          to_regclass('public.account_provider_account_unique') IS NOT NULL AS provider_identity_index
       `);
       assert.deepEqual(result.rows[0], {
-        issuer_required: "NO",
-        issuer_identity_index: true,
+        issuer_nullable: "YES",
+        issuer_identity_index: false,
+        provider_identity_index: true,
       });
     } finally {
       await pool.end();

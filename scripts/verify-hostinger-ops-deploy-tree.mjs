@@ -619,7 +619,7 @@ function writeMinimalValidTree(root, commit, surface = "ops") {
   );
   writeFileSync(
     path.join(root, `${appRoot}/node_modules/next/package.json`),
-    JSON.stringify({ name: "next", version: "16.3.8" }),
+    JSON.stringify({ name: "next", version: "16.4.3" }),
   );
   writeFileSync(
     path.join(root, `${appRoot}/node_modules/sharp/package.json`),

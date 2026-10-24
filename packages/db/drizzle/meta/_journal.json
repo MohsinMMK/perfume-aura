@@ -127,6 +127,20 @@
       "when": 1788180387529,
       "tag": "0017_storefront_sale_settlement",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792826822325,
+      "tag": "0018_better_auth_provider_identity",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792832711204,
+      "tag": "0019_revoke_public_trigger_execute",
+      "breakpoints": true
     }
   ]
 }

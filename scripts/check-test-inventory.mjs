@@ -75,12 +75,12 @@ for (const suite of suites) {
   assert.equal(
     manifest.scripts["test:unit"],
     `tsx --test "${suite.unitGlob}"`,
-    `${suite.packageRoot} must use its quoted Node 24 unit discovery glob`,
+    `${suite.packageRoot} must use its quoted Node unit discovery glob`,
   );
   assert.equal(
     manifest.scripts["test:integration"],
     suite.integrationCommand,
-    `${suite.packageRoot} must use its quoted Node 24 integration discovery glob and required concurrency`,
+    `${suite.packageRoot} must use its quoted Node integration discovery glob and required concurrency`,
   );
 }
 

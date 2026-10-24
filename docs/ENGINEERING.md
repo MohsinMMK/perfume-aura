@@ -64,29 +64,31 @@ Change stack only through an explicit reviewed decision. No Vercel production.
 
 | Area | Choice |
 |---|---|
-| Workspace | pnpm `11.25.0` (`packageManager`), engines Node `>=24.20.0 <25` |
-| Pins | Node `24.20.0`, npm `11.19.0` (`.nvmrc`, CI, ops image, packers) |
-| Apps | Next.js `16.3.8`, React `19.2.8`, App Router, `output: "standalone"` |
+| Workspace | pnpm `12.15.0` (`packageManager`), engines Node `>=26.12.1 <27` |
+| Pins | Node `26.12.1`, npm `11.20.0` (`.nvmrc`, CI, both images, packers) |
+| Apps | Next.js `16.4.3`, React `19.3.1`, App Router, `output: "standalone"` |
 | TypeScript | `tsc` is `7.0.2` via `@typescript/native`. Package named `typescript` is `@typescript/typescript6@6.0.2` for eslint/Next compiler API. `strict: true` |
-| UI | shadcn `^4.19.1`, `@base-ui/react` `^1.7.0`, Tailwind `4.3.3`, Hugeicons. No Radix runtime |
+| UI | shadcn `^4.22.1`, `@base-ui/react` `^1.9.0`, Tailwind `4.3.3`, Hugeicons. No Radix runtime |
 | Fonts | Ops: IBM Plex Sans + Raleway. Storefront: self-hosted Londrina Solid/Outline + Inter Tight |
-| Auth | Better Auth `1.7.2`, two Drizzle adapters |
-| Database | drizzle-orm `0.45.2`, drizzle-kit `^0.31.10`, `pg` `8.23.0` Pool (`max: 10`) |
-| Validation | Zod `4.5.4` |
-| Telemetry | `posthog-js` `1.424.0`, `@sentry/nextjs` `10.73.0` |
+| Auth | Better Auth `1.7.12`, two Drizzle adapters; account identity is unique on (`provider_id`, `account_id`) |
+| Database | drizzle-orm `0.45.4`, drizzle-kit `^0.31.11`, `pg` `8.23.1` Pool (`max: 10`) |
+| Validation | Zod `4.6.7` |
+| Telemetry | `posthog-js` `1.438.19`, `@sentry/nextjs` `11.8.0` |
+| Lint | ESLint `10`; `peerDependencyRules` admits it for import/jsx-a11y/react plugins still capped at 9 |
 | Payments | Cashfree JS `^1.0.7`; dashboard TTL 20 minutes; provider order expiry 15 minutes |
 
-`pnpm-workspace.yaml` overrides: `sharp@0.35.5`, `postcss@8.5.23`,
+`pnpm-workspace.yaml` overrides: `sharp@0.35.5`, `postcss@8.5.31`,
 `@hono/node-server@1.19.14 → 2.0.10`, `brace-expansion@5.0.12`,
-`esbuild@0.18.20 → 0.25.12`, `fast-uri@3.1.8`, `hono@4.13.7`,
-`ip-address@10.7.1`, `js-yaml@4.3.2`, `nanoid@3.3.18`, `qs@6.16.0`,
-`source-map-js@1.2.2`, `proxy-addr@2.0.8`, `postcss-selector-parser@7.1.6`,
-`@modelcontextprotocol/sdk@1.31.0`, `undici@7.29.1`, `dompurify@3.4.16`. Patch:
+`esbuild@0.18.20 → 0.25.12`, `fast-uri@3.1.9`, `hono@4.13.13`,
+`ip-address@10.7.4`, `js-yaml@4.3.2`, `nanoid@3.3.20`, `qs@6.16.1`,
+`source-map-js@1.2.2`, `proxy-addr@2.0.8`, `postcss-selector-parser@7.1.7`,
+`@modelcontextprotocol/sdk@1.32.2`, `undici@7.30.1`, `dompurify@3.4.17`. Patch:
 `patches/minimatch@3.1.5.patch`. Change an override only with dependency-path
 evidence, then verify audit, lint, shadcn preset resolution, migrations, both
 builds, and both packages.
 
-Both production images and CI pin Node `24.20.0`.
+Both production images use `node:26.12.1-trixie-slim` by digest; CI pins Node `26.12.1`
+and PostgreSQL `16.15` by digest for integration jobs.
 
 ## Shared UI contract
 
@@ -118,8 +120,8 @@ Never use Vercel deploy skills.
 - Money persists as integer INR paise. Ops/invoice columns often `*_cents`;
   commerce columns often `amount_minor`. Same unit. No browser float is
   authoritative.
-- Repo migrations: `0000`–`0017` (18 files). Production has not applied
-  `0017`. `0016` is in the live source; its Neon apply is unrecorded — confirm
+- Repo migrations: `0000`–`0018` (19 files). Production has not applied
+  `0017` or `0018`. `0016` is in the live source; its Neon apply is unrecorded — confirm
   the journal before oil-provenance work. See [`CURRENT_STATE.md`](CURRENT_STATE.md).
 - `oil_reservations` and settlement routines are SQL in `0017`, not Drizzle TS
   tables. Finalizer env: `STOREFRONT_PAYMENT_FINALIZER_DATABASE_URL`. That role
@@ -191,7 +193,9 @@ Inventory rules that remain in force:
    Checkout reserves exact FIFO lots before a provider session can be bound.
 3. Owner-authorized local invoice-line returns restore finished stock, never
    restore consumed oil, and never imply a provider refund.
-4. `0013_silly_vanisher` is the Better Auth 1.7 issuer boundary.
+4. `0013_silly_vanisher` added the Better Auth 1.7.0 issuer column;
+   `0018_better_auth_provider_identity` makes it nullable and keys identity by
+   provider for 1.7.3+, failing closed on duplicate provider identities.
    `0014_oil_lots` owns the concentrate ledger. `0016_even_silk_fever` adds
    optional oil-lot provenance. `0017_storefront_sale_settlement` owns
    reservations and finalizer routines.
@@ -266,8 +270,8 @@ without publishing. CI never creates a secondary deployment branch.
 | `verify-production-deploy.mjs` | `pnpm ops:verify-production-deploy` |
 | `verify-commerce-foundation.mjs` | `pnpm commerce:verify` |
 
-The ops packer pins Node `24.20.0`, npm `11.19.0`, and pnpm `11.25.0`. The
-storefront source build uses CI Node `24.20.0` and pins pnpm `11.25.0`.
+The ops packer pins Node `26.12.1`, npm `11.20.0`, and pnpm `12.15.0`. The
+storefront source build uses CI Node `26.12.1` and pins pnpm `12.15.0`.
 Both reject secret-shaped output, verify Linux x64/glibc Sharp, and smoke their
 materialized servers.
 
@@ -347,7 +351,7 @@ Activation procedure:
 
 ## Pending outcome
 
-Do not apply `0016` or `0017` to production without the owner migration gate.
+Do not apply `0016`, `0017` or `0018` to production without the owner migration gate.
 Do not treat CI `quality` as `pnpm check`. Capture privacy-safe Core Web Vitals
 only after approved catalog content is live. Next production actions live in
 [`CURRENT_STATE.md`](CURRENT_STATE.md).

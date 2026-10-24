@@ -1,15 +1,15 @@
 {
   "name": "perfume-aura",
   "private": true,
-  "packageManager": "pnpm@11.25.0",
+  "packageManager": "pnpm@12.15.0",
   "engines": {
-    "node": ">=24.20.0 <25"
+    "node": ">=26.12.1 <27"
   },
   "description": "Perfume Aura monorepo — public storefront and owner operations",
   "scripts": {
     "dev:storefront": "pnpm --filter @perfume-aura/storefront dev",
     "build:storefront": "pnpm --filter @perfume-aura/storefront build",
-    "build": "corepack pnpm hostinger:build:storefront",
+    "build": "pnpm hostinger:build:storefront",
     "start:storefront": "pnpm --filter @perfume-aura/storefront start",
     "hostinger:build:storefront": "bash scripts/build-hostinger-storefront-source.sh",
     "storefront:measure-client": "node scripts/measure-storefront-route-client-js.mjs",
