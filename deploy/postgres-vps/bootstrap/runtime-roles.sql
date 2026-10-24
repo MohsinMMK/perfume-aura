@@ -54,6 +54,12 @@
 
 BEGIN;
 
+-- Role statements below carry passwords; keep them out of the server log even
+-- when the statement fails or runs slowly.
+SET LOCAL log_statement = 'none';
+SET LOCAL log_min_duration_statement = -1;
+SET LOCAL log_min_error_statement = 'panic';
+
 -- These roles are direct login principals, not group roles. Roles are created
 -- or rotated here before any grant script is invoked, but schema/table grants
 -- remain entirely in the reviewed source-controlled grant scripts.

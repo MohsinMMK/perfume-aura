@@ -22,19 +22,16 @@ plan first; no command here deletes the Neon source.
    Drizzle runner directly rather than resolving `pnpm` from `PATH`.
 2. Copy `.env.example` to `/etc/perfume-aura-postgres/compose.env`, set only
    the non-secret values, and keep it `0600 root:root`.
-3. Create every file from `secrets/README.md`, copying no secrets into the
-   repository. Set the S3-compatible `repo1` details in `pgbackrest.conf`.
-4. Create a private client CA offline. Issue a server certificate whose SAN
-   matches the final database hostname and issue a distinct storefront client
-   certificate. The CA private key must never reach the VPS.
-5. Confirm `perfume-aura-ops-internal` already exists from the independent ops
-   stack. This database stack consumes that network but never manages it.
-6. Before enabling any external port, restrict inbound port 6432 to the
-   storefront's verified egress ranges where available. In addition, enforce
+3. Create the `POSTGRES_SECRETS_GID` group and every file from
+   `secrets/README.md`, copying no secrets into the repository. Set the S3-compatible `repo1` details in `pgbackrest.conf`.
+4. Confirm `perfume-aura-ops-internal` and `perfume-aura-storefront-internal`
+   already exist from the independent app stacks. This database stack consumes
+   those networks but never manages them.
+5. Keep inbound port 6432 closed; no pooler publishes a host port. Enforce
    outbound TCP 443 from the PostgreSQL backup-egress path to the independently
    managed pgBackRest repository endpoint only. Verify that enforcement from
    the PostgreSQL container; Docker bridge traffic can bypass a default UFW
-   policy. mTLS remains mandatory even when an allowlist is in place.
+   policy.
 
 Validate the fully expanded Compose definition without starting containers:
 
@@ -51,7 +48,12 @@ docker compose --env-file /etc/perfume-aura-postgres/compose.env -f /srv/perfume
 docker compose --env-file /etc/perfume-aura-postgres/compose.env -f /srv/perfume-aura/deploy/postgres-vps/compose.yaml ps
 docker compose --env-file /etc/perfume-aura-postgres/compose.env -f /srv/perfume-aura/deploy/postgres-vps/compose.yaml exec -T --user postgres postgres pgbackrest --config=/run/secrets/pgbackrest_config --stanza=perfume_aura stanza-create
 docker compose --env-file /etc/perfume-aura-postgres/compose.env -f /srv/perfume-aura/deploy/postgres-vps/compose.yaml exec -T --user postgres postgres pgbackrest --config=/run/secrets/pgbackrest_config --stanza=perfume_aura check
+docker compose --env-file /etc/perfume-aura-postgres/compose.env -f /srv/perfume-aura/deploy/postgres-vps/compose.yaml exec -T --user postgres postgres sh -ceu 'psql --set=ON_ERROR_STOP=1 --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --command="SELECT pg_stat_reset_shared('\''archiver'\'')"'
 ```
+
+`archive_command` fails until `stanza-create` exists, so a fresh cluster always
+records a few early failures. Reset the archiver statistics only after `check`
+passes; from then on `failed_count` must stay `0`.
 
 The PostgreSQL Dockerfile and the PgBouncer/pgAdmin Compose services use
 immutable reviewed multi-architecture image indexes, so `--pull` cannot
@@ -114,10 +116,10 @@ password. The bootstrap reads `POSTGRES_OWNER_PASSWORD_FILE` into short-lived
 `PGPASSWORD`, so neither terminal history nor process arguments expose the
 owner secret. Before migrations, it also proves that the running reviewed
 Compose stack publishes exactly that loopback listener and that the direct
-connection authenticates as the expected PostgreSQL 17 database/owner identity.
+connection authenticates as the expected PostgreSQL 18 database/owner identity.
 The two
 userlist variables must point to separate root-owned
-files: the private list contains only ops, and the public list contains only
+files: the ops list contains only ops, and the storefront list contains only
 the storefront runtime and payment-finalizer verifiers. The bootstrap verifies
 each atomically written file and force-recreates both poolers after installing
 the corresponding Docker-secret sources; this must be inside the planned
@@ -125,7 +127,7 @@ maintenance window. It never accepts a pooled runtime URL and it never prints
 clear-text passwords or SCRAM verifiers. Before it connects, it also rejects
 any matching pair among the owner, ops, storefront, and payment-finalizer
 secret files, reporting only their file labels; otherwise a normal storefront
-password could authenticate as the finalizer through the public userlist.
+password could authenticate as the finalizer through the storefront userlist.
 
 After migrations and before it applies any runtime grant script, the bootstrap
 owner-upserts exactly the `ops`, `storefront`, and `payment_finalizer` rows in
@@ -174,7 +176,7 @@ fi
 systemctl enable --now perfume-aura-postgres-backup.timer perfume-aura-postgres-full-backup.timer
 systemctl list-timers 'perfume-aura-postgres*-backup.timer'
 docker compose --env-file /etc/perfume-aura-postgres/compose.env -f /srv/perfume-aura/deploy/postgres-vps/compose.yaml exec -T --user postgres postgres sh -ceu 'psql --set=ON_ERROR_STOP=1 --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --command="SELECT archived_count, failed_count, last_archived_time, last_failed_time FROM pg_stat_archiver"'
-postgres_data_mount="$(docker volume inspect perfume-aura-postgres-data --format '{{ .Mountpoint }}')"
+postgres_data_mount="$(docker volume inspect perfume-aura-postgres-pg18-data --format '{{ .Mountpoint }}')"
 test -n "$postgres_data_mount"
 df -h "$postgres_data_mount" /var/lib/docker
 ```
@@ -194,19 +196,16 @@ operations workflow. Record no customer data in the evidence.
 
 ## 4. Rehearse application connections
 
-- Ops must use `postgres-pooler:6432` on the existing Docker network with its
-  `ops_runtime` URL. It does not use the public address, a client certificate,
-  or any `DATABASE_TLS_*` environment variable; the private pooler has client
-  TLS disabled and is inaccessible outside that Docker network.
-- Storefront must use the final public database hostname on port `6432`, verify
-  the server certificate hostname, provide its client certificate and key, and
-  connect as `storefront_runtime`. Its separately configured payment-finalizer
-  connection uses the same mTLS endpoint but authenticates only as
-  `storefront_payment_finalizer`; it has no direct table privileges and may
-  execute only the provider-session binding and verified payment-finalization
-  routines. It must never reuse the normal storefront runtime credential. Set
-  all four `DATABASE_TLS_*` values only in that storefront environment; the
-  material applies to both restricted storefront URLs.
+- Each app uses `postgres-pooler:6432/perfume_aura` on its own existing Docker
+  network, with no ssl query parameter and no `DATABASE_TLS_*` variable. Both
+  poolers have client TLS disabled and are unreachable outside their network.
+- Ops connects as `ops_runtime`.
+- Storefront `DATABASE_URL` connects as `storefront_runtime`. Its separately
+  configured `STOREFRONT_PAYMENT_FINALIZER_DATABASE_URL` uses the same pooler
+  but authenticates only as `storefront_payment_finalizer`; it has no direct
+  table privileges and may execute only the provider-session binding and
+  verified payment-finalization routines. It must never reuse the normal
+  storefront runtime credential.
 - Owner migrations stay direct to the raw PostgreSQL container through a
   root-controlled VPS loopback operation or an SSH tunnel terminating at that
   listener; they never use either transaction pooler.
@@ -230,10 +229,10 @@ operations workflow. Record no customer data in the evidence.
    `failed_count` not to have increased from the accepted rehearsal value, and
    confirm the PostgreSQL data volume and Docker filesystem retain the reviewed
    free-space margin.
-6. Update the root-owned ops secret store to the private pooler URL. Through the
-   owning Hostinger provider mechanism, switch storefront `DATABASE_URL` and
+6. Update the root-owned ops env to its private pooler URL. In the root-owned
+   storefront env, switch `DATABASE_URL` and
    `STOREFRONT_PAYMENT_FINALIZER_DATABASE_URL` together to their distinct
-   restricted mTLS pooler URLs and apply the shared client certificate material.
+   restricted private pooler URLs.
 7. Deploy both exact application artifacts. Verify readiness, unauthenticated
    session behavior, ops login, stock/oil actions, storefront public pages,
    release locks, and a real static asset. Keep commerce and staff flags closed.

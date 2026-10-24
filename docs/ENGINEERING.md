@@ -43,7 +43,7 @@ packages/validators/  Zod schemas used by ops
 scripts/          pack, deploy, verify, commerce, client-JS budgets
 deploy/ops-vps/   ops image/compose
 deploy/storefront-vps/  isolated storefront image, Compose and forced SSH deployment
-deploy/postgres-vps/  approved self-hosted PG target (not cut over)
+deploy/postgres-vps/  approved self-hosted PG 18.6 target (not cut over)
 ```
 
 No static marketing app, generated storefront branch, root `tsconfig.json`, or

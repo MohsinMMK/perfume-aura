@@ -143,6 +143,24 @@ require_root_owned_private_file() {
   (( (8#$mode & 8#077) == 0 )) || fail "$label must not be readable or writable by group/other: $path"
 }
 
+# Compose bind-mounts file secrets with host ownership and mode, so a secret
+# read by a non-root service is root-owned, group-readable only by the dedicated
+# POSTGRES_SECRETS_GID, and never group-writable or visible to other.
+require_root_owned_service_secret_file() {
+  local label="$1"
+  local path="$2"
+  local expected_group="$3"
+  local mode
+  local group
+
+  require_absolute_clean_path "$label" "$path"
+  require_root_owned_nonwritable_directory_chain "$label" "$(dirname -- "$path")"
+  mode="$(read_root_owned_metadata "$label" "$path" file)"
+  group="$(stat --format='%g' -- "$path")" || fail "cannot inspect $label group: $path"
+  [[ "$group" == "$expected_group" ]] || fail "$label must belong to POSTGRES_SECRETS_GID: $path"
+  (( (8#$mode & 8#037) == 0 )) || fail "$label must be at most 0640: $path"
+}
+
 require_root_owned_private_directory() {
   local label="$1"
   local path="$2"
@@ -223,6 +241,11 @@ const requiredKeys = new Set([
   "POSTGRES_DATABASE",
   "POSTGRES_OWNER_ROLE",
   "POSTGRES_OWNER_LOOPBACK_PORT",
+  "POSTGRES_SECRETS_GID",
+]);
+const networkDefaults = new Map([
+  ["OPS_DOCKER_NETWORK", "perfume-aura-ops-internal"],
+  ["STOREFRONT_DOCKER_NETWORK", "perfume-aura-storefront-internal"],
 ]);
 const values = new Map();
 
@@ -233,7 +256,7 @@ for (const [index, rawLine] of readFileSync(envFile, "utf8").split(/\r?\n/).entr
   if (!match) continue;
 
   const [, key, rawValue] = match;
-  if (!requiredKeys.has(key)) continue;
+  if (!requiredKeys.has(key) && !networkDefaults.has(key)) continue;
   if (values.has(key)) fail(`${key} is declared more than once (line ${index + 1})`);
 
   let value = rawValue.trim();
@@ -259,7 +282,17 @@ if (!/^(?:[1-9][0-9]{0,4})$/.test(loopbackPort) || Number(loopbackPort) > 65535)
   fail("POSTGRES_OWNER_LOOPBACK_PORT must be a valid TCP port");
 }
 
-process.stdout.write(`${databaseName}\t${ownerRole}\t${loopbackPort}`);
+const secretsGid = values.get("POSTGRES_SECRETS_GID");
+if (!/^[1-9][0-9]{0,9}$/.test(secretsGid) || Number(secretsGid) > 4294967294) {
+  fail("POSTGRES_SECRETS_GID must be a non-root numeric group ID");
+}
+
+// Compose falls back to the same defaults; one shared network would let each
+// app reach the other's pooler.
+const [opsNetwork, storefrontNetwork] = [...networkDefaults].map(([key, fallback]) => values.get(key) ?? fallback);
+if (opsNetwork === storefrontNetwork) fail("OPS_DOCKER_NETWORK and STOREFRONT_DOCKER_NETWORK must differ");
+
+process.stdout.write(`${databaseName}\t${ownerRole}\t${loopbackPort}\t${secretsGid}`);
 NODE
 }
 
@@ -459,6 +492,7 @@ NODE
 validate_started_compose_target() {
   local running_services
   local published_owner_listener
+  local postgres_groups
 
   running_services="$(docker compose --env-file "$POSTGRES_COMPOSE_ENV_FILE" --file "$compose_file" ps --status running --services)" \
     || fail "could not inspect the reviewed postgres service state"
@@ -468,6 +502,12 @@ validate_started_compose_target() {
     || fail "the reviewed postgres service is not running with its loopback owner listener"
   [[ "$published_owner_listener" == "127.0.0.1:$postgres_owner_loopback_port" ]] \
     || fail "the running postgres service owner listener does not match the reviewed Compose loopback target"
+  # archive_command runs as postgres and must read the group-readable
+  # pgBackRest secret; an image built for another group would fail archiving.
+  postgres_groups="$(docker compose --env-file "$POSTGRES_COMPOSE_ENV_FILE" --file "$compose_file" exec -T postgres id -G postgres)" \
+    || fail "could not inspect the running postgres service groups"
+  [[ " $postgres_groups " == *" $postgres_secrets_gid "* ]] \
+    || fail "the running postgres image was not built with POSTGRES_SECRETS_GID"
 }
 
 validate_runtime_principal_ownership() {
@@ -579,17 +619,16 @@ require_root_owned_nonwritable_file "reviewed Drizzle migration runner" "$migrat
 compose_file="$repo_root/deploy/postgres-vps/compose.yaml"
 [[ -f "$compose_file" ]] || fail "self-hosted PostgreSQL Compose file is missing from the reviewed repository checkout"
 compose_identity="$(read_compose_target_identity)" || fail "could not read target identity from POSTGRES_COMPOSE_ENV_FILE"
-IFS=$'\t' read -r compose_database_name compose_owner_role postgres_owner_loopback_port <<<"$compose_identity"
+IFS=$'\t' read -r compose_database_name compose_owner_role postgres_owner_loopback_port postgres_secrets_gid <<<"$compose_identity"
 [[ "$database_name" == "$compose_database_name" ]] || fail "POSTGRES_DATABASE must exactly match the root-owned Compose environment"
 [[ "$owner_role" == "$compose_owner_role" ]] || fail "POSTGRES_OWNER_ROLE must exactly match the root-owned Compose environment"
 [[ "$database_name" == "perfume_aura" ]] || fail "POSTGRES_DATABASE must remain perfume_aura while the reviewed PgBouncer database maps are fixed"
+[[ "$owner_role" == "perfume_aura_owner" ]] \
+  || fail "POSTGRES_OWNER_ROLE must remain perfume_aura_owner while pg_hba.conf, pg_ident.conf and pgBackRest name it"
 
 compose_superuser_password_file="$(read_compose_secret_file_path POSTGRES_SUPERUSER_PASSWORD_FILE)"
 compose_ops_userlist_file="$(read_compose_secret_file_path PGBOUNCER_OPS_USERLIST_FILE)"
 compose_storefront_userlist_file="$(read_compose_secret_file_path PGBOUNCER_STOREFRONT_USERLIST_FILE)"
-compose_tls_ca_file="$(read_compose_secret_file_path PGBOUNCER_TLS_CA_FILE)"
-compose_tls_server_cert_file="$(read_compose_secret_file_path PGBOUNCER_TLS_SERVER_CERT_FILE)"
-compose_tls_server_key_file="$(read_compose_secret_file_path PGBOUNCER_TLS_SERVER_KEY_FILE)"
 compose_pgbackrest_config_file="$(read_compose_secret_file_path PGBACKREST_CONFIG_FILE)"
 compose_pgadmin_password_file="$(read_compose_secret_file_path PGADMIN_PASSWORD_FILE)"
 
@@ -601,13 +640,15 @@ compose_pgadmin_password_file="$(read_compose_secret_file_path PGADMIN_PASSWORD_
   || fail "PGBOUNCER_STOREFRONT_USERLIST_FILE must exactly match the Compose secret source"
 
 require_root_owned_private_file "POSTGRES_SUPERUSER_PASSWORD_FILE" "$compose_superuser_password_file"
-require_root_owned_private_file "PGBOUNCER_OPS_USERLIST_FILE" "$compose_ops_userlist_file"
-require_root_owned_private_file "PGBOUNCER_STOREFRONT_USERLIST_FILE" "$compose_storefront_userlist_file"
-require_root_owned_private_file "PGBOUNCER_TLS_CA_FILE" "$compose_tls_ca_file"
-require_root_owned_private_file "PGBOUNCER_TLS_SERVER_CERT_FILE" "$compose_tls_server_cert_file"
-require_root_owned_private_file "PGBOUNCER_TLS_SERVER_KEY_FILE" "$compose_tls_server_key_file"
-require_root_owned_private_file "PGBACKREST_CONFIG_FILE" "$compose_pgbackrest_config_file"
-require_root_owned_private_file "PGADMIN_PASSWORD_FILE" "$compose_pgadmin_password_file"
+require_root_owned_service_secret_file "PGBOUNCER_OPS_USERLIST_FILE" "$compose_ops_userlist_file" "$postgres_secrets_gid"
+require_root_owned_service_secret_file "PGBOUNCER_STOREFRONT_USERLIST_FILE" "$compose_storefront_userlist_file" "$postgres_secrets_gid"
+require_root_owned_service_secret_file "PGBACKREST_CONFIG_FILE" "$compose_pgbackrest_config_file" "$postgres_secrets_gid"
+require_root_owned_service_secret_file "PGADMIN_PASSWORD_FILE" "$compose_pgadmin_password_file" "$postgres_secrets_gid"
+group_entry="$(getent group "$postgres_secrets_gid")" || fail "POSTGRES_SECRETS_GID group does not exist on this host"
+[[ -z "${group_entry##*:}" ]] || fail "POSTGRES_SECRETS_GID group must have no host members"
+if getent passwd | awk -F: -v gid="$postgres_secrets_gid" '$4 == gid { found = 1 } END { exit !found }'; then
+  fail "no host account may use POSTGRES_SECRETS_GID as its primary group"
+fi
 validate_direct_target
 validate_started_compose_target
 
@@ -648,9 +689,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
-connected_target_identity="$(psql --no-psqlrc -X -qAt "$DATABASE_URL_DIRECT" -c "SELECT current_database() || E'|' || current_user || E'|' || CASE WHEN current_setting('server_version_num')::integer BETWEEN 170000 AND 179999 THEN 'postgres17' ELSE 'unexpected-postgres-version' END")"
-[[ "$connected_target_identity" == "$database_name|$owner_role|postgres17" ]] \
-  || fail "direct owner connection did not reach the exact reviewed PostgreSQL 17 database and owner role"
+connected_target_identity="$(psql --no-psqlrc -X -qAt "$DATABASE_URL_DIRECT" -c "SELECT current_database() || E'|' || current_user || E'|' || CASE WHEN current_setting('server_version_num')::integer BETWEEN 180000 AND 189999 THEN 'postgres18' ELSE 'unexpected-postgres-version' END")"
+[[ "$connected_target_identity" == "$database_name|$owner_role|postgres18" ]] \
+  || fail "direct owner connection did not reach the exact reviewed PostgreSQL 18 database and owner role"
 
 validate_runtime_principal_ownership
 
@@ -769,9 +810,9 @@ write_pgbouncer_userlist() {
 
   userlist_count="$(wc -l < "$userlist_temp" | tr -d '[:space:]')"
   [[ "$userlist_count" == "${#role_names[@]}" ]] || fail "refusing to install an incomplete PgBouncer SCRAM userlist"
-  install -o root -g root -m 0600 "$userlist_temp" "$userlist_file"
+  install -o root -g "$postgres_secrets_gid" -m 0640 "$userlist_temp" "$userlist_file"
   cmp --silent -- "$userlist_temp" "$userlist_file" || fail "PgBouncer userlist installation verification failed"
-  require_root_owned_private_file "PgBouncer userlist" "$userlist_file"
+  require_root_owned_service_secret_file "PgBouncer userlist" "$userlist_file" "$postgres_secrets_gid"
 }
 
 write_pgbouncer_userlist "$PGBOUNCER_OPS_USERLIST_FILE" "$ops_runtime_role"
@@ -783,8 +824,8 @@ docker compose --env-file "$POSTGRES_COMPOSE_ENV_FILE" --file "$compose_file" co
 
 printf 'Recreating PgBouncer services during the planned maintenance window to load separate SCRAM userlists...\n'
 docker compose --env-file "$POSTGRES_COMPOSE_ENV_FILE" --file "$compose_file" \
-  up --detach --no-deps --force-recreate pgbouncer-ops pgbouncer-external
-for pooler_service in pgbouncer-ops pgbouncer-external; do
+  up --detach --no-deps --force-recreate pgbouncer-ops pgbouncer-storefront
+for pooler_service in pgbouncer-ops pgbouncer-storefront; do
   docker compose --env-file "$POSTGRES_COMPOSE_ENV_FILE" --file "$compose_file" \
     ps --status running --services | grep -Fx "$pooler_service" >/dev/null \
     || fail "$pooler_service did not enter the running state after userlist rotation"

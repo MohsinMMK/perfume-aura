@@ -2,22 +2,23 @@
 
 This directory is the version-controlled target infrastructure for the chosen
 VPS migration path. It does **not** deploy a database on its own and it does
-not change the existing ops Compose stack, application code, Neon project,
-production DNS, or credentials.
+not change the existing ops or storefront Compose stacks, application code,
+Neon project, production DNS, or credentials.
 
 ## What it provides
 
 | Component | Scope | Version / exposure |
 | --- | --- | --- |
-| PostgreSQL | primary database | `postgres:17.10-bookworm` pinned to the reviewed immutable index in `postgres/postgres-image.lock`; root-controlled loopback owner port only |
-| PgBouncer for ops | private app pool | `edoburu/pgbouncer:v1.25.2-p0` pinned to the reviewed immutable index; existing Docker network only |
-| PgBouncer for storefront | public app pool | `edoburu/pgbouncer:v1.25.2-p0` pinned to the reviewed immutable index; mTLS + SCRAM on `6432` |
-| pgBackRest | PITR and recovery | runs beside PostgreSQL; encrypted, off-host `repo1` required |
-| pgAdmin | break-glass UI | `dpage/pgadmin4:9.17` pinned to the reviewed immutable index; `127.0.0.1` only |
+| PostgreSQL | primary database | `postgres:18.6-trixie` pinned to the reviewed immutable index in `postgres/postgres-image.lock`; root-controlled loopback owner port only |
+| PgBouncer for ops | private app pool | `edoburu/pgbouncer:v1.26.1-p0` pinned to the reviewed immutable index; existing ops Docker network only |
+| PgBouncer for storefront | private app pool | same pinned image; existing storefront Docker network only |
+| pgBackRest | PITR and recovery | `2.60.0`, built from the checksummed release; runs beside PostgreSQL; encrypted, off-host `repo1` required |
+| pgAdmin | break-glass UI | `dpage/pgadmin4:9.18` pinned to the reviewed immutable index; `127.0.0.1` only |
 
-`compose.yaml` intentionally uses two poolers. The split prevents a public
-listener from becoming an implicit path into operations, and allows the
-existing operations container to remain on its private Docker network.
+`compose.yaml` intentionally uses two poolers, each attached to exactly one
+app's existing Docker network under the alias `postgres-pooler`. Each pooler's
+userlist holds only its own app's roles, so neither app can authenticate as the
+other. No database port is public.
 
 ## Required before deployment
 
@@ -32,14 +33,12 @@ existing operations container to remain on its private Docker network.
    short-lived `PGPASSWORD` environment variable. Every one of those four
    role-secret files must contain a different value; the bootstrap rejects a
    duplicate without printing it.
-5. Establish the storefront's secure mTLS client-certificate delivery path in
-   Hostinger. Do not fall back to a public password-only PostgreSQL port.
-6. Build/digest-inspect images on the actual VPS architecture, then run the
+5. Build/digest-inspect images on the actual VPS architecture, then run the
    exact rehearsal and live acceptance gates in `RUNBOOK.md`. PostgreSQL,
    both PgBouncer services, and pgAdmin are immutable reviewed
    multi-architecture indexes, checked by
    `postgres/verify-postgres-image-lock.mjs` before a VPS build.
-7. Run the root bootstrap only from a clean, root-owned normal Git checkout at
+6. Run the root bootstrap only from a clean, root-owned normal Git checkout at
    the canonical repository origin and the explicit reviewed 40-character
    commit SHA. It rejects worktrees, symbolic links, or mutable tracked
    artifacts. Install the frozen dependency tree with lifecycle scripts
