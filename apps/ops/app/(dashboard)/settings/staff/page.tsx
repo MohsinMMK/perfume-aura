@@ -14,7 +14,7 @@ import { listStaffAccounts } from "@/lib/staff-operations";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Staff access · Perfume Aura Ops",
+  title: "Staff access",
   description: "Owner-only staff access management",
 };
 

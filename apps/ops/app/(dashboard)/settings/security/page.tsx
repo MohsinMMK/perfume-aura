@@ -13,7 +13,7 @@ import { requireCapability } from "@/lib/session";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Security · Perfume Aura Ops",
+  title: "Security",
   description: "Operations account security settings",
 };
 

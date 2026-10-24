@@ -1,7 +1,7 @@
 import { ResetPasswordForm } from "./reset-password-form";
 
 export const metadata = {
-  title: "Reset password · Perfume Aura Ops",
+  title: "Reset password",
   description: "Set a new owner password",
 };
 
