@@ -148,7 +148,11 @@ not to the current VPS release flow.
 2. Confirm and remove the three obsolete Perfume Aura Web Apps preserving
    email/DNS; disconnect retired provider Git triggers and remove their unused
    credentials, then verify live routing and hosting slot counts again.
-3. Keep commerce/security gates closed. Owner gates: India counsel, catalog
+3. Autonomous main releases: `database-release` (migrate → Ops → storefront) is
+   built but disabled. It needs distinct runtime roles, `0016` reconciliation,
+   the VPS admin install and `VPS_DATABASE_AUTO_RELEASE_ENABLED` plus
+   `VPS_OPS_AUTO_DEPLOY_ENABLED`; see Operations.
+4. Keep commerce/security gates closed. Owner gates: India counsel, catalog
    facts/media, CA/tax/delivery policies, Google/SMTP/Cashfree, owner TOTP/staff
    denial, telemetry/maintenance, and explicit launch approval.
 
