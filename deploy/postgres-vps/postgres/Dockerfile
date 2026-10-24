@@ -1,13 +1,13 @@
 # PostgreSQL and pgBackRest must run in the same container: PostgreSQL invokes
 # pgBackRest from archive_command for every WAL segment. Build against the same
 # Debian base as PostgreSQL instead of copying an opaque foreign binary.
-ARG PGBACKREST_VERSION=2.59.1
-ARG PGBACKREST_SOURCE_SHA256=1cd522afc33b8ff846ef88c55dc238717c9c8817a4f6ca7c9f64887de9c7402d
+ARG PGBACKREST_VERSION=2.60.0
+ARG PGBACKREST_SOURCE_SHA256=6d3ee1b5defdadc85228969b4be804096f5e65e54707bb95c7c4c4ce41f5d007
 
 # This immutable multi-architecture index selects the exact Linux image for the
 # VPS architecture. Keep it synchronized with postgres-image.lock and verify it
 # before a VPS build; never replace it with a mutable Docker tag.
-FROM postgres:17.10-bookworm@sha256:9b18b78397054fce88a9552e9d5a3ad5bb7fd258c5b3cc1c5028e46373d6ea8f AS postgres-base
+FROM postgres:18.6-trixie@sha256:edb0c08dc33befd0262ab3b5cf1c4f3f8cfd8b09e88c05b45adee29d6761ddb6 AS postgres-base
 
 FROM postgres-base AS pgbackrest-build
 
@@ -39,11 +39,13 @@ RUN set -eux; \
     mkdir /tmp/pgbackrest-source; \
     tar --extract --gzip --file /tmp/pgbackrest.tar.gz --strip-components=1 --directory /tmp/pgbackrest-source; \
     meson setup /tmp/pgbackrest-build /tmp/pgbackrest-source --prefix=/usr/local; \
-    ninja --directory /tmp/pgbackrest-build; \
+    ninja -C /tmp/pgbackrest-build; \
     meson install --no-rebuild --destdir /tmp/pgbackrest-install -C /tmp/pgbackrest-build; \
     /tmp/pgbackrest-install/usr/local/bin/pgbackrest version
 
 FROM postgres-base
+
+ARG POSTGRES_SECRETS_GID
 
 RUN set -eux; \
     apt-get update; \
@@ -51,8 +53,8 @@ RUN set -eux; \
       libbz2-1.0 \
       liblz4-1 \
       libpq5 \
-      libssh2-1 \
-      libssl3 \
+      libssh2-1t64 \
+      libssl3t64 \
       libsystemd0 \
       libxml2 \
       libzstd1 \
@@ -63,4 +65,12 @@ COPY --from=pgbackrest-build /tmp/pgbackrest-install/usr/local/bin/pgbackrest /u
 
 RUN set -eux; \
     /usr/local/bin/pgbackrest version; \
-    install --directory --owner=postgres --group=postgres --mode=0700 /var/lib/pgbackrest
+    # A fresh spool volume copies these from the image; pgBackRest creates neither.
+    install --directory --owner=postgres --group=postgres --mode=0700 \
+      /var/lib/pgbackrest /var/lib/pgbackrest/log /var/lib/pgbackrest/spool; \
+    # The entrypoint's gosu drop keeps only /etc/group memberships, so Compose
+    # group_add cannot reach archive_command. Bake the secret-reader group in.
+    test -n "${POSTGRES_SECRETS_GID}"; \
+    test "${POSTGRES_SECRETS_GID}" -gt 0; \
+    groupadd --gid "${POSTGRES_SECRETS_GID}" perfume-aura-secrets; \
+    usermod --append --groups perfume-aura-secrets postgres

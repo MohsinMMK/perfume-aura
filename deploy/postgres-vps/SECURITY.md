@@ -6,7 +6,7 @@ it, change production credentials, open a firewall, or alter DNS.
 ## Network model
 
 ```text
-Hostinger storefront -- mTLS + SCRAM ------> pgbouncer-external :6432 --+
+VPS storefront app -- Docker-only SCRAM --> pgbouncer-storefront :6432 -+
 VPS ops app -------- Docker-only SCRAM ----> pgbouncer-ops :6432 ------+--> PostgreSQL :5432
 root-controlled VPS -- loopback-only SCRAM ----------------------------+
 pgAdmin ---------- Docker-internal connection -------------------------+
@@ -20,13 +20,17 @@ PostgreSQL ------- encrypted pgBackRest -------------------------------> off-hos
   `perfume-aura-postgres-backup-egress` network; no application service joins
   the backup network.
 - `pgbouncer-ops` is reachable only through the existing
-  `perfume-aura-ops-internal` network. It never has a host port.
-- `pgbouncer-external` is the sole public database listener and requires TLS,
-  a client certificate issued by the private client CA, and SCRAM credentials.
-  Firewall policy must still allow port 6432 only from the storefront's known
-  egress ranges if those ranges can be established reliably.
+  `perfume-aura-ops-internal` network, and `pgbouncer-storefront` only through
+  the existing `perfume-aura-storefront-internal` network. Each is aliased
+  `postgres-pooler` on its app network and never has a host port. Neither app
+  network can reach raw PostgreSQL, pgAdmin or the other app's pooler.
+- No database port is public. Port 6432 must stay closed at the firewall.
 - pgAdmin binds only to `127.0.0.1`; use a local SSH tunnel and do not proxy it
-  through Caddy or public DNS.
+  through Caddy or public DNS. Its publish rides a dedicated non-masquerading
+  bridge, so pgAdmin has no outbound route. That relies on Docker managing
+  iptables; verify on the VPS that pgAdmin cannot reach an outside address.
+- The container socket accepts the owner only by peer login from the
+  container's `postgres` OS user (`pg_ident.conf`); every TCP client uses SCRAM.
 
 ## Credential and role rules
 
@@ -45,22 +49,24 @@ PostgreSQL ------- encrypted pgBackRest -------------------------------> off-hos
   already owns a database, tablespace, schema, relation, routine, or other
   database-local object. Ownership is not removable with a grant revoke, so
   reusing an owner-capable role would defeat the reviewed runtime grant matrix.
-- Keep separate PgBouncer userlists: the private ops pooler receives only the
-  `ops_runtime` SCRAM verifier, and the public pooler receives only the
+- Keep separate PgBouncer userlists: the ops pooler receives only the
+  `ops_runtime` SCRAM verifier, and the storefront pooler receives only the
   `storefront_runtime` and `storefront_payment_finalizer` verifiers. Do not put
   clear-text passwords or the owner role in either file. The owner, ops,
   storefront, and payment-finalizer secret files must all contain different
-  values; distinct role names do not isolate the two public credentials when
+  values; distinct role names do not isolate the two storefront credentials when
   their password material matches.
-- PostgreSQL, pgBackRest, pooler TLS, pgAdmin, application client-certificate,
-  and off-host repository material remain in root-owned files outside Git.
+- PostgreSQL, pgBackRest, pgAdmin and off-host repository material remain in
+  root-owned files outside Git. Compose bind-mounts file secrets with host
+  ownership, so the four files non-root services read are `root:<gid> 0640` for
+  a memberless `POSTGRES_SECRETS_GID`; only the poolers, pgAdmin and the
+  image's `postgres` user hold it. Everything else stays `root:root 0600`.
 - Rotate a runtime password by changing PostgreSQL, atomically replacing the
   matching verifier file, force-recreating only the relevant pooler in the
   planned maintenance window, and proving the old credential fails. The
   bootstrap verifies the exact generated file before Compose recreates the
   pooler; Docker secrets are immutable for an existing container, so an in-place
-  signal is insufficient. Revoke a lost client certificate in the private CA
-  process, replace the CA bundle if required, then recreate the external pooler.
+  signal is insufficient.
 
 ## Backup and recovery rules
 
@@ -90,8 +96,8 @@ PostgreSQL ------- encrypted pgBackRest -------------------------------> off-hos
   reviewed Docker Hub tag/index or either Linux child manifest drifts. Update
   the matching source reference and lock together only through the documented
   review procedure.
-- The PostgreSQL image compiles the checksum-pinned official pgBackRest 2.59.1
-  distribution against its PostgreSQL 17.10 Debian base; do not replace it with
+- The PostgreSQL image compiles the checksum-pinned official pgBackRest 2.60.0
+  distribution against its PostgreSQL 18.6 Debian trixie base; do not replace it with
   an unverified binary copied from a third-party image.
 - Never run `docker compose down -v`, delete a named volume, or delete Neon
   during the migration. The source remains the rollback path until live

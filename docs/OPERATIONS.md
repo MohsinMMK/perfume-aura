@@ -298,9 +298,11 @@ SELECT * FROM pg_auth_members;
 ## Self-hosted PostgreSQL target
 
 [PostgreSQL runbook](../deploy/postgres-vps/RUNBOOK.md) owns this separate,
-not-live project. It requires independent encrypted off-VPS pgBackRest backup
-and an on-VPS restore drill before cutover. Never expose port 6432 or change
-runtime connections merely because templates exist.
+not-live project: PostgreSQL 18.6 with pgBackRest, and a private per-app
+PgBouncer (`postgres-pooler:6432`) on each app's existing Docker network. It
+requires independent encrypted off-VPS pgBackRest backup and an on-VPS restore
+drill before cutover. Never publish a database port or change runtime
+connections merely because templates exist.
 
 Ordering: source export → disposable restore/parity → migrations/grants →
 off-host backup → independent restore → controlled write freeze/cutover →

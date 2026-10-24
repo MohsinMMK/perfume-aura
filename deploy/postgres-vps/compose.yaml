@@ -1,17 +1,19 @@
 name: perfume-aura-postgres
 
-# This stack is intentionally independent from deploy/ops-vps/compose.yaml.
-# It joins that existing private network only through pgbouncer-ops. Raw
-# PostgreSQL is never publicly reachable; its owner port is loopback-only for
+# This stack is intentionally independent from deploy/ops-vps/compose.yaml and
+# deploy/storefront-vps/compose.yaml. It joins each app's existing private
+# network only through that app's own PgBouncer. Nothing here publishes a
+# public port: raw PostgreSQL's owner port and pgAdmin are loopback-only for
 # root-controlled bootstrap and SSH tunnels.
 services:
   postgres:
-    image: perfume-aura-postgres:17.10-pgbackrest-2.59.1
+    image: perfume-aura-postgres:18.6-pgbackrest-2.60.0
     build:
       context: ./postgres
       args:
-        PGBACKREST_VERSION: 2.59.1
-        PGBACKREST_SOURCE_SHA256: 1cd522afc33b8ff846ef88c55dc238717c9c8817a4f6ca7c9f64887de9c7402d
+        PGBACKREST_VERSION: 2.60.0
+        PGBACKREST_SOURCE_SHA256: 6d3ee1b5defdadc85228969b4be804096f5e65e54707bb95c7c4c4ce41f5d007
+        POSTGRES_SECRETS_GID: ${POSTGRES_SECRETS_GID:?set POSTGRES_SECRETS_GID in the root-only compose environment file}
     restart: unless-stopped
     init: true
     environment:
@@ -21,16 +23,19 @@ services:
       # Keep the entrypoint's one-time cluster initialization on SCRAM too. The
       # mounted production pg_hba.conf remains the authoritative runtime file.
       POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=scram-sha-256
-      PGDATA: /var/lib/postgresql/data
+      # PostgreSQL 18 images keep a major-versioned PGDATA below the volume
+      # root so a future pg_upgrade --link can see old and new clusters.
+      PGDATA: /var/lib/postgresql/18/docker
     command:
       - postgres
       - -c
       - config_file=/etc/postgresql/postgresql.conf
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql
       - pgbackrest-spool:/var/lib/pgbackrest
       - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
       - ./postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./postgres/pg_ident.conf:/etc/postgresql/pg_ident.conf:ro
     secrets:
       - postgres_superuser_password
       - pgbackrest_config
@@ -75,7 +80,7 @@ services:
       com.khanect.exposure: docker-internal-plus-loopback-owner-and-backup-egress
 
   pgbouncer-ops:
-    image: edoburu/pgbouncer:v1.25.2-p0@sha256:7d7a27d9e90985cab5cf42256f5c13a3120baa4b055b69df37beb272b89b2340
+    image: edoburu/pgbouncer:v1.26.1-p0@sha256:488422e38cff912895d0d65d8963fcd306e6ac589a724398b6eb8e294e94d624
     restart: unless-stopped
     init: true
     depends_on:
@@ -83,6 +88,11 @@ services:
         condition: service_healthy
     volumes:
       - ./pgbouncer/pgbouncer-ops.ini:/etc/pgbouncer/pgbouncer.ini:ro
+    # Compose bind-mounts file secrets with their host owner and mode, ignoring
+    # secret uid/gid/mode outside Swarm. This non-root service reads its
+    # root:POSTGRES_SECRETS_GID 0640 secret through this supplementary group.
+    group_add:
+      - ${POSTGRES_SECRETS_GID:?set POSTGRES_SECRETS_GID in the root-only compose environment file}
     secrets:
       - source: pgbouncer_ops_userlist
         target: pgbouncer_userlist
@@ -111,25 +121,28 @@ services:
       com.khanect.owner: Perfume-Aura
       com.khanect.exposure: docker-ops-network-only
 
-  pgbouncer-external:
-    image: edoburu/pgbouncer:v1.25.2-p0@sha256:7d7a27d9e90985cab5cf42256f5c13a3120baa4b055b69df37beb272b89b2340
+  pgbouncer-storefront:
+    image: edoburu/pgbouncer:v1.26.1-p0@sha256:488422e38cff912895d0d65d8963fcd306e6ac589a724398b6eb8e294e94d624
     restart: unless-stopped
     init: true
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - ${PGBOUNCER_BIND_ADDRESS:-0.0.0.0}:${PGBOUNCER_EXTERNAL_PORT:-6432}:6432
     volumes:
-      - ./pgbouncer/pgbouncer-external.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./pgbouncer/pgbouncer-storefront.ini:/etc/pgbouncer/pgbouncer.ini:ro
+    # Compose bind-mounts file secrets with their host owner and mode, ignoring
+    # secret uid/gid/mode outside Swarm. This non-root service reads its
+    # root:POSTGRES_SECRETS_GID 0640 secret through this supplementary group.
+    group_add:
+      - ${POSTGRES_SECRETS_GID:?set POSTGRES_SECRETS_GID in the root-only compose environment file}
     secrets:
       - source: pgbouncer_storefront_userlist
         target: pgbouncer_userlist
-      - pgbouncer_tls_ca
-      - pgbouncer_tls_server_cert
-      - pgbouncer_tls_server_key
     networks:
-      - database_internal
+      database_internal:
+      storefront_internal:
+        aliases:
+          - postgres-pooler
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,nodev,size=16m,mode=1777
@@ -146,12 +159,12 @@ services:
     stop_grace_period: 30s
     labels:
       com.khanect.stack: perfume-aura-postgres
-      com.khanect.service: pgbouncer-external
+      com.khanect.service: pgbouncer-storefront
       com.khanect.owner: Perfume-Aura
-      com.khanect.exposure: public-mtls-only-6432
+      com.khanect.exposure: docker-storefront-network-only
 
   pgadmin:
-    image: dpage/pgadmin4:9.17@sha256:2f4ce946ddf8360680d7eff4eaba1d91859eb6b4003e6623bad5c63a322c2f4d
+    image: dpage/pgadmin4:9.18@sha256:c332c5f6dfba995d9ebc4af261d93506d6876085d712eaaa3defc8dd1a3f26de
     restart: unless-stopped
     init: true
     depends_on:
@@ -169,10 +182,16 @@ services:
       - 127.0.0.1:${PGADMIN_LOOPBACK_PORT:-5050}:8080
     volumes:
       - pgadmin-data:/var/lib/pgadmin
+    # Compose bind-mounts file secrets with their host owner and mode, ignoring
+    # secret uid/gid/mode outside Swarm. This non-root service reads its
+    # root:POSTGRES_SECRETS_GID 0640 secret through this supplementary group.
+    group_add:
+      - ${POSTGRES_SECRETS_GID:?set POSTGRES_SECRETS_GID in the root-only compose environment file}
     secrets:
       - pgadmin_password
     networks:
       - database_internal
+      - pgadmin_loopback
     # pgAdmin also initializes its named data volume before its final process
     # runs as its service account.
     cap_drop:
@@ -199,6 +218,13 @@ networks:
   database_internal:
     name: perfume-aura-postgres-internal
     internal: true
+  # Docker publishes no ports for a container attached only to internal
+  # networks. This bridge carries just pgAdmin's loopback publish; without
+  # masquerading, pgAdmin has no outbound path to the internet.
+  pgadmin_loopback:
+    name: perfume-aura-postgres-pgadmin-loopback
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "false"
   # PostgreSQL reaches only the independently managed pgBackRest repository
   # through this dedicated outbound network. Keep host firewall egress rules
   # restricted to the repository endpoint on TCP 443; never attach app stacks.
@@ -209,10 +235,16 @@ networks:
   ops_internal:
     external: true
     name: ${OPS_DOCKER_NETWORK:-perfume-aura-ops-internal}
+  # Existing, external Compose network from deploy/storefront-vps/compose.yaml.
+  # Only pgbouncer-storefront joins it, so the storefront never sees the ops
+  # pooler, raw PostgreSQL or pgAdmin.
+  storefront_internal:
+    external: true
+    name: ${STOREFRONT_DOCKER_NETWORK:-perfume-aura-storefront-internal}
 
 volumes:
   postgres-data:
-    name: perfume-aura-postgres-data
+    name: perfume-aura-postgres-pg18-data
   pgbackrest-spool:
     name: perfume-aura-pgbackrest-spool
   pgadmin-data:
@@ -225,12 +257,6 @@ secrets:
     file: ${PGBOUNCER_OPS_USERLIST_FILE:?set PGBOUNCER_OPS_USERLIST_FILE}
   pgbouncer_storefront_userlist:
     file: ${PGBOUNCER_STOREFRONT_USERLIST_FILE:?set PGBOUNCER_STOREFRONT_USERLIST_FILE}
-  pgbouncer_tls_ca:
-    file: ${PGBOUNCER_TLS_CA_FILE:?set PGBOUNCER_TLS_CA_FILE}
-  pgbouncer_tls_server_cert:
-    file: ${PGBOUNCER_TLS_SERVER_CERT_FILE:?set PGBOUNCER_TLS_SERVER_CERT_FILE}
-  pgbouncer_tls_server_key:
-    file: ${PGBOUNCER_TLS_SERVER_KEY_FILE:?set PGBOUNCER_TLS_SERVER_KEY_FILE}
   pgbackrest_config:
     file: ${PGBACKREST_CONFIG_FILE:?set PGBACKREST_CONFIG_FILE}
   pgadmin_password:

@@ -22,7 +22,11 @@ Do not create `shop` or `www.app`.
 Storefront and Ops share Neon and currently use the same runtime database
 role/credential; role isolation is not verified. Auth tables, application auth
 secrets and cookies remain separate. No database has moved to the VPS. Self-hosted PostgreSQL
-preparation under `deploy/postgres-vps/` is not active production.
+preparation under `deploy/postgres-vps/` is not active production. Its
+PostgreSQL 18.6 private-pooler stack passes a local disposable rehearsal
+(bootstrap, network/privilege isolation, transaction pooling, archiving,
+full/diff backup and isolated restore) against a local posix repository;
+the S3 repository, VPS rehearsal, data export and cutover remain unapproved.
 
 ## Deployment status
 
