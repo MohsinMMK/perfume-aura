@@ -7,7 +7,7 @@ Never infer a live release from Git HEAD. Never record secrets or customer data.
 
 | Surface | Owner | Live source |
 |---|---|---|
-| `perfumeaura.com` | VPS Caddy → loopback 3031 → storefront | `58c70d535b40d58c98e52f1f7c07e2f62ffa867c` |
+| `perfumeaura.com` | VPS Caddy → loopback 3031 → storefront | `c6b0db0e3327f1d7e8b414b17692622aac2da727` |
 | `www.perfumeaura.com` | Caddy HTTPS 308 to apex, preserving path/query | Same storefront |
 | `app.perfumeaura.com` | VPS Caddy → loopback 3020 → Ops | `09164609b918cf8c356ec35e42e6d96ff1a25dce` |
 
@@ -18,6 +18,10 @@ GoDaddy owns registration. Hostinger nameservers `lunar.dns-parking.com` and
 www CNAME points to apex. No apex AAAA remains. Hostinger CDN is disabled
 and the storefront is opted out of automatic CDN. Preserve mail records.
 Do not create `shop` or `www.app`.
+
+Neon currently rejects connections with `53000` (project quota exceeded), so
+Ops readiness returns 503. The storefront discovery catalog does not use Neon
+and stays available. Restoring the quota is an owner Neon plan action.
 
 Storefront and Ops share Neon and currently use the same runtime database
 role/credential; role isolation is not verified. Auth tables, application auth
@@ -32,7 +36,7 @@ the S3 repository, VPS rehearsal, data export and cutover remain unapproved.
 
 - Storefront: protected main → scoped checks → checksummed Linux standalone →
   immutable GHCR image → Tailscale forced SSH → hardened container.
-  `VPS_STOREFRONT_AUTO_DEPLOY_ENABLED=true`. GitHub run `37038313449`
+  `VPS_STOREFRONT_AUTO_DEPLOY_ENABLED=true`. GitHub run `40083231615`
   (`deploy_target=storefront`) deployed the exact live source. Full public
   acceptance passes; `VPS_STOREFRONT_PUBLIC_VERIFICATION_ENABLED=true` checks
   future releases.
@@ -40,7 +44,7 @@ the S3 repository, VPS rehearsal, data export and cutover remain unapproved.
   is unchanged. `VPS_OPS_AUTO_DEPLOY_ENABLED=false` enforces the pending migration
   gate; the working Ops runtime remains available.
 - Storefront image digest:
-  `sha256:8110cbc0ba75939936b9f7274f721b39520160e85f0ceaf189c673c79e6114cb`.
+  `sha256:25a93afe5c73a022523d40ff0d6f99b10fb213c8d2833f17b1fa634740b08ff5`.
   The runtime settings are root-owned mode 0600 in
   `/etc/khanect/perfume-aura-storefront.env`; app auth secrets remain separate.
   Forced SSH probe succeeds and arbitrary commands are denied.
@@ -55,9 +59,8 @@ the S3 repository, VPS rehearsal, data export and cutover remain unapproved.
   deploy Ops or apply migrations. Database changes fail closed at the owner gate.
 - Source pin is Node `26.12.1` / npm `11.20.0` / pnpm `12.15.0` on
   `node:26.12.1-trixie-slim@sha256:36793bcbb160a6a16cede1e62b93f84e26b78a972a8a4c0b879c1c12f22761ec`.
-  Live storefront still runs the earlier Node 24 image until the next accepted
-  storefront release. Ops still runs its previous accepted image; auto-deploy
-  stays gated.
+  The live storefront runs this source. Ops still runs its previous accepted
+  image; auto-deploy stays gated.
 
 ## Active release locks
 
@@ -147,16 +150,17 @@ not to the current VPS release flow.
 
 ## Next actions
 
-1. Verify apex/www resolve only to the VPS, with no retired A/AAAA targets,
+1. Restore the Neon quota, then confirm Ops readiness before any database work.
+2. Verify apex/www resolve only to the VPS, with no retired A/AAAA targets,
    before removing recovery hosting.
-2. Confirm and remove the three obsolete Perfume Aura Web Apps preserving
+3. Confirm and remove the three obsolete Perfume Aura Web Apps preserving
    email/DNS; disconnect retired provider Git triggers and remove their unused
    credentials, then verify live routing and hosting slot counts again.
-3. Autonomous main releases: `database-release` (migrate → Ops → storefront) is
+4. Autonomous main releases: `database-release` (migrate → Ops → storefront) is
    built but disabled. It needs distinct runtime roles, `0016` reconciliation,
    the VPS admin install and `VPS_DATABASE_AUTO_RELEASE_ENABLED` plus
    `VPS_OPS_AUTO_DEPLOY_ENABLED`; see Operations.
-4. Keep commerce/security gates closed. Owner gates: India counsel, catalog
+5. Keep commerce/security gates closed. Owner gates: India counsel, catalog
    facts/media, CA/tax/delivery policies, Google/SMTP/Cashfree, owner TOTP/staff
    denial, telemetry/maintenance, and explicit launch approval.
 
