@@ -7,9 +7,9 @@ Never infer a live release from Git HEAD. Never record secrets or customer data.
 
 | Surface | Owner | Live source |
 |---|---|---|
-| `perfumeaura.com` | VPS Caddy → loopback 3031 → storefront | `c6b0db0e3327f1d7e8b414b17692622aac2da727` |
+| `perfumeaura.com` | VPS Caddy → loopback 3031 → storefront | `2af78e0fd3f14ad199e7ad37e7505e95c706f9f8` |
 | `www.perfumeaura.com` | Caddy HTTPS 308 to apex, preserving path/query | Same storefront |
-| `app.perfumeaura.com` | VPS Caddy → loopback 3020 → Ops | `7b8349f1f9f3214edfe17f64548c507725e4d9ad` |
+| `app.perfumeaura.com` | VPS Caddy → loopback 3020 → Ops | `2af78e0fd3f14ad199e7ad37e7505e95c706f9f8` |
 
 VPS: Hostinger KVM2, public `194.164.149.3`, Tailscale `100.119.191.103`.
 Admin: `ssh khanect-vps`. SSH is private; only HTTP/HTTPS are public.
@@ -42,16 +42,16 @@ outside it is still open.
 
 - Storefront: protected main → scoped checks → checksummed Linux standalone →
   immutable GHCR image → Tailscale forced SSH → hardened container.
-  `VPS_STOREFRONT_AUTO_DEPLOY_ENABLED=true`. GitHub run `40083231615`
-  (`deploy_target=storefront`) deployed the exact live source. Full public
+  `VPS_STOREFRONT_AUTO_DEPLOY_ENABLED=true`. GitHub push run `40091178477`
+  deployed the exact live source to both apps. Full public
   acceptance passes; `VPS_STOREFRONT_PUBLIC_VERIFICATION_ENABLED=true` checks
   future releases.
 - Ops uses an independent image and deploy identity.
-  `VPS_OPS_AUTO_DEPLOY_ENABLED=true`. GitHub run `40088270173`
-  (`deploy_target=ops`) deployed the exact live source; Ops acceptance (live,
-  ready, version, unauthenticated session) and storefront checks pass.
+  `VPS_OPS_AUTO_DEPLOY_ENABLED=true`. Ops acceptance (live, ready, version,
+  unauthenticated session) and storefront checks pass. Ops sends
+  `X-Robots-Tag: noindex, nofollow` on every page.
 - Storefront image digest:
-  `sha256:25a93afe5c73a022523d40ff0d6f99b10fb213c8d2833f17b1fa634740b08ff5`.
+  `sha256:c8e50b311901a03471f7926e91bef12bb9eca3f528057cc56cba437ebeb8af76`.
   The runtime settings are root-owned mode 0600 in
   `/etc/khanect/perfume-aura-storefront.env`; app auth secrets remain separate.
   Forced SSH probe succeeds and arbitrary commands are denied.
