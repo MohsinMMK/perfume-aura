@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-EXPECTED_PNPM="11.25.0"
+EXPECTED_PNPM="12.15.0"
 EXPECTED_SHARP="0.35.5"
 OUTPUT_DIR="$ROOT/.hostinger/storefront"
 RUNTIME_DEPS_DIR="$ROOT/scripts/ops-runtime-deps"
@@ -20,8 +20,8 @@ verify_repository_contract() {
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const rootPackage = JSON.parse(fs.readFileSync("package.json", "utf8"));
-assert.equal(rootPackage.packageManager, "pnpm@11.25.0");
-assert.equal(rootPackage.scripts.build, "corepack pnpm hostinger:build:storefront");
+assert.equal(rootPackage.packageManager, "pnpm@12.15.0");
+assert.equal(rootPackage.scripts.build, "pnpm hostinger:build:storefront");
 assert.equal(
   rootPackage.scripts["hostinger:build:storefront"],
   "bash scripts/build-hostinger-storefront-source.sh",
@@ -53,8 +53,8 @@ fi
 [[ $# -eq 0 ]] || fail "Usage: build-hostinger-storefront-source.sh [self-test]"
 
 verify_repository_contract
-[[ "$(node -p 'process.versions.node.split(`.`)[0]')" == "24" ]] || fail "Hostinger storefront build requires Node 24.x"
-[[ "$(corepack pnpm@"$EXPECTED_PNPM" --version)" == "$EXPECTED_PNPM" ]] || fail "Hostinger storefront build requires pnpm $EXPECTED_PNPM"
+[[ "$(node -p 'process.versions.node.split(`.`)[0]')" == "26" ]] || fail "Hostinger storefront build requires Node 26.x"
+[[ "$(pnpm --version)" == "$EXPECTED_PNPM" ]] || fail "Hostinger storefront build requires pnpm $EXPECTED_PNPM"
 [[ "$(node -p 'process.platform')" == "linux" ]] || fail "Hostinger storefront output must be built on Linux"
 [[ "$(node -p 'process.arch')" == "x64" ]] || fail "Hostinger storefront output must target linux/x64"
 node -e 'const report=process.report?.getReport();if(!report?.header?.glibcVersionRuntime)process.exit(1)' || fail "Hostinger storefront output requires glibc"
@@ -66,7 +66,7 @@ PROVIDER_TRACKED_DRIFT="$(git status --porcelain --untracked-files=no)"
 if [[ "$ROOT" == */hbuilds/source/repository &&
       "${NPM_CONFIG_IGNORE_SCRIPTS:-}" == "true" &&
       "$PROVIDER_TRACKED_DRIFT" == " M pnpm-lock.yaml" ]]; then
-  echo "==> Restoring pnpm 11 lockfile syntax after Hostinger's pnpm 10 preinstall"
+  echo "==> Restoring the committed lockfile syntax after Hostinger's pnpm 10 preinstall"
   git restore --source=HEAD --worktree -- pnpm-lock.yaml
 fi
 if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
@@ -74,7 +74,7 @@ if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
 fi
 
 echo "==> Installing the locked pnpm workspace"
-corepack pnpm@"$EXPECTED_PNPM" install --frozen-lockfile
+pnpm install --frozen-lockfile
 [[ -z "$(git status --porcelain --untracked-files=no)" ]] || fail "frozen install changed tracked source files"
 
 echo "==> Building @perfume-aura/storefront from $SOURCE_COMMIT"
@@ -87,7 +87,7 @@ STOREFRONT_PUBLIC_RELEASE="${STOREFRONT_PUBLIC_RELEASE:-false}" \
 STOREFRONT_CHECKOUT_RELEASE_APPROVED="${STOREFRONT_CHECKOUT_RELEASE_APPROVED:-false}" \
 STOREFRONT_INQUIRIES_ENABLED="${STOREFRONT_INQUIRIES_ENABLED:-false}" \
 STANDALONE_SOURCE_COMMIT="$SOURCE_COMMIT" \
-  corepack pnpm@"$EXPECTED_PNPM" --filter @perfume-aura/storefront build
+  pnpm --filter @perfume-aura/storefront build
 
 STANDALONE="$ROOT/apps/storefront/.next/standalone"
 APP_ROOT="$STANDALONE/apps/storefront"
@@ -200,7 +200,7 @@ cat > "$STAGE/package.json" <<'JSON'
 {
   "name": "perfume-aura-storefront-hostinger-source",
   "private": true,
-  "engines": { "node": ">=24.20.0 <25" },
+  "engines": { "node": ">=26.12.1 <27" },
   "scripts": { "start": "node apps/storefront/server.js" }
 }
 JSON

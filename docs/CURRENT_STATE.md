@@ -49,19 +49,22 @@ preparation under `deploy/postgres-vps/` is not active production.
   start time and image remain unchanged.
 - Markdown-only changes must not deploy. Storefront-only releases must not
   deploy Ops or apply migrations. Database changes fail closed at the owner gate.
-- Source pin is Node `24.20.0` / npm `11.19.0` on
-  `node:24.20.0-bookworm-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e`.
-  Live storefront runs that base. Ops still runs its previous accepted image;
-  auto-deploy stays gated.
+- Source pin is Node `26.12.1` / npm `11.20.0` / pnpm `12.15.0` on
+  `node:26.12.1-trixie-slim@sha256:36793bcbb160a6a16cede1e62b93f84e26b78a972a8a4c0b879c1c12f22761ec`.
+  Live storefront still runs the earlier Node 24 image until the next accepted
+  storefront release. Ops still runs its previous accepted image; auto-deploy
+  stays gated.
 
 ## Active release locks
 
-Source dependencies use security-patched Next.js `16.3.8`, Sharp `0.35.5`,
-Nodemailer `10.0.9` and reviewed transitive overrides. Lint, type checks, unit tests, both builds/client budgets and
-110 disposable-database integration tests pass. Production dependency audits
-report zero known vulnerabilities. The full `pnpm check` stops at the development-only
-`braces@3.0.3` advisory GHSA-vfj7-8cjw-p6xm (no upstream patched release).
-Do not suppress the audit; revisit when the upstream toolchain removes it.
+Source dependencies are at latest: Next.js `16.4.3`, React `19.3.1`, Better
+Auth `1.7.12`, ESLint `10`, Sentry `11.8.0`, Sharp `0.35.5`, Nodemailer `10.2.1`
+and reviewed transitive overrides. The full `pnpm check` (including both audits)
+and 110 disposable-database integration tests pass. CI integration stays on
+PostgreSQL `16.15` to match the protected `postgresql-16-integration` check;
+moving majors needs Neon version evidence. Better Auth 1.7.3+ needs migration
+`0018_better_auth_provider_identity`; Ops must not run the new auth code before
+the owner gate applies it.
 This validates source, not the still-accepted Ops image: its patched release remains subject to the migration gate.
 
 All remain false: `STOREFRONT_PUBLIC_RELEASE`,
@@ -78,7 +81,9 @@ Visitors see 114 discovery products (79 Inspired, 15 Unknown, 20 Signature),
 approved sellable catalog publication. Shop/products stay noindex; checkout
 is unavailable. Customer auth returns 404 before initializing auth/Neon.
 
-Production migration `0017_storefront_sale_settlement` is not applied. The
+Production migrations `0017_storefront_sale_settlement`,
+`0018_better_auth_provider_identity` and
+`0019_revoke_public_trigger_execute` are not applied. The
 `0016` apply is unrecorded: check the journal before related work.
 Do not deploy Ops from main until its manual migration/grant gate passes.
 Storefront-only releases may proceed with Ops/database work excluded.

@@ -47,7 +47,8 @@ export const storefrontSession = pgTable("storefront_session", {
 
 export const storefrontAccount = pgTable("storefront_account", {
   id: text("id").primaryKey(),
-  issuer: text("issuer").notNull(),
+  /** Legacy Better Auth 1.7.0–1.7.2 identity column; 1.7.3+ never writes it. */
+  issuer: text("issuer"),
   accountId: text("account_id").notNull(),
   providerId: text("provider_id").notNull(),
   userId: text("user_id")
@@ -68,8 +69,8 @@ export const storefrontAccount = pgTable("storefront_account", {
     .$onUpdate(() => new Date()),
 }, (table) => [
   index("storefront_account_user_id_idx").on(table.userId),
-  uniqueIndex("storefront_account_issuer_account_unique").on(
-    table.issuer,
+  uniqueIndex("storefront_account_provider_account_unique").on(
+    table.providerId,
     table.accountId,
   ),
 ]);

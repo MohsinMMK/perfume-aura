@@ -33,7 +33,7 @@ protected main merge → scoped quality/integration → clean Linux standalone
 | Setting | Contract |
 |---|---|
 | Workflow | `.github/workflows/ops-pack.yml`, storefront target |
-| Build | `scripts/build-hostinger-storefront-source.sh`; Linux x64/glibc, Node 24.20.0, pnpm 11.25.0 |
+| Build | `scripts/build-hostinger-storefront-source.sh`; Linux x64/glibc, Node 26.12.1, pnpm 12.15.0 |
 | Image | `ghcr.io/mohsinmmk/perfume-aura-storefront@sha256:<digest>` |
 | Compose | `/srv/khanect/stacks/perfume-aura-storefront/compose.yaml` |
 | Runtime env | `/etc/khanect/perfume-aura-storefront.env`, root:root 0600 |
@@ -197,7 +197,11 @@ Unexpected effective privileges fail acceptance: no runtime DDL, TEMP, role
 membership or broad sequence power. Finalizer has function-only access, no table
 grants. Preserve append-only stock/audit/invitation records.
 
-`0017` adds oil reservations/FIFO settlement and is not applied. Confirm the
+`0017` adds oil reservations/FIFO settlement and is not applied. `0018` keys
+Better Auth accounts by provider identity (required by Better Auth 1.7.3+) and
+is not applied; it stops on duplicate provider identities. `0019` revokes
+PUBLIC EXECUTE from the two `0010` trigger functions the storefront grant check
+reports as drift; not applied. Confirm the
 unrecorded `0016` journal before oil provenance work. Do not change either
 runtime database URL during this web migration.
 

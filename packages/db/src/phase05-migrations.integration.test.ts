@@ -70,19 +70,21 @@ describe("customer accounts and UPI commerce migration", () => {
     await rm(through0010, { recursive: true, force: true });
   });
 
-  it("migrates a fresh database with issuer, profile, idempotency, lease, refund, and outbox structures", async () => {
+  it("migrates a fresh database with provider identity, profile, idempotency, lease, refund, and outbox structures", async () => {
     await migrateAt(urlFor(databaseNames[0]));
     const pool = new Pool({ connectionString: urlFor(databaseNames[0]), max: 1 });
     try {
-      const result = await pool.query<{ issuer_required: string; profile_exists: boolean; outbox_exists: boolean; request_required: string }>(`
+      const result = await pool.query<{ issuer_nullable: string; provider_identity_index: boolean; profile_exists: boolean; outbox_exists: boolean; request_required: string }>(`
         SELECT
-          (SELECT is_nullable FROM information_schema.columns WHERE table_name = 'storefront_account' AND column_name = 'issuer') AS issuer_required,
+          (SELECT is_nullable FROM information_schema.columns WHERE table_name = 'storefront_account' AND column_name = 'issuer') AS issuer_nullable,
+          to_regclass('public.storefront_account_provider_account_unique') IS NOT NULL AS provider_identity_index,
           to_regclass('public.storefront_customer_profile') IS NOT NULL AS profile_exists,
           to_regclass('public.notification_outbox') IS NOT NULL AS outbox_exists,
           (SELECT is_nullable FROM information_schema.columns WHERE table_name = 'checkout_sessions' AND column_name = 'request_id') AS request_required
       `);
       assert.deepEqual(result.rows[0], {
-        issuer_required: "NO",
+        issuer_nullable: "YES",
+        provider_identity_index: true,
         profile_exists: true,
         outbox_exists: true,
         request_required: "NO",

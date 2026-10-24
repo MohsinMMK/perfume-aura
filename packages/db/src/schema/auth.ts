@@ -67,7 +67,8 @@ export const account = pgTable(
   {
     id: text("id").primaryKey(),
     accountId: text("account_id").notNull(),
-    issuer: text("issuer").notNull(),
+    /** Legacy Better Auth 1.7.0–1.7.2 identity column; 1.7.3+ never writes it. */
+    issuer: text("issuer"),
     providerId: text("provider_id").notNull(),
     userId: text("user_id")
       .notNull()
@@ -93,8 +94,8 @@ export const account = pgTable(
   },
   (table) => [
     index("account_user_id_idx").on(table.userId),
-    uniqueIndex("account_issuer_account_id_unique").on(
-      table.issuer,
+    uniqueIndex("account_provider_account_unique").on(
+      table.providerId,
       table.accountId,
     ),
   ],

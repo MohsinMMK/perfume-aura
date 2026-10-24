@@ -203,6 +203,7 @@ export async function ensureOwnerAccount(
       await transaction.insert(account).values({
         id: randomUUID(),
         accountId: owner.id,
+        // Better Auth 1.7.12 ignores issuer; 1.7.2 images still look credentials up by it.
         issuer: "local:credential",
         providerId: "credential",
         userId: owner.id,
@@ -270,6 +271,7 @@ export async function recoverOwnerCredential(
       await transaction.insert(account).values({
         id: randomUUID(),
         accountId: owner.id,
+        // Better Auth 1.7.12 ignores issuer; 1.7.2 images still look credentials up by it.
         issuer: "local:credential",
         providerId: "credential",
         userId: owner.id,
