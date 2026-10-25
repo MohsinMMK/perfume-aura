@@ -12,6 +12,9 @@ export function SmoothScroll() {
   useEffect(() => {
     const media = window.matchMedia(smoothScrollQuery);
     let active = true;
+    // Each connect owns one generation; a slower import from an earlier
+    // media change must not create a second Lenis behind the current one.
+    let generation = 0;
     let teardown = () => {};
 
     const disconnect = () => {
@@ -21,6 +24,7 @@ export function SmoothScroll() {
 
     const connect = () => {
       disconnect();
+      const current = ++generation;
       if (!media.matches) return;
 
       void Promise.all([
@@ -28,7 +32,7 @@ export function SmoothScroll() {
         import("gsap"),
         import("gsap/ScrollTrigger"),
       ]).then(([{ default: Lenis }, { default: gsap }, { ScrollTrigger }]) => {
-        if (!active || !media.matches) return;
+        if (!active || current !== generation || !media.matches) return;
         gsap.registerPlugin(ScrollTrigger);
 
         const lenis = new Lenis({
@@ -36,7 +40,9 @@ export function SmoothScroll() {
           wheelMultiplier: 1,
           smoothWheel: true,
           syncTouch: false,
-          anchors: true,
+          // In-page links (the skip link above all) jump natively; letting
+          // Lenis also animate them makes the page jump back and glide.
+          anchors: false,
           stopInertiaOnNavigate: true,
           prevent: (node) =>
             node instanceof Element &&

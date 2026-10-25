@@ -116,30 +116,33 @@ export function HomeHero() {
     let active = true;
     let cleanup = () => {};
 
-    // After the opening hands over, the bottle rises out of the zoom-through.
-    const stopWaiting = afterOpeningIntro(() => {
-      void import("gsap").then(
-        ({ default: gsap }) => {
-          if (!active) return;
-          const motionMedia = gsap.matchMedia(section);
+    void import("gsap").then(
+      ({ default: gsap }) => {
+        if (!active) return;
+        const motionMedia = gsap.matchMedia(section);
 
-          motionMedia.add("(prefers-reduced-motion: no-preference)", () => {
-            const timeline = gsap.timeline({ defaults: { ease: "power4.out" } });
-            timeline.from(media, { y: 28, scale: 0.94, duration: 0.82 }, 0.18);
-            if (controls) {
-              timeline.from(controls, { scale: 0.86, duration: 0.42 }, 0.48);
-            }
-            timeline.from(cta, { y: 20, duration: 0.46 }, 0.56);
+        motionMedia.add("(prefers-reduced-motion: no-preference)", () => {
+          // The start pose is set now, under the opening, so the hero never
+          // shows its final pose and then snaps back. After the opening hands
+          // over, the bottle rises out of the zoom-through.
+          const timeline = gsap.timeline({
+            paused: true,
+            defaults: { ease: "power4.out" },
           });
+          timeline.from(media, { y: 28, scale: 0.94, duration: 0.82 }, 0.18);
+          if (controls) {
+            timeline.from(controls, { scale: 0.86, duration: 0.42 }, 0.48);
+          }
+          timeline.from(cta, { y: 20, duration: 0.46 }, 0.56);
+          return afterOpeningIntro(() => timeline.play());
+        });
 
-          cleanup = () => motionMedia.revert();
-        },
-      );
-    });
+        cleanup = () => motionMedia.revert();
+      },
+    );
 
     return () => {
       active = false;
-      stopWaiting();
       cleanup();
     };
   }, []);

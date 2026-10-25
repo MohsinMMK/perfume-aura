@@ -27,11 +27,15 @@ export function OpeningIntro() {
 
     let active = true;
     let finished = false;
+    let stopMotion = () => {};
     let cleanup = () => {};
 
+    // Hand-over also stops the looping floats and skip listeners, so nothing
+    // keeps ticking behind the hidden overlay for the life of the page.
     const handOver = () => {
       if (finished) return;
       finished = true;
+      stopMotion();
       root.dataset.state = "done";
       window.dispatchEvent(new Event(openingIntroEndEvent));
     };
@@ -120,13 +124,15 @@ export function OpeningIntro() {
         window.addEventListener(type, skip, { passive: true, once: true }),
       );
 
-      cleanup = () => {
+      stopMotion = () => {
         skipEvents.forEach((type) => window.removeEventListener(type, skip));
         floats.forEach((tween) => tween.kill());
         timeline.kill();
         gsap.killTweensOf(root);
-        handOver();
       };
+      cleanup = handOver;
+    }, () => {
+      if (active) handOver();
     });
 
     return () => {

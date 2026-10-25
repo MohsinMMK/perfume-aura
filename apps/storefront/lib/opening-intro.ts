@@ -6,7 +6,12 @@ export const openingIntroEndEvent = "aura:opening-intro-end";
 export const openingIntroPlayingSelector =
   '[data-opening-intro][data-state="play"]';
 
-export const openingIntroGateScript = `(function(){try{var e=document.querySelector("[data-opening-intro]");if(!e||window.matchMedia("(prefers-reduced-motion: reduce)").matches||window.sessionStorage.getItem("${openingIntroSessionKey}"))return;window.sessionStorage.setItem("${openingIntroSessionKey}","1");e.setAttribute("data-state","play")}catch(t){}})();`;
+// Matches the CSS failsafe (5s delay + 300ms fade). If the opening never hands
+// over (hydration or the motion chunk failed), the gate releases the page
+// itself so paused hero/header animations and waiting effects still run.
+const openingIntroFailsafeMs = 5300;
+
+export const openingIntroGateScript = `(function(){try{var e=document.querySelector("[data-opening-intro]");if(!e||window.matchMedia("(prefers-reduced-motion: reduce)").matches||window.sessionStorage.getItem("${openingIntroSessionKey}"))return;window.sessionStorage.setItem("${openingIntroSessionKey}","1");e.setAttribute("data-state","play");window.setTimeout(function(){if(e.getAttribute("data-state")!=="play")return;e.setAttribute("data-state","done");window.dispatchEvent(new Event("${openingIntroEndEvent}"))},${openingIntroFailsafeMs})}catch(t){}})();`;
 
 export function isOpeningIntroPlaying(): boolean {
   return document.querySelector(openingIntroPlayingSelector) !== null;
