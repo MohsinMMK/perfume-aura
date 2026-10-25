@@ -203,10 +203,10 @@ Unexpected effective privileges fail acceptance: no runtime DDL, TEMP, role
 membership or broad sequence power. Finalizer has function-only access, no table
 grants. Preserve append-only stock/audit/invitation records.
 
-Migrations `0000`–`0019` are applied and recorded in the production journal.
+Migrations `0000`–`0020` are applied and recorded in the production journal.
 `0018` keys Better Auth accounts by provider identity and stops on duplicate
 provider identities; `0019` revokes PUBLIC EXECUTE from the `0010` trigger
-functions.
+functions. `0020` adds series, supplies and the append-only supply ledger.
 
 ### Automated database release
 
@@ -232,7 +232,7 @@ Prerequisites:
 1. Distinct login roles for Ops, storefront and the payment finalizer, each with
    no DDL, TEMP or membership, including through PUBLIC. The runner refuses a
    shared role. Met on the VPS PostgreSQL.
-2. Complete recorded history. Met: `0000`–`0019` are recorded.
+2. Complete recorded history. Met: `0000`–`0020` are recorded.
 3. Reviewed admin install on the VPS: the `perfume-database-release` user with only
    the CI public key and a forced command, root-owned `release-ssh.sh` and
    `release-root.sh` in `/usr/local/libexec/`, the `sudoers` and `sshd.conf`
