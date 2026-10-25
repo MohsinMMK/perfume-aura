@@ -182,7 +182,7 @@ export function IngredientAtmosphere() {
       className="pointer-events-none absolute inset-0 [perspective:900px]"
       aria-hidden="true"
     >
-      {ingredients.map((ingredient) => (
+      {ingredients.map((ingredient, index) => (
         <div
           key={ingredient.name}
           data-ingredient-item
@@ -194,19 +194,21 @@ export function IngredientAtmosphere() {
           data-base-rotate={ingredient.baseRotate}
           className={`pointer-events-auto absolute ${ingredient.wrapperClassName}`}
         >
-          <div
-            data-ingredient-layer
-            data-depth={ingredient.depth}
-            data-tilt={ingredient.tilt}
-            className="relative size-full origin-center will-change-transform [transform-style:preserve-3d]"
-          >
-            <Image
-              src={ingredient.src}
-              alt=""
-              fill
-              sizes={ingredient.sizes}
-              className="object-contain drop-shadow-[0_1.5rem_1.2rem_rgba(0,0,0,.38)]"
-            />
+          <div data-motion-float-loop data-float-index={index} className="size-full">
+            <div
+              data-ingredient-layer
+              data-depth={ingredient.depth}
+              data-tilt={ingredient.tilt}
+              className="relative size-full origin-center will-change-transform [transform-style:preserve-3d]"
+            >
+              <Image
+                src={ingredient.src}
+                alt=""
+                fill
+                sizes={ingredient.sizes}
+                className="object-contain drop-shadow-[0_1.5rem_1.2rem_rgba(0,0,0,.38)]"
+              />
+            </div>
           </div>
         </div>
       ))}

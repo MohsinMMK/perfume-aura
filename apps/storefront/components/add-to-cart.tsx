@@ -121,6 +121,7 @@ export function AddToCart({ product }: Readonly<{ product: StorefrontProduct }>)
         className="min-h-12 w-full justify-between rounded-[var(--aura-radius)] bg-[var(--aura-brass)] px-4 font-display text-lg text-[var(--aura-ink)] hover:bg-[var(--aura-ivory)] sm:min-h-[4.75rem] sm:px-6 sm:text-xl lg:text-2xl"
         disabled={!purchasable || loading}
         onClick={submit}
+        data-floating-action-avoid
       >
         <span>{purchasable ? loading ? "Updating cart…" : "Add to cart" : "Not available yet"}</span>
         <span aria-live="polite">

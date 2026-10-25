@@ -68,6 +68,9 @@ describe("storefront WhatsApp contact action", () => {
     assert.match(action, /WhatsappIcon/u);
     assert.match(action, /pathname\.startsWith\("\/products\/"\)/u);
     assert.match(action, /isProductPage \? " aura-whatsapp-action--product"/u);
+    assert.match(action, /querySelectorAll<HTMLElement>\("\[data-floating-action-avoid\]"\)/u);
+    assert.match(action, /tabIndex=\{covering \? -1 : undefined\}/u);
+    assert.match(globals, /\.aura-whatsapp-action\[data-covering="true"\] \{[\s\S]*visibility: hidden;[\s\S]*pointer-events: none;/u);
     assert.match(action, /captureStorefrontAction\("product_purchase", "open_whatsapp"\)/u);
     assert.match(action, /Buy through WhatsApp/u);
     assert.match(action, /href=\{productWhatsAppUrl\}/u);

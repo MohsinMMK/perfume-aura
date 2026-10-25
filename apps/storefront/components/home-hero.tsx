@@ -16,6 +16,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { Button } from "@perfume-aura/ui/components/button";
 import { cn } from "@perfume-aura/ui/lib/utils";
+import { afterOpeningIntro } from "@/lib/opening-intro";
 
 type HeroProduct = Readonly<{
   slug: string;
@@ -115,26 +116,30 @@ export function HomeHero() {
     let active = true;
     let cleanup = () => {};
 
-    void import("gsap").then(
-      ({ default: gsap }) => {
-        if (!active) return;
-        const motionMedia = gsap.matchMedia(section);
+    // After the opening hands over, the bottle rises out of the zoom-through.
+    const stopWaiting = afterOpeningIntro(() => {
+      void import("gsap").then(
+        ({ default: gsap }) => {
+          if (!active) return;
+          const motionMedia = gsap.matchMedia(section);
 
-        motionMedia.add("(prefers-reduced-motion: no-preference)", () => {
-          const timeline = gsap.timeline({ defaults: { ease: "power4.out" } });
-          timeline.from(media, { y: 28, scale: 0.94, duration: 0.82 }, 0.18);
-          if (controls) {
-            timeline.from(controls, { scale: 0.86, duration: 0.42 }, 0.48);
-          }
-          timeline.from(cta, { y: 20, duration: 0.46 }, 0.56);
-        });
+          motionMedia.add("(prefers-reduced-motion: no-preference)", () => {
+            const timeline = gsap.timeline({ defaults: { ease: "power4.out" } });
+            timeline.from(media, { y: 28, scale: 0.94, duration: 0.82 }, 0.18);
+            if (controls) {
+              timeline.from(controls, { scale: 0.86, duration: 0.42 }, 0.48);
+            }
+            timeline.from(cta, { y: 20, duration: 0.46 }, 0.56);
+          });
 
-        cleanup = () => motionMedia.revert();
-      },
-    );
+          cleanup = () => motionMedia.revert();
+        },
+      );
+    });
 
     return () => {
       active = false;
+      stopWaiting();
       cleanup();
     };
   }, []);
