@@ -141,7 +141,7 @@ Never use Vercel deploy skills.
   commerce columns often `amount_minor`. Same unit. No browser float is
   authoritative.
 - Repo migrations: `0000`–`0020` (21 files). Production (VPS PostgreSQL) has
-  applied and recorded `0000`–`0019`; `0020_series_supplies` is not applied.
+  applied and recorded all of them.
   See [`CURRENT_STATE.md`](CURRENT_STATE.md).
 - `oil_reservations` and settlement routines are SQL in `0017`, not Drizzle TS
   tables. Finalizer env: `STOREFRONT_PAYMENT_FINALIZER_DATABASE_URL`. That role
@@ -380,8 +380,6 @@ Activation procedure:
 
 ## Pending outcome
 
-Do not apply `0020` to production without the owner migration gate and a
-reapply of `ops-runtime-grants.sql` and `storefront-runtime-grants.sql`.
 Do not treat CI `quality` as `pnpm check`. Capture privacy-safe Core Web Vitals
 only after approved catalog content is live. Next production actions live in
 [`CURRENT_STATE.md`](CURRENT_STATE.md).

@@ -23,7 +23,9 @@ Both apps use the self-hosted VPS PostgreSQL; Neon is no longer used by any
 runtime. The Neon project still exists unused; it was not copied (quota-locked),
 so production started from a fresh schema: migrations `0000`–`0019` applied and
 recorded, the `MAIN` location seeded and one Ops owner seeded; no products or
-customers yet.
+customers yet. `0020_series_supplies` was applied manually on 2026-10-25 after
+full pgBackRest backup `20261025-181006F`, with all three grant scripts
+reapplied without drift; the journal records `0000`–`0020`.
 
 PostgreSQL 18.6 from `deploy/postgres-vps/` listens on loopback
 `127.0.0.1:55442` (55432 belongs to another project); pgAdmin is on loopback
@@ -164,13 +166,8 @@ not to the current VPS release flow.
 5. Keep commerce/security gates closed. Owner gates: India counsel, catalog
    facts/media, CA/tax/delivery policies, Google/SMTP/Cashfree, owner TOTP/staff
    denial, telemetry/maintenance, and explicit launch approval.
-6. Ops UI now uses Astryx `0.7.3` (light/dark/system, section-rail navigation)
-   in source; the storefront keeps `packages/ui`. It reaches `app.perfumeaura.com` only through a normal
-   Ops release; the live Ops SHA above predates it.
-7. Series, supplies and make-at-sale (Ops) are in source only.
-   They need `0020_series_supplies` applied manually with both runtime grant
-   files reapplied before an Ops release; runtime deploys of it stay blocked.
-   Storefront checkout still assumes 50% and finished stock (see Engineering).
+6. Storefront checkout still assumes 50% oil and finished stock; align it with
+   series shares and make-at-sale before any checkout release (see Engineering).
 
 ## Find the owner
 
