@@ -1,17 +1,17 @@
 import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@perfume-aura/ui/components/card";
-import { Badge } from "@perfume-aura/ui/components/badge";
-import { buttonVariants } from "@perfume-aura/ui/components/button";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Text } from "@astryxdesign/core/Text";
+import { Token } from "@astryxdesign/core/Token";
+import { VStack } from "@astryxdesign/core/VStack";
 import { getFinanceSummary } from "@/lib/finance";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatInr } from "@/lib/money";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { PageHeader } from "@/components/page-header";
 import { formatBusinessDate } from "@/lib/business-date";
 import { requireCapability } from "@/lib/session";
 
@@ -86,70 +86,67 @@ export default async function FinancePage({
     : [];
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">
-            Finance
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Signals from inventory, invoices, and payments — not a full ledger.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {[7, 30, 90].map((d) => (
-            <Link
-              key={d}
-              href={d === 30 ? "/finance" : `/finance?days=${d}`}
-              className={buttonVariants({
-                variant: days === d ? "default" : "outline",
-                size: "sm",
-              })}
-            >
-              {d}d
-            </Link>
-          ))}
-        </div>
-      </div>
+    <VStack gap={6} className="mx-auto w-full max-w-6xl">
+      <PageHeader
+        title="Finance"
+        description="Signals from inventory, invoices, and payments — not a full ledger."
+        actions={[7, 30, 90].map((d) => (
+          <Button
+            key={d}
+            label={`${d}d`}
+            href={d === 30 ? "/finance" : `/finance?days=${d}`}
+            variant={days === d ? "primary" : "secondary"}
+            size="sm"
+          />
+        ))}
+      />
 
       {result.error || !s ? (
         <DbUnavailableState message={result.error ?? "No data"} />
       ) : (
         <>
-          <p className="text-xs text-muted-foreground">
+          <Text as="p" type="supporting">
             Period: {formatBusinessDate(s.from)} →{" "}
             {formatBusinessDate(s.to)} · Business timezone: {s.timeZone}.
             Captured and legacy cost bases are reported separately.
-          </p>
+          </Text>
           {s.cogsSnapshotDefectCount > 0 ? (
-            <p className="text-sm text-destructive" role="alert">
-              Data integrity warning: {s.cogsSnapshotDefectCount} sale{" "}
-              {s.cogsSnapshotDefectCount === 1 ? "movement is" : "movements are"}{" "}
-              missing a cost snapshot and excluded from COGS.
-            </p>
+            <Banner
+              status="error"
+              role="alert"
+              title={`Data integrity warning: ${s.cogsSnapshotDefectCount} sale ${
+                s.cogsSnapshotDefectCount === 1 ? "movement is" : "movements are"
+              } missing a cost snapshot and excluded from COGS.`}
+            />
           ) : null}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {cards.map((c) => (
-              <Link key={c.label} href={c.href} className="group">
-                <Card className="h-full transition-colors group-hover:ring-foreground/20">
-                  <CardHeader className="flex flex-row items-start justify-between gap-2">
-                    <div>
-                      <CardDescription>{c.label}</CardDescription>
-                      <CardTitle className="mt-1 text-2xl tabular-nums">
-                        {c.value}
-                      </CardTitle>
-                    </div>
-                    <Badge variant="secondary">Live</Badge>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xs text-muted-foreground">{c.hint}</p>
-                  </CardContent>
+              <Link
+                key={c.label}
+                href={c.href}
+                className="group rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              >
+                <Card className="h-full transition-colors group-hover:border-border-strong">
+                  <VStack gap={3}>
+                    <HStack justify="between" align="start" gap={2}>
+                      <VStack gap={1}>
+                        <Heading level={3} accessibilityLevel={2} color="secondary">
+                          {c.label}
+                        </Heading>
+                        <Text as="p" size="2xl" weight="semibold" hasTabularNumbers>
+                          {c.value}
+                        </Text>
+                      </VStack>
+                      <Token size="sm" label="Live" color="green" />
+                    </HStack>
+                    <Text as="p" type="supporting">{c.hint}</Text>
+                  </VStack>
                 </Card>
               </Link>
             ))}
           </div>
         </>
       )}
-    </div>
+    </VStack>
   );
 }

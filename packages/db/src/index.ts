@@ -115,6 +115,39 @@ export {
 } from "./oil-inventory";
 
 export {
+  recipeForBottles,
+  bottlesCanMake,
+  type BottleRecipe,
+  type CanMakeInput,
+  type CanMakeResult,
+} from "./production-math";
+
+export {
+  createProductSeries,
+  updateProductSeries,
+  upsertSeriesSize,
+  createSeriesProduct,
+  assignProductSeries,
+  createSupplyItem,
+  updateSupplyItem,
+  receiveSupply,
+  adjustSupply,
+  makeBottlesInTransaction,
+  loadVariantCapacity,
+  type VariantCapacity,
+  type SupplyKind,
+  type ProductSeriesInput,
+  type SeriesSizeInput,
+  type SeriesProductVariantInput,
+  type CreateSeriesProductInput,
+  type SupplyItemInput,
+  type SupplyMovementResult,
+  type MakeBottlesLine,
+  type MakeBottlesInput,
+  type MakeBottlesResult,
+} from "./production";
+
+export {
   completeOpsSale,
   type SaleCustomerInput,
   type SaleLineInput,

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Button } from "@perfume-aura/ui/components/button";
-import { Input } from "@perfume-aura/ui/components/input";
-import { Label } from "@perfume-aura/ui/components/label";
+import { Button } from "@astryxdesign/core/Button";
+import { Text } from "@astryxdesign/core/Text";
+import { FormField } from "@/components/form-field";
 import { requestRefundAction } from "@/lib/commerce";
 
 export function RefundRequestForm({ orderId }: Readonly<{ orderId: string }>) {
@@ -22,5 +22,16 @@ export function RefundRequestForm({ orderId }: Readonly<{ orderId: string }>) {
       setPending(false);
     }
   }
-  return <details className="mt-2"><summary className="cursor-pointer text-xs font-medium underline underline-offset-4">Refund</summary><form onSubmit={submit} className="mt-3 grid min-w-[18rem] gap-3 rounded-md border bg-background p-3"><input type="hidden" name="orderId" value={orderId} /><div className="grid gap-1"><Label htmlFor={`refund-amount-${orderId}`}>Amount (INR)</Label><Input id={`refund-amount-${orderId}`} name="amount" type="number" min="0.01" step="0.01" required /></div><div className="grid gap-1"><Label htmlFor={`refund-reason-${orderId}`}>Reason</Label><Input id={`refund-reason-${orderId}`} name="reason" minLength={5} maxLength={240} required /></div><Button type="submit" size="sm" disabled={pending} focusableWhenDisabled={pending}>{pending ? "Requesting…" : "Request refund"}</Button>{message ? <p role="status" className="text-xs">{message}</p> : null}</form></details>;
+  return (
+    <details className="mt-2">
+      <summary className="inline-flex min-h-11 cursor-pointer items-center text-xs font-medium text-primary underline underline-offset-4">Refund</summary>
+      <form onSubmit={submit} className="mt-3 grid min-w-[18rem] gap-3 rounded-md border border-border bg-surface p-3">
+        <input type="hidden" name="orderId" value={orderId} />
+        <FormField id={`refund-amount-${orderId}`} label="Amount (INR)" name="amount" type="number" min="0.01" step="0.01" required />
+        <FormField id={`refund-reason-${orderId}`} label="Reason" name="reason" required hint="5 to 240 characters." />
+        <Button type="submit" size="sm" variant="primary" label={pending ? "Requesting…" : "Request refund"} isLoading={pending} />
+        {message ? <Text as="p" type="supporting" role="status">{message}</Text> : null}
+      </form>
+    </details>
+  );
 }

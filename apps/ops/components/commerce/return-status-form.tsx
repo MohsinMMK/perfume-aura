@@ -1,17 +1,11 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Button } from "@perfume-aura/ui/components/button";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "@perfume-aura/ui/components/field";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@perfume-aura/ui/components/native-select";
-import { Textarea } from "@perfume-aura/ui/components/textarea";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Selector } from "@astryxdesign/core/Selector";
+import { VStack } from "@astryxdesign/core/VStack";
+import { TextAreaField } from "@/components/form-field";
 import { updateCommerceReturnStatusAction } from "@/lib/commerce";
 import {
   returnStatusTransitions,
@@ -27,6 +21,7 @@ export function ReturnStatusForm({
 }>) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [nextStatus, setNextStatus] = useState<string>(status);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,19 +41,31 @@ export function ReturnStatusForm({
     <form onSubmit={submit}>
       <input type="hidden" name="returnId" value={returnId} />
       <input type="hidden" name="expectedStatus" value={status} />
-      <FieldGroup className="gap-3">
-        <Field orientation="responsive" data-disabled={pending || undefined}>
-          <NativeSelect name="status" defaultValue={status} aria-label="Return status" disabled={pending} className="w-full">
-            {returnStatusTransitions[status].map((value) => <NativeSelectOption key={value} value={value}>{value[0]?.toUpperCase()}{value.slice(1)}</NativeSelectOption>)}
-          </NativeSelect>
-          <Button type="submit" size="sm" variant="outline" disabled={pending} focusableWhenDisabled={pending}>{pending ? "Saving…" : "Update"}</Button>
-        </Field>
-        <Field data-disabled={pending || undefined} data-invalid={Boolean(error) || undefined}>
-          <FieldLabel htmlFor={`return-resolution-${returnId}`}>Resolution notes</FieldLabel>
-          <Textarea id={`return-resolution-${returnId}`} name="resolutionNotes" maxLength={2000} placeholder="Required when rejecting or cancelling" disabled={pending} aria-invalid={Boolean(error) || undefined} />
-        </Field>
-        {error ? <p className="text-sm text-destructive" role="alert">{error}</p> : null}
-      </FieldGroup>
+      <VStack gap={3}>
+        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <Selector
+            label="Return status"
+            isLabelHidden
+            htmlName="status"
+            value={nextStatus}
+            onChange={(next) => setNextStatus(next)}
+            options={returnStatusTransitions[status].map((value) => ({
+              value,
+              label: `${value[0]?.toUpperCase() ?? ""}${value.slice(1)}`,
+            }))}
+            width="100%"
+          />
+          <Button type="submit" size="sm" variant="secondary" label={pending ? "Saving…" : "Update"} isLoading={pending} />
+        </div>
+        <TextAreaField
+          id={`return-resolution-${returnId}`}
+          label="Resolution notes"
+          name="resolutionNotes"
+          placeholder="Required when rejecting or cancelling"
+          rows={3}
+        />
+        {error ? <Banner status="error" title={error} role="alert" /> : null}
+      </VStack>
     </form>
   );
 }

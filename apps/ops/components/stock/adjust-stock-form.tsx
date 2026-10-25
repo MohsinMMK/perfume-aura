@@ -1,27 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, type FormEvent } from "react";
-import { Button } from "@perfume-aura/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@perfume-aura/ui/components/card";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@perfume-aura/ui/components/field";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@perfume-aura/ui/components/native-select";
-import { Spinner } from "@perfume-aura/ui/components/spinner";
+import { useId, useRef, useState, type FormEvent } from "react";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Selector } from "@astryxdesign/core/Selector";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { adjustStockAction } from "@/lib/stock";
 import { FormField, TextAreaField } from "@/components/form-field";
 
@@ -37,10 +25,12 @@ type Props = {
 
 export function AdjustStockForm({ variants, defaultVariantId }: Props) {
   const router = useRouter();
+  const fieldId = useId();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const [variantId, setVariantId] = useState(defaultVariantId ?? "");
   const idempotencyKeyRef = useRef<string | null>(null);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -70,6 +60,7 @@ export function AdjustStockForm({ variants, defaultVariantId }: Props) {
       idempotencyKeyRef.current = null;
       setSuccess(`Adjusted. On hand now: ${result.data?.quantityAfter}`);
       (e.target as HTMLFormElement).reset();
+      setVariantId(defaultVariantId ?? "");
       setPending(false);
       router.refresh();
     } catch {
@@ -86,46 +77,36 @@ export function AdjustStockForm({ variants, defaultVariantId }: Props) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Adjust stock</CardTitle>
-        <CardDescription>
-          Signed delta (+ add / − remove). A note is required for the ledger.
-        </CardDescription>
-      </CardHeader>
       <form onSubmit={onSubmit}>
-        <CardContent>
-          <FieldGroup className="gap-4 sm:grid sm:grid-cols-2 sm:gap-4">
-            <Field
-              data-invalid={fe("variantId") ? true : undefined}
-              className="sm:col-span-2"
-            >
-              <FieldLabel htmlFor="adjust-variantId">
-                Variant <span className="text-destructive">*</span>
-              </FieldLabel>
-              <NativeSelect
-                id="adjust-variantId"
-                name="variantId"
-                required
-                defaultValue={defaultVariantId ?? ""}
-                className="w-full"
-                aria-invalid={fe("variantId") ? true : undefined}
-              >
-                <NativeSelectOption value="" disabled>
-                  Select SKU…
-                </NativeSelectOption>
-                {variants.map((v) => (
-                  <NativeSelectOption key={v.id} value={v.id}>
-                    {v.label}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-              {fe("variantId") ? (
-                <FieldError>{fe("variantId")}</FieldError>
-              ) : null}
-            </Field>
+        <VStack gap={4}>
+          <VStack gap={1}>
+            <Heading level={2}>Adjust stock</Heading>
+            <Text color="secondary">
+              Signed delta (+ add / − remove). A note is required for the ledger.
+            </Text>
+          </VStack>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Selector
+              label="Variant"
+              htmlName="variantId"
+              options={variants.map((v) => ({ value: v.id, label: v.label }))}
+              value={variantId}
+              onChange={setVariantId}
+              placeholder="Select SKU…"
+              hasSearch
+              isRequired
+              width="100%"
+              status={
+                fe("variantId")
+                  ? { type: "error", message: fe("variantId") }
+                  : undefined
+              }
+              containerClassName="sm:col-span-2"
+            />
             <FormField
               label="Delta"
               name="quantityDelta"
+              id={`${fieldId}-quantityDelta`}
               type="number"
               required
               step={1}
@@ -136,7 +117,7 @@ export function AdjustStockForm({ variants, defaultVariantId }: Props) {
             <TextAreaField
               label="Note"
               name="note"
-              id="adjust-note"
+              id={`${fieldId}-note`}
               required
               placeholder="Reason for adjustment…"
               error={fe("note")}
@@ -144,29 +125,25 @@ export function AdjustStockForm({ variants, defaultVariantId }: Props) {
               className="sm:col-span-2"
             />
             {error ? (
-              <FieldError className="sm:col-span-2">{error}</FieldError>
+              <div className="sm:col-span-2">
+                <Banner status="error" title={error} />
+              </div>
             ) : null}
             {success ? (
-              <p
-                className="text-sm text-muted-foreground sm:col-span-2"
-                role="status"
-              >
-                {success}
-              </p>
+              <div className="sm:col-span-2" role="status">
+                <Text color="secondary">{success}</Text>
+              </div>
             ) : null}
-          </FieldGroup>
-        </CardContent>
-        <CardFooter className="justify-end">
-          <Button
-            type="submit"
-            variant="secondary"
-            disabled={pending}
-            focusableWhenDisabled={pending}
-          >
-            {pending ? <Spinner data-icon="inline-start" /> : null}
-            {pending ? "Saving…" : "Apply adjustment"}
-          </Button>
-        </CardFooter>
+          </div>
+          <HStack justify="end">
+            <Button
+              type="submit"
+              variant="secondary"
+              label={pending ? "Saving…" : "Apply adjustment"}
+              isLoading={pending}
+            />
+          </HStack>
+        </VStack>
       </form>
     </Card>
   );

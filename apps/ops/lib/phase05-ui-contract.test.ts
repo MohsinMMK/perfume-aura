@@ -46,23 +46,20 @@ describe("Phase 05 UI and query contracts", () => {
     }
   });
 
-  it("keeps focused pending Base Buttons in the tab order", async () => {
+  it("keeps focused pending Astryx Buttons in the tab order", async () => {
     const files = [
       ...(await tsxFiles(resolve(opsRoot, "app"))),
       ...(await tsxFiles(resolve(opsRoot, "components"))),
     ];
     for (const file of files) {
       const source = await readFile(file, "utf8");
-      const pendingButtons = source.match(
-        /<(?:Button|AlertDialogAction)\b[^>]*disabled=\{pending[^>]*>/gs,
-      ) ?? [];
-      for (const button of pendingButtons) {
-        assert.match(
-          button,
-          /focusableWhenDisabled=\{pending\}/,
-          `${file} disables a pending Base Button without preserving focus`,
-        );
-      }
+      // isLoading keeps a pending Button focusable through aria-disabled;
+      // isDisabled would drop keyboard focus mid-submit.
+      assert.doesNotMatch(
+        source,
+        /<Button\b[^>]*\bisDisabled=\{pending\b[^>]*>/s,
+        `${file} disables a pending Astryx Button instead of using isLoading`,
+      );
     }
   });
 
@@ -106,11 +103,9 @@ describe("Phase 05 UI and query contracts", () => {
       assert.doesNotMatch(source, /TooltipProvider|Toaster/);
     }
     assert.match(dashboardLayout, /<AppShell\b/);
-    assert.match(appShell, /<TooltipProvider>/);
-    assert.match(
-      appShell,
-      /<Toaster position="top-right" richColors closeButton \/>/,
-    );
+    // Astryx toasts mount their own viewport, so the shell needs no providers.
+    assert.match(appShell, /<AstryxAppShell\b/);
+    assert.doesNotMatch(appShell, /TooltipProvider|Toaster/);
   });
 
   it("makes ops motion immediate when reduced motion is requested", async () => {
@@ -156,7 +151,13 @@ describe("Phase 05 UI and query contracts", () => {
   });
 
   it("keeps simultaneously mounted stock labels and controls uniquely associated", async () => {
-    const [fieldSource, receiveSource, adjustSource] = await Promise.all([
+    const [
+      fieldSource,
+      receiveSource,
+      adjustSource,
+      receiveSupplySource,
+      adjustSupplySource,
+    ] = await Promise.all([
       readFile(resolve(opsRoot, "components/form-field.tsx"), "utf8"),
       readFile(
         resolve(opsRoot, "components/stock/receive-stock-form.tsx"),
@@ -166,11 +167,24 @@ describe("Phase 05 UI and query contracts", () => {
         resolve(opsRoot, "components/stock/adjust-stock-form.tsx"),
         "utf8",
       ),
+      readFile(
+        resolve(opsRoot, "components/supplies/receive-supply-form.tsx"),
+        "utf8",
+      ),
+      readFile(
+        resolve(opsRoot, "components/supplies/adjust-supply-form.tsx"),
+        "utf8",
+      ),
     ]);
     assert.match(fieldSource, /id\?: string/);
     assert.match(fieldSource, /const fieldId = id \?\? name/g);
-    assert.match(receiveSource, /name="note"\s+id="receive-note"/s);
-    assert.match(adjustSource, /name="note"\s+id="adjust-note"/s);
+    // Product detail mounts one receive/adjust pair per variant.
+    for (const source of [receiveSource, adjustSource]) {
+      assert.match(source, /const fieldId = useId\(\)/);
+      assert.match(source, /name="note"\s+id=\{`\$\{fieldId\}-note`\}/s);
+    }
+    assert.match(receiveSupplySource, /name="note"\s+id="receive-supply-note"/s);
+    assert.match(adjustSupplySource, /name="note"\s+id="adjust-supply-note"/s);
   });
 
   it("keeps sale capture controls touch-sized and retains payment notes", async () => {
@@ -183,7 +197,7 @@ describe("Phase 05 UI and query contracts", () => {
       ),
     ]);
     assert.match(fieldSource, /inputClassName\?: string/);
-    assert.match(fieldSource, /className=\{cn\(inputClassName\)\}/);
+    assert.match(fieldSource, /controlClassName=\{cn\(inputClassName\)\}/);
 
     const fields = saleWizardSource.match(/<FormField\b[\s\S]*?\/>/g) ?? [];
     const fieldsByName = new Map(

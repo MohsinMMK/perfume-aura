@@ -89,6 +89,7 @@ export type ProductDetail = {
   category: string | null;
   description: string | null;
   status: "active" | "archived";
+  seriesId: string | null;
   createdAt: Date;
   updatedAt: Date;
   variants: VariantRow[];
@@ -246,6 +247,7 @@ export async function getProduct(id: string): Promise<ProductDetail | null> {
     category: product.category,
     description: product.description,
     status: product.status,
+    seriesId: product.seriesId,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
     variants,

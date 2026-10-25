@@ -11,7 +11,8 @@ BEGIN;
 REVOKE ALL PRIVILEGES ON TABLE
   "two_factor", "staff_invitation_events", "ops_audit_events",
   "inquiry_notification_outbox", "notification_outbox", "shipping_serviceability",
-  "oil_lots", "oil_movements", "oil_reservations", "ops_sales", "runtime_capability_roles"
+  "oil_lots", "oil_movements", "oil_reservations", "ops_sales", "runtime_capability_roles",
+  "product_series", "series_sizes", "supply_items", "supply_movements"
 FROM :"runtime_role";
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
@@ -32,8 +33,13 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
   "oil_lots"
 TO :"runtime_role";
 
+GRANT SELECT, INSERT, UPDATE ON TABLE
+  "product_series", "series_sizes", "supply_items"
+TO :"runtime_role";
+
 GRANT SELECT, INSERT ON TABLE
-  "staff_invitation_events", "ops_audit_events", "oil_movements", "ops_sales"
+  "staff_invitation_events", "ops_audit_events", "oil_movements", "ops_sales",
+  "supply_movements"
 TO :"runtime_role";
 
 COMMIT;
@@ -51,7 +57,11 @@ WITH matrix(table_name, allowed) AS (
     ('oil_movements', ARRAY['SELECT','INSERT']),
     ('oil_reservations', ARRAY[]::text[]),
     ('ops_sales', ARRAY['SELECT','INSERT']),
-    ('runtime_capability_roles', ARRAY[]::text[])
+    ('runtime_capability_roles', ARRAY[]::text[]),
+    ('product_series', ARRAY['SELECT','INSERT','UPDATE']),
+    ('series_sizes', ARRAY['SELECT','INSERT','UPDATE']),
+    ('supply_items', ARRAY['SELECT','INSERT','UPDATE']),
+    ('supply_movements', ARRAY['SELECT','INSERT'])
 ), privileges(privilege) AS (
   VALUES ('SELECT'), ('INSERT'), ('UPDATE'), ('DELETE'), ('TRUNCATE'),
          ('REFERENCES'), ('TRIGGER')

@@ -388,11 +388,16 @@ export function oilDemandForVariant(input: {
   productId: string;
   sizeMl: number;
   quantity: number;
+  concentrationPercent?: number;
 }): OilDemand {
   try {
     return {
       productId: input.productId,
-      oilMl: oilMlForBottles(input.sizeMl, input.quantity),
+      oilMl: oilMlForBottles(
+        input.sizeMl,
+        input.quantity,
+        input.concentrationPercent,
+      ),
     };
   } catch (error) {
     throw new OilInventoryError(

@@ -35,8 +35,8 @@ truth. Do not rebuild the whole graph for a routine question.
 - Disabled `/api/customer-auth/*` returns 404 before initializing auth/database.
   Other gated routes may statically import auth before 404; do not change casually.
 - Preserve persistent labels, visible focus, inert closed drawers, focus
-  restoration, 44px targets and reduced motion. Shared UI is `packages/ui`;
-  official shadcn preset `b23PPibQOI` must resolve.
+  restoration, 44px targets and reduced motion. Storefront UI is `packages/ui`;
+  official shadcn preset `b23PPibQOI` must resolve. Ops UI is Astryx.
 - Runtime writes use pooled pg/Drizzle transactions; manual direct-owner
   migrations require isolated proof and restricted grants. Tests use only
   disposable loopback PostgreSQL, never production.

@@ -2,17 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { Button } from "@perfume-aura/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@perfume-aura/ui/components/card";
-import { FieldError, FieldGroup } from "@perfume-aura/ui/components/field";
-import { Spinner } from "@perfume-aura/ui/components/spinner";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import {
   createCustomerAction,
   updateCustomerAction,
@@ -86,16 +82,14 @@ export function CustomerForm({ mode, customerId, defaults }: Props) {
   return (
     <form onSubmit={onSubmit} className="mx-auto w-full max-w-2xl">
       <Card>
-        <CardHeader>
-          <CardTitle>
-            {mode === "create" ? "New customer" : "Edit customer"}
-          </CardTitle>
-          <CardDescription>
-            B2B or walk-in contact for invoices.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <FieldGroup className="gap-4 sm:grid sm:grid-cols-2">
+        <VStack gap={4}>
+          <VStack gap={1}>
+            <Heading level={mode === "create" ? 1 : 2}>
+              {mode === "create" ? "New customer" : "Edit customer"}
+            </Heading>
+            <Text color="secondary">B2B or walk-in contact for invoices.</Text>
+          </VStack>
+          <div className="grid gap-4 sm:grid-cols-2">
             <FormField
               label="Name"
               name="name"
@@ -137,19 +131,17 @@ export function CustomerForm({ mode, customerId, defaults }: Props) {
               error={fe("notes")}
               className="sm:col-span-2"
             />
-          </FieldGroup>
-          {error ? <FieldError className="mt-4">{error}</FieldError> : null}
-        </CardContent>
-        <CardFooter className="gap-2">
-          <Button
-            type="submit"
-            disabled={pending}
-            focusableWhenDisabled={pending}
-          >
-            {pending ? <Spinner data-icon="inline-start" /> : null}
-            {mode === "create" ? "Create" : "Save"}
-          </Button>
-        </CardFooter>
+          </div>
+          {error ? <Banner status="error" title={error} /> : null}
+          <HStack gap={2}>
+            <Button
+              type="submit"
+              variant="primary"
+              label={mode === "create" ? "Create" : "Save"}
+              isLoading={pending}
+            />
+          </HStack>
+        </VStack>
       </Card>
     </form>
   );

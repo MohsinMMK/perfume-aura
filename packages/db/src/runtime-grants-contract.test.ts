@@ -39,6 +39,13 @@ describe("customer commerce runtime grant matrices", () => {
     assert.match(ops, /'oil_lots', ARRAY\['SELECT','INSERT','UPDATE'\]/);
     assert.match(ops, /'oil_movements', ARRAY\['SELECT','INSERT'\]/);
     assert.match(ops, /'ops_sales', ARRAY\['SELECT','INSERT'\]/);
+    assert.match(ops, /'product_series', ARRAY\['SELECT','INSERT','UPDATE'\]/);
+    assert.match(ops, /'series_sizes', ARRAY\['SELECT','INSERT','UPDATE'\]/);
+    assert.match(ops, /'supply_items', ARRAY\['SELECT','INSERT','UPDATE'\]/);
+    assert.match(ops, /'supply_movements', ARRAY\['SELECT','INSERT'\]/);
+    for (const table of ["product_series", "series_sizes", "supply_items", "supply_movements"]) {
+      assert.match(storefront, new RegExp(`\\('${table}', ARRAY\\[\\]::text\\[\\]\\)`));
+    }
 
     assert.match(
       storefront,

@@ -1,15 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@perfume-aura/ui/components/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@perfume-aura/ui/components/dialog";
+import { Button } from "@astryxdesign/core/Button";
+import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { HStack } from "@astryxdesign/core/HStack";
+import { VStack } from "@astryxdesign/core/VStack";
 import { ReceiveStockForm } from "@/components/stock/receive-stock-form";
 import { AdjustStockForm } from "@/components/stock/adjust-stock-form";
 
@@ -24,20 +19,25 @@ export function VariantStockDialogs({ variantId, label }: Props) {
   const options = [{ id: variantId, label }];
 
   return (
-    <div className="flex flex-wrap gap-1.5">
-      <Dialog open={receiveOpen} onOpenChange={setReceiveOpen}>
-        <DialogTrigger
-          render={
-            <Button type="button" size="xs" variant="outline" />
-          }
-        >
-          Receive
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-md" showCloseButton>
-          <DialogHeader>
-            <DialogTitle>Receive stock</DialogTitle>
-            <DialogDescription>{label}</DialogDescription>
-          </DialogHeader>
+    <HStack gap={1.5} wrap="wrap">
+      <Button
+        label="Receive"
+        size="sm"
+        variant="secondary"
+        onClick={() => setReceiveOpen(true)}
+      />
+      <Dialog
+        isOpen={receiveOpen}
+        onOpenChange={setReceiveOpen}
+        purpose="form"
+        width={448}
+      >
+        <VStack gap={4}>
+          <DialogHeader
+            title="Receive stock"
+            subtitle={label}
+            onOpenChange={setReceiveOpen}
+          />
           <ReceiveStockForm
             variants={options}
             defaultVariantId={variantId}
@@ -45,26 +45,30 @@ export function VariantStockDialogs({ variantId, label }: Props) {
             title="Receive"
             description="Units received into MAIN."
           />
-        </DialogContent>
+        </VStack>
       </Dialog>
 
-      <Dialog open={adjustOpen} onOpenChange={setAdjustOpen}>
-        <DialogTrigger
-          render={<Button type="button" size="xs" variant="ghost" />}
-        >
-          Adjust
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-md" showCloseButton>
-          <DialogHeader>
-            <DialogTitle>Adjust stock</DialogTitle>
-            <DialogDescription>{label}</DialogDescription>
-          </DialogHeader>
-          <AdjustStockForm
-            variants={options}
-            defaultVariantId={variantId}
+      <Button
+        label="Adjust"
+        size="sm"
+        variant="ghost"
+        onClick={() => setAdjustOpen(true)}
+      />
+      <Dialog
+        isOpen={adjustOpen}
+        onOpenChange={setAdjustOpen}
+        purpose="form"
+        width={448}
+      >
+        <VStack gap={4}>
+          <DialogHeader
+            title="Adjust stock"
+            subtitle={label}
+            onOpenChange={setAdjustOpen}
           />
-        </DialogContent>
+          <AdjustStockForm variants={options} defaultVariantId={variantId} />
+        </VStack>
       </Dialog>
-    </div>
+    </HStack>
   );
 }

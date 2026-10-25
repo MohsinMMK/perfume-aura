@@ -1,3 +1,7 @@
+import { Card } from "@astryxdesign/core/Card";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { ForgotPasswordForm } from "./forgot-password-form";
 
 export const metadata = {
@@ -8,18 +12,18 @@ export const metadata = {
 export default function ForgotPasswordPage() {
   return (
     <main className="w-full max-w-sm">
-      <p className="text-center text-xs uppercase tracking-[0.25em] text-muted-foreground">
-        Perfume Aura
-      </p>
-      <h1 className="mt-3 text-center font-heading text-2xl font-semibold tracking-tight">
-        Reset owner password
-      </h1>
-      <p className="mt-2 text-center text-sm text-muted-foreground">
-        Request a single-use link sent through the configured owner mailbox.
-      </p>
-      <div className="mt-8">
-        <ForgotPasswordForm />
-      </div>
+      <Card padding={6}>
+        <VStack gap={6}>
+          <VStack gap={2}>
+            <Text type="label" color="secondary">Perfume Aura</Text>
+            <Heading level={1}>Reset owner password</Heading>
+            <Text as="p" color="secondary">
+              Request a single-use link sent through the configured owner mailbox.
+            </Text>
+          </VStack>
+          <ForgotPasswordForm />
+        </VStack>
+      </Card>
     </main>
   );
 }

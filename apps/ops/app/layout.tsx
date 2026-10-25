@@ -1,16 +1,14 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans, Raleway } from "next/font/google";
+import { Figtree } from "next/font/google";
+import { cookies } from "next/headers";
+import "./layers.css";
 import "./globals.css";
-import { cn } from "@perfume-aura/ui/lib/utils";
+import { AstryxProviders } from "@/components/astryx/providers";
+import { parseThemeMode, themeModeCookie } from "@/lib/theme-mode";
 
-const ibmPlexSans = IBM_Plex_Sans({
+const figtree = Figtree({
   subsets: ["latin"],
-  variable: "--font-sans",
-});
-
-const ralewayHeading = Raleway({
-  subsets: ["latin"],
-  variable: "--font-heading",
+  variable: "--font-figtree",
 });
 
 export const metadata: Metadata = {
@@ -22,22 +20,21 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const mode = parseThemeMode((await cookies()).get(themeModeCookie)?.value);
+
   return (
     <html
       lang="en"
-      className={cn(
-        "dark h-full font-sans antialiased",
-        ibmPlexSans.variable,
-        ralewayHeading.variable,
-      )}
+      className={figtree.variable}
+      data-theme={mode === "system" ? undefined : mode}
     >
-      <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
-        {children}
+      <body>
+        <AstryxProviders initialMode={mode}>{children}</AstryxProviders>
       </body>
     </html>
   );

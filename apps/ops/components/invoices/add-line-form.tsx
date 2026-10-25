@@ -2,27 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { Button } from "@perfume-aura/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@perfume-aura/ui/components/card";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@perfume-aura/ui/components/field";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@perfume-aura/ui/components/native-select";
-import { Spinner } from "@perfume-aura/ui/components/spinner";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Selector } from "@astryxdesign/core/Selector";
+import { useToast } from "@astryxdesign/core/Toast";
+import { VStack } from "@astryxdesign/core/VStack";
 import { addInvoiceLineAction } from "@/lib/invoices";
 import { FormField } from "@/components/form-field";
-import { toast } from "@perfume-aura/ui/components/sonner";
 
 export function AddInvoiceLineForm({
   invoiceId,
@@ -32,22 +21,26 @@ export function AddInvoiceLineForm({
   variants: { id: string; label: string; retailRupees: number }[];
 }) {
   const router = useRouter();
+  const showToast = useToast();
+  const [variantId, setVariantId] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (pending) return;
     setPending(true);
     setError(null);
     setFieldErrors({});
-    const fd = new FormData(e.currentTarget);
-    const variantId = String(fd.get("variantId") ?? "");
+    const formElement = e.currentTarget;
+    const fd = new FormData(formElement);
+    const selectedVariantId = String(fd.get("variantId") ?? "");
     let result: Awaited<ReturnType<typeof addInvoiceLineAction>>;
     try {
       result = await addInvoiceLineAction({
         invoiceId,
-        variantId: variantId || undefined,
+        variantId: selectedVariantId || undefined,
         description: String(fd.get("description") ?? "").trim(),
         quantity: Number(fd.get("quantity")),
         unitPrice: Number(fd.get("unitPrice")),
@@ -55,56 +48,52 @@ export function AddInvoiceLineForm({
     } catch {
       const message = "The invoice line could not be added";
       setError(message);
-      toast.error(message);
+      showToast({ body: message, type: "error" });
       setPending(false);
       return;
     }
     if (!result.ok) {
       setError(result.error);
       setFieldErrors(result.fieldErrors ?? {});
-      toast.error(result.error);
+      showToast({ body: result.error, type: "error" });
       setPending(false);
       return;
     }
-    (e.target as HTMLFormElement).reset();
-    toast.success("Invoice line added");
+    formElement.reset();
+    setVariantId("");
+    showToast({ body: "Invoice line added" });
     setPending(false);
     router.refresh();
   }
 
+  const variantError = fieldErrors.variantId?.[0];
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Add line</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={onSubmit}>
-          <FieldGroup className="gap-3">
-          <Field data-invalid={Boolean(fieldErrors.variantId?.[0])}>
-            <FieldLabel htmlFor="variantId">SKU (optional)</FieldLabel>
-            <NativeSelect
-              id="variantId"
-              name="variantId"
-              className="w-full"
-              defaultValue=""
-              aria-invalid={Boolean(fieldErrors.variantId?.[0])}
-            >
-              <NativeSelectOption value="">Free text / no SKU</NativeSelectOption>
-              {variants.map((v) => (
-                <NativeSelectOption key={v.id} value={v.id}>
-                  {v.label}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-            <FieldError>{fieldErrors.variantId?.[0]}</FieldError>
-          </Field>
+      <form onSubmit={onSubmit}>
+        <VStack gap={4}>
+          <Heading level={2}>Add line</Heading>
+          <Selector
+            label="SKU (optional)"
+            htmlName="variantId"
+            width="100%"
+            value={variantId}
+            onChange={setVariantId}
+            options={[
+              { value: "", label: "Free text / no SKU" },
+              ...variants.map((v) => ({ value: v.id, label: v.label })),
+            ]}
+            status={
+              variantError ? { type: "error", message: variantError } : undefined
+            }
+          />
           <FormField
             label="Description"
             name="description"
             placeholder="Auto-filled from SKU if empty"
             error={fieldErrors.description?.[0]}
           />
-          <FieldGroup className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <FormField
               label="Quantity"
               name="quantity"
@@ -126,20 +115,18 @@ export function AddInvoiceLineForm({
               min={0}
               error={fieldErrors.unitPrice?.[0]}
             />
-          </FieldGroup>
-          {error ? <FieldError>{error}</FieldError> : null}
-          <Button
-            type="submit"
-            disabled={pending}
-            focusableWhenDisabled={pending}
-            className="w-fit"
-          >
-            {pending ? <Spinner data-icon="inline-start" /> : null}
-            Add line
-          </Button>
-          </FieldGroup>
-        </form>
-      </CardContent>
+          </div>
+          {error ? <Banner status="error" title={error} role="alert" /> : null}
+          <HStack gap={2}>
+            <Button
+              type="submit"
+              label="Add line"
+              variant="primary"
+              isLoading={pending}
+            />
+          </HStack>
+        </VStack>
+      </form>
     </Card>
   );
 }

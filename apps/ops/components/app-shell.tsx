@@ -1,55 +1,105 @@
 "use client";
 
-import Link from "next/link";
+import { useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
+import { LockPasswordIcon, UserGroupIcon } from "@hugeicons/core-free-icons";
+import { AppShell as AstryxAppShell } from "@astryxdesign/core/AppShell";
 import { AppSidebar } from "@/components/app-sidebar";
-import type { OpsRole } from "@/lib/ops-access";
+import { hugeIcon } from "@/components/astryx/huge-icon";
+import type { OpsAccount } from "@/components/navigation/account-menu";
+import { CommandMenu } from "@/components/navigation/command-menu";
 import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@perfume-aura/ui/components/sidebar";
-import { Separator } from "@perfume-aura/ui/components/separator";
-import { Toaster } from "@perfume-aura/ui/components/sonner";
-import { TooltipProvider } from "@perfume-aura/ui/components/tooltip";
+  navSectionForPath,
+  navSectionsForRole,
+  type NavSectionId,
+} from "@/components/navigation/nav-sections";
+import { navCollapsedCookie } from "@/lib/nav-preferences";
+import { hasOpsCapability } from "@/lib/ops-access";
+
+const oneYearInSeconds = 60 * 60 * 24 * 365;
 
 /**
- * Official shadcn app shell: SidebarProvider + Sidebar + SidebarInset.
- * Mobile drawer is built into Sidebar; trigger lives in the inset header.
+ * Astryx frame: section rail + collapsible SideNav on wide screens, AppShell's
+ * generated top bar and drawer on narrow ones, and a ⌘K page search.
  */
 export function AppShell({
   children,
   lowStockCount = 0,
-  role,
+  account,
+  defaultNavCollapsed = false,
 }: {
   children: React.ReactNode;
   /** Active low-stock SKU count for nav badge (FR-INV-7 day-to-day alert). */
   lowStockCount?: number;
-  role: OpsRole;
+  account: OpsAccount;
+  defaultNavCollapsed?: boolean;
 }) {
+  const pathname = usePathname();
+  const { role } = account;
+  const sections = useMemo(() => navSectionsForRole(role), [role]);
+  const accountPages = useMemo(
+    () => [
+      ...(hasOpsCapability(role, "security.self")
+        ? [{ href: "/settings/security", label: "Security", icon: hugeIcon(LockPasswordIcon) }]
+        : []),
+      ...(hasOpsCapability(role, "security.staff.manage")
+        ? [{ href: "/settings/staff", label: "Staff access", icon: hugeIcon(UserGroupIcon) }]
+        : []),
+    ],
+    [role],
+  );
+
+  // A section picked from the rail holds until the route changes; then the
+  // section that owns the new route takes over.
+  const [picked, setPicked] = useState<{ id: NavSectionId; pathname: string } | null>(null);
+  const activeSectionId =
+    picked?.pathname === pathname
+      ? picked.id
+      : navSectionForPath(sections, pathname)?.id;
+
+  const [isNavCollapsed, setIsNavCollapsed] = useState(defaultNavCollapsed);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  function updateNavCollapsed(next: boolean) {
+    setIsNavCollapsed(next);
+    document.cookie = `${navCollapsedCookie}=${next ? "1" : "0"}; Path=/; Max-Age=${oneYearInSeconds}; SameSite=Lax; Secure`;
+  }
+
+  function selectSection(id: NavSectionId) {
+    const shownId = activeSectionId ?? sections[0]?.id;
+    if (id === shownId && !isNavCollapsed) {
+      updateNavCollapsed(true);
+      return;
+    }
+    setPicked({ id, pathname });
+    if (isNavCollapsed) updateNavCollapsed(false);
+  }
+
   return (
-    <TooltipProvider>
-      <SidebarProvider>
-        <AppSidebar lowStockCount={lowStockCount} role={role} />
-        <SidebarInset>
-          <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3 md:px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-1 h-4" />
-            <span className="truncate text-sm font-medium tracking-tight">
-              Perfume Aura Ops
-            </span>
-            {lowStockCount > 0 ? (
-              <Link
-                href="/stock/low"
-                className="ml-auto truncate text-xs font-medium text-destructive underline-offset-4 hover:underline"
-              >
-                {lowStockCount} low stock
-              </Link>
-            ) : null}
-          </header>
-          <div className="flex flex-1 flex-col p-4 md:p-6">{children}</div>
-        </SidebarInset>
-      </SidebarProvider>
-      <Toaster position="top-right" richColors closeButton />
-    </TooltipProvider>
+    <>
+      <AstryxAppShell
+        contentPadding={6}
+        sideNav={
+          <AppSidebar
+            sections={sections}
+            activeSectionId={activeSectionId}
+            onSelectSection={selectSection}
+            isCollapsed={isNavCollapsed}
+            onCollapsedChange={updateNavCollapsed}
+            onOpenSearch={() => setIsSearchOpen(true)}
+            lowStockCount={lowStockCount}
+            account={account}
+          />
+        }
+      >
+        {children}
+      </AstryxAppShell>
+      <CommandMenu
+        sections={sections}
+        extraPages={accountPages}
+        isOpen={isSearchOpen}
+        onOpenChange={setIsSearchOpen}
+      />
+    </>
   );
 }

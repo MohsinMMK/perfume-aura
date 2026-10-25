@@ -1,20 +1,20 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import {
-  Card,
-  CardContent,
-} from "@perfume-aura/ui/components/card";
-import { Badge } from "@perfume-aura/ui/components/badge";
-import { buttonVariants } from "@perfume-aura/ui/components/button";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { EmptyState } from "@astryxdesign/core/EmptyState";
 import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
+  TableHeaderCell,
   TableRow,
-} from "@perfume-aura/ui/components/table";
+} from "@astryxdesign/core/Table";
+import { Text } from "@astryxdesign/core/Text";
+import { Token } from "@astryxdesign/core/Token";
+import { VStack } from "@astryxdesign/core/VStack";
 import { listProducts } from "@/lib/products";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatQty } from "@/lib/money";
@@ -31,7 +31,7 @@ import {
   parsePage,
 } from "@/lib/pagination";
 import { PaginationNav } from "@/components/pagination-nav";
-import { cn } from "@perfume-aura/ui/lib/utils";
+import { PageHeader } from "@/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -81,25 +81,16 @@ export default async function ProductsPage({
   const hasFilters = q.length > 0 || status !== "active";
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">
-            Products
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Catalog of fragrances and sellable sizes.
-          </p>
-        </div>
-        {canManageCommercials ? (
-          <Link
-            href="/products/new"
-            className={cn(buttonVariants(), "w-full sm:w-auto")}
-          >
-            New product
-          </Link>
-        ) : null}
-      </div>
+    <VStack gap={6} className="mx-auto w-full max-w-6xl">
+      <PageHeader
+        title="Products"
+        description="Catalog of fragrances and sellable sizes."
+        actions={
+          canManageCommercials ? (
+            <Button label="New product" href="/products/new" variant="primary" />
+          ) : undefined
+        }
+      />
 
       <Suspense fallback={null}>
         <ProductFilters q={q} status={status} />
@@ -109,72 +100,65 @@ export default async function ProductsPage({
         <DbUnavailableState message={result.error ?? "No data returned."} />
       ) : result.data.items.length === 0 ? (
         hasFilters ? (
-          <Card>
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              No products match your filters.{" "}
-              <Link
-                href="/products"
-                className="underline-offset-4 hover:underline"
-              >
-                Clear filters
-              </Link>
-            </CardContent>
+          <Card variant="muted">
+            <EmptyState
+              title="No products match your filters."
+              actions={
+                <Button label="Clear filters" href="/products" variant="secondary" />
+              }
+            />
           </Card>
         ) : (
-          <CatalogEmptyState />
+          <CatalogEmptyState canCreate={canManageCommercials} />
         )
       ) : (
-        <Card className="overflow-hidden py-0">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Brand</TableHead>
-                  <TableHead className="text-right">Variants</TableHead>
-                  <TableHead className="text-right">On hand</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {result.data.items.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell>
+        <Card padding={0} className="overflow-hidden">
+          <Table hasHover>
+            <TableHeader>
+              <TableRow>
+                <TableHeaderCell>Name</TableHeaderCell>
+                <TableHeaderCell>Brand</TableHeaderCell>
+                <TableHeaderCell className="text-right">Variants</TableHeaderCell>
+                <TableHeaderCell className="text-right">On hand</TableHeaderCell>
+                <TableHeaderCell>Status</TableHeaderCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {result.data.items.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell>
+                    <VStack gap={0.5}>
                       <Link
                         href={`/products/${p.id}`}
-                        className="font-medium text-foreground underline-offset-4 hover:underline"
+                        className="font-medium text-primary underline-offset-4 hover:underline"
                       >
                         {p.name}
                       </Link>
                       {p.category ? (
-                        <p className="text-xs text-muted-foreground">
-                          {p.category}
-                        </p>
+                        <Text type="supporting">{p.category}</Text>
                       ) : null}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {p.brand ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatQty(p.variantCount)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatQty(p.totalOnHand)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          p.status === "active" ? "secondary" : "outline"
-                        }
-                      >
-                        {p.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
+                    </VStack>
+                  </TableCell>
+                  <TableCell>
+                    <Text color="secondary">{p.brand ?? "—"}</Text>
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatQty(p.variantCount)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatQty(p.totalOnHand)}
+                  </TableCell>
+                  <TableCell>
+                    <Token
+                      size="sm"
+                      label={p.status}
+                      color={p.status === "active" ? "green" : "gray"}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
           <PaginationNav
             pathname="/products"
             page={result.data.page}
@@ -187,6 +171,6 @@ export default async function ProductsPage({
           />
         </Card>
       )}
-    </div>
+    </VStack>
   );
 }

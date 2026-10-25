@@ -1,13 +1,9 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { businessDateAt, BUSINESS_TIMEZONE } from "./business-time";
 import { allocateDocumentNumberInTransaction } from "./document-numbers";
 import { DomainError } from "./domain-errors";
 import { applyMovementInTransaction } from "./inventory";
-import { availableQuantity } from "./inventory-math";
-import {
-  consumeOilInTransaction,
-  oilDemandForVariant,
-} from "./oil-inventory";
+import { makeBottlesInTransaction } from "./production";
 import {
   customers,
   invoiceLines,
@@ -461,8 +457,22 @@ export async function fulfillInvoice(input: {
     const variantIds = [
       ...new Set(remainingLines.map((line) => line.variantId)),
     ].sort();
+    const variantProducts = await tx
+      .select({ productId: productVariants.productId })
+      .from(productVariants)
+      .where(inArray(productVariants.id, variantIds));
+    const productIds = [
+      ...new Set(variantProducts.map((row) => row.productId)),
+    ].sort();
+    // Products, then variants, as every stock and oil workflow locks them.
+    await tx
+      .select({ id: products.id })
+      .from(products)
+      .where(inArray(products.id, productIds))
+      .orderBy(asc(products.id))
+      .for("update");
     const lockedVariants = await tx
-      .select()
+      .select({ id: productVariants.id })
       .from(productVariants)
       .where(inArray(productVariants.id, variantIds))
       .orderBy(productVariants.id)
@@ -475,27 +485,18 @@ export async function fulfillInvoice(input: {
       );
     }
 
-    const demandByVariant = new Map<string, number>();
-    for (const line of remainingLines) {
-      demandByVariant.set(
-        line.variantId,
-        (demandByVariant.get(line.variantId) ?? 0) + line.remaining,
-      );
-    }
-
-    for (const variant of lockedVariants) {
-      const demand = demandByVariant.get(variant.id) ?? 0;
-      const available = availableQuantity(
-        variant.quantityOnHand,
-        variant.qtyReserved,
-      );
-      if (demand > available) {
-        throw new DomainError(
-          "INSUFFICIENT_STOCK",
-          `Insufficient stock for ${variant.sku}: available ${available}, requested ${demand}`,
-        );
-      }
-    }
+    // Bottles finished stock cannot cover are made first; a missing
+    // ingredient or packaging fails the whole fulfilment before any sale.
+    await makeBottlesInTransaction(tx, {
+      lines: remainingLines.map((line) => ({
+        lineId: line.id,
+        variantId: line.variantId,
+        quantity: line.remaining,
+      })),
+      refType: "invoice",
+      refId: input.invoiceId,
+      userId: input.userId ?? null,
+    });
 
     // All variants are locked and all demand has been validated before the
     // first ledger/cache mutation. Lines are already sorted by primary key.
@@ -530,29 +531,6 @@ export async function fulfillInvoice(input: {
           "Invoice fulfillment state changed",
         );
       }
-    }
-
-    const variantsById = new Map(
-      lockedVariants.map((variant) => [variant.id, variant]),
-    );
-    for (const line of remainingLines) {
-      const variant = variantsById.get(line.variantId);
-      if (!variant) {
-        throw new DomainError("NOT_FOUND", "One or more invoice variants no longer exist");
-      }
-      await consumeOilInTransaction(tx, {
-        demands: [
-          oilDemandForVariant({
-            productId: variant.productId,
-            sizeMl: variant.sizeMl,
-            quantity: line.remaining,
-          }),
-        ],
-        refType: "invoice",
-        refId: input.invoiceId,
-        userId: input.userId ?? null,
-        idempotencyPrefix: `oil:invoice:${input.invoiceId}:${line.id}`,
-      });
     }
 
     return { fulfilledLines: remainingLines.length, idempotent: false };

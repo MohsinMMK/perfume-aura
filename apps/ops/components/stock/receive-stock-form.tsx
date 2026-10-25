@@ -1,29 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, type FormEvent } from "react";
-import { Button } from "@perfume-aura/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@perfume-aura/ui/components/card";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@perfume-aura/ui/components/field";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@perfume-aura/ui/components/native-select";
-import { Spinner } from "@perfume-aura/ui/components/spinner";
+import { useId, useRef, useState, type FormEvent } from "react";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Selector } from "@astryxdesign/core/Selector";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { receiveStockAction } from "@/lib/stock";
 import { FormField, TextAreaField } from "@/components/form-field";
+import { cn } from "@/lib/cn";
 
 type VariantOption = {
   id: string;
@@ -47,10 +36,12 @@ export function ReceiveStockForm({
   compact,
 }: Props) {
   const router = useRouter();
+  const fieldId = useId();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const [variantId, setVariantId] = useState(defaultVariantId ?? "");
   const idempotencyKeyRef = useRef<string | null>(null);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -80,6 +71,7 @@ export function ReceiveStockForm({
       idempotencyKeyRef.current = null;
       setSuccess(`Received. On hand now: ${result.data?.quantityAfter}`);
       (e.target as HTMLFormElement).reset();
+      setVariantId(defaultVariantId ?? "");
       setPending(false);
       router.refresh();
     } catch {
@@ -89,66 +81,55 @@ export function ReceiveStockForm({
   }
 
   const fe = (key: string) => fieldErrors[key]?.[0];
+  const span = compact ? undefined : "sm:col-span-2";
 
   if (variants.length === 0) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>
+        <VStack gap={1}>
+          <Heading level={2}>{title}</Heading>
+          <Text color="secondary">
             No active variants yet. Create a product first.
-          </CardDescription>
-        </CardHeader>
+          </Text>
+        </VStack>
       </Card>
     );
   }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
       <form onSubmit={onSubmit}>
-        <CardContent>
-          <FieldGroup
+        <VStack gap={4}>
+          <VStack gap={1}>
+            <Heading level={2}>{title}</Heading>
+            <Text color="secondary">{description}</Text>
+          </VStack>
+          <div
             className={
-              compact
-                ? "gap-3"
-                : "gap-4 sm:grid sm:grid-cols-2 sm:gap-4"
+              compact ? "grid gap-3" : "grid gap-4 sm:grid-cols-2"
             }
           >
-            <Field
-              data-invalid={fe("variantId") ? true : undefined}
-              className={compact ? undefined : "sm:col-span-2"}
-            >
-              <FieldLabel htmlFor="variantId">
-                Variant <span className="text-destructive">*</span>
-              </FieldLabel>
-              <NativeSelect
-                id="variantId"
-                name="variantId"
-                required
-                defaultValue={defaultVariantId ?? ""}
-                className="w-full"
-                aria-invalid={fe("variantId") ? true : undefined}
-              >
-                <NativeSelectOption value="" disabled>
-                  Select SKU…
-                </NativeSelectOption>
-                {variants.map((v) => (
-                  <NativeSelectOption key={v.id} value={v.id}>
-                    {v.label}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-              {fe("variantId") ? (
-                <FieldError>{fe("variantId")}</FieldError>
-              ) : null}
-            </Field>
+            <Selector
+              label="Variant"
+              htmlName="variantId"
+              options={variants.map((v) => ({ value: v.id, label: v.label }))}
+              value={variantId}
+              onChange={setVariantId}
+              placeholder="Select SKU…"
+              hasSearch
+              isRequired
+              width="100%"
+              status={
+                fe("variantId")
+                  ? { type: "error", message: fe("variantId") }
+                  : undefined
+              }
+              containerClassName={cn(span)}
+            />
             <FormField
               label="Quantity"
               name="quantity"
+              id={`${fieldId}-quantity`}
               type="number"
               required
               min={1}
@@ -159,35 +140,32 @@ export function ReceiveStockForm({
             <TextAreaField
               label="Note"
               name="note"
-              id="receive-note"
+              id={`${fieldId}-note`}
               placeholder="Optional — PO ref, supplier…"
               error={fe("note")}
               rows={2}
-              className={compact ? undefined : "sm:col-span-2"}
+              className={span}
             />
             {error ? (
-              <FieldError className="sm:col-span-2">{error}</FieldError>
+              <div className={span}>
+                <Banner status="error" title={error} />
+              </div>
             ) : null}
             {success ? (
-              <p
-                className="text-sm text-muted-foreground sm:col-span-2"
-                role="status"
-              >
-                {success}
-              </p>
+              <div className={span} role="status">
+                <Text color="secondary">{success}</Text>
+              </div>
             ) : null}
-          </FieldGroup>
-        </CardContent>
-        <CardFooter className="justify-end">
-          <Button
-            type="submit"
-            disabled={pending}
-            focusableWhenDisabled={pending}
-          >
-            {pending ? <Spinner data-icon="inline-start" /> : null}
-            {pending ? "Receiving…" : "Receive"}
-          </Button>
-        </CardFooter>
+          </div>
+          <HStack justify="end">
+            <Button
+              type="submit"
+              variant="primary"
+              label={pending ? "Receiving…" : "Receive"}
+              isLoading={pending}
+            />
+          </HStack>
+        </VStack>
       </form>
     </Card>
   );

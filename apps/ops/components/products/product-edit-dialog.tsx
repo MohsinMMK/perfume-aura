@@ -1,21 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
-import { toast } from "@perfume-aura/ui/components/sonner";
-import { Button } from "@perfume-aura/ui/components/button";
+import { useId, useState, type FormEvent } from "react";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { HStack } from "@astryxdesign/core/HStack";
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@perfume-aura/ui/components/dialog";
-import { FieldError, FieldGroup } from "@perfume-aura/ui/components/field";
-import { Spinner } from "@perfume-aura/ui/components/spinner";
+  Layout,
+  LayoutContent,
+  LayoutFooter,
+} from "@astryxdesign/core/Layout";
+import { useToast } from "@astryxdesign/core/Toast";
+import { VStack } from "@astryxdesign/core/VStack";
 import { FormField, TextAreaField } from "@/components/form-field";
 import { updateProductAction } from "@/lib/products";
 
@@ -32,6 +29,8 @@ type Props = {
 
 export function ProductEditDialog({ product }: Props) {
   const router = useRouter();
+  const showToast = useToast();
+  const formId = useId();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [expectedUpdatedAt, setExpectedUpdatedAt] = useState(product.updatedAt);
@@ -57,7 +56,7 @@ export function ProductEditDialog({ product }: Props) {
     } catch {
       const message = "The product update could not be completed";
       setError(message);
-      toast.error(message);
+      showToast({ body: message, type: "error" });
       setPending(false);
       return;
     }
@@ -65,13 +64,13 @@ export function ProductEditDialog({ product }: Props) {
     if (!result.ok) {
       setError(result.error);
       setFieldErrors(result.fieldErrors ?? {});
-      toast.error(result.error);
+      showToast({ body: result.error, type: "error" });
       setPending(false);
       return;
     }
 
     if (result.data?.updatedAt) setExpectedUpdatedAt(result.data.updatedAt);
-    toast.success("Product updated");
+    showToast({ body: "Product updated" });
     setOpen(false);
     setPending(false);
     router.refresh();
@@ -79,82 +78,94 @@ export function ProductEditDialog({ product }: Props) {
 
   const fieldError = (name: string) => fieldErrors[name]?.[0];
 
+  function onOpenChange(nextOpen: boolean) {
+    if (pending) return;
+    setOpen(nextOpen);
+    if (!nextOpen) {
+      setError(null);
+      setFieldErrors({});
+    }
+  }
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (pending) return;
-        setOpen(nextOpen);
-        if (!nextOpen) {
-          setError(null);
-          setFieldErrors({});
-        }
-      }}
-    >
-      <DialogTrigger render={<Button type="button" variant="outline" size="sm" />}>
-        Edit details
-      </DialogTrigger>
-      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Edit product</DialogTitle>
-          <DialogDescription>
-            Update catalog details. Lifecycle and inventory are managed
-            separately.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={onSubmit} className="flex flex-col gap-6">
-          <FieldGroup className="gap-4">
-            <FormField
-              label="Name"
-              name="name"
-              required
-              defaultValue={product.name}
-              error={fieldError("name")}
+    <>
+      <Button
+        type="button"
+        label="Edit details"
+        variant="secondary"
+        size="sm"
+        onClick={() => setOpen(true)}
+      />
+      <Dialog
+        isOpen={open}
+        onOpenChange={onOpenChange}
+        purpose="form"
+        width={520}
+        maxHeight="calc(100dvh - 2rem)"
+      >
+        <Layout
+          header={
+            <DialogHeader
+              title="Edit product"
+              subtitle="Update catalog details. Lifecycle and inventory are managed separately."
+              onOpenChange={onOpenChange}
             />
-            <FormField
-              label="Brand"
-              name="brand"
-              defaultValue={product.brand ?? ""}
-              error={fieldError("brand")}
-            />
-            <FormField
-              label="Category"
-              name="category"
-              defaultValue={product.category ?? ""}
-              error={fieldError("category")}
-            />
-            <TextAreaField
-              label="Description"
-              name="description"
-              defaultValue={product.description ?? ""}
-              error={fieldError("description")}
-            />
-            {error ? <FieldError>{error}</FieldError> : null}
-          </FieldGroup>
-          <DialogFooter>
-            <DialogClose
-              render={
+          }
+          content={
+            <LayoutContent isScrollable>
+              <form id={formId} onSubmit={onSubmit}>
+                <VStack gap={4}>
+                  <FormField
+                    label="Name"
+                    name="name"
+                    required
+                    defaultValue={product.name}
+                    error={fieldError("name")}
+                  />
+                  <FormField
+                    label="Brand"
+                    name="brand"
+                    defaultValue={product.brand ?? ""}
+                    error={fieldError("brand")}
+                  />
+                  <FormField
+                    label="Category"
+                    name="category"
+                    defaultValue={product.category ?? ""}
+                    error={fieldError("category")}
+                  />
+                  <TextAreaField
+                    label="Description"
+                    name="description"
+                    defaultValue={product.description ?? ""}
+                    error={fieldError("description")}
+                  />
+                  {error ? <Banner status="error" title={error} /> : null}
+                </VStack>
+              </form>
+            </LayoutContent>
+          }
+          footer={
+            <LayoutFooter hasDivider>
+              <HStack justify="end" gap={2} wrap="wrap">
                 <Button
                   type="button"
-                  variant="outline"
-                  disabled={pending}
-                  focusableWhenDisabled={pending}
+                  label="Cancel"
+                  variant="secondary"
+                  onClick={() => onOpenChange(false)}
                 />
-              }
-            >
-              Cancel
-            </DialogClose>
-            <Button
-              type="submit"
-              disabled={pending}
-              focusableWhenDisabled={pending}
-            >
-              {pending ? <Spinner data-icon="inline-start" /> : null}
-              {pending ? "Saving…" : "Save changes"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+                <Button
+                  type="submit"
+                  form={formId}
+                  label={pending ? "Saving…" : "Save changes"}
+                  variant="primary"
+                  isLoading={pending}
+                />
+              </HStack>
+            </LayoutFooter>
+          }
+        />
+      </Dialog>
+    </>
   );
 }

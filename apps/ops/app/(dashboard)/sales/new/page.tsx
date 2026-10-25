@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { VStack } from "@astryxdesign/core/VStack";
 import { SaleWizard } from "@/components/sales/sale-wizard";
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { listActiveCustomersForSelect } from "@/lib/customers";
@@ -6,6 +6,7 @@ import { safeDbQuery } from "@/lib/db-safe";
 import { hasOpsCapability } from "@/lib/ops-access";
 import { listSaleCatalog } from "@/lib/sales";
 import { requireCapability } from "@/lib/session";
+import { PageBreadcrumbs } from "@/components/page-breadcrumbs";
 
 export const dynamic = "force-dynamic";
 
@@ -28,18 +29,15 @@ export default async function NewSalePage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
-      <Link
-        href="/invoices"
-        className="text-sm text-muted-foreground underline-offset-4 hover:underline"
-      >
-        ← Invoices
-      </Link>
+    <VStack gap={4} className="mx-auto w-full max-w-6xl">
+      <PageBreadcrumbs
+        items={[{ label: "Invoices", href: "/invoices" }, { label: "New sale" }]}
+      />
       <SaleWizard
         customers={customersResult.data ?? []}
         catalog={catalogResult.data ?? []}
         canRecordPayment={hasOpsCapability(session.user.role, "payments.record")}
       />
-    </div>
+    </VStack>
   );
 }

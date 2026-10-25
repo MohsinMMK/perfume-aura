@@ -2,6 +2,14 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
+import { AstryxProviders } from "@/components/astryx/providers";
+import "./layers.css";
+import "./globals.css";
 
 export default function GlobalError({
   error,
@@ -14,26 +22,35 @@ export default function GlobalError({
     Sentry.captureException(error);
   }, [error]);
 
+  // The root layout (and its theme cookie) is replaced here, so the page
+  // follows the operating-system colour scheme.
   return (
-    <html lang="en" className="dark">
-      <body className="flex min-h-svh items-center justify-center bg-background p-6 text-foreground">
-        <main className="w-full max-w-md border border-border bg-card p-8 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Perfume Aura Operations
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold">Something went wrong</h1>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            The error was reported. Try the page again, or sign in again if the
-            problem continues.
-          </p>
-          <button
-            type="button"
-            className="mt-6 min-h-11 border border-border px-5 text-sm font-medium"
-            onClick={reset}
-          >
-            Try again
-          </button>
-        </main>
+    <html lang="en">
+      <body className="bg-body text-primary">
+        <AstryxProviders initialMode="system">
+          <div className="flex min-h-svh items-center justify-center p-6">
+            <main className="w-full max-w-md">
+              <Card padding={8}>
+                <VStack gap={4} align="center" className="text-center">
+                  <Text type="label" color="secondary">
+                    Perfume Aura Operations
+                  </Text>
+                  <Heading level={1}>Something went wrong</Heading>
+                  <Text as="p" color="secondary">
+                    The error was reported. Try the page again, or sign in again
+                    if the problem continues.
+                  </Text>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    label="Try again"
+                    onClick={reset}
+                  />
+                </VStack>
+              </Card>
+            </main>
+          </div>
+        </AstryxProviders>
       </body>
     </html>
   );

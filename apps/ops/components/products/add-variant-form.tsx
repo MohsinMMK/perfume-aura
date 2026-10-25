@@ -2,17 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { Button } from "@perfume-aura/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@perfume-aura/ui/components/card";
-import { FieldError, FieldGroup } from "@perfume-aura/ui/components/field";
-import { Spinner } from "@perfume-aura/ui/components/spinner";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { createVariantAction } from "@/lib/products";
 import { FormField } from "@/components/form-field";
 
@@ -66,23 +62,28 @@ export function AddVariantForm({ productId }: Props) {
 
   if (!open) {
     return (
-      <Button type="button" variant="outline" onClick={() => setOpen(true)}>
-        Add variant
-      </Button>
+      <HStack>
+        <Button
+          type="button"
+          label="Add variant"
+          variant="secondary"
+          onClick={() => setOpen(true)}
+        />
+      </HStack>
     );
   }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Add variant</CardTitle>
-        <CardDescription>
-          Another size/SKU for this product. Prices in rupees.
-        </CardDescription>
-      </CardHeader>
       <form onSubmit={onSubmit}>
-        <CardContent>
-          <FieldGroup className="gap-4 sm:grid sm:grid-cols-2 sm:gap-4">
+        <VStack gap={6}>
+          <VStack gap={1}>
+            <Heading level={2}>Add variant</Heading>
+            <Text as="p" color="secondary">
+              Another size/SKU for this product. Prices in rupees.
+            </Text>
+          </VStack>
+          <div className="grid gap-4 sm:grid-cols-2">
             <FormField
               label="SKU"
               name="sku"
@@ -133,32 +134,30 @@ export function AddVariantForm({ productId }: Props) {
               error={fe("retail")}
             />
             {error ? (
-              <FieldError className="sm:col-span-2">{error}</FieldError>
+              <div className="sm:col-span-2">
+                <Banner status="error" title={error} />
+              </div>
             ) : null}
-          </FieldGroup>
-        </CardContent>
-        <CardFooter className="justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={pending}
-            focusableWhenDisabled={pending}
-            onClick={() => {
-              setOpen(false);
-              setError(null);
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={pending}
-            focusableWhenDisabled={pending}
-          >
-            {pending ? <Spinner data-icon="inline-start" /> : null}
-            {pending ? "Saving…" : "Save variant"}
-          </Button>
-        </CardFooter>
+          </div>
+          <HStack justify="end" gap={2} wrap="wrap">
+            <Button
+              type="button"
+              label="Cancel"
+              variant="secondary"
+              onClick={() => {
+                if (pending) return;
+                setOpen(false);
+                setError(null);
+              }}
+            />
+            <Button
+              type="submit"
+              label={pending ? "Saving…" : "Save variant"}
+              variant="primary"
+              isLoading={pending}
+            />
+          </HStack>
+        </VStack>
       </form>
     </Card>
   );

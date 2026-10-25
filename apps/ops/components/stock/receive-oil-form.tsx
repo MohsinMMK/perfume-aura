@@ -2,26 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
-import { Button } from "@perfume-aura/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@perfume-aura/ui/components/card";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@perfume-aura/ui/components/field";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@perfume-aura/ui/components/native-select";
-import { Spinner } from "@perfume-aura/ui/components/spinner";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Selector } from "@astryxdesign/core/Selector";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { receiveOilAction } from "@/lib/oil";
 import { FormField, TextAreaField } from "@/components/form-field";
 
@@ -36,15 +23,18 @@ export function ReceiveOilForm({ products, canViewCost }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const [productId, setProductId] = useState("");
   const idempotencyKeyRef = useRef<string | null>(null);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    // React clears currentTarget once the handler yields, so keep the form.
+    const formElement = event.currentTarget;
     setPending(true);
     setError(null);
     setSuccess(null);
     setFieldErrors({});
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     idempotencyKeyRef.current ??= crypto.randomUUID();
     try {
       const result = await receiveOilAction({
@@ -70,7 +60,8 @@ export function ReceiveOilForm({ products, canViewCost }: Props) {
       setSuccess(
         `Received. This lot now holds ${result.data?.remainingQuantityMl ?? 0} ml oil.`,
       );
-      event.currentTarget.reset();
+      formElement.reset();
+      setProductId("");
       router.refresh();
     } catch {
       setError("The oil receive could not be saved");
@@ -81,37 +72,37 @@ export function ReceiveOilForm({ products, canViewCost }: Props) {
   return (
     <form onSubmit={onSubmit}>
       <Card>
-        <CardHeader>
-          <CardTitle>Receive 1 kg oil</CardTitle>
-          <CardDescription>
-            One original bottle is stored as 1000 ml. Sales later take oil from
-            the oldest lot first.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <FieldGroup className="gap-4">
-            <Field data-invalid={Boolean(fieldErrors.productId?.[0])}>
-              <FieldLabel htmlFor="productId">Perfume oil</FieldLabel>
-              <NativeSelect
-                id="productId"
-                name="productId"
-                required
-                className="w-full min-h-11"
-                aria-invalid={Boolean(fieldErrors.productId?.[0])}
-              >
-                <NativeSelectOption value="" disabled>
-                  Select perfume…
-                </NativeSelectOption>
-                {products.map((product) => (
-                  <NativeSelectOption key={product.id} value={product.id}>
-                    {product.name}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-              <FieldError>{fieldErrors.productId?.[0]}</FieldError>
-            </Field>
+        <VStack gap={4}>
+          <VStack gap={1}>
+            <Heading level={2}>Receive oil</Heading>
+            <Text color="secondary">
+              One original bottle is stored as 1000 ml. Sales later take oil
+              from the oldest lot first.
+            </Text>
+          </VStack>
+          <VStack gap={4}>
+            <Selector
+              label="Perfume oil"
+              htmlName="productId"
+              options={products.map((product) => ({
+                value: product.id,
+                label: product.name,
+              }))}
+              value={productId}
+              onChange={setProductId}
+              placeholder="Select perfume…"
+              hasSearch
+              isRequired
+              width="100%"
+              status={
+                fieldErrors.productId?.[0]
+                  ? { type: "error", message: fieldErrors.productId[0] }
+                  : undefined
+              }
+              controlClassName="min-h-11"
+            />
             <FormField
-              label="1 kg bottles received"
+              label="1 kg / 1 L bottles received"
               name="kgBottles"
               type="number"
               min={1}
@@ -152,25 +143,27 @@ export function ReceiveOilForm({ products, canViewCost }: Props) {
             <TextAreaField
               label="Internal note"
               name="note"
+              id="receive-oil-note"
               error={fieldErrors.note?.[0]}
             />
-            {error ? <FieldError>{error}</FieldError> : null}
+            {error ? <Banner status="error" title={error} /> : null}
             {success ? (
-              <p className="text-sm text-muted-foreground">{success}</p>
+              <div role="status">
+                <Text color="secondary">{success}</Text>
+              </div>
             ) : null}
-          </FieldGroup>
-        </CardContent>
-        <CardFooter>
-          <Button
-            type="submit"
-            disabled={pending || products.length === 0}
-            focusableWhenDisabled={pending}
-            className="min-h-11"
-          >
-            {pending ? <Spinner data-icon="inline-start" /> : null}
-            Receive oil
-          </Button>
-        </CardFooter>
+          </VStack>
+          <div>
+            <Button
+              type="submit"
+              variant="primary"
+              label="Receive oil"
+              isLoading={pending}
+              isDisabled={products.length === 0}
+              className="min-h-11"
+            />
+          </div>
+        </VStack>
       </Card>
     </form>
   );

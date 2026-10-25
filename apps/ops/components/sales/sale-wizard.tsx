@@ -2,34 +2,24 @@
 
 import { useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@perfume-aura/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@perfume-aura/ui/components/card";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@perfume-aura/ui/components/field";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@perfume-aura/ui/components/native-select";
-import { Spinner } from "@perfume-aura/ui/components/spinner";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Selector } from "@astryxdesign/core/Selector";
+import { Step, Stepper } from "@astryxdesign/core/Stepper";
 import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
+  TableHeaderCell,
   TableRow,
-} from "@perfume-aura/ui/components/table";
+} from "@astryxdesign/core/Table";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { FormField, TextAreaField } from "@/components/form-field";
 import { formatInr, formatQty } from "@/lib/money";
 import { completeSaleAction } from "@/lib/sales";
@@ -93,16 +83,30 @@ export function SaleWizard({
     const resolved = lines.flatMap((line) => {
       const item = catalogById.get(line.variantId);
       if (!item) return [];
+      // Finished bottles go first; the server makes the rest from the recipe.
+      const fromStock = Math.min(line.quantity, Math.max(0, item.quantityOnHand));
+      const toMake = line.quantity - fromStock;
+      const oilMl =
+        toMake > 0 && item.concentrationPercent !== null
+          ? Math.ceil((item.sizeMl * toMake * item.concentrationPercent) / 100)
+          : 0;
       return [
         {
           ...item,
           quantity: line.quantity,
-          oilMl: Math.ceil((item.sizeMl * line.quantity * 50) / 100),
+          fromStock,
+          toMake,
+          oilMl,
+          baseMl: toMake > 0 && item.concentrationPercent !== null
+            ? item.sizeMl * toMake - oilMl
+            : 0,
+          shortBy: Math.max(0, toMake - item.canMake),
         },
       ];
     });
     const oil = [
       ...resolved
+        .filter((line) => line.oilMl > 0)
         .reduce((byProduct, line) => {
           const current = byProduct.get(line.productId);
           byProduct.set(line.productId, {
@@ -123,12 +127,17 @@ export function SaleWizard({
     return {
       lines: resolved,
       oil,
+      baseMl: resolved.reduce((total, line) => total + line.baseMl, 0),
+      madeBottles: resolved.reduce((total, line) => total + line.toMake, 0),
+      short: resolved.filter((line) => line.shortBy > 0),
       totalCents: resolved.reduce(
         (total, line) => total + line.retailCents * line.quantity,
         0,
       ),
     };
   }, [catalogById, lines]);
+
+  const selectedItem = catalogById.get(selectedVariantId);
 
   function addLine() {
     const item = catalogById.get(selectedVariantId);
@@ -197,68 +206,73 @@ export function SaleWizard({
         ? Boolean(customerId)
         : newCustomer.name.trim().length > 0
       : step === 1
-        ? lines.length > 0
+        ? lines.length > 0 && preview.short.length === 0
         : true;
+
+  const customerIdError = fieldErrors.customerId?.[0];
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>New sale</CardTitle>
-        <CardDescription>
-          Step {step + 1} of {steps.length}: {steps[step]}. Oil leaves the 1 kg
-          bottle when you confirm.
-        </CardDescription>
-        <ol className="flex flex-wrap gap-2 pt-2 text-sm">
-          {steps.map((label, index) => (
-            <li
-              key={label}
-              className={
-                index === step
-                  ? "font-medium text-foreground"
-                  : "text-muted-foreground"
-              }
-            >
-              {index + 1}. {label}
-            </li>
-          ))}
-        </ol>
-      </CardHeader>
-      <CardContent>
+      <VStack gap={6}>
+        <VStack gap={2}>
+          <Heading level={1}>New sale</Heading>
+          <Text color="secondary">
+            Step {step + 1} of {steps.length}: {steps[step]}. Finished bottles go
+            first; the rest are made from oil, base and packaging when you confirm.
+          </Text>
+          <Stepper
+            label="Sale steps"
+            activeStep={step}
+            density="compact"
+            // Finished steps can be revisited; later ones open through Next.
+            onStepClick={(index) => {
+              if (index < step) setStep(index);
+            }}
+            horizontalOptions={{
+              minimumStepWidth: 96,
+              collapsedVariant: "withLabel",
+            }}
+          >
+            {steps.map((label, index) => (
+              <Step key={label} step={index} label={label} isDisabled={index > step} />
+            ))}
+          </Stepper>
+        </VStack>
+
         {step === 0 ? (
-          <FieldGroup className="gap-4">
-            <Field>
-              <FieldLabel htmlFor="customerMode">Customer</FieldLabel>
-              <NativeSelect
-                id="customerMode"
-                className="min-h-11 w-full"
-                value={customerMode}
-                onChange={(event) =>
-                  setCustomerMode(event.target.value === "new" ? "new" : "existing")
-                }
-              >
-                <NativeSelectOption value="existing" disabled={customers.length === 0}>
-                  Existing customer
-                </NativeSelectOption>
-                <NativeSelectOption value="new">New customer</NativeSelectOption>
-              </NativeSelect>
-            </Field>
+          <VStack gap={4}>
+            <Selector
+              label="Customer"
+              width="100%"
+              value={customerMode}
+              onChange={(value) =>
+                setCustomerMode(value === "new" ? "new" : "existing")
+              }
+              options={[
+                {
+                  value: "existing",
+                  label: "Existing customer",
+                  disabled: customers.length === 0,
+                },
+                { value: "new", label: "New customer" },
+              ]}
+            />
             {customerMode === "existing" ? (
-              <Field data-invalid={Boolean(fieldErrors.customerId?.[0])}>
-                <FieldLabel htmlFor="customerId">Name</FieldLabel>
-                <NativeSelect
-                  id="customerId"
-                  className="min-h-11 w-full"
-                  value={customerId}
-                  onChange={(event) => setCustomerId(event.target.value)}
-                >
-                  {customers.map((customer) => (
-                    <NativeSelectOption key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-                <FieldError>{fieldErrors.customerId?.[0]}</FieldError>
-              </Field>
+              <Selector
+                label="Name"
+                width="100%"
+                value={customerId}
+                onChange={setCustomerId}
+                options={customers.map((customer) => ({
+                  value: customer.id,
+                  label: customer.name,
+                }))}
+                status={
+                  customerIdError
+                    ? { type: "error", message: customerIdError }
+                    : undefined
+                }
+              />
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
@@ -329,27 +343,22 @@ export function SaleWizard({
                 />
               </div>
             )}
-          </FieldGroup>
+          </VStack>
         ) : null}
 
         {step === 1 ? (
-          <div className="flex flex-col gap-4">
-            <FieldGroup className="gap-4 sm:grid sm:grid-cols-[1fr_8rem_auto] sm:items-end">
-              <Field>
-                <FieldLabel htmlFor="variantId">Product</FieldLabel>
-                <NativeSelect
-                  id="variantId"
-                  className="min-h-11 w-full"
-                  value={selectedVariantId}
-                  onChange={(event) => setSelectedVariantId(event.target.value)}
-                >
-                  {catalog.map((item) => (
-                    <NativeSelectOption key={item.variantId} value={item.variantId}>
-                      {item.productName} · {item.sizeMl} ml · {item.sku}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-              </Field>
+          <VStack gap={4}>
+            <div className="grid gap-4 sm:grid-cols-[1fr_8rem_auto] sm:items-end">
+              <Selector
+                label="Product"
+                width="100%"
+                value={selectedVariantId}
+                onChange={setSelectedVariantId}
+                options={catalog.map((item) => ({
+                  value: item.variantId,
+                  label: `${item.productName} · ${item.sizeMl} ml · ${item.quantityOnHand} in stock · can make ${item.canMake}`,
+                }))}
+              />
               <FormField
                 label="Qty"
                 name="quantity"
@@ -364,27 +373,100 @@ export function SaleWizard({
               />
               <Button
                 type="button"
-                variant="outline"
-                className="min-h-11"
+                label="Add"
+                variant="secondary"
                 onClick={() => {
                   addLine();
                 }}
-              >
-                Add
-              </Button>
-            </FieldGroup>
+              />
+            </div>
+            {selectedItem ? (
+              <Text type="supporting" color="secondary">
+                {selectedItem.seriesName ?? "No series"} · {formatQty(selectedItem.quantityOnHand)} finished
+                {selectedItem.oilMlPerBottle !== null && selectedItem.baseMlPerBottle !== null
+                  ? ` · one bottle uses ${formatQty(selectedItem.oilMlPerBottle)} ml oil and ${formatQty(selectedItem.baseMlPerBottle)} ml base`
+                  : ""}
+                {selectedItem.blocker
+                  ? ` · can't make more: ${selectedItem.blocker}`
+                  : ` · can make ${formatQty(selectedItem.canMake)} more${selectedItem.limitedBy ? ` (${selectedItem.limitedBy} runs out first)` : ""}`}
+              </Text>
+            ) : null}
             {lines.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Add the bottles this person is buying.
-              </p>
+              <Text color="secondary">Add the bottles this person is buying.</Text>
             ) : (
+              <Card padding={0} className="overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHeaderCell>Item</TableHeaderCell>
+                      <TableHeaderCell className="text-right">Qty</TableHeaderCell>
+                      <TableHeaderCell className="text-right">From stock</TableHeaderCell>
+                      <TableHeaderCell className="text-right">Made now</TableHeaderCell>
+                      <TableHeaderCell className="text-right">Oil</TableHeaderCell>
+                      <TableHeaderCell className="text-right">
+                        <span className="sr-only">Actions</span>
+                      </TableHeaderCell>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {preview.lines.map((line) => (
+                      <TableRow key={line.variantId}>
+                        <TableCell>
+                          {line.productName} · {line.sizeMl} ml
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {formatQty(line.quantity)}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {formatQty(line.fromStock)}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {formatQty(line.toMake)}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {formatQty(line.oilMl)} ml
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            type="button"
+                            label="Remove"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeLine(line.variantId)}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            )}
+            {preview.short.length > 0 ? (
+              <Banner
+                status="warning"
+                title="Not enough to make these bottles"
+                description={preview.short
+                  .map((line) =>
+                    line.blocker
+                      ? `${line.productName} ${line.sizeMl} ml: ${line.blocker}`
+                      : `${line.productName} ${line.sizeMl} ml: ${formatQty(line.fromStock + line.canMake)} available, ${line.limitedBy ?? "materials"} runs out first`,
+                  )
+                  .join(". ")}
+              />
+            ) : null}
+          </VStack>
+        ) : null}
+
+        {step === 2 || step === 3 ? (
+          <VStack gap={4}>
+            <Card padding={0} className="overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Item</TableHead>
-                    <TableHead className="text-right">Qty</TableHead>
-                    <TableHead className="text-right">Oil</TableHead>
-                    <TableHead />
+                    <TableHeaderCell>Item</TableHeaderCell>
+                    <TableHeaderCell className="text-right">Qty</TableHeaderCell>
+                    <TableHeaderCell className="text-right">Oil used</TableHeaderCell>
+                    <TableHeaderCell className="text-right">Price</TableHeaderCell>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -393,93 +475,60 @@ export function SaleWizard({
                       <TableCell>
                         {line.productName} · {line.sizeMl} ml
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right tabular-nums">
                         {formatQty(line.quantity)}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right tabular-nums">
                         {formatQty(line.oilMl)} ml
                       </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="min-h-11"
-                          onClick={() => removeLine(line.variantId)}
-                        >
-                          Remove
-                        </Button>
+                      <TableCell className="text-right tabular-nums">
+                        {formatInr(line.retailCents * line.quantity)}
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            )}
-          </div>
-        ) : null}
-
-        {step === 2 || step === 3 ? (
-          <div className="flex flex-col gap-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Item</TableHead>
-                  <TableHead className="text-right">Qty</TableHead>
-                  <TableHead className="text-right">Oil used</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {preview.lines.map((line) => (
-                  <TableRow key={line.variantId}>
-                    <TableCell>
-                      {line.productName} · {line.sizeMl} ml
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatQty(line.quantity)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatQty(line.oilMl)} ml
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatInr(line.retailCents * line.quantity)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <ul className="text-sm text-muted-foreground">
+            </Card>
+            <ul className="flex flex-col gap-1 text-sm text-secondary">
               {preview.oil.map((row) => (
                 <li key={row.productName}>
-                  {row.productName}: {formatQty(row.oilMl)} ml oil leaves the 1 kg
-                  bottle. {formatQty(Math.max(0, row.availableOilMl - row.oilMl))} ml
+                  {row.productName}: {formatQty(row.oilMl)} ml oil goes into new
+                  bottles. {formatQty(Math.max(0, row.availableOilMl - row.oilMl))} ml
                   remains available
                   {row.reservedOilMl > 0
                     ? ` (${formatQty(row.reservedOilMl)} ml held for storefront checkouts)`
                     : ""}.
                 </li>
               ))}
+              {preview.madeBottles > 0 ? (
+                <li>
+                  {formatQty(preview.madeBottles)}{" "}
+                  {preview.madeBottles === 1 ? "bottle is" : "bottles are"} made now,
+                  using {formatQty(preview.baseMl)} ml base in total, plus one empty
+                  bottle (and box, where the size has one) for each.
+                </li>
+              ) : (
+                <li>Every bottle comes from finished stock.</li>
+              )}
             </ul>
-            <p className="text-sm font-medium">Total {formatInr(preview.totalCents)}</p>
+            <Text weight="semibold" hasTabularNumbers>
+              Total {formatInr(preview.totalCents)}
+            </Text>
             {step === 3 && canRecordPayment ? (
-              <div className="rounded-lg border p-4">
-                <label className="flex min-h-11 items-center gap-3 text-sm font-medium">
-                  <input
-                    type="checkbox"
-                    checked={recordPayment}
-                    onChange={(event) => setRecordPayment(event.target.checked)}
+              <Card variant="muted">
+                <VStack gap={4}>
+                  <CheckboxInput
+                    label="Record full payment now"
+                    value={recordPayment}
+                    onChange={setRecordPayment}
                   />
-                  Record full payment now
-                </label>
-                {recordPayment ? (
-                  <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                    <Field>
-                      <FieldLabel htmlFor="paymentMethod">Payment method</FieldLabel>
-                      <NativeSelect
-                        id="paymentMethod"
-                        className="min-h-11 w-full"
+                  {recordPayment ? (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Selector
+                        label="Payment method"
+                        width="100%"
                         value={paymentMethod}
-                        onChange={(event) => {
-                          const value = event.target.value;
+                        onChange={(value) => {
                           if (
                             value === "cash" ||
                             value === "bank_transfer" ||
@@ -489,79 +538,76 @@ export function SaleWizard({
                             setPaymentMethod(value);
                           }
                         }}
-                      >
-                        <NativeSelectOption value="cash">Cash</NativeSelectOption>
-                        <NativeSelectOption value="bank_transfer">Bank transfer / UPI</NativeSelectOption>
-                        <NativeSelectOption value="card">Card</NativeSelectOption>
-                        <NativeSelectOption value="other">Other</NativeSelectOption>
-                      </NativeSelect>
-                    </Field>
-                    <FormField
-                      label="Reference"
-                      name="paymentReference"
-                      placeholder="UPI or transaction reference"
-                      value={paymentReference}
-                      onChange={setPaymentReference}
-                      error={fieldErrors.paymentReference?.[0]}
-                      inputClassName="min-h-11"
-                    />
-                    <TextAreaField
-                      label="Payment note"
-                      name="paymentNote"
-                      className="sm:col-span-2"
-                      rows={2}
-                      value={paymentNote}
-                      onChange={setPaymentNote}
-                      error={fieldErrors.paymentNote?.[0]}
-                    />
-                  </div>
-                ) : null}
-              </div>
+                        options={[
+                          { value: "cash", label: "Cash" },
+                          { value: "bank_transfer", label: "Bank transfer / UPI" },
+                          { value: "card", label: "Card" },
+                          { value: "other", label: "Other" },
+                        ]}
+                      />
+                      <FormField
+                        label="Reference"
+                        name="paymentReference"
+                        placeholder="UPI or transaction reference"
+                        value={paymentReference}
+                        onChange={setPaymentReference}
+                        error={fieldErrors.paymentReference?.[0]}
+                        inputClassName="min-h-11"
+                      />
+                      <TextAreaField
+                        label="Payment note"
+                        name="paymentNote"
+                        className="sm:col-span-2"
+                        rows={2}
+                        value={paymentNote}
+                        onChange={setPaymentNote}
+                        error={fieldErrors.paymentNote?.[0]}
+                      />
+                    </div>
+                  ) : null}
+                </VStack>
+              </Card>
             ) : null}
-          </div>
+          </VStack>
         ) : null}
-        {error ? <FieldError className="mt-4">{error}</FieldError> : null}
-      </CardContent>
-      <CardFooter className="flex flex-wrap gap-2">
-        {step > 0 ? (
-          <Button
-            type="button"
-            variant="outline"
-            className="min-h-11"
-            onClick={() => {
-              setError(null);
-              setStep((current) => current - 1);
-            }}
-          >
-            Back
-          </Button>
-        ) : null}
-        {step < 3 ? (
-          <Button
-            type="button"
-            className="min-h-11"
-            disabled={!canNext}
-            onClick={() => {
-              setError(null);
-              setStep((current) => current + 1);
-            }}
-          >
-            Continue
-          </Button>
-        ) : (
-          <form onSubmit={onConfirm}>
+        {error ? <Banner status="error" title={error} role="alert" /> : null}
+
+        <HStack gap={2} wrap="wrap">
+          {step > 0 ? (
             <Button
-              type="submit"
-              className="min-h-11"
-              disabled={pending || preview.lines.length === 0}
-              focusableWhenDisabled={pending}
-            >
-              {pending ? <Spinner data-icon="inline-start" /> : null}
-              Confirm sale
-            </Button>
-          </form>
-        )}
-      </CardFooter>
+              type="button"
+              label="Back"
+              variant="secondary"
+              onClick={() => {
+                setError(null);
+                setStep((current) => current - 1);
+              }}
+            />
+          ) : null}
+          {step < 3 ? (
+            <Button
+              type="button"
+              label="Continue"
+              variant="primary"
+              isDisabled={!canNext}
+              onClick={() => {
+                setError(null);
+                setStep((current) => current + 1);
+              }}
+            />
+          ) : (
+            <form onSubmit={onConfirm}>
+              <Button
+                type="submit"
+                label="Confirm sale"
+                variant="primary"
+                isLoading={pending}
+                isDisabled={preview.lines.length === 0}
+              />
+            </form>
+          )}
+        </HStack>
+      </VStack>
     </Card>
   );
 }

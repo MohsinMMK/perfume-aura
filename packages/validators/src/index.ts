@@ -299,3 +299,118 @@ export const completeSaleSchema = z
 
 export type ReceiveOilInput = z.infer<typeof receiveOilSchema>;
 export type CompleteSaleInput = z.infer<typeof completeSaleSchema>;
+
+/* ─── Series, packaging and the base mixture ─── */
+
+const seriesFieldsSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(120),
+  oilConcentrationPercent: z
+    .number()
+    .int("Use a whole percent")
+    .min(1, "At least 1%")
+    .max(100, "At most 100%"),
+  oilReorderLevelMl: z.number().int("Whole ml only").min(0, "Cannot be negative"),
+});
+
+export const createSeriesSchema = seriesFieldsSchema.extend({
+  slug: z
+    .string()
+    .trim()
+    .min(1, "Slug is required")
+    .max(80)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Lowercase letters, numbers and dashes"),
+});
+
+export const updateSeriesSchema = seriesFieldsSchema.extend({
+  seriesId: z.string().uuid(),
+  status: z.enum(["active", "archived"]),
+});
+
+export const seriesSizeSchema = z.object({
+  seriesId: z.string().uuid(),
+  sizeMl: z.number().int("Whole ml only").min(1, "Size is required").max(1000),
+  /** Major INR (rupees) */
+  defaultRetail: z.number().min(0, "Price cannot be negative"),
+  bottleSupplyId: z.string().uuid().optional().or(z.literal("")),
+  boxSupplyId: z.string().uuid().optional().or(z.literal("")),
+  isActive: z.boolean().default(true),
+});
+
+export const supplyKindSchema = z.enum(["bottle", "box", "base"]);
+
+export const createSupplySchema = z.object({
+  kind: supplyKindSchema,
+  name: z.string().trim().min(1, "Name is required").max(120),
+  sizeMl: z.number().int("Whole ml only").positive().optional(),
+  reorderLevel: z.number().int("Whole numbers only").min(0, "Cannot be negative"),
+});
+
+export const updateSupplySchema = z.object({
+  supplyId: z.string().uuid(),
+  expectedVersion: z.number().int().min(0),
+  name: z.string().trim().min(1, "Name is required").max(120),
+  sizeMl: z.number().int("Whole ml only").positive().optional(),
+  reorderLevel: z.number().int("Whole numbers only").min(0, "Cannot be negative"),
+  status: z.enum(["active", "archived"]),
+});
+
+export const receiveSupplySchema = z.object({
+  idempotencyKey: z.string().uuid(),
+  supplyId: z.string().uuid("Select a supply"),
+  quantity: z.number().int("Whole numbers only").positive("Quantity must be positive"),
+  supplierName: z.string().max(200).optional(),
+  /** Major INR (rupees) */
+  totalCost: z
+    .number()
+    .min(0, "Cost cannot be negative")
+    .max(21_474_836.47, "Cost is too large")
+    .optional(),
+  note: z.string().max(1000).optional(),
+});
+
+export const adjustSupplySchema = z.object({
+  idempotencyKey: z.string().uuid(),
+  supplyId: z.string().uuid("Select a supply"),
+  quantityDelta: z
+    .number()
+    .int("Must be a whole number")
+    .refine((n) => n !== 0, "Change cannot be zero"),
+  note: z.string().trim().min(1, "Say why the count changed").max(1000),
+});
+
+export const createSeriesProductSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(200),
+  brand: z.string().max(200).optional(),
+  category: z.string().max(100).optional(),
+  description: z.string().max(5000).optional(),
+  seriesId: z.string().uuid("Pick a series"),
+  variants: z
+    .array(
+      z.object({
+        sizeMl: z.number().int().positive(),
+        sku: z
+          .string()
+          .min(1, "SKU is required")
+          .max(64)
+          .regex(/^[A-Za-z0-9._-]+$/, "SKU: letters, numbers, . _ - only"),
+        /** Major INR (rupees) */
+        retail: z.number().min(0, "Retail cannot be negative"),
+        cost: z.number().min(0, "Cost cannot be negative"),
+      }),
+    )
+    .min(1, "Pick at least one size"),
+});
+
+export const assignProductSeriesSchema = z.object({
+  productId: z.string().uuid(),
+  seriesId: z.string().uuid().or(z.literal("")),
+});
+
+export type CreateSeriesInput = z.infer<typeof createSeriesSchema>;
+export type UpdateSeriesInput = z.infer<typeof updateSeriesSchema>;
+export type SeriesSizeFormInput = z.infer<typeof seriesSizeSchema>;
+export type CreateSupplyInput = z.infer<typeof createSupplySchema>;
+export type UpdateSupplyInput = z.infer<typeof updateSupplySchema>;
+export type ReceiveSupplyInput = z.infer<typeof receiveSupplySchema>;
+export type AdjustSupplyInput = z.infer<typeof adjustSupplySchema>;
+export type CreateSeriesProductInput = z.infer<typeof createSeriesProductSchema>;

@@ -1,9 +1,14 @@
 "use client";
 
 import { useState, type FormEvent, type ReactNode } from "react";
-import { Button } from "@perfume-aura/ui/components/button";
-import { Input } from "@perfume-aura/ui/components/input";
-import { Label } from "@perfume-aura/ui/components/label";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Switch } from "@astryxdesign/core/Switch";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
+import { FormField } from "@/components/form-field";
 import {
   updateCatalogMediaAction,
   updateCatalogVariantPriceAction,
@@ -40,13 +45,27 @@ function AuditedControlForm({
       setPending(false);
     }
   }
-  return <form onSubmit={onSubmit} className="grid gap-3 rounded-md border p-4">
-    {children}
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div>{error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}{message ? <p role="status" className="text-sm text-emerald-700">{message}</p> : null}</div>
-      <Button type="submit" size="sm" variant="outline" disabled={pending} focusableWhenDisabled={pending}>{pending ? "Saving…" : "Save audited record"}</Button>
-    </div>
+  return <form onSubmit={onSubmit} className="rounded-md border border-border p-4">
+    <VStack gap={3}>
+      {children}
+      {error ? <Banner status="error" title={error} role="alert" /> : null}
+      {message ? <Banner status="success" title={message} role="status" /> : null}
+      <HStack justify="end">
+        <Button type="submit" size="sm" variant="secondary" label={pending ? "Saving…" : "Save audited record"} isLoading={pending} />
+      </HStack>
+    </VStack>
   </form>;
+}
+
+/** Controlled Astryx checkbox that still posts "on" under `name`, like the native one it replaces. */
+function ApprovalCheckbox({ name, label, defaultChecked }: Readonly<{ name: string; label: string; defaultChecked: boolean }>) {
+  const [checked, setChecked] = useState(defaultChecked);
+  return <div className="flex min-h-11 items-center"><CheckboxInput label={label} htmlName={name} value={checked} onChange={(next) => setChecked(next)} /></div>;
+}
+
+function ActiveSwitch({ name, label, defaultChecked }: Readonly<{ name: string; label: string; defaultChecked: boolean }>) {
+  const [checked, setChecked] = useState(defaultChecked);
+  return <div className="flex min-h-11 items-center"><Switch label={label} htmlName={name} value={checked} onChange={(next) => setChecked(next)} /></div>;
 }
 
 export function CatalogVariantPriceControl({ value }: Readonly<{ value: {
@@ -64,12 +83,15 @@ export function CatalogVariantPriceControl({ value }: Readonly<{ value: {
     <input type="hidden" name="productId" value={value.productId} />
     <input type="hidden" name="variantId" value={value.variantId} />
     <input type="hidden" name="expectedUpdatedAt" value={value.expectedUpdatedAt} />
-    <p className="font-medium">{value.sizeMl} ml · {value.sku}</p>
+    <Text as="p" weight="medium">{value.sizeMl} ml · {value.sku}</Text>
     <div className="grid gap-3 sm:grid-cols-2">
-      <div className="grid gap-2"><Label htmlFor={`amount-${value.variantId}`}>GST-inclusive retail price (INR)</Label><Input id={`amount-${value.variantId}`} name="amount" type="number" min="0.01" step="0.01" required defaultValue={value.amountMinor == null ? "" : value.amountMinor / 100} /></div>
-      <div className="grid gap-2"><Label htmlFor={`price-ref-${value.variantId}`}>CA/owner price approval reference</Label><Input id={`price-ref-${value.variantId}`} name="approvalReference" defaultValue={value.approvalReference ?? ""} /></div>
+      <FormField id={`amount-${value.variantId}`} label="GST-inclusive retail price (INR)" name="amount" type="number" min="0.01" step="0.01" required defaultValue={value.amountMinor == null ? "" : value.amountMinor / 100} />
+      <FormField id={`price-ref-${value.variantId}`} label="CA/owner price approval reference" name="approvalReference" defaultValue={value.approvalReference ?? ""} />
     </div>
-    <div className="flex flex-wrap gap-5"><label className="flex min-h-11 items-center gap-2 text-sm"><input className="size-4" type="checkbox" name="approved" defaultChecked={Boolean(value.approvedAt)} />Approved</label><label className="flex min-h-11 items-center gap-2 text-sm"><input className="size-4" type="checkbox" name="active" defaultChecked={value.active} />Active for sale</label></div>
+    <HStack gap={5} wrap="wrap">
+      <ApprovalCheckbox name="approved" label="Approved" defaultChecked={Boolean(value.approvedAt)} />
+      <ActiveSwitch name="active" label="Active for sale" defaultChecked={value.active} />
+    </HStack>
   </AuditedControlForm>;
 }
 
@@ -89,13 +111,15 @@ export function CatalogMediaControl({ value }: Readonly<{ value: {
     <input type="hidden" name="productId" value={value.productId} />
     <input type="hidden" name="mediaId" value={value.mediaId} />
     <input type="hidden" name="expectedUpdatedAt" value={value.expectedUpdatedAt} />
-    <p className="font-medium">{value.kind} · {value.dimensions}</p>
-    <p className="break-all text-xs text-muted-foreground">{value.storageKey}</p>
+    <VStack gap={0.5}>
+      <Text as="p" weight="medium">{value.kind} · {value.dimensions}</Text>
+      <Text as="p" type="supporting" wordBreak="break-all">{value.storageKey}</Text>
+    </VStack>
     <div className="grid gap-3 sm:grid-cols-[1fr_7rem]">
-      <div className="grid gap-2"><Label htmlFor={`alt-${value.mediaId}`}>Accessible alt text</Label><Input id={`alt-${value.mediaId}`} name="altText" required minLength={5} defaultValue={value.altText} /></div>
-      <div className="grid gap-2"><Label htmlFor={`position-${value.mediaId}`}>Position</Label><Input id={`position-${value.mediaId}`} name="position" type="number" min={0} required defaultValue={value.position} /></div>
+      <FormField id={`alt-${value.mediaId}`} label="Accessible alt text" name="altText" required defaultValue={value.altText} />
+      <FormField id={`position-${value.mediaId}`} label="Position" name="position" type="number" min={0} step={1} required defaultValue={value.position} />
     </div>
-    <div className="grid gap-2"><Label htmlFor={`media-ref-${value.mediaId}`}>Media approval reference</Label><Input id={`media-ref-${value.mediaId}`} name="approvalReference" defaultValue={value.approvalReference ?? ""} /></div>
-    <label className="flex min-h-11 items-center gap-2 text-sm"><input className="size-4" type="checkbox" name="approved" defaultChecked={Boolean(value.approvedAt)} />Asset and metadata approved</label>
+    <FormField id={`media-ref-${value.mediaId}`} label="Media approval reference" name="approvalReference" defaultValue={value.approvalReference ?? ""} />
+    <ApprovalCheckbox name="approved" label="Asset and metadata approved" defaultChecked={Boolean(value.approvedAt)} />
   </AuditedControlForm>;
 }

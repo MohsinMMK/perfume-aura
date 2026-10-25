@@ -2,15 +2,16 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@perfume-aura/ui/components/button";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@perfume-aura/ui/components/field";
-import { Input } from "@perfume-aura/ui/components/input";
-import { Spinner } from "@perfume-aura/ui/components/spinner";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Text } from "@astryxdesign/core/Text";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { VStack } from "@astryxdesign/core/VStack";
+import { useNativeConstraints } from "@/components/auth/native-input-constraints";
 import { authClient } from "@/lib/auth-client";
 
 type EnrollmentState = {
@@ -38,6 +39,13 @@ export function TwoFactorEnrollmentForm({
   const [confirmedBackupCodes, setConfirmedBackupCodes] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const passwordConstraints = useNativeConstraints({ required: true });
+  const codeConstraints = useNativeConstraints({
+    required: true,
+    pattern: "[0-9]{6}",
+    inputMode: "numeric",
+  });
+  const invalid = error ? { type: "error" as const } : undefined;
 
   async function startEnrollment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -96,103 +104,119 @@ export function TwoFactorEnrollmentForm({
     }
   }
 
+  const errorBanner = error ? (
+    <div role="alert">
+      <Banner status="error" title={error} />
+    </div>
+  ) : null;
+
   if (enrollment) {
     return (
-      <form onSubmit={verifyEnrollment} className="flex flex-col gap-5">
-        <div className="rounded-md border border-border bg-muted/30 p-4">
-          <h3 className="text-sm font-medium">1. Add this setup key</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            In an authenticator app, choose manual setup and use this one-time
-            URI. It is visible only while this page remains open.
-          </p>
-          <code className="mt-3 block overflow-x-auto rounded bg-background p-3 text-xs">
-            {enrollment.totpURI}
-          </code>
-        </div>
+      <form onSubmit={verifyEnrollment}>
+        <VStack gap={5}>
+          <Card variant="muted" padding={4}>
+            <VStack gap={3}>
+              <VStack gap={1}>
+                <Heading level={3}>1. Add this setup key</Heading>
+                <Text as="p" color="secondary">
+                  In an authenticator app, choose manual setup and use this
+                  one-time URI. It is visible only while this page remains open.
+                </Text>
+              </VStack>
+              <code className="block overflow-x-auto rounded-md border border-border bg-surface p-3 font-mono text-xs text-primary">
+                {enrollment.totpURI}
+              </code>
+            </VStack>
+          </Card>
 
-        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-4">
-          <h3 className="text-sm font-medium">2. Store recovery codes now</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Each code works once. They will not be shown again on this page.
-          </p>
-          <ul className="mt-3 grid grid-cols-2 gap-2 font-mono text-sm sm:grid-cols-3">
-            {enrollment.backupCodes.map((backupCode) => (
-              <li key={backupCode} className="rounded bg-background px-2 py-1">
-                {backupCode}
-              </li>
-            ))}
-          </ul>
-          <label className="mt-4 flex min-h-11 items-center gap-3 text-sm">
-            <input
-              type="checkbox"
-              checked={confirmedBackupCodes}
-              onChange={(event) =>
-                setConfirmedBackupCodes(event.currentTarget.checked)
-              }
-            />
-            I have safely stored every recovery code.
-          </label>
-        </div>
+          <Card variant="yellow" padding={4}>
+            <VStack gap={3}>
+              <VStack gap={1}>
+                <Heading level={3}>2. Store recovery codes now</Heading>
+                <Text as="p" color="secondary">
+                  Each code works once. They will not be shown again on this
+                  page.
+                </Text>
+              </VStack>
+              <ul className="grid grid-cols-2 gap-2 font-mono text-sm text-primary sm:grid-cols-3">
+                {enrollment.backupCodes.map((backupCode) => (
+                  <li
+                    key={backupCode}
+                    className="rounded-md bg-surface px-2 py-1"
+                  >
+                    {backupCode}
+                  </li>
+                ))}
+              </ul>
+              <div className="flex min-h-11 items-center">
+                <CheckboxInput
+                  label="I have safely stored every recovery code."
+                  value={confirmedBackupCodes}
+                  onChange={setConfirmedBackupCodes}
+                />
+              </div>
+            </VStack>
+          </Card>
 
-        <Field data-invalid={error ? true : undefined}>
-          <FieldLabel htmlFor="totp-code">3. Verify the 6-digit code</FieldLabel>
-          <Input
+          <TextInput
+            ref={codeConstraints}
             id="totp-code"
-            name="totp-code"
-            inputMode="numeric"
+            htmlName="totp-code"
+            label="3. Verify the 6-digit code"
             autoComplete="one-time-code"
-            pattern="[0-9]{6}"
-            required
             value={code}
-            onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
-            aria-invalid={error ? true : undefined}
+            onChange={(value) => setCode(value.replace(/\D/g, ""))}
+            status={invalid}
+            controlClassName="min-h-11"
           />
-        </Field>
 
-        {error ? <FieldError>{error}</FieldError> : null}
+          {errorBanner}
 
-        <Button
-          type="submit"
-          disabled={pending || !confirmedBackupCodes}
-          focusableWhenDisabled={pending}
-        >
-          {pending ? <Spinner data-icon="inline-start" /> : null}
-          {pending ? "Verifying…" : "Verify and finish"}
-        </Button>
+          <HStack justify="start">
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={pending}
+              isDisabled={!confirmedBackupCodes}
+              label={pending ? "Verifying…" : "Verify and finish"}
+            />
+          </HStack>
+        </VStack>
       </form>
     );
   }
 
   return (
     <form onSubmit={startEnrollment}>
-      <FieldGroup>
-        <Field data-invalid={error ? true : undefined}>
-          <FieldLabel htmlFor="two-factor-password">Current password</FieldLabel>
-          <Input
-            id="two-factor-password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            aria-invalid={error ? true : undefined}
+      <VStack gap={4}>
+        <TextInput
+          ref={passwordConstraints}
+          id="two-factor-password"
+          htmlName="password"
+          label="Current password"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={setPassword}
+          status={invalid}
+          controlClassName="min-h-11"
+        />
+        {errorBanner}
+        <HStack justify="start">
+          <Button
+            type="submit"
+            variant="primary"
+            isLoading={pending}
+            label={
+              pending
+                ? "Preparing…"
+                : enforced
+                  ? "Set up required two-factor authentication"
+                  : "Set up two-factor authentication"
+            }
           />
-        </Field>
-        {error ? <FieldError>{error}</FieldError> : null}
-        <Button
-          type="submit"
-          disabled={pending}
-          focusableWhenDisabled={pending}
-        >
-          {pending ? <Spinner data-icon="inline-start" /> : null}
-          {pending
-            ? "Preparing…"
-            : enforced
-              ? "Set up required two-factor authentication"
-              : "Set up two-factor authentication"}
-        </Button>
-      </FieldGroup>
+        </HStack>
+      </VStack>
     </form>
   );
 }

@@ -1,7 +1,16 @@
-import { Badge } from "@perfume-aura/ui/components/badge";
-import { Card, CardContent } from "@perfume-aura/ui/components/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@perfume-aura/ui/components/table";
+import { Card } from "@astryxdesign/core/Card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableHeaderCell,
+  TableRow,
+} from "@astryxdesign/core/Table";
+import { Token } from "@astryxdesign/core/Token";
+import { VStack } from "@astryxdesign/core/VStack";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { PageHeader } from "@/components/page-header";
 import { listCommercePromotions } from "@/lib/commerce";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatInr } from "@/lib/money";
@@ -11,5 +20,36 @@ export const dynamic = "force-dynamic";
 export default async function CommercePromotionsPage() {
   await requireCapability("commerce.promotions.manage", { redirectToLogin: true });
   const result = await safeDbQuery(() => listCommercePromotions());
-  return <div className="mx-auto flex w-full max-w-6xl flex-col gap-6"><div><h1 className="font-heading text-2xl font-semibold tracking-tight">Promotions & bundles</h1><p className="mt-1 text-sm text-muted-foreground">Server-authoritative discounts in INR; discovery sets remain excluded.</p></div>{result.error || !result.data ? <DbUnavailableState message={result.error ?? "No data returned."} /> : <Card className="overflow-hidden py-0"><CardContent className="p-0"><Table><TableHeader><TableRow><TableHead>Code</TableHead><TableHead>Discount</TableHead><TableHead>Window</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{result.data.map((promo) => <TableRow key={promo.id}><TableCell className="font-mono font-medium">{promo.code}</TableCell><TableCell>{promo.discountAmountMinor ? formatInr(promo.discountAmountMinor) : `${(promo.discountPercentBasisPoints ?? 0) / 100}%`}</TableCell><TableCell>{promo.startsAt.toLocaleDateString("en-IN")} – {promo.endsAt.toLocaleDateString("en-IN")}</TableCell><TableCell><Badge variant={promo.active ? "default" : "secondary"}>{promo.active ? "active" : "inactive"}</Badge></TableCell></TableRow>)}</TableBody></Table></CardContent></Card>}</div>;
+  return (
+    <VStack gap={6} className="mx-auto w-full max-w-6xl">
+      <PageHeader
+        title="Promotions & bundles"
+        description="Server-authoritative discounts in INR; discovery sets remain excluded."
+      />
+      {result.error || !result.data ? <DbUnavailableState message={result.error ?? "No data returned."} /> : (
+        <Card padding={0} className="overflow-hidden">
+          <Table hasHover>
+            <TableHeader>
+              <TableRow>
+                <TableHeaderCell>Code</TableHeaderCell>
+                <TableHeaderCell>Discount</TableHeaderCell>
+                <TableHeaderCell>Window</TableHeaderCell>
+                <TableHeaderCell>Status</TableHeaderCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {result.data.map((promo) => (
+                <TableRow key={promo.id}>
+                  <TableCell className="font-mono font-medium">{promo.code}</TableCell>
+                  <TableCell className="tabular-nums">{promo.discountAmountMinor ? formatInr(promo.discountAmountMinor) : `${(promo.discountPercentBasisPoints ?? 0) / 100}%`}</TableCell>
+                  <TableCell>{promo.startsAt.toLocaleDateString("en-IN")} – {promo.endsAt.toLocaleDateString("en-IN")}</TableCell>
+                  <TableCell><Token size="sm" label={promo.active ? "active" : "inactive"} color={promo.active ? "green" : "gray"} /></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
+    </VStack>
+  );
 }

@@ -13,10 +13,19 @@ export {
 
 export {
   products,
+  productSeries,
   productVariants,
   productStatusEnum,
   variantStatusEnum,
 } from "./products";
+
+export {
+  seriesSizes,
+  supplyItems,
+  supplyKindEnum,
+  supplyMovements,
+  supplyMovementTypeEnum,
+} from "./production";
 
 export { locations } from "./locations";
 

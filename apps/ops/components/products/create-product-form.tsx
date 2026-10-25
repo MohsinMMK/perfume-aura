@@ -2,23 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { Button } from "@perfume-aura/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@perfume-aura/ui/components/card";
-import {
-  FieldDescription,
-  FieldGroup,
-  FieldLegend,
-  FieldSet,
-} from "@perfume-aura/ui/components/field";
-import { Separator } from "@perfume-aura/ui/components/separator";
-import { Spinner } from "@perfume-aura/ui/components/spinner";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Divider } from "@astryxdesign/core/Divider";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { createProductAction } from "@/lib/products";
 import { FormField, TextAreaField } from "@/components/form-field";
 
@@ -76,15 +67,16 @@ export function CreateProductForm() {
   return (
     <form onSubmit={onSubmit} className="mx-auto w-full max-w-2xl">
       <Card>
-        <CardHeader>
-          <CardTitle>New product</CardTitle>
-          <CardDescription>
-            Create a catalog product and its first sellable size/SKU. Prices in
-            INR rupees (stored as integer paise in legacy `*Cents` columns).
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-6">
-          <FieldGroup className="gap-4 sm:grid sm:grid-cols-2 sm:gap-4">
+        <VStack gap={6}>
+          <VStack gap={1}>
+            <Heading level={2}>New product</Heading>
+            <Text as="p" color="secondary">
+              Create a catalog product and its first sellable size/SKU. Prices in
+              INR rupees (stored as integer paise in legacy `*Cents` columns).
+            </Text>
+          </VStack>
+
+          <div className="grid gap-4 sm:grid-cols-2">
             <FormField
               label="Name"
               name="name"
@@ -112,17 +104,19 @@ export function CreateProductForm() {
               error={fe("description")}
               className="sm:col-span-2"
             />
-          </FieldGroup>
+          </div>
 
-          <Separator />
+          <Divider />
 
-          <FieldSet>
-            <FieldLegend variant="label">First variant (SKU)</FieldLegend>
-            <FieldDescription>
+          <fieldset className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
+            <legend className="mb-1 p-0">
+              <Heading level={3}>First variant (SKU)</Heading>
+            </legend>
+            <Text as="p" color="secondary">
               Size, cost, and retail. You can add more variants on the product
               page.
-            </FieldDescription>
-            <FieldGroup className="mt-4 gap-4 sm:grid sm:grid-cols-2 sm:gap-4">
+            </Text>
+            <div className="grid gap-4 sm:grid-cols-2">
               <FormField
                 label="SKU"
                 name="sku"
@@ -176,34 +170,29 @@ export function CreateProductForm() {
                 placeholder="4500"
                 error={fe("retail")}
               />
-            </FieldGroup>
-          </FieldSet>
+            </div>
+          </fieldset>
 
-          {error ? (
-            <p className="text-sm text-destructive" role="alert">
-              {error}
-            </p>
-          ) : null}
-        </CardContent>
-        <CardFooter className="justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={pending}
-            focusableWhenDisabled={pending}
-            onClick={() => router.push("/products")}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={pending}
-            focusableWhenDisabled={pending}
-          >
-            {pending ? <Spinner data-icon="inline-start" /> : null}
-            {pending ? "Creating…" : "Create product"}
-          </Button>
-        </CardFooter>
+          {error ? <Banner status="error" title={error} /> : null}
+
+          <HStack justify="end" gap={2} wrap="wrap">
+            <Button
+              type="button"
+              label="Cancel"
+              variant="secondary"
+              onClick={() => {
+                if (pending) return;
+                router.push("/products");
+              }}
+            />
+            <Button
+              type="submit"
+              label={pending ? "Creating…" : "Create product"}
+              variant="primary"
+              isLoading={pending}
+            />
+          </HStack>
+        </VStack>
       </Card>
     </form>
   );

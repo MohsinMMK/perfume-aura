@@ -1,27 +1,19 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@perfume-aura/ui/components/card";
-import { Badge } from "@perfume-aura/ui/components/badge";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { EmptyState } from "@astryxdesign/core/EmptyState";
+import { Heading } from "@astryxdesign/core/Heading";
 import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
+  TableHeaderCell,
   TableRow,
-} from "@perfume-aura/ui/components/table";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@perfume-aura/ui/components/empty";
+} from "@astryxdesign/core/Table";
+import { Text } from "@astryxdesign/core/Text";
+import { Token } from "@astryxdesign/core/Token";
+import { VStack } from "@astryxdesign/core/VStack";
 import { listActiveVariantsForStockSelect } from "@/lib/products";
 import { listRecentMovements } from "@/lib/stock";
 import { safeDbQuery } from "@/lib/db-safe";
@@ -29,6 +21,7 @@ import { formatInr, formatQty } from "@/lib/money";
 import { ReceiveStockForm } from "@/components/stock/receive-stock-form";
 import { AdjustStockForm } from "@/components/stock/adjust-stock-form";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { PageHeader } from "@/components/page-header";
 import { formatBusinessDateTime } from "@/lib/business-date";
 import { hasOpsCapability } from "@/lib/ops-access";
 import { requireCapability } from "@/lib/session";
@@ -41,18 +34,16 @@ import { PaginationNav } from "@/components/pagination-nav";
 
 export const dynamic = "force-dynamic";
 
-function typeBadgeVariant(
-  type: string,
-): "default" | "secondary" | "destructive" | "outline" {
+function typeTokenColor(type: string): "green" | "red" | "gray" {
   switch (type) {
     case "receive":
     case "return":
-      return "secondary";
+      return "green";
     case "sale":
     case "damage":
-      return "destructive";
+      return "red";
     default:
-      return "outline";
+      return "gray";
   }
 }
 
@@ -93,125 +84,122 @@ export default async function StockPage({
   }));
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Stock</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Receive inventory and review the movement ledger.
-          </p>
-        </div>
-        <div className="flex flex-col items-start gap-1 sm:items-end">
-          <Link
-            href="/stock/oil"
-            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-          >
-            Oil stock →
-          </Link>
-          <Link
-            href="/stock/low"
-            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-          >
-            View low stock →
-          </Link>
-        </div>
-      </div>
+    <VStack gap={6} className="mx-auto w-full max-w-6xl">
+      <PageHeader
+        title="Stock"
+        description="Receive inventory and review the movement ledger."
+        actions={
+          <>
+            <Button label="Oil stock" href="/stock/oil" variant="secondary" />
+            <Button label="View low stock" href="/stock/low" variant="secondary" />
+          </>
+        }
+      />
 
       {dbError ? (
         <DbUnavailableState message={dbError} />
       ) : (
         <>
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
             <ReceiveStockForm variants={variantOptions} />
             {canAdjustStock ? <AdjustStockForm variants={variantOptions} /> : null}
           </div>
 
-          <Card className="overflow-hidden py-0">
-            <CardHeader className="border-b py-4">
-              <CardTitle>Recent movements</CardTitle>
-              <CardDescription>
+          <Card padding={0} className="overflow-hidden">
+            <VStack gap={1} padding={4} className="border-b border-border">
+              <Heading level={2}>Recent movements</Heading>
+              <Text color="secondary">
                 Paged ledger entries across all movement types.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              {movements.length === 0 ? (
-                <Empty className="rounded-none border-0 py-10">
-                  <EmptyHeader>
-                    <EmptyTitle>No movements yet</EmptyTitle>
-                    <EmptyDescription>
-                      Receive stock to create the first ledger entry.
-                    </EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>When</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Product / SKU</TableHead>
-                      <TableHead className="text-right">Delta</TableHead>
-                      <TableHead className="text-right">After</TableHead>
-                      {canViewCost ? <TableHead>Cost basis</TableHead> : null}
-                      <TableHead>Note</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {movements.map((m) => (
-                      <TableRow key={m.id}>
-                        <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+              </Text>
+            </VStack>
+            {movements.length === 0 ? (
+              <EmptyState
+                title="No movements yet"
+                description="Receive stock to create the first ledger entry."
+                headingLevel={3}
+              />
+            ) : (
+              <Table hasHover>
+                <TableHeader>
+                  <TableRow>
+                    <TableHeaderCell>When</TableHeaderCell>
+                    <TableHeaderCell>Type</TableHeaderCell>
+                    <TableHeaderCell>Product / SKU</TableHeaderCell>
+                    <TableHeaderCell className="text-right">Delta</TableHeaderCell>
+                    <TableHeaderCell className="text-right">After</TableHeaderCell>
+                    {canViewCost ? (
+                      <TableHeaderCell>Cost basis</TableHeaderCell>
+                    ) : null}
+                    <TableHeaderCell>Note</TableHeaderCell>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {movements.map((m) => (
+                    <TableRow key={m.id}>
+                      <TableCell>
+                        <Text type="supporting">
                           {formatBusinessDateTime(m.createdAt)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={typeBadgeVariant(m.type)}>
-                            {m.type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className="font-medium">{m.productName}</span>
-                          <p className="text-xs text-muted-foreground">
-                            {m.sku} · {m.sizeMl} ml
-                          </p>
-                        </TableCell>
-                        <TableCell
-                          className={
-                            m.quantityDelta >= 0
-                              ? "text-right tabular-nums text-foreground"
-                              : "text-right tabular-nums text-destructive"
+                        </Text>
+                      </TableCell>
+                      <TableCell>
+                        <Token
+                          size="sm"
+                          label={
+                            m.type === "receive" && m.note === "Made at sale"
+                              ? "made at sale"
+                              : m.type
                           }
-                        >
-                          {m.quantityDelta > 0 ? "+" : ""}
-                          {formatQty(m.quantityDelta)}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {formatQty(m.quantityAfter)}
-                        </TableCell>
-                        {canViewCost ? (
-                          <TableCell className="whitespace-nowrap text-xs">
-                            {m.costBasis === "snapshot" &&
+                          color={typeTokenColor(m.type)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <VStack gap={0.5}>
+                          <Text weight="medium">{m.productName}</Text>
+                          <Text type="supporting">
+                            {m.sku} · {m.sizeMl} ml
+                          </Text>
+                        </VStack>
+                      </TableCell>
+                      <TableCell
+                        className={
+                          m.quantityDelta >= 0
+                            ? "text-right tabular-nums"
+                            : "text-right tabular-nums text-error"
+                        }
+                      >
+                        {m.quantityDelta > 0 ? "+" : ""}
+                        {formatQty(m.quantityDelta)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatQty(m.quantityAfter)}
+                      </TableCell>
+                      {canViewCost ? (
+                        <TableCell>
+                          {m.costBasis === "snapshot" &&
+                          m.unitCostCents !== null ? (
+                            <Text type="supporting" color="primary">
+                              Captured · {formatInr(m.unitCostCents)}
+                            </Text>
+                          ) : m.costBasis === "legacy_current" &&
                             m.unitCostCents !== null ? (
-                              <span>
-                                Captured · {formatInr(m.unitCostCents)}
-                              </span>
-                            ) : m.costBasis === "legacy_current" &&
-                              m.unitCostCents !== null ? (
-                              <span className="text-muted-foreground">
-                                Legacy estimate · {formatInr(m.unitCostCents)}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                        ) : null}
-                        <TableCell className="max-w-[12rem] truncate text-muted-foreground">
-                          {m.note ?? "—"}
+                            <Text type="supporting">
+                              Legacy estimate · {formatInr(m.unitCostCents)}
+                            </Text>
+                          ) : (
+                            <Text type="supporting">—</Text>
+                          )}
                         </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
+                      ) : null}
+                      <TableCell>
+                        <Text color="secondary" maxLines={1}>
+                          {m.note ?? "—"}
+                        </Text>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
             {movementPage ? (
               <PaginationNav
                 pathname="/stock"
@@ -223,6 +211,6 @@ export default async function StockPage({
           </Card>
         </>
       )}
-    </div>
+    </VStack>
   );
 }
