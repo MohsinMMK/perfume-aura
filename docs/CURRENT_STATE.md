@@ -7,9 +7,9 @@ Never infer a live release from Git HEAD. Never record secrets or customer data.
 
 | Surface | Owner | Live source |
 |---|---|---|
-| `perfumeaura.com` | VPS Caddy → loopback 3031 → storefront | `2af78e0fd3f14ad199e7ad37e7505e95c706f9f8` |
+| `perfumeaura.com` | VPS Caddy → loopback 3031 → storefront | `30a72e68225fa544bb0fd6c6ec1067b843ea4694` |
 | `www.perfumeaura.com` | Caddy HTTPS 308 to apex, preserving path/query | Same storefront |
-| `app.perfumeaura.com` | VPS Caddy → loopback 3020 → Ops | `2af78e0fd3f14ad199e7ad37e7505e95c706f9f8` |
+| `app.perfumeaura.com` | VPS Caddy → loopback 3020 → Ops | `30a72e68225fa544bb0fd6c6ec1067b843ea4694` |
 
 VPS: Hostinger KVM2, public `194.164.149.3`, Tailscale `100.119.191.103`.
 Admin: `ssh khanect-vps`. SSH is private; only HTTP/HTTPS are public.
@@ -45,7 +45,7 @@ outside it is still open.
 
 - Storefront: protected main → scoped checks → checksummed Linux standalone →
   immutable GHCR image → Tailscale forced SSH → hardened container.
-  `VPS_STOREFRONT_AUTO_DEPLOY_ENABLED=true`. GitHub push run `40091178477`
+  `VPS_STOREFRONT_AUTO_DEPLOY_ENABLED=true`. GitHub dispatch run `40220465044`
   deployed the exact live source to both apps. Full public
   acceptance passes; `VPS_STOREFRONT_PUBLIC_VERIFICATION_ENABLED=true` checks
   future releases.
@@ -54,7 +54,7 @@ outside it is still open.
   unauthenticated session) and storefront checks pass. Ops sends
   `X-Robots-Tag: noindex, nofollow` on every page.
 - Storefront image digest:
-  `sha256:c8e50b311901a03471f7926e91bef12bb9eca3f528057cc56cba437ebeb8af76`.
+  `sha256:ad8b8d26823d81652d9096a802780adf8932a62813166f006fa802088e50fb97`.
   The runtime settings are root-owned mode 0600 in
   `/etc/khanect/perfume-aura-storefront.env`; app auth secrets remain separate.
   Forced SSH probe succeeds and arbitrary commands are denied.
