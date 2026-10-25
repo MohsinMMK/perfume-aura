@@ -6,21 +6,60 @@ const readStorefront = (relativePath: string) =>
   readFile(new URL(relativePath, import.meta.url), "utf8");
 
 describe("storefront motion contract", () => {
-  it("removes the blocking first-load intro and keeps native scroll", async () => {
-    const [shell, globals, layout] = await Promise.all([
+  it("plays a skippable once-per-session homepage opening without hiding content from no-JS visitors", async () => {
+    const [shell, globals, layout, home, intro, introPolicy, hero] = await Promise.all([
       readStorefront("../components/storefront-shell.tsx"),
       readStorefront("../app/globals.css"),
       readStorefront("../app/layout.tsx"),
+      readStorefront("../app/page.tsx"),
+      readStorefront("../components/opening-intro.tsx"),
+      readStorefront("./opening-intro.ts"),
+      readStorefront("../components/home-hero.tsx"),
     ]);
 
     assert.doesNotMatch(shell, /OpeningIntro/);
-    assert.doesNotMatch(globals, /\.opening-intro/);
+    assert.match(home, /<OpeningIntro \/>[\s\S]*<HomeHero \/>/u);
+    assert.match(globals, /\.aura-intro \{\s*display: none;\s*\}/u);
+    assert.match(globals, /\.aura-intro\[data-state="play"\] \{[\s\S]*animation: aura-intro-failsafe 300ms ease-out 5s forwards;/u);
+    assert.match(globals, /body:has\(\.aura-intro\[data-state="play"\]\)[\s\S]*animation-play-state: paused;/u);
+    assert.match(introPolicy, /prefers-reduced-motion: reduce/u);
+    assert.match(introPolicy, /sessionStorage\.getItem/u);
+    assert.match(introPolicy, /setAttribute\("data-state","play"\)/u);
+    assert.match(intro, /aria-hidden="true"/u);
+    assert.match(intro, /suppressHydrationWarning/u);
+    assert.match(intro, /\["pointerdown", "keydown", "wheel", "touchstart"\]/u);
+    assert.match(intro, /dangerouslySetInnerHTML=\{\{ __html: openingIntroGateScript \}\}/u);
+    assert.match(hero, /afterOpeningIntro\(/u);
     assert.match(globals, /html\s*\{[\s\S]*scroll-behavior:\s*auto;/);
     assert.match(layout, /data-scroll-behavior="auto"/);
     assert.doesNotMatch(globals, /scroll-behavior:\s*smooth/);
   });
 
-  it("owns reduced-motion and desktop journey through live matchMedia", async () => {
+  it("smooths wheel input only, through the official Lenis and ScrollTrigger wiring", async () => {
+    const [smooth, smoothPolicy, shell, motion] = await Promise.all([
+      readStorefront("../components/smooth-scroll.tsx"),
+      readStorefront("./smooth-scroll.ts"),
+      readStorefront("../components/storefront-shell.tsx"),
+      readStorefront("../components/storefront-motion.tsx"),
+    ]);
+
+    assert.match(shell, /<SmoothScroll \/>/u);
+    assert.match(
+      smoothPolicy,
+      /\(hover: hover\) and \(pointer: fine\) and \(prefers-reduced-motion: no-preference\)/u,
+    );
+    assert.match(smoothPolicy, /\[role="dialog"\]/u);
+    assert.match(smooth, /syncTouch: false/u);
+    assert.match(smooth, /lenis\.on\("scroll", ScrollTrigger\.update\)/u);
+    assert.match(smooth, /lenis\.raf\(time \* 1000\)/u);
+    assert.match(smooth, /gsap\.ticker\.lagSmoothing\(0\)/u);
+    assert.match(smooth, /isPageScrollLocked\(document\.documentElement, document\.body\)/u);
+    assert.match(smooth, /lenis\.destroy\(\)/u);
+    assert.match(motion, /jumpWindowScroll\(0, 0\)/u);
+    assert.doesNotMatch(motion, /window\.scrollTo\(/u);
+  });
+
+  it("owns reduced-motion, the card stack and the arc wheel through live matchMedia", async () => {
     const [motion, shell, hero, aboutStage, home, globals] = await Promise.all([
       readStorefront("../components/storefront-motion.tsx"),
       readStorefront("../components/storefront-shell.tsx"),
@@ -112,8 +151,13 @@ describe("storefront motion contract", () => {
     assert.match(motion, /element\.dataset\.driftX/);
     assert.match(motion, /element\.dataset\.driftY/);
     assert.match(motion, /pin:\s*true/);
-    assert.match(motion, /containerAnimation:\s*horizontalTween/);
     assert.match(motion, /anticipatePin:\s*1/);
+    assert.match(motion, /ScrollTrigger\.addEventListener\("refreshInit", layoutArc\)/u);
+    assert.match(motion, /ScrollTrigger\.removeEventListener\("refreshInit", layoutArc\)/u);
+    assert.match(motion, /section\.dataset\.arcReady = "true"/u);
+    assert.match(motion, /delete section\.dataset\.arcReady/u);
+    assert.match(motion, /start: \(\) => `top\+=\$\{naturalTop\(index\)\} bottom`/u);
+    assert.match(motion, /attachContinuousMotionGuard\(element, float\)/u);
     assert.match(motion, /"\[data-product-sticky-top\]"/u);
     assert.match(motion, /"\[data-product-sticky-bottom\]"/u);
     assert.match(motion, /trigger: productHero,[\s\S]*start: "bottom top",[\s\S]*end: "\+=64",[\s\S]*scrub: 0\.35/u);
@@ -174,19 +218,21 @@ describe("storefront motion contract", () => {
     assert.match(aboutStage, /document\.addEventListener\("visibilitychange"/u);
     assert.match(aboutStage, /document\.removeEventListener\("visibilitychange"/u);
 
-    assert.match(home, /data-motion-journey-pin/);
-    assert.match(home, /lg:justify-start[\s\S]*lg:pt-20/);
-    assert.match(home, /data-motion-journey-heading/);
+    assert.match(home, /data-motion-arc-pin/);
+    assert.match(home, /data-motion-arc-heading/);
     assert.match(home, /viewBox="0 -12 1000 340"/);
     assert.match(home, /max-w-\[56rem\][\s\S]*sm:max-w-\[64rem\]/);
-    assert.match(home, /lg:min-h-\[26rem\]/);
-    assert.match(home, /aura-snap-row/);
-    assert.match(home, /snap-x snap-mandatory/);
-    assert.match(home, /role="region"[\s\S]*aria-label="Why Perfume Aura"[\s\S]*tabIndex=\{0\}/u);
+    assert.match(home, /aria-labelledby="why-perfume-aura-heading"/u);
+    assert.match(home, /data-motion-stack-section/u);
+    assert.match(home, /aria-labelledby="four-ways-heading"/u);
+    assert.match(home, /<ol className="aura-stack /u);
+    assert.match(globals, /\.aura-stack__item \{\s*position: sticky;/u);
+    assert.match(globals, /height: calc\(var\(--aura-stack-card\) - \(var\(--aura-stack-index\) \* var\(--aura-stack-bar\)\)\);/u);
+    assert.match(globals, /@media \(max-height: 34rem\) \{\s*\.aura-stack__item \{\s*position: static;/u);
+    assert.match(globals, /\.aura-arc\[data-arc-ready="true"\] \.aura-arc__stage/u);
     assert.match(home, /render=\{<Link href="\/fragrance-guide" \/>\}[\s\S]*aura-cream-action[\s\S]*Learn how to choose a scent/u);
     assert.doesNotMatch(home, /Learn how to choose a scent[\s\S]*underline underline-offset-8/u);
-    assert.match(globals, /\[data-motion-journey-track\]/);
-    assert.match(globals, /transform:\s*none !important;/);
+    assert.match(globals, /\[data-motion-stack-card\],\s*\[data-motion-float-loop\] \{\s*transform: none !important;/u);
 
     const reducedMotion = globals.match(
       /@media \(prefers-reduced-motion: reduce\) \{([\s\S]*)\}\s*$/,

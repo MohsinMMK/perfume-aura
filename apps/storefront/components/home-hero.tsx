@@ -16,6 +16,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { Button } from "@perfume-aura/ui/components/button";
 import { cn } from "@perfume-aura/ui/lib/utils";
+import { afterOpeningIntro } from "@/lib/opening-intro";
 
 type HeroProduct = Readonly<{
   slug: string;
@@ -121,12 +122,19 @@ export function HomeHero() {
         const motionMedia = gsap.matchMedia(section);
 
         motionMedia.add("(prefers-reduced-motion: no-preference)", () => {
-          const timeline = gsap.timeline({ defaults: { ease: "power4.out" } });
+          // The start pose is set now, under the opening, so the hero never
+          // shows its final pose and then snaps back. After the opening hands
+          // over, the bottle rises out of the zoom-through.
+          const timeline = gsap.timeline({
+            paused: true,
+            defaults: { ease: "power4.out" },
+          });
           timeline.from(media, { y: 28, scale: 0.94, duration: 0.82 }, 0.18);
           if (controls) {
             timeline.from(controls, { scale: 0.86, duration: 0.42 }, 0.48);
           }
           timeline.from(cta, { y: 20, duration: 0.46 }, 0.56);
+          return afterOpeningIntro(() => timeline.play());
         });
 
         cleanup = () => motionMedia.revert();

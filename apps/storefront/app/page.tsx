@@ -1,16 +1,20 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
   ArrowRight01Icon,
-  DeliveryTruck01Icon,
-  PackageIcon,
-  Shield01Icon,
+  Calendar03Icon,
+  CheckmarkBadge01Icon,
+  FireIcon,
+  Moon02Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@perfume-aura/ui/components/button";
 import { HomeHero } from "@/components/home-hero";
 import { IngredientAtmosphere } from "@/components/ingredient-atmosphere";
+import { OpeningIntro } from "@/components/opening-intro";
+import { StackAtmosphere } from "@/components/stack-atmosphere";
 import { ProductCard } from "@/components/product-card";
 import { getFeaturedProducts } from "@/lib/catalog";
 import {
@@ -41,37 +45,53 @@ export const metadata: Metadata = {
 };
 
 const processSteps: readonly Readonly<{
-  icon: IconSvgElement;
   number: string;
   title: string;
   description: string;
 }>[] = [
   {
-    icon: PackageIcon,
     number: "01",
     title: "Begin with feeling",
     description: "Start with the atmosphere you want to carry: quiet, vivid, intimate, or after dark.",
   },
   {
-    icon: Shield01Icon,
     number: "02",
     title: "Follow the composition",
     description: "Move through fragrance family, note structure, and intensity without needing to speak in perfume jargon.",
   },
   {
-    icon: DeliveryTruck01Icon,
     number: "03",
     title: "Find your presence",
     description: "Choose the direction that feels like you. Only complete editions will enter the public collection.",
   },
 ];
 
-const proofRows = [
-  ["Mood", "Start with the way you want the room to feel."],
-  ["Intensity", "Move from close-wearing restraint to a bolder trail."],
-  ["Occasion", "Find a direction for daylight, evening, work, or celebration."],
-  ["Release", "Every public edition must be complete, reviewed, and ready."],
-] as const;
+const proofRows: readonly Readonly<{
+  icon: IconSvgElement;
+  title: string;
+  description: string;
+}>[] = [
+  {
+    icon: Moon02Icon,
+    title: "Mood",
+    description: "Start with the way you want the room to feel: fresh and open, soft and close, or warm after dark.",
+  },
+  {
+    icon: FireIcon,
+    title: "Intensity",
+    description: "Move from close-wearing restraint to a bolder trail that arrives a moment before you do.",
+  },
+  {
+    icon: Calendar03Icon,
+    title: "Occasion",
+    description: "Find a direction for daylight, work, an evening out, or a celebration that deserves a signature.",
+  },
+  {
+    icon: CheckmarkBadge01Icon,
+    title: "Release",
+    description: "Every public edition must be complete, reviewed, and ready before it joins the collection.",
+  },
+];
 
 const compositionHeadlineWords = [
   "Perfume",
@@ -101,6 +121,7 @@ export default async function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }}
       />
+      <OpeningIntro />
       <HomeHero />
 
       <section className="relative min-h-[86svh] overflow-hidden bg-[var(--aura-ink)] px-5 py-24 text-[var(--aura-ivory)] sm:px-8 lg:py-36">
@@ -130,19 +151,39 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="bg-[var(--aura-ink)] px-[var(--aura-gutter)] py-16 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:py-24">
-        <div className="mx-auto max-w-[78rem]">
-          <p className="mb-8 text-center text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-[color:rgb(245_228_199_/_65%)]">Four ways into the collection</p>
-          <div className="border-y border-dashed border-[color:var(--aura-rule)]">
-            {proofRows.map(([title, description], index) => (
-              <article data-motion-stack key={title} className="grid min-h-28 items-center border-b border-dashed border-[color:var(--aura-rule)] px-[var(--aura-gutter)] py-6 last:border-b-0 sm:grid-cols-[4rem_15rem_1fr] lg:px-6">
-                <span className="font-display text-2xl text-[var(--aura-brass)]">0{index + 1}</span>
-                <h3 className="font-display text-4xl">{title}</h3>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-[color:rgb(245_228_199_/_72%)] sm:mt-0">{description}</p>
+      <section
+        data-motion-stack-section
+        aria-labelledby="four-ways-heading"
+        className="relative bg-[var(--aura-ink)] px-[var(--aura-gutter)] pb-16 pt-10 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:pb-24"
+      >
+        <StackAtmosphere />
+        <h2 id="four-ways-heading" className="relative z-10 mb-10 text-center text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-[color:rgb(245_228_199_/_65%)]">Four ways into the collection</h2>
+        <ol className="aura-stack relative z-10 mx-auto max-w-[34rem]">
+          {proofRows.map((row, index) => (
+            <li
+              key={row.title}
+              data-motion-stack-item
+              className="aura-stack__item"
+              style={{ "--aura-stack-index": index } as CSSProperties}
+            >
+              <article data-motion-stack-card className="aura-stack__card">
+                <h3 className="aura-stack__bar font-display">
+                  <span className="aura-stack__dot" aria-hidden="true" />
+                  {row.title}
+                  <span className="aura-stack__dot" aria-hidden="true" />
+                  <span data-motion-stack-shade className="aura-stack__shade" aria-hidden="true" />
+                </h3>
+                <div className="aura-stack__body">
+                  <span className="grid size-16 place-items-center rounded-full border border-[color:var(--aura-rule)] text-[var(--aura-ivory)]" aria-hidden="true">
+                    <HugeiconsIcon icon={row.icon} strokeWidth={1.3} className="size-8" />
+                  </span>
+                  <p className="max-w-[26rem] text-base leading-7 text-[color:rgb(245_228_199_/_82%)] sm:text-lg sm:leading-8">{row.description}</p>
+                  <span className="font-display text-sm tracking-[0.18em] text-[var(--aura-brass)]" aria-hidden="true">0{index + 1} / 0{proofRows.length}</span>
+                </div>
               </article>
-            ))}
-          </div>
-        </div>
+            </li>
+          ))}
+        </ol>
       </section>
 
       <section className="overflow-hidden bg-[var(--aura-ink)] px-[var(--aura-gutter)] pb-24 pt-10 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:pb-36">
@@ -169,53 +210,57 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section data-motion-journey className="relative overflow-x-clip bg-[var(--aura-ink)] px-[var(--aura-gutter)] py-20 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:py-0">
-        <div data-motion-journey-pin className="mx-auto max-w-[94rem] lg:flex lg:h-[100svh] lg:max-w-none lg:flex-col lg:justify-start lg:overflow-hidden lg:pt-20">
-          <div className="relative z-10 mb-10 sm:mb-12 lg:mb-10 lg:px-8">
-            <h2 className="sr-only">Why Perfume Aura</h2>
-            <div data-motion-journey-heading className="mx-auto w-full max-w-[56rem] sm:max-w-[64rem]" aria-hidden="true">
-              <svg viewBox="0 -12 1000 340" className="h-auto w-full overflow-visible" focusable="false">
-                <defs>
-                  <path id="why-perfume-aura-arc" d="M 196 216 A 430 430 0 0 1 804 216" />
-                </defs>
-                <text
-                  className="font-display"
-                  fill="var(--aura-ivory)"
-                  fontSize="108"
-                  letterSpacing="-2"
+      <section
+        data-motion-arc
+        aria-labelledby="why-perfume-aura-heading"
+        className="aura-arc relative overflow-x-clip bg-[var(--aura-ink)] text-[var(--aura-ivory)]"
+      >
+        <div data-motion-arc-pin className="aura-arc__stage">
+          <h2 id="why-perfume-aura-heading" className="sr-only">Why Perfume Aura</h2>
+          <div data-motion-arc-heading className="mx-auto w-full max-w-[56rem] px-[var(--aura-gutter)] sm:max-w-[64rem]" aria-hidden="true">
+            <svg viewBox="0 -12 1000 340" className="h-auto w-full overflow-visible" focusable="false">
+              <defs>
+                <path id="why-perfume-aura-arc" d="M 196 216 A 430 430 0 0 1 804 216" />
+              </defs>
+              <text
+                className="font-display"
+                fill="var(--aura-ivory)"
+                fontSize="108"
+                letterSpacing="-2"
+              >
+                <textPath
+                  href="#why-perfume-aura-arc"
+                  startOffset="0"
+                  textLength="675"
+                  lengthAdjust="spacingAndGlyphs"
                 >
-                  <textPath
-                    href="#why-perfume-aura-arc"
-                    startOffset="0"
-                    textLength="675"
-                    lengthAdjust="spacingAndGlyphs"
-                  >
-                    WHY PERFUME <tspan fill="transparent" stroke="var(--aura-ivory)" strokeWidth="1.5" paintOrder="stroke">AURA</tspan>
-                  </textPath>
-                </text>
-              </svg>
-            </div>
+                  WHY PERFUME <tspan fill="transparent" stroke="var(--aura-ivory)" strokeWidth="1.5" paintOrder="stroke">AURA</tspan>
+                </textPath>
+              </text>
+            </svg>
           </div>
-
-          <div
-            data-motion-journey-track
-            role="region"
-            aria-label="Why Perfume Aura"
-            tabIndex={0}
-            className="aura-snap-row relative -mx-[var(--aura-gutter)] flex snap-x snap-mandatory gap-[var(--aura-gap)] overflow-x-auto px-[var(--aura-gutter)] pb-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)] lg:mx-0 lg:w-max lg:gap-[var(--aura-gap-lg)] lg:overflow-visible lg:px-8 lg:pb-0"
-          >
-            {processSteps.map((step, index) => (
-              <article data-motion-stage key={step.number} className={`relative min-h-[24rem] w-[88vw] shrink-0 snap-center overflow-hidden rounded-[var(--aura-radius)] p-6 sm:min-h-[28rem] sm:w-[70vw] lg:min-h-[26rem] lg:w-[48vw] ${index === 0 ? "bg-[var(--aura-brass)] text-[var(--aura-ink)]" : index === 1 ? "bg-[var(--aura-orange)] text-[var(--aura-ink)]" : "bg-[var(--aura-red)] text-white"}`}>
-                <div className="flex items-start justify-between">
-                  <span className="font-display text-5xl">{step.number}</span>
-                  <HugeiconsIcon icon={step.icon} strokeWidth={1.4} className="size-10" />
-                </div>
-                <div className="absolute inset-x-6 bottom-7">
-                  <h3 className="font-display text-5xl leading-none">{step.title}</h3>
-                  <p className="mt-4 max-w-sm text-sm leading-6">{step.description}</p>
-                </div>
-              </article>
-            ))}
+          <p className="aura-arc__lede">We help you choose a fragrance by how it feels on you, not by how loudly it is labelled.</p>
+          <div className="aura-arc__viewport">
+            <span className="aura-arc__guide aura-arc__guide--outer" aria-hidden="true" />
+            <span className="aura-arc__guide aura-arc__guide--inner" aria-hidden="true" />
+            <ol data-motion-arc-wheel className="aura-arc__wheel">
+              {processSteps.map((step, index) => (
+                <li
+                  key={step.number}
+                  data-motion-arc-item
+                  className="aura-arc__item"
+                  style={{ "--aura-arc-index": index } as CSSProperties}
+                >
+                  <span className="text-outline block text-[clamp(4.5rem,9vw,7.5rem)] leading-[0.8]" aria-hidden="true">{step.number}</span>
+                  <h3 className="aura-arc__pill font-display">
+                    <span className="aura-stack__dot" aria-hidden="true" />
+                    {step.title}
+                    <span className="aura-stack__dot" aria-hidden="true" />
+                  </h3>
+                  <p className="max-w-[24rem] text-base leading-7 text-[color:rgb(245_228_199_/_82%)] sm:text-lg sm:leading-8">{step.description}</p>
+                </li>
+              ))}
+            </ol>
           </div>
         </div>
       </section>

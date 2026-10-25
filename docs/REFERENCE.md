@@ -339,13 +339,16 @@ Layout grammar:
 
 The reusable source pattern is:
 
-1. Immersive product-led hero with manual next/previous controls.
-2. Oversized brand statement interrupted by floating product imagery.
-3. Short numbered value or guidance rows.
-4. Three-up product/editorial cards with accent themes.
-5. Pinned desktop narrative that moves horizontally with scroll.
-6. Alternating image-led story panel and large closing product edit.
-7. Dense footer combining identity, navigation, status/newsletter, and utility
+1. Short skippable opening: colour rings wipe, the mark and ingredients gather,
+   then the stage zooms through into the hero.
+2. Immersive product-led hero with manual next/previous controls.
+3. Oversized brand statement interrupted by floating ingredient imagery.
+4. Numbered guidance cards that stack under their title bars while
+   ingredients float beside them.
+5. Three-up product/editorial cards with accent themes.
+6. Pinned narrative whose numbered steps ride a large arc with scroll.
+7. Alternating image-led story panel and large closing product edit.
+8. Dense footer combining identity, navigation, status/newsletter, and utility
    actions.
 
 Desktop begins with a complete inline navigation. Scrolling condenses it into a
@@ -369,17 +372,25 @@ checkout control.
 
 ### Motion contract
 
-Perfume Aura uses its existing GSAP/ScrollTrigger dependency for scoped reveals,
-parallax, a desktop-only pinned journey, and a pausable marquee. Native scrolling
-remains the foundation; no Lenis dependency is added because it is not needed
-to reproduce the composition and could interfere with accessibility. All
-animations must:
+Perfume Aura uses its GSAP/ScrollTrigger dependency for scoped reveals,
+parallax, the arc narrative, the card stack, idle ingredient floats and a
+pausable marquee. Lenis (exact pin) smooths wheel input only on fine-pointer
+devices, through the official `lenis.on("scroll", ScrollTrigger.update)` and
+GSAP-ticker wiring. Touch, keyboard, scrollbar and assistive scrolling stay
+native; Lenis yields inside dialogs, listboxes, menus and while a dialog locks
+the page. Owner-approved under COM-ADR-034. All animations must:
 
-- disable cleanly for `prefers-reduced-motion`;
+- disable cleanly for `prefers-reduced-motion`, including smoothing;
 - avoid hiding meaningful content before JavaScript runs;
 - clean up only triggers created by their own component;
 - pause continuous motion during hover, keyboard focus, or document hiding;
-- preserve usable native horizontal scroll-snap on mobile.
+- keep layout-owned effects such as the sticky card stack usable without
+  JavaScript.
+
+The homepage opening is about three seconds, plays once per browser session,
+never under reduced motion, and skips on any pointer, key, wheel or touch
+input. The server renders it hidden; a pre-paint gate opts in, and a CSS
+failsafe removes it after five seconds if hydration fails.
 
 ### Fidelity and adaptation matrix
 
@@ -391,7 +402,9 @@ animations must:
 | Product-led hero and manual slider | Perfume Aura bottle compositions and labelled controls | No automatic carousel or copied fruit/media |
 | Compact scrolled header | Supplied full mark transitions to the supplied wordmark beside the route-aware CTA, cart, and menu cluster | Existing release locks remain authoritative |
 | Cream menu/cart sheets | Accessible controlled sheets with focus management | Do not copy non-inert closed panels |
-| Pinned horizontal narrative | Desktop GSAP journey; mobile native scroll-snap cards | Reduced motion remains complete and readable |
+| Opening intro | Perfume Aura rings, mark and ingredient cutouts, once per session | Skippable, no-JS and reduced-motion safe |
+| Stacking claim cards | Sticky CSS stack with GSAP tilt and bar shading | Static list on short landscape screens |
+| Arc narrative | Pinned GSAP arc wheel on every breakpoint | Static readable list without motion |
 | Hover product reveal | CSS-owned reveal with real routes and honest locked state | No duplicated GSAP hover ownership |
 | Newsletter/status footer cell | Clearly non-input status panel until subscription exists | No dead form control or collection claim |
 
@@ -403,7 +416,8 @@ animations must:
 - Tabs without `aria-expanded` and `aria-controls` relationships.
 - Duplicate animated labels that produce repeated accessible names.
 - Placeholder-only forms without persistent labels.
-- A blocking intro or any animation without a reduced-motion alternative.
+- A blocking or repeating intro, or any animation without a reduced-motion
+  alternative.
 
 Fresh browser evidence outranks this document. Update this contract when the
 implemented design changes.

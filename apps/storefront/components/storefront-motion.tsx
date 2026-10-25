@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { attachContinuousMotionGuard } from "@/lib/continuous-motion";
 import { compactHeaderScrollY } from "@/lib/header-motion";
+import { jumpWindowScroll } from "@/lib/smooth-scroll";
 
 const historyScrollStateKey = "__perfumeAuraScroll";
 const mobileProductCardQuery = "(max-width: 639px)";
@@ -125,11 +126,10 @@ export function StorefrontMotion() {
       popstateNavigationRef.current = null;
       let restoreFrame = window.requestAnimationFrame(() => {
         restoreFrame = window.requestAnimationFrame(() => {
-          const root = document.documentElement;
-          const previousScrollBehavior = root.style.scrollBehavior;
-          root.style.scrollBehavior = "auto";
-          window.scrollTo(popstateNavigation.position.x, popstateNavigation.position.y);
-          root.style.scrollBehavior = previousScrollBehavior;
+          jumpWindowScroll(
+            popstateNavigation.position.x,
+            popstateNavigation.position.y,
+          );
         });
       });
       return () => window.cancelAnimationFrame(restoreFrame);
@@ -138,12 +138,7 @@ export function StorefrontMotion() {
     if (previousPathname === null || previousPathname === pathname) return;
 
     popstateNavigationRef.current = null;
-
-    const root = document.documentElement;
-    const previousScrollBehavior = root.style.scrollBehavior;
-    root.style.scrollBehavior = "auto";
-    window.scrollTo({ top: 0, left: 0 });
-    root.style.scrollBehavior = previousScrollBehavior;
+    jumpWindowScroll(0, 0);
   }, [pathname, popstateRevision]);
 
   useEffect(() => {
@@ -513,23 +508,100 @@ export function StorefrontMotion() {
                 );
               });
 
-            const stackedPanels = gsap.utils
-              .toArray<HTMLElement>("[data-motion-stack]", contentRoot)
-              .filter(hasPendingMotion);
-            if (stackedPanels.length > 0) {
-              gsap.from(stackedPanels, {
-                y: 36,
-                stagger: 0.08,
-                duration: 0.7,
-                ease: "power4.out",
-                scrollTrigger: {
-                  trigger: stackedPanels[0]?.parentElement ?? stackedPanels[0],
-                  start: "top 84%",
-                  once: true,
-                  onEnter: () => markEnteredMotion(stackedPanels),
-                },
+            const guardCleanups: Array<() => void> = [];
+
+            // Sticky CSS owns the stack; motion only tilts each card in and
+            // darkens the bars it covers. Ranges come from the list's natural
+            // layout because a stuck sticky item reports its stuck position.
+            gsap.utils
+              .toArray<HTMLElement>("[data-motion-stack-section]", contentRoot)
+              .forEach((section) => {
+                const list = section.querySelector<HTMLElement>(".aura-stack");
+                const items = gsap.utils.toArray<HTMLElement>(
+                  "[data-motion-stack-item]",
+                  section,
+                );
+                if (!list || items.length === 0) return;
+
+                const shades = items.map((item) =>
+                  item.querySelector<HTMLElement>("[data-motion-stack-shade]"),
+                );
+                const arrivals = items.map(() => 0);
+                const paintShades = () => {
+                  shades.forEach((shade, index) => {
+                    if (!shade) return;
+                    const covering = arrivals
+                      .slice(index + 1)
+                      .reduce((sum, arrival) => sum + arrival, 0);
+                    shade.style.opacity = Math.min(0.6, covering * 0.2).toFixed(3);
+                  });
+                };
+                const naturalTop = (index: number) =>
+                  items.slice(0, index).reduce((offset, item) => {
+                    const marginBottom = Number.parseFloat(
+                      window.getComputedStyle(item).marginBottom,
+                    );
+                    return offset + item.offsetHeight + (marginBottom || 0);
+                  }, 0);
+                const stickyTop = (item: HTMLElement) =>
+                  Number.parseFloat(window.getComputedStyle(item).top) || 0;
+
+                items.forEach((item, index) => {
+                  const card = item.querySelector<HTMLElement>(
+                    "[data-motion-stack-card]",
+                  );
+                  if (!card) return;
+
+                  gsap.fromTo(
+                    card,
+                    {
+                      rotate: index % 2 === 0 ? -4 : 3.5,
+                      yPercent: 10,
+                      scale: 0.96,
+                    },
+                    {
+                      rotate: 0,
+                      yPercent: 0,
+                      scale: 1,
+                      ease: "none",
+                      scrollTrigger: {
+                        trigger: list,
+                        start: () => `top+=${naturalTop(index)} bottom`,
+                        end: () =>
+                          `top+=${naturalTop(index)} ${stickyTop(item)}px`,
+                        scrub: 0.6,
+                        invalidateOnRefresh: true,
+                        onUpdate: (self) => {
+                          arrivals[index] = self.progress;
+                          paintShades();
+                        },
+                      },
+                    },
+                  );
+                });
+
+                guardCleanups.push(() => {
+                  shades.forEach((shade) => shade?.style.removeProperty("opacity"));
+                });
               });
-            }
+
+            gsap.utils
+              .toArray<HTMLElement>("[data-motion-float-loop]", contentRoot)
+              .forEach((element) => {
+                const index = Number.parseInt(element.dataset.floatIndex ?? "0", 10);
+                const direction = index % 2 === 0 ? 1 : -1;
+                const float = gsap.to(element, {
+                  keyframes: {
+                    x: [0, 14 * direction, -8 * direction, 0],
+                    y: [0, -18, 10, 0],
+                    rotate: [0, 6 * direction, -4 * direction, 0],
+                  },
+                  duration: 7 + index * 1.3,
+                  ease: "sine.inOut",
+                  repeat: -1,
+                });
+                guardCleanups.push(attachContinuousMotionGuard(element, float));
+              });
 
             gsap.utils
               .toArray<HTMLElement>("[data-motion-float]", contentRoot)
@@ -605,12 +677,7 @@ export function StorefrontMotion() {
 
             gsap.utils
               .toArray<HTMLElement>("[data-motion-stage]", contentRoot)
-              .filter(
-                (element) =>
-                  hasPendingMotion(element) &&
-                  (!context.conditions?.isDesktop ||
-                    !element.closest("[data-motion-journey]")),
-              )
+              .filter(hasPendingMotion)
               .forEach((element, index) => {
                 gsap.from(element, {
                   y: 48,
@@ -626,8 +693,6 @@ export function StorefrontMotion() {
                 });
               });
 
-            const guardCleanups: Array<() => void> = [];
-
             gsap.utils
               .toArray<HTMLElement>("[data-motion-marquee]", contentRoot)
               .forEach((element) => {
@@ -640,22 +705,81 @@ export function StorefrontMotion() {
                 guardCleanups.push(attachContinuousMotionGuard(element, marquee));
               });
 
-            if (context.conditions?.isDesktop) {
-              gsap.utils
-                .toArray<HTMLElement>("[data-motion-journey]", contentRoot)
-                .forEach((section) => {
-                  const pin =
-                    section.querySelector<HTMLElement>("[data-motion-journey-pin]") ??
-                    section;
-                  const track = section.querySelector<HTMLElement>(
-                    "[data-motion-journey-track]",
-                  );
-                  if (!track) return;
+            // The steps ride a large circle while the stage pins. Geometry
+            // is recomputed on every refresh so each viewport keeps one step
+            // centred and its neighbours peeking in from the edges.
+            gsap.utils
+              .toArray<HTMLElement>("[data-motion-arc]", contentRoot)
+              .forEach((section) => {
+                const pin = section.querySelector<HTMLElement>("[data-motion-arc-pin]");
+                const wheel = section.querySelector<HTMLElement>("[data-motion-arc-wheel]");
+                const heading = section.querySelector<HTMLElement>(
+                  "[data-motion-arc-heading]",
+                );
+                const items = gsap.utils.toArray<HTMLElement>(
+                  "[data-motion-arc-item]",
+                  section,
+                );
+                if (!pin || !wheel || items.length < 2) return;
 
-                  const horizontalTween = gsap.to(track, {
-                    x: () =>
-                      -Math.max(0, track.scrollWidth - pin.clientWidth),
+                let stepDegrees = 24;
+                const layoutArc = () => {
+                  const width = section.clientWidth || window.innerWidth;
+                  const rem =
+                    Number.parseFloat(
+                      window.getComputedStyle(document.documentElement).fontSize,
+                    ) || 16;
+                  const itemWidth = Math.min(28 * rem, width * 0.82);
+                  const radius = Math.max(
+                    width * (context.conditions?.isMobile ? 1.7 : 0.95),
+                    40 * rem,
+                  );
+                  stepDegrees = ((itemWidth * 1.3) / radius) * (180 / Math.PI);
+                  section.style.setProperty("--aura-arc-item", `${itemWidth}px`);
+                  section.style.setProperty("--aura-arc-radius", `${radius}px`);
+                  section.style.setProperty("--aura-arc-step", `${stepDegrees}deg`);
+                  section.style.setProperty("--aura-arc-center", "46%");
+                };
+                const paintArc = () => {
+                  const rotation = Number(gsap.getProperty(wheel, "rotate")) || 0;
+                  items.forEach((item, index) => {
+                    const distance = Math.abs(index * stepDegrees + rotation) / stepDegrees;
+                    item.style.opacity = gsap.utils
+                      .clamp(0.16, 1, 1 - distance * 0.72)
+                      .toFixed(3);
+                  });
+                };
+
+                section.dataset.arcReady = "true";
+                layoutArc();
+                ScrollTrigger.addEventListener("refreshInit", layoutArc);
+
+                if (heading) {
+                  gsap.fromTo(
+                    heading,
+                    { rotate: -9, yPercent: 18, scale: 0.9 },
+                    {
+                      rotate: 0,
+                      yPercent: 0,
+                      scale: 1,
+                      ease: "none",
+                      scrollTrigger: {
+                        trigger: section,
+                        start: "top bottom",
+                        end: "top top",
+                        scrub: 0.6,
+                      },
+                    },
+                  );
+                }
+
+                gsap.fromTo(
+                  wheel,
+                  { rotate: 0 },
+                  {
+                    rotate: () => -(items.length - 1) * stepDegrees,
                     ease: "none",
+                    onUpdate: paintArc,
                     scrollTrigger: {
                       trigger: pin,
                       pin: true,
@@ -663,36 +787,26 @@ export function StorefrontMotion() {
                       anticipatePin: 1,
                       start: "top top",
                       end: () =>
-                        `+=${Math.max(
-                          window.innerHeight,
-                          track.scrollWidth - pin.clientWidth,
-                        )}`,
-                      scrub: 0.75,
+                        `+=${Math.round((items.length - 1) * window.innerHeight * 0.85)}`,
+                      scrub: 0.8,
                       invalidateOnRefresh: true,
                     },
-                  });
+                  },
+                );
+                paintArc();
 
-                  gsap.utils
-                    .toArray<HTMLElement>("[data-motion-stage]", section)
-                    .forEach((stage) => {
-                      gsap.fromTo(
-                        stage,
-                        { y: 28 },
-                        {
-                          y: 0,
-                          ease: "none",
-                          scrollTrigger: {
-                            trigger: stage,
-                            containerAnimation: horizontalTween,
-                            start: "left 88%",
-                            end: "left 58%",
-                            scrub: true,
-                          },
-                        },
-                      );
-                    });
+                guardCleanups.push(() => {
+                  ScrollTrigger.removeEventListener("refreshInit", layoutArc);
+                  delete section.dataset.arcReady;
+                  [
+                    "--aura-arc-item",
+                    "--aura-arc-radius",
+                    "--aura-arc-step",
+                    "--aura-arc-center",
+                  ].forEach((property) => section.style.removeProperty(property));
+                  items.forEach((item) => item.style.removeProperty("opacity"));
                 });
-            }
+              });
 
             return () => {
               guardCleanups.forEach((removeGuard) => removeGuard());

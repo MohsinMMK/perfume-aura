@@ -70,6 +70,24 @@ body {
   font-family: var(--aura-font-sans);
 }
 
+/* Lenis recommended rules (lenis/dist/lenis.css), scoped to wheel smoothing. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow: clip;
+}
+
+.lenis [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
 .font-display {
   font-family: var(--aura-font-display);
   font-weight: 400;
@@ -91,6 +109,324 @@ body {
   animation: aura-hero-aura-echo 1400ms cubic-bezier(0.22, 1, 0.36, 1)
     both;
   animation-delay: calc((5 - var(--aura-hero-word-index)) * 70ms + 180ms);
+}
+
+/*
+ * Stacking cards: native sticky owns the stack so it stays smooth without
+ * JavaScript. Each card is one bar shorter than the last, so every card's
+ * bottom edge meets at the same line and the stack leaves as one block.
+ */
+.aura-stack {
+  --aura-stack-top: 5.25rem;
+  --aura-stack-bar: 2.75rem;
+  --aura-stack-card: min(27rem, calc(100svh - var(--aura-stack-top) - 1.5rem));
+  --aura-stack-gap: 24svh;
+
+  display: flow-root;
+  margin-block: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Sticky items are held by their margin box: equal margins keep the release
+   simultaneous, and the last margin is the hold on the completed stack. */
+.aura-stack__item {
+  position: sticky;
+  top: calc(var(--aura-stack-top) + (var(--aura-stack-index) * var(--aura-stack-bar)));
+  margin-bottom: var(--aura-stack-gap);
+}
+
+.aura-stack__card {
+  display: grid;
+  height: calc(var(--aura-stack-card) - (var(--aura-stack-index) * var(--aura-stack-bar)));
+  grid-template-rows: var(--aura-stack-bar) minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--aura-rule);
+  border-radius: var(--aura-radius);
+  background: var(--aura-ink);
+  box-shadow: 0 -0.75rem 2rem rgb(0 0 0 / 38%);
+  transform-origin: 50% 0%;
+  will-change: transform;
+}
+
+.aura-stack__bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  padding-inline: 1rem;
+  background: var(--aura-ivory);
+  color: var(--aura-ink);
+  font-size: clamp(1.25rem, 4.6vw, 1.75rem);
+  line-height: 1;
+}
+
+.aura-stack__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 9999px;
+  background: currentcolor;
+}
+
+.aura-stack__shade {
+  position: absolute;
+  inset: 0;
+  background: var(--aura-ink);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.aura-stack__body {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  overflow: hidden;
+  padding: 1.25rem 1.5rem 1.5rem;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .aura-stack {
+    --aura-stack-top: 6rem;
+    --aura-stack-bar: 3.25rem;
+    --aura-stack-card: min(30rem, calc(100svh - var(--aura-stack-top) - 2rem));
+  }
+
+  .aura-stack__bar {
+    padding-inline: 1.5rem;
+  }
+}
+
+/* Short landscape screens cannot fit a readable stack: list the cards. */
+@media (max-height: 34rem) {
+  .aura-stack__item {
+    position: static;
+    margin-bottom: var(--aura-gap);
+  }
+
+  .aura-stack__card {
+    height: auto;
+    grid-template-rows: var(--aura-stack-bar) auto;
+  }
+}
+
+/*
+ * Arc wheel: a static readable list until motion opts in with
+ * data-arc-ready, then the steps ride a large circle as the stage pins.
+ */
+.aura-arc__stage {
+  padding: 5rem var(--aura-gutter) 5rem;
+}
+
+.aura-arc__lede {
+  max-width: 22rem;
+  margin: 0 auto;
+  color: var(--aura-brass);
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  line-height: 1.55;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.aura-arc__viewport {
+  position: relative;
+}
+
+.aura-arc__wheel {
+  display: grid;
+  max-width: 78rem;
+  gap: 3.5rem;
+  margin: 3.5rem auto 0;
+  padding: 0;
+  list-style: none;
+}
+
+.aura-arc__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  text-align: center;
+}
+
+.aura-arc__pill {
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  border-radius: 0.375rem;
+  padding: 0 0.85rem;
+  background: var(--aura-ivory);
+  color: var(--aura-ink);
+  font-size: clamp(1.1rem, 2.4vw, 1.4rem);
+  line-height: 1;
+}
+
+.aura-arc__guide {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .aura-arc__stage {
+    padding-inline: var(--aura-gutter-lg);
+  }
+
+  .aura-arc__wheel {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.aura-arc[data-arc-ready="true"] .aura-arc__stage {
+  display: flex;
+  height: 100svh;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 4.75rem 0 0;
+}
+
+.aura-arc[data-arc-ready="true"] .aura-arc__viewport {
+  flex: 1;
+  min-height: 0;
+}
+
+.aura-arc[data-arc-ready="true"] .aura-arc__wheel {
+  position: absolute;
+  top: calc(var(--aura-arc-center, 45%) + var(--aura-arc-radius, 60rem));
+  left: 50%;
+  display: block;
+  width: 0;
+  height: 0;
+  margin: 0;
+  will-change: transform;
+}
+
+.aura-arc[data-arc-ready="true"] .aura-arc__item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--aura-arc-item, 28rem);
+  transform: rotate(calc(var(--aura-arc-index) * var(--aura-arc-step, 24deg)))
+    translate(-50%, -50%) translateY(calc(-1 * var(--aura-arc-radius, 60rem)));
+  transform-origin: 0 0;
+}
+
+.aura-arc[data-arc-ready="true"] .aura-arc__guide {
+  position: absolute;
+  top: calc(var(--aura-arc-center, 45%) + var(--aura-arc-radius, 60rem));
+  left: 50%;
+  display: block;
+  border: 1px dashed rgb(245 228 199 / 16%);
+  border-radius: 9999px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.aura-arc[data-arc-ready="true"] .aura-arc__guide--outer {
+  width: calc((var(--aura-arc-radius, 60rem) + 11rem) * 2);
+  height: calc((var(--aura-arc-radius, 60rem) + 11rem) * 2);
+}
+
+.aura-arc[data-arc-ready="true"] .aura-arc__guide--inner {
+  width: calc((var(--aura-arc-radius, 60rem) - 11rem) * 2);
+  height: calc((var(--aura-arc-radius, 60rem) - 11rem) * 2);
+}
+
+/* Homepage opening: hidden unless the pre-paint gate opts in. */
+.aura-intro {
+  display: none;
+}
+
+.aura-intro[data-state="play"] {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: block;
+  overflow: hidden;
+  background: var(--aura-ink);
+  animation: aura-intro-failsafe 300ms ease-out 5s forwards;
+}
+
+body:has(.aura-intro[data-state="play"]) :is(.aura-hero-motion__word, .aura-header-logo-enter) {
+  animation-play-state: paused;
+}
+
+.aura-intro__ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150vmax;
+  height: 150vmax;
+  margin: -75vmax 0 0 -75vmax;
+  border-radius: 9999px;
+  transform: scale(0);
+  will-change: transform;
+}
+
+.aura-intro__ring--brass {
+  background: var(--aura-brass);
+}
+
+.aura-intro__ring--orange {
+  background: var(--aura-orange);
+}
+
+.aura-intro__ring--red {
+  background: var(--aura-red);
+}
+
+.aura-intro__ring--ink {
+  background: var(--aura-ink);
+}
+
+.aura-intro__stage {
+  --aura-intro-spread-x: clamp(7rem, 22vw, 20rem);
+  --aura-intro-spread-y: clamp(8rem, 20vh, 14rem);
+  --aura-intro-ingredient: clamp(5.5rem, 12vw, 11rem);
+
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  will-change: transform, opacity;
+}
+
+.aura-intro__logo {
+  width: clamp(5.5rem, 11vw, 9rem);
+  height: auto;
+  visibility: hidden;
+  opacity: 0;
+}
+
+.aura-intro__ingredient {
+  position: absolute;
+  top: calc(
+    50% + (var(--aura-intro-y) * var(--aura-intro-spread-y)) -
+      (var(--aura-intro-ingredient) / 2)
+  );
+  left: calc(
+    50% + (var(--aura-intro-x) * var(--aura-intro-spread-x)) -
+      (var(--aura-intro-ingredient) / 2)
+  );
+  width: var(--aura-intro-ingredient);
+  height: var(--aura-intro-ingredient);
+  visibility: hidden;
+  opacity: 0;
+  filter: drop-shadow(0 1rem 1rem rgb(0 0 0 / 35%));
+}
+
+@keyframes aura-intro-failsafe {
+  to {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
 @keyframes aura-hero-aura-echo {
@@ -363,7 +699,9 @@ body {
   filter: drop-shadow(0 4px 4px rgb(0 0 0 / 28%));
   isolation: isolate;
   touch-action: manipulation;
-  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    opacity 160ms ease-out,
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .aura-whatsapp-label {
@@ -435,6 +773,17 @@ body {
 
 .aura-whatsapp-action:active {
   transform: scale(0.97);
+}
+
+.aura-whatsapp-action[data-covering="true"] {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(0, 1rem, 0) scale(0.9);
+  transition:
+    opacity 160ms ease-out,
+    transform 240ms cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0s linear 240ms;
 }
 
 @media (max-width: 639px) {
@@ -660,15 +1009,6 @@ body {
 
 .aura-product-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.aura-snap-row {
-  scrollbar-width: none;
-  scroll-padding-inline: 0.75rem;
-}
-
-.aura-snap-row::-webkit-scrollbar {
-  display: none;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -961,33 +1301,14 @@ textarea {
     transition-duration: 0.01ms !important;
   }
 
-  [data-motion-journey],
-  [data-motion-journey] .pin-spacer {
-    min-height: auto !important;
-    height: auto !important;
-  }
-
-  [data-motion-journey] > div,
-  [data-motion-journey-pin] {
-    position: static !important;
-    height: auto !important;
-    overflow: visible !important;
-    transform: none !important;
-  }
-
-  [data-motion-journey-track],
   [data-motion-stage],
   [data-motion-copy],
   [data-motion-horizontal],
   [data-motion-float],
   [data-motion-parallax],
   [data-motion-product-card],
-  [data-motion-stack] {
+  [data-motion-stack-card],
+  [data-motion-float-loop] {
     transform: none !important;
-  }
-
-  [data-motion-journey-track] {
-    display: grid !important;
-    width: 100% !important;
   }
 }

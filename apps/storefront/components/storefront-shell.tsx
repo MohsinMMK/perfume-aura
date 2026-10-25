@@ -12,6 +12,7 @@ import { CartProvider } from "./cart-provider";
 import { CartDrawer } from "./cart-drawer";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
+import { SmoothScroll } from "./smooth-scroll";
 import { StorefrontMotion } from "./storefront-motion";
 import { GoogleOneTapPrompt } from "./google-one-tap-prompt";
 import { StorefrontRouteChrome } from "./storefront-route-chrome";
@@ -30,6 +31,7 @@ export function StorefrontShell({ children }: Readonly<{ children: ReactNode }>)
       initialCart={loadRemoteCart ? null : readReleaseLockedCart()}
       loadRemoteCart={loadRemoteCart}
     >
+      <SmoothScroll />
       <Suspense fallback={null}>
         <StorefrontMotion />
       </Suspense>
