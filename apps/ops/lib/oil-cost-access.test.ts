@@ -29,6 +29,6 @@ test("oil purchase costs stay behind the owner-only cost capability", async () =
     /data\.totalCost !== undefined && !canViewCost[\s\S]*Only an owner can record purchase costs/s,
   );
   assert.match(page, /canViewCost = hasOpsCapability\(session\.user\.role, "stock\.view-cost"\)/);
-  assert.match(page, /canViewCost \? \(\s*<TableHead[^>]*>Cost<\/TableHead>/s);
+  assert.match(page, /canViewCost \? \(\s*<TableHeaderCell[^>]*>Cost<\/TableHeaderCell>/s);
   assert.match(form, /canViewCost \? \(\s*<FormField[\s\S]*name="totalCost"/s);
 });

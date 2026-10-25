@@ -1,32 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
-import { toast } from "@perfume-aura/ui/components/sonner";
+import { useId, useState, type FormEvent } from "react";
+import { AlertDialog } from "@astryxdesign/core/AlertDialog";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { HStack } from "@astryxdesign/core/HStack";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@perfume-aura/ui/components/alert-dialog";
-import { Button } from "@perfume-aura/ui/components/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@perfume-aura/ui/components/dialog";
-import { FieldError, FieldGroup } from "@perfume-aura/ui/components/field";
-import { Spinner } from "@perfume-aura/ui/components/spinner";
+  Layout,
+  LayoutContent,
+  LayoutFooter,
+} from "@astryxdesign/core/Layout";
+import { useToast } from "@astryxdesign/core/Toast";
 import { FormField } from "@/components/form-field";
 import {
   archiveVariantAction,
@@ -50,6 +36,8 @@ export function VariantActions({
   variant,
 }: Props) {
   const router = useRouter();
+  const showToast = useToast();
+  const formId = useId();
   const [version, setVersion] = useState(variant.version);
   const [editOpen, setEditOpen] = useState(false);
   const [lifecycleOpen, setLifecycleOpen] = useState(false);
@@ -87,7 +75,7 @@ export function VariantActions({
     } catch {
       const message = "The variant update could not be completed";
       setError(message);
-      toast.error(message);
+      showToast({ body: message, type: "error" });
       setPending(false);
       return;
     }
@@ -95,13 +83,13 @@ export function VariantActions({
     if (!result.ok) {
       setError(result.error);
       setFieldErrors(result.fieldErrors ?? {});
-      toast.error(result.error);
+      showToast({ body: result.error, type: "error" });
       setPending(false);
       return;
     }
 
     if (result.data?.version !== undefined) setVersion(result.data.version);
-    toast.success("Variant updated");
+    showToast({ body: "Variant updated" });
     setEditOpen(false);
     setPending(false);
     router.refresh();
@@ -121,20 +109,22 @@ export function VariantActions({
     } catch {
       const message = "The variant action could not be completed";
       setError(message);
-      toast.error(message);
+      showToast({ body: message, type: "error" });
       setPending(false);
       return;
     }
 
     if (!result.ok) {
       setError(result.error);
-      toast.error(result.error);
+      showToast({ body: result.error, type: "error" });
       setPending(false);
       return;
     }
 
     if (result.data?.version !== undefined) setVersion(result.data.version);
-    toast.success(archiving ? "Variant archived" : "Variant reactivated");
+    showToast({
+      body: archiving ? "Variant archived" : "Variant reactivated",
+    });
     setLifecycleOpen(false);
     setPending(false);
     router.refresh();
@@ -143,174 +133,173 @@ export function VariantActions({
   const fieldError = (name: string) => fieldErrors[name]?.[0];
   const label = `${productName} — ${variant.sku} (${variant.sizeMl} ml)`;
 
+
+  function onEditOpenChange(nextOpen: boolean) {
+    if (pending) return;
+    setEditOpen(nextOpen);
+    if (!nextOpen) {
+      setError(null);
+      setFieldErrors({});
+    }
+  }
+
+  const lifecycleDescription = archiving
+    ? `Archive ${variant.sku}? Its stock balance and movement history remain available.`
+    : productStatus === "active"
+      ? `Make ${variant.sku} available in stock and invoice selectors again?`
+      : "Reactivate the product before reactivating this variant.";
+
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <HStack gap={2} align="center" wrap="wrap">
       {variant.status === "active" && productStatus === "active" ? (
         <VariantStockDialogs variantId={variant.id} label={label} />
       ) : null}
 
+      <Button
+        type="button"
+        label="Edit"
+        variant="secondary"
+        size="sm"
+        onClick={() => setEditOpen(true)}
+      />
       <Dialog
-        open={editOpen}
-        onOpenChange={(nextOpen) => {
-          if (pending) return;
-          setEditOpen(nextOpen);
-          if (!nextOpen) {
-            setError(null);
-            setFieldErrors({});
-          }
-        }}
+        isOpen={editOpen}
+        onOpenChange={onEditOpenChange}
+        purpose="form"
+        width={560}
+        maxHeight="calc(100dvh - 2rem)"
       >
-        <DialogTrigger render={<Button type="button" variant="outline" size="sm" />}>
-          Edit
-        </DialogTrigger>
-        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit variant</DialogTitle>
-            <DialogDescription>
-              Update catalog fields for {variant.sku}. Stock balances are not
-              changed here.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={onEdit} className="flex flex-col gap-6">
-            <FieldGroup className="gap-4 sm:grid sm:grid-cols-2 sm:gap-4">
-              <FormField
-                label="SKU"
-                name="sku"
-                required
-                defaultValue={variant.sku}
-                error={fieldError("sku")}
-              />
-              <FormField
-                label="Barcode"
-                name="barcode"
-                defaultValue={variant.barcode ?? ""}
-                error={fieldError("barcode")}
-              />
-              <FormField
-                label="Size (ml)"
-                name="sizeMl"
-                type="number"
-                min={1}
-                step={1}
-                required
-                defaultValue={variant.sizeMl}
-                error={fieldError("sizeMl")}
-              />
-              <FormField
-                label="Reorder level"
-                name="reorderLevel"
-                type="number"
-                min={0}
-                step={1}
-                required
-                defaultValue={variant.reorderLevel}
-                error={fieldError("reorderLevel")}
-              />
-              <FormField
-                label="Cost (INR)"
-                name="cost"
-                type="number"
-                min={0}
-                step="0.01"
-                required
-                defaultValue={variant.costCents / 100}
-                error={fieldError("cost")}
-              />
-              <FormField
-                label="Retail (INR)"
-                name="retail"
-                type="number"
-                min={0}
-                step="0.01"
-                required
-                defaultValue={variant.retailCents / 100}
-                error={fieldError("retail")}
-              />
-              {error ? (
-                <FieldError className="sm:col-span-2">{error}</FieldError>
-              ) : null}
-            </FieldGroup>
-            <DialogFooter>
-              <DialogClose
-                render={
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={pending}
-                    focusableWhenDisabled={pending}
-                  />
-                }
+        <Layout
+          header={
+            <DialogHeader
+              title="Edit variant"
+              subtitle={`Update catalog fields for ${variant.sku}. Stock balances are not changed here.`}
+              onOpenChange={onEditOpenChange}
+            />
+          }
+          content={
+            <LayoutContent isScrollable>
+              <form
+                id={formId}
+                onSubmit={onEdit}
+                className="grid gap-4 sm:grid-cols-2"
               >
-                Cancel
-              </DialogClose>
-              <Button
-                type="submit"
-                disabled={pending}
-                focusableWhenDisabled={pending}
-              >
-                {pending ? <Spinner data-icon="inline-start" /> : null}
-                {pending ? "Saving…" : "Save variant"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
+                <FormField
+                  label="SKU"
+                  name="sku"
+                  id={`${formId}-sku`}
+                  required
+                  defaultValue={variant.sku}
+                  error={fieldError("sku")}
+                />
+                <FormField
+                  label="Barcode"
+                  name="barcode"
+                  id={`${formId}-barcode`}
+                  defaultValue={variant.barcode ?? ""}
+                  error={fieldError("barcode")}
+                />
+                <FormField
+                  label="Size (ml)"
+                  name="sizeMl"
+                  id={`${formId}-sizeMl`}
+                  type="number"
+                  min={1}
+                  step={1}
+                  required
+                  defaultValue={variant.sizeMl}
+                  error={fieldError("sizeMl")}
+                />
+                <FormField
+                  label="Reorder level"
+                  name="reorderLevel"
+                  id={`${formId}-reorderLevel`}
+                  type="number"
+                  min={0}
+                  step={1}
+                  required
+                  defaultValue={variant.reorderLevel}
+                  error={fieldError("reorderLevel")}
+                />
+                <FormField
+                  label="Cost (INR)"
+                  name="cost"
+                  id={`${formId}-cost`}
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  required
+                  defaultValue={variant.costCents / 100}
+                  error={fieldError("cost")}
+                />
+                <FormField
+                  label="Retail (INR)"
+                  name="retail"
+                  id={`${formId}-retail`}
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  required
+                  defaultValue={variant.retailCents / 100}
+                  error={fieldError("retail")}
+                />
+                {error ? (
+                  <div className="sm:col-span-2">
+                    <Banner status="error" title={error} />
+                  </div>
+                ) : null}
+              </form>
+            </LayoutContent>
+          }
+          footer={
+            <LayoutFooter hasDivider>
+              <HStack justify="end" gap={2} wrap="wrap">
+                <Button
+                  type="button"
+                  label="Cancel"
+                  variant="secondary"
+                  onClick={() => onEditOpenChange(false)}
+                />
+                <Button
+                  type="submit"
+                  form={formId}
+                  label={pending ? "Saving…" : "Save variant"}
+                  variant="primary"
+                  isLoading={pending}
+                />
+              </HStack>
+            </LayoutFooter>
+          }
+        />
       </Dialog>
 
+      <Button
+        type="button"
+        label={archiving ? "Archive" : "Reactivate"}
+        variant={archiving ? "destructive" : "secondary"}
+        size="sm"
+        isDisabled={!archiving && productStatus !== "active"}
+        onClick={() => setLifecycleOpen(true)}
+      />
       <AlertDialog
-        open={lifecycleOpen}
+        isOpen={lifecycleOpen}
         onOpenChange={(nextOpen) => {
           if (pending) return;
           setLifecycleOpen(nextOpen);
           if (!nextOpen) setError(null);
         }}
-      >
-        <AlertDialogTrigger
-          render={
-            <Button
-              type="button"
-              variant={archiving ? "destructive" : "outline"}
-              size="sm"
-              disabled={!archiving && productStatus !== "active"}
-            />
-          }
-        >
-          {archiving ? "Archive" : "Reactivate"}
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {archiving ? "Archive variant?" : "Reactivate variant?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {archiving
-                ? `Archive ${variant.sku}? Its stock balance and movement history remain available.`
-                : productStatus === "active"
-                  ? `Make ${variant.sku} available in stock and invoice selectors again?`
-                  : "Reactivate the product before reactivating this variant."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          {error ? <FieldError>{error}</FieldError> : null}
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              type="button"
-              variant={archiving ? "destructive" : "default"}
-              disabled={pending || (!archiving && productStatus !== "active")}
-              focusableWhenDisabled={pending}
-              onClick={changeLifecycle}
-            >
-              {pending ? <Spinner data-icon="inline-start" /> : null}
-              {pending
-                ? archiving
-                  ? "Archiving…"
-                  : "Reactivating…"
-                : archiving
-                  ? "Archive variant"
-                  : "Reactivate variant"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+        title={archiving ? "Archive variant?" : "Reactivate variant?"}
+        description={
+          error ? `${lifecycleDescription} ${error}` : lifecycleDescription
+        }
+        actionLabel={archiving ? "Archive variant" : "Reactivate variant"}
+        actionVariant={archiving ? "destructive" : "primary"}
+        isActionLoading={pending}
+        onAction={() => {
+          if (!archiving && productStatus !== "active") return;
+          void changeLifecycle();
+        }}
+      />
+    </HStack>
   );
 }

@@ -1,13 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Button } from "@perfume-aura/ui/components/button";
-import { Input } from "@perfume-aura/ui/components/input";
-import { Label } from "@perfume-aura/ui/components/label";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@perfume-aura/ui/components/native-select";
+import { Button } from "@astryxdesign/core/Button";
+import { Selector } from "@astryxdesign/core/Selector";
+import { Text } from "@astryxdesign/core/Text";
+import { FormField } from "@/components/form-field";
 import { updateShipmentAction } from "@/lib/commerce";
 
 type OrderShipment = {
@@ -17,6 +14,8 @@ type OrderShipment = {
   trackingNumber: string | null;
 };
 
+const shipmentStatuses = ["pending", "booked", "shipped", "delivered", "rto", "cancelled"] as const;
+
 export function ShipmentUpdateForm({
   order,
 }: Readonly<{
@@ -24,6 +23,7 @@ export function ShipmentUpdateForm({
 }>) {
   const [shipmentPending, setShipmentPending] = useState(false);
   const [shipmentMessage, setShipmentMessage] = useState<string | null>(null);
+  const [status, setStatus] = useState<string>(order.shipmentStatus ?? "pending");
 
   async function updateShipment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,61 +45,34 @@ export function ShipmentUpdateForm({
 
   return (
     <details className="mt-2">
-      <summary className="cursor-pointer text-xs font-medium underline underline-offset-4">
+      <summary className="inline-flex min-h-11 cursor-pointer items-center text-xs font-medium text-primary underline underline-offset-4">
         Update
       </summary>
-      <div className="mt-3 grid min-w-[18rem] gap-4 rounded-md border bg-background p-3">
+      <div className="mt-3 grid min-w-[18rem] gap-4 rounded-md border border-border bg-surface p-3">
         <form onSubmit={updateShipment} className="grid gap-3">
           <input type="hidden" name="orderId" value={order.id} />
-          <div className="grid gap-1">
-            <Label htmlFor={`status-${order.id}`}>Shipment status</Label>
-            <NativeSelect
-              id={`status-${order.id}`}
-              name="status"
-              defaultValue={order.shipmentStatus ?? "pending"}
-            >
-              {[
-                "pending",
-                "booked",
-                "shipped",
-                "delivered",
-                "rto",
-                "cancelled",
-              ].map((status) => (
-                <NativeSelectOption key={status} value={status}>
-                  {status}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-          </div>
-          <div className="grid gap-1">
-            <Label htmlFor={`courier-${order.id}`}>Courier</Label>
-            <Input
-              id={`courier-${order.id}`}
-              name="courier"
-              defaultValue={order.courier ?? ""}
-            />
-          </div>
-          <div className="grid gap-1">
-            <Label htmlFor={`tracking-${order.id}`}>Tracking number</Label>
-            <Input
-              id={`tracking-${order.id}`}
-              name="trackingNumber"
-              defaultValue={order.trackingNumber ?? ""}
-            />
-          </div>
+          <Selector
+            id={`status-${order.id}`}
+            label="Shipment status"
+            htmlName="status"
+            value={status}
+            onChange={(next) => setStatus(next)}
+            options={shipmentStatuses.map((value) => ({ value, label: value }))}
+            width="100%"
+          />
+          <FormField id={`courier-${order.id}`} label="Courier" name="courier" defaultValue={order.courier ?? ""} />
+          <FormField id={`tracking-${order.id}`} label="Tracking number" name="trackingNumber" defaultValue={order.trackingNumber ?? ""} />
           <Button
             type="submit"
             size="sm"
-            disabled={shipmentPending}
-            focusableWhenDisabled={shipmentPending}
-          >
-            {shipmentPending ? "Saving…" : "Save shipment"}
-          </Button>
+            variant="primary"
+            label={shipmentPending ? "Saving…" : "Save shipment"}
+            isLoading={shipmentPending}
+          />
           {shipmentMessage ? (
-            <p role="status" className="text-xs">
+            <Text as="p" type="supporting" role="status">
               {shipmentMessage}
-            </p>
+            </Text>
           ) : null}
         </form>
       </div>

@@ -2,28 +2,17 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
-import { Button } from "@perfume-aura/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@perfume-aura/ui/components/card";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@perfume-aura/ui/components/field";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@perfume-aura/ui/components/native-select";
-import { Spinner } from "@perfume-aura/ui/components/spinner";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Selector } from "@astryxdesign/core/Selector";
+import { Text } from "@astryxdesign/core/Text";
+import { useToast } from "@astryxdesign/core/Toast";
+import { VStack } from "@astryxdesign/core/VStack";
 import { recordPaymentAction } from "@/lib/payments";
 import { FormField, TextAreaField } from "@/components/form-field";
-import { toast } from "@perfume-aura/ui/components/sonner";
 
 export function RecordPaymentForm({
   invoiceId,
@@ -33,6 +22,8 @@ export function RecordPaymentForm({
   balanceRupees: number;
 }) {
   const router = useRouter();
+  const showToast = useToast();
+  const [method, setMethod] = useState("cash");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
@@ -43,6 +34,7 @@ export function RecordPaymentForm({
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (pending) return;
     setPending(true);
     setError(null);
     setFieldErrors({});
@@ -69,7 +61,7 @@ export function RecordPaymentForm({
     } catch {
       const message = "The payment could not be recorded";
       setError(message);
-      toast.error(message);
+      showToast({ body: message, type: "error" });
       setPending(false);
       return;
     }
@@ -77,36 +69,37 @@ export function RecordPaymentForm({
     if (!result.ok) {
       setError(result.error);
       setFieldErrors(result.fieldErrors ?? {});
-      toast.error(result.error);
+      showToast({ body: result.error, type: "error" });
       return;
     }
     requestRef.current = null;
-    toast.success(
-      result.data?.fullyPaid
+    showToast({
+      body: result.data?.fullyPaid
         ? "Payment recorded — invoice fully paid"
         : "Partial payment recorded",
-    );
+    });
     router.refresh();
   }
 
   const defaultAmount =
     balanceRupees > 0 ? String(Number(balanceRupees.toFixed(2))) : "";
 
+  const methodError = fieldErrors.method?.[0];
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Record payment</CardTitle>
-        <CardDescription>
-          Manual cash / bank / card. Does not change stock. Balance:{" "}
-          <span className="font-medium text-foreground">
-            ₹{balanceRupees.toFixed(2)}
-          </span>
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={onSubmit}>
-          <FieldGroup className="gap-3">
-          <FieldGroup className="grid gap-3 sm:grid-cols-2">
+      <form onSubmit={onSubmit}>
+        <VStack gap={4}>
+          <VStack gap={1}>
+            <Heading level={2}>Record payment</Heading>
+            <Text color="secondary">
+              Manual cash / bank / card. Does not change stock. Balance:{" "}
+              <span className="font-medium tabular-nums text-primary">
+                ₹{balanceRupees.toFixed(2)}
+              </span>
+            </Text>
+          </VStack>
+          <div className="grid gap-4 sm:grid-cols-2">
             <FormField
               label="Amount (INR)"
               name="amount"
@@ -117,24 +110,20 @@ export function RecordPaymentForm({
               defaultValue={defaultAmount}
               error={fieldErrors.amount?.[0]}
             />
-            <Field data-invalid={Boolean(fieldErrors.method?.[0])}>
-              <FieldLabel htmlFor="method">Method</FieldLabel>
-              <NativeSelect
-                id="method"
-                name="method"
-                defaultValue="cash"
-                className="w-full"
-                aria-invalid={Boolean(fieldErrors.method?.[0])}
-              >
-                <NativeSelectOption value="cash">Cash</NativeSelectOption>
-                <NativeSelectOption value="bank_transfer">
-                  Bank transfer
-                </NativeSelectOption>
-                <NativeSelectOption value="card">Card</NativeSelectOption>
-                <NativeSelectOption value="other">Other</NativeSelectOption>
-              </NativeSelect>
-              <FieldError>{fieldErrors.method?.[0]}</FieldError>
-            </Field>
+            <Selector
+              label="Method"
+              htmlName="method"
+              width="100%"
+              value={method}
+              onChange={setMethod}
+              options={[
+                { value: "cash", label: "Cash" },
+                { value: "bank_transfer", label: "Bank transfer" },
+                { value: "card", label: "Card" },
+                { value: "other", label: "Other" },
+              ]}
+              status={methodError ? { type: "error", message: methodError } : undefined}
+            />
             <FormField
               label="Paid at"
               name="paidAt"
@@ -147,25 +136,25 @@ export function RecordPaymentForm({
               placeholder="Bank ref / cheque #"
               error={fieldErrors.reference?.[0]}
             />
-          </FieldGroup>
+          </div>
           <TextAreaField
             label="Note"
             name="note"
             rows={2}
             error={fieldErrors.note?.[0]}
           />
-          {error ? <FieldError>{error}</FieldError> : null}
-          <Button
-            type="submit"
-            disabled={pending || balanceRupees <= 0}
-            focusableWhenDisabled={pending}
-          >
-            {pending ? <Spinner data-icon="inline-start" /> : null}
-            Record payment
-          </Button>
-          </FieldGroup>
-        </form>
-      </CardContent>
+          {error ? <Banner status="error" title={error} role="alert" /> : null}
+          <HStack gap={2}>
+            <Button
+              type="submit"
+              label="Record payment"
+              variant="primary"
+              isLoading={pending}
+              isDisabled={balanceRupees <= 0}
+            />
+          </HStack>
+        </VStack>
+      </form>
     </Card>
   );
 }

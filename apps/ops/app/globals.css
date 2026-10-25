@@ -1,13 +1,64 @@
-@import "tailwindcss";
-/* Tokens + shadcn/tw-animate come from the shared UI package (preset source of truth) */
-@import "@perfume-aura/ui/globals.css";
+/* Astryx (neutral theme) with the Tailwind v4 bridge; layer order lives in layers.css. */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "@astryxdesign/core/reset.css";
+@import "@astryxdesign/core/astryx.css";
+@import "@astryxdesign/theme-neutral/theme.css";
+@import "@astryxdesign/core/tailwind-theme.css";
+@import "tailwindcss/utilities.css" layer(utilities);
 
-/* Scan shared UI package for class names used in components */
-@source "../../../packages/ui/src";
+/* Figtree is self-hosted through next/font instead of the theme's remote import. */
+:root {
+  --font-family-body: var(--font-figtree), -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-family-heading: var(--font-figtree), -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
 
-/* Ops defaults to dark luxury admin */
-html {
-  color-scheme: dark;
+/* Native date and time inputs, which Astryx inputs do not cover, in the Astryx control style. */
+@layer components {
+  .ops-native-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: var(--size-element-md);
+    padding-inline: var(--spacing-3);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-element);
+    background: var(--color-background-surface);
+    color: var(--color-text-primary);
+    font: inherit;
+    font-size: var(--font-size-base);
+    color-scheme: light dark;
+  }
+
+  .ops-native-input:hover {
+    border-color: var(--color-border-emphasized);
+  }
+
+  .ops-native-input:focus-visible {
+    outline: var(--focus-outline-width) var(--focus-outline-style)
+      var(--focus-outline-color);
+    outline-offset: var(--focus-outline-offset);
+  }
+
+  .ops-native-input[aria-invalid="true"] {
+    border-color: var(--color-error);
+  }
+}
+
+/* Touch input keeps every Astryx control at least 44 px tall. */
+@media (pointer: coarse) {
+  :root {
+    --size-element-sm: 44px;
+    --size-element-md: 44px;
+    --size-element-lg: 48px;
+  }
+
+  /* Segmented items sit inside the control's padding, so size them directly. */
+  .astryx-segmented-control-item {
+    min-block-size: 44px;
+    min-inline-size: 44px;
+  }
 }
 
 /* Product motion communicates state; reduced-motion requests make it immediate. */

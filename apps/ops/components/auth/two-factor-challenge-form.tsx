@@ -2,15 +2,12 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@perfume-aura/ui/components/button";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@perfume-aura/ui/components/field";
-import { Input } from "@perfume-aura/ui/components/input";
-import { Spinner } from "@perfume-aura/ui/components/spinner";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { VStack } from "@astryxdesign/core/VStack";
+import { useNativeConstraints } from "@/components/auth/native-input-constraints";
 import { authClient } from "@/lib/auth-client";
 
 function errorMessage(error: { message?: string } | null): string {
@@ -24,6 +21,10 @@ export function TwoFactorChallengeForm() {
   const [trustDevice, setTrustDevice] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const codeConstraints = useNativeConstraints({
+    required: true,
+    inputMode: useRecoveryCode ? "text" : "numeric",
+  });
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,56 +57,54 @@ export function TwoFactorChallengeForm() {
 
   return (
     <form onSubmit={onSubmit}>
-      <FieldGroup>
-        <Field data-invalid={error ? true : undefined}>
-          <FieldLabel htmlFor="two-factor-challenge-code">
-            {useRecoveryCode ? "Recovery code" : "Authenticator code"}
-          </FieldLabel>
-          <Input
-            id="two-factor-challenge-code"
-            name="code"
-            autoComplete="one-time-code"
-            inputMode={useRecoveryCode ? "text" : "numeric"}
-            required
-            value={code}
-            onChange={(event) => setCode(event.target.value)}
-            aria-invalid={error ? true : undefined}
-          />
-        </Field>
-        {error ? <FieldError>{error}</FieldError> : null}
+      <VStack gap={4}>
+        <TextInput
+          ref={codeConstraints}
+          id="two-factor-challenge-code"
+          htmlName="code"
+          label={useRecoveryCode ? "Recovery code" : "Authenticator code"}
+          autoComplete="one-time-code"
+          value={code}
+          onChange={setCode}
+          status={error ? { type: "error" } : undefined}
+          controlClassName="min-h-11"
+        />
+        {error ? (
+          <div role="alert">
+            <Banner status="error" title={error} />
+          </div>
+        ) : null}
 
-        <label className="flex min-h-11 items-center gap-3 text-sm">
-          <input
-            type="checkbox"
-            checked={trustDevice}
-            onChange={(event) => setTrustDevice(event.currentTarget.checked)}
-          />
-          Trust this private device for 30 days.
-        </label>
+        <CheckboxInput
+          label="Trust this private device for 30 days."
+          value={trustDevice}
+          onChange={setTrustDevice}
+        />
 
         <Button
           type="submit"
-          disabled={pending}
-          focusableWhenDisabled={pending}
-        >
-          {pending ? <Spinner data-icon="inline-start" /> : null}
-          {pending ? "Verifying…" : "Continue"}
-        </Button>
+          variant="primary"
+          width="100%"
+          isLoading={pending}
+          label={pending ? "Verifying…" : "Continue"}
+        />
 
         <Button
           type="button"
           variant="ghost"
+          width="100%"
+          label={
+            useRecoveryCode
+              ? "Use authenticator code"
+              : "Use a recovery code instead"
+          }
           onClick={() => {
             setUseRecoveryCode((current) => !current);
             setCode("");
             setError(null);
           }}
-        >
-          {useRecoveryCode
-            ? "Use authenticator code"
-            : "Use a recovery code instead"}
-        </Button>
-      </FieldGroup>
+        />
+      </VStack>
     </form>
   );
 }

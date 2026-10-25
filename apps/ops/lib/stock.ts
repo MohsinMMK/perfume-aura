@@ -7,8 +7,10 @@ import {
   db,
   desc,
   eq,
+  gt,
   InventoryError,
   lte,
+  or,
   productVariants,
   products,
   sql,
@@ -72,6 +74,16 @@ export type DashboardStats = {
   inventoryCostCents: number | null;
 };
 
+/**
+ * Series perfumes are made at sale, so an empty shelf is normal for them; they
+ * count as low only when a reorder level was set. Their oil and packaging
+ * raise material alerts instead.
+ */
+const tracksFinishedStock = or(
+  sql`${products.seriesId} IS NULL`,
+  gt(productVariants.reorderLevel, 0),
+);
+
 export async function listLowStock(): Promise<LowStockRow[]> {
   const session = await requireCapability("stock.view");
   const canViewCost = hasOpsCapability(session.user.role, "stock.view-cost");
@@ -98,6 +110,7 @@ export async function listLowStock(): Promise<LowStockRow[]> {
         eq(products.status, "active"),
         // qty <= reorder (includes reorder 0 when stock is 0)
         lte(productVariants.quantityOnHand, productVariants.reorderLevel),
+        tracksFinishedStock,
       ),
     )
     .orderBy(productVariants.quantityOnHand, products.name);
@@ -165,6 +178,7 @@ export async function getLowStockCount(): Promise<number> {
         eq(productVariants.status, "active"),
         eq(products.status, "active"),
         lte(productVariants.quantityOnHand, productVariants.reorderLevel),
+        tracksFinishedStock,
       ),
     );
   return Number(row?.lowStockCount ?? 0);

@@ -75,7 +75,7 @@ function assertCurrentVariant(
   }
 }
 
-function mapProductConstraint(error: unknown): never {
+export function mapProductConstraint(error: unknown): never {
   if (!isUniqueViolation(error)) throw error;
 
   const constraint = postgresConstraint(error);

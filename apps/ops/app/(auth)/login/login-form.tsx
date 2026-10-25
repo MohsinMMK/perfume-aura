@@ -3,16 +3,13 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { FormEvent, Suspense, useState } from "react";
-import { Button } from "@perfume-aura/ui/components/button";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@perfume-aura/ui/components/field";
-import { Input } from "@perfume-aura/ui/components/input";
-import { Skeleton } from "@perfume-aura/ui/components/skeleton";
-import { Spinner } from "@perfume-aura/ui/components/spinner";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Skeleton } from "@astryxdesign/core/Skeleton";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { VStack } from "@astryxdesign/core/VStack";
+import { useNativeConstraints } from "@/components/auth/native-input-constraints";
 import { authClient } from "@/lib/auth-client";
 import {
   AUTH_PASSWORD_MAX_LENGTH,
@@ -39,6 +36,13 @@ function LoginFormInner() {
       : null,
   );
   const [pending, setPending] = useState(false);
+  const emailConstraints = useNativeConstraints({ required: true });
+  const passwordConstraints = useNativeConstraints({
+    required: true,
+    minLength: AUTH_PASSWORD_MIN_LENGTH,
+    maxLength: AUTH_PASSWORD_MAX_LENGTH,
+  });
+  const invalid = error ? { type: "error" as const } : undefined;
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -81,78 +85,73 @@ function LoginFormInner() {
 
   return (
     <form onSubmit={onSubmit}>
-      <FieldGroup>
-        <Field data-invalid={error ? true : undefined}>
-          <FieldLabel htmlFor="email">Email</FieldLabel>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="name@company.com"
-            className="min-h-11"
-            aria-invalid={error ? true : undefined}
-          />
-        </Field>
+      <VStack gap={4}>
+        <TextInput
+          ref={emailConstraints}
+          id="email"
+          htmlName="email"
+          label="Email"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={setEmail}
+          placeholder="name@company.com"
+          status={invalid}
+          controlClassName="min-h-11"
+        />
 
-        <Field data-invalid={error ? true : undefined}>
-          <div className="flex items-center justify-between gap-4">
-            <FieldLabel htmlFor="password">Password</FieldLabel>
+        <VStack gap={1}>
+          <TextInput
+            ref={passwordConstraints}
+            id="password"
+            htmlName="password"
+            label="Password"
+            type={passwordVisible ? "text" : "password"}
+            autoComplete="current-password"
+            value={password}
+            onChange={setPassword}
+            placeholder="Enter your password"
+            status={invalid}
+            controlClassName="min-h-11"
+          />
+          <HStack justify="between" align="center" gap={4} wrap="wrap">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              label={passwordVisible ? "Hide password" : "Show password"}
+              onClick={() => setPasswordVisible((visible) => !visible)}
+            />
             <Link
               href="/forgot-password"
-              className="inline-flex min-h-11 items-center rounded-md px-2 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              className="inline-flex min-h-11 items-center rounded-md px-2 text-sm text-secondary underline-offset-4 hover:text-primary hover:underline"
             >
               Forgot password?
             </Link>
-          </div>
-          <div className="relative">
-            <Input
-              id="password"
-              name="password"
-              type={passwordVisible ? "text" : "password"}
-              autoComplete="current-password"
-              required
-              minLength={AUTH_PASSWORD_MIN_LENGTH}
-              maxLength={AUTH_PASSWORD_MAX_LENGTH}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              className="min-h-11 pr-20"
-              aria-invalid={error ? true : undefined}
-            />
-            <button
-              type="button"
-              aria-label={passwordVisible ? "Hide password" : "Show password"}
-              className="absolute inset-y-0 right-1 min-w-16 rounded-md px-3 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-[-3px]"
-              onClick={() => setPasswordVisible((visible) => !visible)}
-            >
-              {passwordVisible ? "Hide" : "Show"}
-            </button>
-          </div>
-        </Field>
+          </HStack>
+        </VStack>
 
-        {error ? <FieldError>{error}</FieldError> : null}
+        {error ? (
+          <div role="alert">
+            <Banner status="error" title={error} />
+          </div>
+        ) : null}
 
         <Button
           type="submit"
-          className="min-h-11 w-full"
-          disabled={pending}
-          focusableWhenDisabled={pending}
-        >
-          {pending ? <Spinner data-icon="inline-start" /> : null}
-          {pending ? "Signing in…" : "Sign in"}
-        </Button>
-      </FieldGroup>
+          variant="primary"
+          width="100%"
+          isLoading={pending}
+          label={pending ? "Signing in…" : "Sign in"}
+        />
+      </VStack>
     </form>
   );
 }
 
 export function LoginForm() {
   return (
-    <Suspense fallback={<Skeleton className="h-40 w-full rounded-md" />}>
+    <Suspense fallback={<Skeleton height={160} />}>
       <LoginFormInner />
     </Suspense>
   );

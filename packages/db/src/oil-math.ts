@@ -1,6 +1,6 @@
 import { InventoryMathError } from "./inventory-math";
 
-/** Locked v1 recipe: every finished perfume is 50% oil by volume. */
+/** Default recipe: a finished perfume is 50% oil by volume. Series override it. */
 export const OIL_CONCENTRATION_PERCENT = 50;
 
 /** Locked v1 conversion: one original 1 kg concentrate bottle is 1000 ml. */
@@ -22,10 +22,21 @@ function assertPositiveInt(value: number, field: string): number {
  * Signature 105 ml is not a whole millilitre at 50%; consume the ceiling so
  * the integer ledger never under-deducts concentrate (105 → 53 ml).
  */
-export function oilMlForBottles(sizeMl: number, quantity: number): number {
+export function oilMlForBottles(
+  sizeMl: number,
+  quantity: number,
+  concentrationPercent: number = OIL_CONCENTRATION_PERCENT,
+): number {
   const size = assertPositiveInt(sizeMl, "sizeMl");
   const count = assertPositiveInt(quantity, "quantity");
-  const numerator = size * count * OIL_CONCENTRATION_PERCENT;
+  const percent = assertPositiveInt(concentrationPercent, "concentrationPercent");
+  if (percent > 100) {
+    throw new InventoryMathError(
+      "concentrationPercent cannot exceed 100",
+      "INVALID_INPUT",
+    );
+  }
+  const numerator = size * count * percent;
   return Math.ceil(numerator / 100);
 }
 

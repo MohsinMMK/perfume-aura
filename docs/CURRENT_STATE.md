@@ -73,7 +73,7 @@ outside it is still open.
 Source dependencies are at latest: Next.js `16.4.3`, React `19.3.1`, Better
 Auth `1.7.12`, ESLint `10`, Sentry `11.8.0`, Sharp `0.35.5`, Nodemailer `10.2.1`
 and reviewed transitive overrides. The full `pnpm check` (including both audits)
-and 113 disposable-database integration tests pass. CI integration stays on
+and 122 disposable-database integration tests pass. CI integration stays on
 PostgreSQL `16.15` to match the protected `postgresql-16-integration` check;
 production now runs 18.6, so moving CI to 18 is an open follow-up.
 
@@ -164,6 +164,13 @@ not to the current VPS release flow.
 5. Keep commerce/security gates closed. Owner gates: India counsel, catalog
    facts/media, CA/tax/delivery policies, Google/SMTP/Cashfree, owner TOTP/staff
    denial, telemetry/maintenance, and explicit launch approval.
+6. Ops UI now uses Astryx `0.7.3` (light/dark/system, section-rail navigation)
+   in source; the storefront keeps `packages/ui`. It reaches `app.perfumeaura.com` only through a normal
+   Ops release; the live Ops SHA above predates it.
+7. Series, supplies and make-at-sale (Ops) are in source only.
+   They need `0020_series_supplies` applied manually with both runtime grant
+   files reapplied before an Ops release; runtime deploys of it stay blocked.
+   Storefront checkout still assumes 50% and finished stock (see Engineering).
 
 ## Find the owner
 

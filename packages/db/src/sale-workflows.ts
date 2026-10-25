@@ -3,12 +3,7 @@ import { businessDateAt, BUSINESS_TIMEZONE } from "./business-time";
 import { allocateDocumentNumberInTransaction } from "./document-numbers";
 import { DomainError } from "./domain-errors";
 import { applyMovementInTransaction } from "./inventory";
-import { availableQuantity } from "./inventory-math";
-import {
-  consumeOilInTransaction,
-  oilDemandForVariant,
-  type OilDemand,
-} from "./oil-inventory";
+import { makeBottlesInTransaction } from "./production";
 import {
   customers,
   invoiceLines,
@@ -65,7 +60,10 @@ export type CompleteOpsSaleResult = {
   invoiceId: string;
   invoiceNumber: string;
   customerId: string;
+  /** Bottles made at sale because finished stock did not cover them. */
+  filledBottles: number;
   oilConsumedMl: number;
+  baseConsumedMl: number;
   totalCents: number;
   amountPaidCents: number;
   idempotent: boolean;
@@ -97,7 +95,9 @@ async function loadExistingSale(
     invoiceId: existing.invoiceId,
     invoiceNumber: existing.invoiceNumber,
     customerId: existing.customerId,
+    filledBottles: 0,
     oilConsumedMl: 0,
+    baseConsumedMl: 0,
     totalCents: existing.totalCents,
     amountPaidCents: existing.amountPaidCents,
     idempotent: true,
@@ -218,7 +218,6 @@ export async function completeOpsSale(
         productRows.map((product) => [product.id, product]),
       );
 
-      const oilDemands: OilDemand[] = [];
       let subtotalCents = 0;
       const preparedLines: Array<{
         variantId: string;
@@ -240,16 +239,6 @@ export async function completeOpsSale(
         if (!product || product.status !== "active") {
           throw new DomainError("INVALID_STATE", "Product not found or inactive");
         }
-        const available = availableQuantity(
-          variant.quantityOnHand,
-          variant.qtyReserved,
-        );
-        if (line.quantity > available) {
-          throw new DomainError(
-            "INSUFFICIENT_STOCK",
-            `Insufficient stock for ${variant.sku}: available ${available}, requested ${line.quantity}`,
-          );
-        }
         const unitPriceCents =
           line.unitPriceCents === undefined
             ? variant.retailCents
@@ -266,13 +255,6 @@ export async function completeOpsSale(
           unitPriceCents,
           lineTotalCents,
         });
-        oilDemands.push(
-          oilDemandForVariant({
-            productId: variant.productId,
-            sizeMl: variant.sizeMl,
-            quantity: line.quantity,
-          }),
-        );
       }
 
       const now = input.now ?? new Date();
@@ -383,6 +365,19 @@ export async function completeOpsSale(
         .where(eq(invoiceLines.invoiceId, invoice.id))
         .orderBy(asc(invoiceLines.id));
 
+      // Bottles finished stock cannot cover are made now from oil, base and
+      // packaging, then sold below like any other bottle.
+      const made = await makeBottlesInTransaction(tx, {
+        lines: insertedLines.flatMap((line) =>
+          line.variantId
+            ? [{ lineId: line.id, variantId: line.variantId, quantity: line.quantity }]
+            : [],
+        ),
+        refType: "invoice",
+        refId: invoice.id,
+        userId: input.createdBy ?? null,
+      });
+
       for (const line of insertedLines) {
         if (!line.variantId) {
           throw new DomainError("INVALID_STATE", "Sale lines must be stocked products");
@@ -403,14 +398,6 @@ export async function completeOpsSale(
           .where(eq(invoiceLines.id, line.id));
       }
 
-      const oil = await consumeOilInTransaction(tx, {
-        demands: oilDemands,
-        refType: "invoice",
-        refId: invoice.id,
-        userId: input.createdBy ?? null,
-        idempotencyPrefix: `oil:ops-sale:${input.idempotencyKey}`,
-      });
-
       await tx.insert(opsSales).values({
         idempotencyKey: input.idempotencyKey,
         invoiceId: invoice.id,
@@ -422,7 +409,7 @@ export async function completeOpsSale(
         invoiceId: invoice.id,
         invoiceNumber: number,
         customerId,
-        oilConsumedMl: oil.consumedMl,
+        ...made,
         totalCents: subtotalCents,
         amountPaidCents,
         idempotent: false,

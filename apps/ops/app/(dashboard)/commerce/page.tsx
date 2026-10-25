@@ -1,7 +1,12 @@
 import Link from "next/link";
-import { Badge } from "@perfume-aura/ui/components/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@perfume-aura/ui/components/card";
+import { Card } from "@astryxdesign/core/Card";
+import { Grid } from "@astryxdesign/core/Grid";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Text } from "@astryxdesign/core/Text";
+import { Token } from "@astryxdesign/core/Token";
+import { VStack } from "@astryxdesign/core/VStack";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { PageHeader } from "@/components/page-header";
 import { safeDbQuery } from "@/lib/db-safe";
 import { getCommerceOverview } from "@/lib/commerce";
 import { requireCapability } from "@/lib/session";
@@ -21,39 +26,61 @@ export default async function CommercePage() {
         ["Open returns", result.data.openReturns, "/commerce/support"],
       ] as const
     : [];
+  const checkoutEnabled = Boolean(result.data?.checkoutEnabled);
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">Storefront commerce</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Catalog approval, customer orders, fulfillment, and release gates.</p>
-        </div>
-        <Badge variant={result.data?.checkoutEnabled ? "default" : "secondary"}>
-          Checkout {result.data?.checkoutEnabled ? "enabled" : "gated"}
-        </Badge>
-      </div>
+    <VStack gap={6} className="mx-auto w-full max-w-6xl">
+      <PageHeader
+        title="Storefront commerce"
+        description="Catalog approval, customer orders, fulfillment, and release gates."
+        actions={
+          <Token
+            size="sm"
+            label={`Checkout ${checkoutEnabled ? "enabled" : "gated"}`}
+            color={checkoutEnabled ? "green" : "gray"}
+          />
+        }
+      />
       {result.error || !result.data ? <DbUnavailableState message={result.error ?? "No data returned."} /> : null}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {metrics.map(([label, value, href]) => (
-          <Link key={label} href={href} className="group">
-            <Card className="h-full transition-colors group-hover:ring-foreground/20">
-              <CardHeader><CardDescription>{label}</CardDescription><CardTitle className="text-3xl tabular-nums">{value}</CardTitle></CardHeader>
+          <Link
+            key={label}
+            href={href}
+            className="group rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            <Card className="h-full transition-colors group-hover:border-border-strong">
+              <VStack gap={1}>
+                <Text as="p" color="secondary">{label}</Text>
+                <Text as="p" size="3xl" weight="semibold" hasTabularNumbers>{value}</Text>
+              </VStack>
             </Card>
           </Link>
         ))}
       </div>
       <Card>
-        <CardHeader><CardTitle>Release sequence</CardTitle><CardDescription>The store remains fail-closed until every independent gate is proven.</CardDescription></CardHeader>
-        <CardContent className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            "Approve each product’s legal, content, media, SKU, stock, cost, and price data.",
-            "Approve shipping, returns, cancellation, tax, and support settings.",
-            "Verify Cashfree, customer-auth, OAuth, email, and production callback domains.",
-            "Run the authorized prepaid UPI lifecycle acceptance tests before release.",
-          ].map((text, index) => <p key={text} className="rounded-md border p-4"><span className="mb-2 block text-xs font-semibold uppercase text-muted-foreground">Gate {index + 1}</span>{text}</p>)}
-        </CardContent>
+        <VStack gap={4}>
+          <VStack gap={1}>
+            <Heading level={2}>Release sequence</Heading>
+            <Text as="p" color="secondary">The store remains fail-closed until every independent gate is proven.</Text>
+          </VStack>
+          <Grid columns={{ minWidth: 200 }} gap={3}>
+            {[
+              "Approve each product’s legal, content, media, SKU, stock, cost, and price data.",
+              "Approve shipping, returns, cancellation, tax, and support settings.",
+              "Verify Cashfree, customer-auth, OAuth, email, and production callback domains.",
+              "Run the authorized prepaid UPI lifecycle acceptance tests before release.",
+            ].map((text, index) => (
+              <div key={text} className="rounded-md border border-border p-4">
+                <VStack gap={2}>
+                  <Text as="span" type="supporting" weight="semibold" className="uppercase">Gate {index + 1}</Text>
+                  <Text as="p">{text}</Text>
+                </VStack>
+              </div>
+            ))}
+          </Grid>
+        </VStack>
       </Card>
-    </div>
+    </VStack>
   );
 }

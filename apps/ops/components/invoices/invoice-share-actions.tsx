@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { buttonVariants } from "@perfume-aura/ui/components/button";
-import { cn } from "@perfume-aura/ui/lib/utils";
+import { Button } from "@astryxdesign/core/Button";
+import { HStack } from "@astryxdesign/core/HStack";
 
 export function InvoiceShareActions({
   invoiceId,
@@ -10,35 +9,29 @@ export function InvoiceShareActions({
   whatsappUrl: string | null;
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
-      <Link
+    <HStack gap={2} wrap="wrap">
+      <Button
+        label="Print / save PDF"
         href={`/invoices/${invoiceId}/print`}
-        className={buttonVariants({ variant: "outline" })}
         target="_blank"
-      >
-        Print / save PDF
-      </Link>
+        variant="secondary"
+      />
       {whatsappUrl ? (
-        <a
+        <Button
+          label="Open in WhatsApp"
           href={whatsappUrl}
           target="_blank"
           rel="noreferrer"
-          className={buttonVariants({ variant: "secondary" })}
-        >
-          Open in WhatsApp
-        </a>
+          variant="secondary"
+        />
       ) : (
-        <span
-          className={cn(
-            buttonVariants({ variant: "secondary" }),
-            "cursor-not-allowed opacity-50",
-          )}
-          aria-disabled="true"
-          title="Add a valid customer phone number to enable WhatsApp"
-        >
-          WhatsApp unavailable
-        </span>
+        <Button
+          label="WhatsApp unavailable"
+          variant="secondary"
+          isDisabled
+          tooltip="Add a valid customer phone number to enable WhatsApp"
+        />
       )}
-    </div>
+    </HStack>
   );
 }

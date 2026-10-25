@@ -1,29 +1,23 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@perfume-aura/ui/components/card";
-import { Badge } from "@perfume-aura/ui/components/badge";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { EmptyState } from "@astryxdesign/core/EmptyState";
+import { Heading } from "@astryxdesign/core/Heading";
 import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
+  // Aliased so lib/oil-cost-access.test.ts can match the cost column header.
+  TableHeaderCell,
   TableRow,
-} from "@perfume-aura/ui/components/table";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@perfume-aura/ui/components/empty";
+} from "@astryxdesign/core/Table";
+import { Text } from "@astryxdesign/core/Text";
+import { Token } from "@astryxdesign/core/Token";
+import { VStack } from "@astryxdesign/core/VStack";
 import { ReceiveOilForm } from "@/components/stock/receive-oil-form";
 import { DbUnavailableState } from "@/components/db-empty-state";
+import { PageHeader } from "@/components/page-header";
 import { PaginationNav } from "@/components/pagination-nav";
 import { formatBusinessDateTime } from "@/lib/business-date";
 import { safeDbQuery } from "@/lib/db-safe";
@@ -43,6 +37,21 @@ import {
 import { requireCapability } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
+
+function SectionHeader({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <VStack gap={1} padding={4} className="border-b border-border">
+      <Heading level={2}>{title}</Heading>
+      <Text color="secondary">{description}</Text>
+    </VStack>
+  );
+}
 
 export default async function OilStockPage({
   searchParams,
@@ -100,21 +109,14 @@ export default async function OilStockPage({
   const movements = movementPage?.items ?? [];
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Oil stock</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            1 kg bottle = 1000 ml. Every perfume uses 50% oil.
-          </p>
-        </div>
-        <Link
-          href="/stock"
-          className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-        >
-          ← Finished bottles
-        </Link>
-      </div>
+    <VStack gap={6} className="mx-auto w-full max-w-6xl">
+      <PageHeader
+        title="Oil stock"
+        description="1 kg / 1 L bottle = 1000 ml. Each series sets how much oil a bottle uses; the rest is base mixture."
+        actions={
+          <Button label="Finished bottles" href="/stock" variant="secondary" />
+        }
+      />
 
       {dbError ? (
         <DbUnavailableState message={dbError} />
@@ -124,134 +126,137 @@ export default async function OilStockPage({
             {canReceive ? (
               <ReceiveOilForm products={products} canViewCost={canViewCost} />
             ) : null}
-            <Card className="overflow-hidden py-0">
-              <CardHeader className="border-b py-4">
-                <CardTitle>Available oil</CardTitle>
-                <CardDescription>
-                  Raw oil available after active storefront holds, in millilitres.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                {balances.length === 0 ? (
-                  <Empty className="border-0">
-                    <EmptyHeader>
-                      <EmptyTitle>No oil received yet</EmptyTitle>
-                      <EmptyDescription>
-                        Receive a 1 kg bottle before recording a sale.
-                      </EmptyDescription>
-                    </EmptyHeader>
-                  </Empty>
-                ) : (
-                  <Table className="table-fixed">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Perfume</TableHead>
-                        <TableHead className="w-24 text-right">Available</TableHead>
-                        <TableHead className="w-20 text-right">Held</TableHead>
-                        <TableHead className="w-16 text-right">Lots</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {balances.map((row) => (
-                        <TableRow key={row.productId}>
-                          <TableCell className="truncate" title={row.productName}>
-                            {row.productName}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatQty(row.availableMl)} ml
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatQty(row.reservedMl)} ml
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatQty(row.lotCount)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card className="overflow-hidden py-0">
-            <CardHeader className="border-b py-4">
-              <CardTitle>Purchase lots</CardTitle>
-              <CardDescription>
-                Supplier, purchase reference, physical remaining oil, and active storefront holds for every receipt.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              {lots.length === 0 ? (
-                <Empty className="border-0">
-                  <EmptyHeader>
-                    <EmptyTitle>No purchase lots</EmptyTitle>
-                    <EmptyDescription>
-                      Supplier and cost details appear after the first oil receipt.
-                    </EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
+            <Card padding={0} className="overflow-hidden">
+              <SectionHeader
+                title="Available oil"
+                description="Raw oil available after active storefront holds, in millilitres."
+              />
+              {balances.length === 0 ? (
+                <EmptyState
+                  title="No oil received yet"
+                  description="Receive a 1 kg bottle before recording a sale."
+                />
               ) : (
-                <Table className="table-fixed">
+                <Table hasHover textOverflow="truncate">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-40">Received</TableHead>
-                      <TableHead>Perfume</TableHead>
-                      <TableHead className="w-48">Supplier / reference</TableHead>
-                      <TableHead className="w-24 text-right">Received</TableHead>
-                      <TableHead className="w-24 text-right">Remaining</TableHead>
-                      <TableHead className="w-20 text-right">Held</TableHead>
-                      <TableHead className="w-24 text-right">Available</TableHead>
-                      {canViewCost ? (
-                        <TableHead className="w-24 text-right">Cost</TableHead>
-                      ) : null}
+                      <TableHeaderCell className="min-w-40">Perfume</TableHeaderCell>
+                      <TableHeaderCell className="w-24 min-w-24 text-right">Available</TableHeaderCell>
+                      <TableHeaderCell className="w-20 min-w-20 text-right">Held</TableHeaderCell>
+                      <TableHeaderCell className="w-16 min-w-16 text-right">Lots</TableHeaderCell>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {lots.map((lot) => (
-                      <TableRow key={lot.id}>
-                        <TableCell className="truncate" title={lot.receivedDate ?? formatBusinessDateTime(lot.createdAt)}>
-                          {lot.receivedDate
-                            ? lot.receivedDate
-                            : formatBusinessDateTime(lot.createdAt)}
-                        </TableCell>
-                        <TableCell className="truncate font-medium" title={lot.productName}>
-                          {lot.productName}
-                        </TableCell>
-                        <TableCell className="truncate" title={lot.supplierReference ?? lot.supplierName ?? undefined}>
-                          {lot.supplierName ?? "—"}
-                          {lot.supplierReference ? (
-                            <p className="truncate text-xs text-muted-foreground">
-                              {lot.supplierReference}
-                            </p>
-                          ) : null}
+                    {balances.map((row) => (
+                      <TableRow key={row.productId}>
+                        <TableCell>
+                          <span className="block truncate" title={row.productName}>
+                            {row.productName}
+                          </span>
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
-                          {formatQty(lot.receivedQuantityMl)} ml
+                          {formatQty(row.availableMl)} ml
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
-                          {formatQty(lot.remainingQuantityMl)} ml
+                          {formatQty(row.reservedMl)} ml
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
-                          {formatQty(lot.reservedQuantityMl)} ml
+                          {formatQty(row.lotCount)}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {formatQty(lot.availableQuantityMl)} ml
-                        </TableCell>
-                        {canViewCost ? (
-                          <TableCell className="text-right tabular-nums">
-                            {lot.totalCostCents === null
-                              ? "—"
-                              : formatInr(lot.totalCostCents)}
-                          </TableCell>
-                        ) : null}
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               )}
-            </CardContent>
+            </Card>
+          </div>
+
+          <Card padding={0} className="overflow-hidden">
+            <SectionHeader
+              title="Purchase lots"
+              description="Supplier, purchase reference, physical remaining oil, and active storefront holds for every receipt."
+            />
+            {lots.length === 0 ? (
+              <EmptyState
+                title="No purchase lots"
+                description="Supplier and cost details appear after the first oil receipt."
+              />
+            ) : (
+              <Table hasHover textOverflow="truncate">
+                <TableHeader>
+                  <TableRow>
+                    <TableHeaderCell className="w-40 min-w-40">Received</TableHeaderCell>
+                    <TableHeaderCell className="min-w-40">Perfume</TableHeaderCell>
+                    <TableHeaderCell className="w-48 min-w-48">Supplier / reference</TableHeaderCell>
+                    <TableHeaderCell className="w-24 min-w-24 text-right">Received</TableHeaderCell>
+                    <TableHeaderCell className="w-24 min-w-24 text-right">Remaining</TableHeaderCell>
+                    <TableHeaderCell className="w-20 min-w-20 text-right">Held</TableHeaderCell>
+                    <TableHeaderCell className="w-24 min-w-24 text-right">Available</TableHeaderCell>
+                    {canViewCost ? (
+                      <TableHeaderCell className="w-24 min-w-24 text-right">Cost</TableHeaderCell>
+                    ) : null}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {lots.map((lot) => (
+                    <TableRow key={lot.id}>
+                      <TableCell>
+                        <span
+                          className="block truncate"
+                          title={
+                            lot.receivedDate ??
+                            formatBusinessDateTime(lot.createdAt)
+                          }
+                        >
+                          {lot.receivedDate
+                            ? lot.receivedDate
+                            : formatBusinessDateTime(lot.createdAt)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <span className="block truncate" title={lot.productName}>
+                          {lot.productName}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div
+                          className="flex min-w-0 flex-col gap-0.5"
+                          title={
+                            lot.supplierReference ?? lot.supplierName ?? undefined
+                          }
+                        >
+                          <Text maxLines={1}>{lot.supplierName ?? "—"}</Text>
+                          {lot.supplierReference ? (
+                            <Text type="supporting" maxLines={1}>
+                              {lot.supplierReference}
+                            </Text>
+                          ) : null}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatQty(lot.receivedQuantityMl)} ml
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatQty(lot.remainingQuantityMl)} ml
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatQty(lot.reservedQuantityMl)} ml
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatQty(lot.availableQuantityMl)} ml
+                      </TableCell>
+                      {canViewCost ? (
+                        <TableCell className="text-right tabular-nums">
+                          {lot.totalCostCents === null
+                            ? "—"
+                            : formatInr(lot.totalCostCents)}
+                        </TableCell>
+                      ) : null}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
             {lotPage ? (
               <PaginationNav
                 pathname="/stock/oil"
@@ -264,75 +269,74 @@ export default async function OilStockPage({
             ) : null}
           </Card>
 
-          <Card className="overflow-hidden py-0">
-            <CardHeader className="border-b py-4">
-              <CardTitle>Oil movements</CardTitle>
-              <CardDescription>Append-only concentrate ledger.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              {movements.length === 0 ? (
-                <Empty className="border-0">
-                  <EmptyHeader>
-                    <EmptyTitle>No oil movements</EmptyTitle>
-                    <EmptyDescription>
-                      Receives and sales will appear here.
-                    </EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
-              ) : (
-                <Table className="table-fixed">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-44">When</TableHead>
-                      <TableHead>Perfume</TableHead>
-                      <TableHead className="w-24">Type</TableHead>
-                      <TableHead className="w-24 text-right">Change</TableHead>
-                      <TableHead className="w-24 text-right">After</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {movements.map((row) => (
-                      <TableRow key={row.id}>
-                        <TableCell className="truncate" title={formatBusinessDateTime(row.createdAt)}>
-                          {formatBusinessDateTime(row.createdAt)}
-                        </TableCell>
-                        <TableCell className="truncate" title={row.productName}>
-                          {row.productName}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              row.type === "sale" ? "destructive" : "secondary"
-                            }
-                          >
-                            {row.type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {row.quantityDeltaMl > 0 ? "+" : ""}
-                          {formatQty(row.quantityDeltaMl)} ml
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatQty(row.quantityAfterMl)} ml
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-          {movementPage ? (
-            <PaginationNav
-              pathname="/stock/oil"
-              page={movementPage.page}
-              totalPages={movementPage.totalPages}
-              total={movementPage.total}
-              search={resolvedSearch}
+          <Card padding={0} className="overflow-hidden">
+            <SectionHeader
+              title="Oil movements"
+              description="Append-only concentrate ledger."
             />
-          ) : null}
+            {movements.length === 0 ? (
+              <EmptyState
+                title="No oil movements"
+                description="Receives and sales will appear here."
+              />
+            ) : (
+              <Table hasHover textOverflow="truncate">
+                <TableHeader>
+                  <TableRow>
+                    <TableHeaderCell className="w-44 min-w-44">When</TableHeaderCell>
+                    <TableHeaderCell className="min-w-40">Perfume</TableHeaderCell>
+                    <TableHeaderCell className="w-24 min-w-24">Type</TableHeaderCell>
+                    <TableHeaderCell className="w-24 min-w-24 text-right">Change</TableHeaderCell>
+                    <TableHeaderCell className="w-24 min-w-24 text-right">After</TableHeaderCell>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {movements.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell>
+                        <span
+                          className="block truncate"
+                          title={formatBusinessDateTime(row.createdAt)}
+                        >
+                          {formatBusinessDateTime(row.createdAt)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="block truncate" title={row.productName}>
+                          {row.productName}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Token
+                          size="sm"
+                          label={row.type}
+                          color={row.type === "sale" ? "red" : "gray"}
+                        />
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {row.quantityDeltaMl > 0 ? "+" : ""}
+                        {formatQty(row.quantityDeltaMl)} ml
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatQty(row.quantityAfterMl)} ml
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+            {movementPage ? (
+              <PaginationNav
+                pathname="/stock/oil"
+                page={movementPage.page}
+                totalPages={movementPage.totalPages}
+                total={movementPage.total}
+                search={resolvedSearch}
+              />
+            ) : null}
+          </Card>
         </>
       )}
-    </div>
+    </VStack>
   );
 }

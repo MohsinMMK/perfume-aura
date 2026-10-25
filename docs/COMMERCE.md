@@ -610,12 +610,18 @@ returns. See [`COMMERCE.md`](COMMERCE.md).
 
 Auth: `/login`, `/forgot-password`, `/reset-password`, `/two-factor`.
 
-Inventory: `/dashboard`, `/products`, `/stock`, `/stock/oil`, `/stock/low`,
-`/finance`, `/reports`. Sales: `/sales/new`, `/customers`, `/invoices`,
+Inventory: `/dashboard`, `/products`, `/series`, `/stock`, `/stock/oil`,
+`/stock/supplies`, `/stock/low`, `/finance`, `/reports`. Sales: `/sales/new`, `/customers`, `/invoices`,
 `/invoices/ar`, `/payments`. Commerce: `/commerce`, `/commerce/catalog`,
 `/commerce/orders`, `/commerce/promotions`, `/commerce/reviews`,
 `/commerce/support`, `/commerce/settings`. Settings: `/settings/security`,
 `/settings/staff`.
+
+Ops flow: receive oil (1 kg/1 L bottles), base and packaging; each series sets
+its oil share and per-size bottle/box; a local sale makes missing bottles from
+those materials. Products show how many more each size can make and the first
+material to run out. Dashboard and `/stock/low` warn once oil, base or
+packaging reaches its reorder level. Online orders do not use this yet.
 
 Roles are exact `owner`, `staff`, or `user`. Staff can update shipment state
 and cannot manage refunds, costs, finance, promotions, publication, or staff.

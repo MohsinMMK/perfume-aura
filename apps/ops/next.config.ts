@@ -26,7 +26,6 @@ const nextConfig: NextConfig = {
     PERFUME_AURA_BUILD_COMMIT: buildSourceCommit,
   },
   transpilePackages: [
-    "@perfume-aura/ui",
     "@perfume-aura/db",
     "@perfume-aura/validators",
   ],

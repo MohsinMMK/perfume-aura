@@ -1,16 +1,13 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { Button } from "@perfume-aura/ui/components/button";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@perfume-aura/ui/components/field";
-import { Input } from "@perfume-aura/ui/components/input";
-import { Spinner } from "@perfume-aura/ui/components/spinner";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Text } from "@astryxdesign/core/Text";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { VStack } from "@astryxdesign/core/VStack";
+import { useNativeConstraints } from "@/components/auth/native-input-constraints";
 import { authClient } from "@/lib/auth-client";
 import {
   AUTH_PASSWORD_MAX_LENGTH,
@@ -24,6 +21,12 @@ export function ChangePasswordForm() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const passwordConstraints = useNativeConstraints({
+    required: true,
+    minLength: AUTH_PASSWORD_MIN_LENGTH,
+    maxLength: AUTH_PASSWORD_MAX_LENGTH,
+  });
+  const invalid = error ? { type: "error" as const } : undefined;
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -70,74 +73,66 @@ export function ChangePasswordForm() {
 
   return (
     <form onSubmit={onSubmit} className="max-w-lg">
-      <FieldGroup>
-        <Field data-invalid={error ? true : undefined}>
-          <FieldLabel htmlFor="current-password">
-            Current password
-          </FieldLabel>
-          <Input
-            id="current-password"
-            type="password"
-            autoComplete="current-password"
-            required
-            minLength={AUTH_PASSWORD_MIN_LENGTH}
-            maxLength={AUTH_PASSWORD_MAX_LENGTH}
-            value={currentPassword}
-            onChange={(event) => setCurrentPassword(event.target.value)}
-          />
-        </Field>
+      <VStack gap={4}>
+        <TextInput
+          ref={passwordConstraints}
+          id="current-password"
+          label="Current password"
+          type="password"
+          autoComplete="current-password"
+          value={currentPassword}
+          onChange={setCurrentPassword}
+          status={invalid}
+          controlClassName="min-h-11"
+        />
 
-        <Field data-invalid={error ? true : undefined}>
-          <FieldLabel htmlFor="settings-new-password">
-            New password
-          </FieldLabel>
-          <Input
-            id="settings-new-password"
-            type="password"
-            autoComplete="new-password"
-            required
-            minLength={AUTH_PASSWORD_MIN_LENGTH}
-            maxLength={AUTH_PASSWORD_MAX_LENGTH}
-            value={newPassword}
-            onChange={(event) => setNewPassword(event.target.value)}
-          />
-          <FieldDescription>
-            Use {AUTH_PASSWORD_MIN_LENGTH}–{AUTH_PASSWORD_MAX_LENGTH} characters.
-          </FieldDescription>
-        </Field>
+        <TextInput
+          ref={passwordConstraints}
+          id="settings-new-password"
+          label="New password"
+          type="password"
+          autoComplete="new-password"
+          value={newPassword}
+          onChange={setNewPassword}
+          description={`Use ${AUTH_PASSWORD_MIN_LENGTH}–${AUTH_PASSWORD_MAX_LENGTH} characters.`}
+          status={invalid}
+          controlClassName="min-h-11"
+        />
 
-        <Field data-invalid={error ? true : undefined}>
-          <FieldLabel htmlFor="settings-confirm-password">
-            Confirm new password
-          </FieldLabel>
-          <Input
-            id="settings-confirm-password"
-            type="password"
-            autoComplete="new-password"
-            required
-            minLength={AUTH_PASSWORD_MIN_LENGTH}
-            maxLength={AUTH_PASSWORD_MAX_LENGTH}
-            value={confirmation}
-            onChange={(event) => setConfirmation(event.target.value)}
-          />
-        </Field>
+        <TextInput
+          ref={passwordConstraints}
+          id="settings-confirm-password"
+          label="Confirm new password"
+          type="password"
+          autoComplete="new-password"
+          value={confirmation}
+          onChange={setConfirmation}
+          status={invalid}
+          controlClassName="min-h-11"
+        />
 
-        {error ? <FieldError>{error}</FieldError> : null}
+        {error ? (
+          <div role="alert">
+            <Banner status="error" title={error} />
+          </div>
+        ) : null}
         {success ? (
-          <p className="text-sm text-muted-foreground" role="status">
-            {success}
-          </p>
+          <div role="status">
+            <Text as="p" color="secondary">
+              {success}
+            </Text>
+          </div>
         ) : null}
 
-        <Button
-          type="submit"
-          disabled={pending}
-          focusableWhenDisabled={pending}
-        >
-          {pending ? <Spinner data-icon="inline-start" /> : null}
-          {pending ? "Changing…" : "Change password"}
-        </Button>
-      </FieldGroup>
+        <HStack justify="start">
+          <Button
+            type="submit"
+            variant="primary"
+            isLoading={pending}
+            label={pending ? "Changing…" : "Change password"}
+          />
+        </HStack>
+      </VStack>
     </form>
   );
 }

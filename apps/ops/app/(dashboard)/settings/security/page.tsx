@@ -1,12 +1,10 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@perfume-aura/ui/components/card";
+import { Card } from "@astryxdesign/core/Card";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { ChangePasswordForm } from "@/components/auth/change-password-form";
 import { TwoFactorEnrollmentForm } from "@/components/auth/two-factor-enrollment-form";
+import { PageHeader } from "@/components/page-header";
 import { isOpsTwoFactorRequired } from "@/lib/ops-security-policy";
 import { requireCapability } from "@/lib/session";
 
@@ -26,52 +24,48 @@ export default async function SecuritySettingsPage() {
   const hasTwoFactor = session.user.twoFactorEnabled === true;
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
-      <div>
-        <h1 className="font-heading text-2xl font-semibold tracking-tight">
-          Security
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Manage your password, sessions, and required sign-in protection.
-        </p>
-      </div>
+    <VStack gap={6} className="mx-auto w-full max-w-4xl">
+      <PageHeader
+        title="Security"
+        description="Manage your password, sessions, and required sign-in protection."
+      />
 
       {!twoFactorRequired || hasTwoFactor ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Password</CardTitle>
-            <CardDescription>
-              Recovery links are single-use and expire after 30 minutes.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <Card padding={6}>
+          <VStack gap={5}>
+            <VStack gap={1}>
+              <Heading level={2}>Password</Heading>
+              <Text as="p" color="secondary">
+                Recovery links are single-use and expire after 30 minutes.
+              </Text>
+            </VStack>
             <ChangePasswordForm />
-          </CardContent>
+          </VStack>
         </Card>
       ) : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Authenticator app</CardTitle>
-          <CardDescription>
-            {hasTwoFactor
-              ? "Two-factor authentication is active on this account."
-              : twoFactorRequired
-              ? "Two-factor authentication is required before you can access operations."
-                : "Add an authenticator app and recovery codes to protect this account."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <Card padding={6}>
+        <VStack gap={5}>
+          <VStack gap={1}>
+            <Heading level={2}>Authenticator app</Heading>
+            <Text as="p" color="secondary">
+              {hasTwoFactor
+                ? "Two-factor authentication is active on this account."
+                : twoFactorRequired
+                  ? "Two-factor authentication is required before you can access operations."
+                  : "Add an authenticator app and recovery codes to protect this account."}
+            </Text>
+          </VStack>
           {hasTwoFactor ? (
-            <p className="text-sm text-muted-foreground">
+            <Text as="p" color="secondary">
               To preserve required protection, this account cannot disable its
               authenticator through the operations app.
-            </p>
+            </Text>
           ) : (
             <TwoFactorEnrollmentForm enforced={twoFactorRequired} />
           )}
-        </CardContent>
+        </VStack>
       </Card>
-    </div>
+    </VStack>
   );
 }

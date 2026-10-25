@@ -8,12 +8,15 @@ const repositoryRoot = process.cwd();
 const opsBuildRoot = path.join(repositoryRoot, "apps/ops/.next");
 const manifestsRoot = path.join(opsBuildRoot, "server/app");
 
+// Ops renders through Astryx (built neutral theme, press and locale runtime),
+// which every route ships; these limits are the Astryx baseline plus ~3%.
+// Dashboard routes also ship the shell: section rail, account menu and ⌘K search.
 const clientJavaScriptBudgets = new Map([
-  ["/(auth)/forgot-password/page", 181_000],
-  ["/(auth)/login/page", 185_000],
-  ["/(auth)/reset-password/page", 184_000],
-  ["/(auth)/two-factor/page", 176_000],
-  ["/(dashboard)/dashboard/page", 396_000],
+  ["/(auth)/forgot-password/page", 354_000],
+  ["/(auth)/login/page", 364_000],
+  ["/(auth)/reset-password/page", 362_000],
+  ["/(auth)/two-factor/page", 368_000],
+  ["/(dashboard)/dashboard/page", 506_000],
 ]);
 
 async function findClientReferenceManifests(directory) {

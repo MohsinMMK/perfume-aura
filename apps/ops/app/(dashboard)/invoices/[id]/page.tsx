@@ -1,21 +1,19 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@perfume-aura/ui/components/card";
-import { Badge } from "@perfume-aura/ui/components/badge";
+import { Card } from "@astryxdesign/core/Card";
+import { Grid } from "@astryxdesign/core/Grid";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
 import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
+  TableHeaderCell,
   TableRow,
-} from "@perfume-aura/ui/components/table";
+} from "@astryxdesign/core/Table";
+import { Text } from "@astryxdesign/core/Text";
+import { Token } from "@astryxdesign/core/Token";
+import { VStack } from "@astryxdesign/core/VStack";
 import { getInvoice } from "@/lib/invoices";
 import { listActiveVariantsForSelect } from "@/lib/products";
 import { listPayments } from "@/lib/payments";
@@ -40,8 +38,22 @@ import { PaginationNav } from "@/components/pagination-nav";
 import { InvoiceShareActions } from "@/components/invoices/invoice-share-actions";
 import { createInvoiceWhatsAppUrl } from "@/lib/invoice-sharing";
 import { ReceiveReturnForm } from "@/components/invoices/receive-return-form";
+import { PageBreadcrumbs } from "@/components/page-breadcrumbs";
 
 export const dynamic = "force-dynamic";
+
+function statusColor(status: string): "gray" | "blue" | "green" | "red" {
+  switch (status) {
+    case "issued":
+      return "blue";
+    case "paid":
+      return "green";
+    case "void":
+      return "red";
+    default:
+      return "gray";
+  }
+}
 
 export default async function InvoiceDetailPage({
   params,
@@ -120,145 +132,138 @@ export default async function InvoiceDetailPage({
         })
       : null;
 
+  const showLineActions = inv.status === "draft" && canDraft;
+  const totals = [
+    { label: "Subtotal", cents: inv.subtotalCents },
+    { label: "Total", cents: inv.totalCents },
+    { label: "Balance", cents: inv.balanceCents },
+  ];
+
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <Link
-            href="/invoices"
-            className="text-sm text-muted-foreground underline-offset-4 hover:underline"
-          >
-            ← Invoices
-          </Link>
-          <h1 className="mt-2 font-heading text-2xl font-semibold tracking-tight">
-            {inv.number ?? "Draft invoice"}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {inv.customerName}
-            {inv.customerPhone ? ` · ${inv.customerPhone}` : ""}
-          </p>
-          <div className="mt-2">
-            <Badge>{inv.status}</Badge>
-          </div>
-        </div>
-        <InvoiceStatusActions
-          canFulfill={canFulfill}
-          canIssue={canIssue}
-          canRecordPayment={canRecordPayment}
-          canVoid={canVoid}
-          invoiceId={inv.id}
-          status={inv.status}
+    <VStack gap={6} className="mx-auto w-full max-w-6xl">
+      <VStack gap={2}>
+        <PageBreadcrumbs
+          items={[
+            { label: "Invoices", href: "/invoices" },
+            { label: inv.number ?? "Draft invoice" },
+          ]}
         />
-      </div>
+        <HStack justify="between" align="start" gap={4} wrap="wrap">
+          <VStack gap={1}>
+            <Heading level={1}>{inv.number ?? "Draft invoice"}</Heading>
+            <Text as="p" color="secondary">
+              {inv.customerName}
+              {inv.customerPhone ? ` · ${inv.customerPhone}` : ""}
+            </Text>
+            <HStack gap={2}>
+              <Token
+                size="sm"
+                label={inv.status}
+                color={statusColor(inv.status)}
+              />
+            </HStack>
+          </VStack>
+          <InvoiceStatusActions
+            canFulfill={canFulfill}
+            canIssue={canIssue}
+            canRecordPayment={canRecordPayment}
+            canVoid={canVoid}
+            invoiceId={inv.id}
+            status={inv.status}
+          />
+        </HStack>
+      </VStack>
 
       {inv.status !== "draft" ? (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Share invoice</CardTitle>
-            <CardDescription>
-              Save the print view as a PDF, then open the prepared customer message and attach the PDF in WhatsApp.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          <VStack gap={3}>
+            <VStack gap={1}>
+              <Heading level={2}>Share invoice</Heading>
+              <Text as="p" color="secondary">
+                Save the print view as a PDF, then open the prepared customer message and attach the PDF in WhatsApp.
+              </Text>
+            </VStack>
             <InvoiceShareActions invoiceId={inv.id} whatsappUrl={whatsappUrl} />
-          </CardContent>
+          </VStack>
         </Card>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Subtotal
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xl tabular-nums">
-            {formatInr(inv.subtotalCents)}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xl tabular-nums">
-            {formatInr(inv.totalCents)}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Balance
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xl tabular-nums">
-            {formatInr(inv.balanceCents)}
-          </CardContent>
-        </Card>
-      </div>
+      <Grid columns={{ minWidth: 180, max: 3 }} gap={4}>
+        {totals.map((total) => (
+          <Card key={total.label}>
+            <VStack gap={1}>
+              <Text type="supporting">{total.label}</Text>
+              <Text size="xl" weight="semibold" hasTabularNumbers>
+                {formatInr(total.cents)}
+              </Text>
+            </VStack>
+          </Card>
+        ))}
+      </Grid>
 
-      <Card className="overflow-hidden py-0">
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
+      <Card padding={0} className="overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHeaderCell>Description</TableHeaderCell>
+              <TableHeaderCell className="text-right">Qty</TableHeaderCell>
+              <TableHeaderCell className="text-right">Unit</TableHeaderCell>
+              <TableHeaderCell className="text-right">Line</TableHeaderCell>
+              <TableHeaderCell className="text-right">Fulfilled</TableHeaderCell>
+              <TableHeaderCell className="text-right">Returned</TableHeaderCell>
+              {showLineActions ? (
+                <TableHeaderCell>
+                  <span className="sr-only">Actions</span>
+                </TableHeaderCell>
+              ) : null}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {inv.lines.length === 0 ? (
               <TableRow>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Qty</TableHead>
-                <TableHead className="text-right">Unit</TableHead>
-                <TableHead className="text-right">Line</TableHead>
-                <TableHead className="text-right">Fulfilled</TableHead>
-                <TableHead className="text-right">Returned</TableHead>
-                {inv.status === "draft" && canDraft ? <TableHead /> : null}
+                <TableCell
+                  colSpan={showLineActions ? 7 : 6}
+                  className="text-center"
+                >
+                  <Text color="secondary">No lines yet.</Text>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {inv.lines.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={inv.status === "draft" && canDraft ? 7 : 6}
-                    className="text-center text-muted-foreground"
-                  >
-                    No lines yet.
+            ) : (
+              inv.lines.map((line) => (
+                <TableRow key={line.id}>
+                  <TableCell>{line.description}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatQty(line.quantity)}
                   </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatInr(line.unitPriceCents)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatInr(line.lineTotalCents)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatQty(line.quantityFulfilled)}
+                    {line.variantId ? "" : " · no SKU"}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatQty(line.quantityReturned)}
+                  </TableCell>
+                  {showLineActions ? (
+                    <TableCell className="text-right">
+                      <RemoveLineButton
+                        invoiceId={inv.id}
+                        lineId={line.id}
+                      />
+                    </TableCell>
+                  ) : null}
                 </TableRow>
-              ) : (
-                inv.lines.map((line) => (
-                  <TableRow key={line.id}>
-                    <TableCell>{line.description}</TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatQty(line.quantity)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatInr(line.unitPriceCents)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatInr(line.lineTotalCents)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatQty(line.quantityFulfilled)}
-                      {line.variantId ? "" : " · no SKU"}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatQty(line.quantityReturned)}
-                    </TableCell>
-                    {inv.status === "draft" && canDraft ? (
-                      <TableCell className="text-right">
-                        <RemoveLineButton
-                          invoiceId={inv.id}
-                          lineId={line.id}
-                        />
-                      </TableCell>
-                    ) : null}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </Card>
 
-      {inv.status === "draft" && canDraft ? (
+      {showLineActions ? (
         <AddInvoiceLineForm invoiceId={inv.id} variants={variants} />
       ) : null}
 
@@ -289,42 +294,42 @@ export default async function InvoiceDetailPage({
       ) : null}
 
       {canRecordPayment && paymentRows.length > 0 ? (
-        <Card className="overflow-hidden py-0">
-          <CardHeader className="border-b px-4 py-3">
-            <CardTitle className="text-base">
+        <Card padding={0} className="overflow-hidden">
+          <div className="border-b border-border px-4 py-3">
+            <Heading level={2}>
               Payment history · {paymentsResult.data?.total ?? paymentRows.length}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Number</TableHead>
-                  <TableHead>Method</TableHead>
-                  <TableHead>When</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paymentRows.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-medium">
-                      {p.number ?? p.id.slice(0, 8)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{p.method}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+            </Heading>
+          </div>
+          <Table hasHover>
+            <TableHeader>
+              <TableRow>
+                <TableHeaderCell>Number</TableHeaderCell>
+                <TableHeaderCell>Method</TableHeaderCell>
+                <TableHeaderCell>When</TableHeaderCell>
+                <TableHeaderCell className="text-right">Amount</TableHeaderCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paymentRows.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell className="font-medium">
+                    {p.number ?? p.id.slice(0, 8)}
+                  </TableCell>
+                  <TableCell>
+                    <Token size="sm" label={p.method} color="gray" />
+                  </TableCell>
+                  <TableCell>
+                    <Text type="supporting">
                       {formatBusinessDateTime(p.paidAt)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatInr(p.amountCents)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
+                    </Text>
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatInr(p.amountCents)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
           {paymentsResult.data ? (
             <PaginationNav
               pathname={`/invoices/${id}`}
@@ -340,14 +345,14 @@ export default async function InvoiceDetailPage({
 
       {inv.notes ? (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Notes</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground whitespace-pre-wrap">
-            {inv.notes}
-          </CardContent>
+          <VStack gap={2}>
+            <Heading level={2}>Notes</Heading>
+            <Text as="p" color="secondary" className="whitespace-pre-wrap">
+              {inv.notes}
+            </Text>
+          </VStack>
         </Card>
       ) : null}
-    </div>
+    </VStack>
   );
 }

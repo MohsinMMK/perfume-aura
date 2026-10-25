@@ -1,20 +1,20 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import {
-  Card,
-  CardContent,
-} from "@perfume-aura/ui/components/card";
-import { Badge } from "@perfume-aura/ui/components/badge";
-import { buttonVariants } from "@perfume-aura/ui/components/button";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { EmptyState } from "@astryxdesign/core/EmptyState";
 import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
+  TableHeaderCell,
   TableRow,
-} from "@perfume-aura/ui/components/table";
+} from "@astryxdesign/core/Table";
+import { Text } from "@astryxdesign/core/Text";
+import { Token } from "@astryxdesign/core/Token";
+import { VStack } from "@astryxdesign/core/VStack";
 import { listCustomers } from "@/lib/customers";
 import { safeDbQuery } from "@/lib/db-safe";
 import { ProductFilters } from "@/components/products/product-filters";
@@ -26,7 +26,7 @@ import {
   parsePage,
 } from "@/lib/pagination";
 import { PaginationNav } from "@/components/pagination-nav";
-import { cn } from "@perfume-aura/ui/lib/utils";
+import { PageHeader } from "@/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -65,23 +65,14 @@ export default async function CustomersPage({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">
-            Customers
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Contacts for invoices and AR.
-          </p>
-        </div>
-        <Link
-          href="/customers/new"
-          className={cn(buttonVariants(), "w-full sm:w-auto")}
-        >
-          New customer
-        </Link>
-      </div>
+    <VStack gap={6} className="mx-auto w-full max-w-6xl">
+      <PageHeader
+        title="Customers"
+        description="Contacts for invoices and AR."
+        actions={
+          <Button label="New customer" href="/customers/new" variant="primary" />
+        }
+      />
 
       <Suspense fallback={null}>
         <ProductFilters
@@ -95,60 +86,59 @@ export default async function CustomersPage({
       {result.error || !result.data ? (
         <DbUnavailableState message={result.error ?? "No data"} />
       ) : result.data.items.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            No customers yet.{" "}
-            <Link href="/customers/new" className="underline-offset-4 hover:underline">
-              Add one
-            </Link>
-          </CardContent>
+        <Card variant="muted">
+          <EmptyState
+            title="No customers yet"
+            description="Add a customer to raise invoices against them."
+            actions={
+              <Button label="Add customer" href="/customers/new" variant="primary" />
+            }
+          />
         </Card>
       ) : (
-        <Card className="overflow-hidden py-0">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>City</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {result.data.items.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell>
+        <Card padding={0} className="overflow-hidden">
+          <Table hasHover>
+            <TableHeader>
+              <TableRow>
+                <TableHeaderCell>Name</TableHeaderCell>
+                <TableHeaderCell>Phone</TableHeaderCell>
+                <TableHeaderCell>City</TableHeaderCell>
+                <TableHeaderCell>Status</TableHeaderCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {result.data.items.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell>
+                    <VStack gap={0.5}>
                       <Link
                         href={`/customers/${c.id}`}
-                        className="font-medium underline-offset-4 hover:underline"
+                        className="font-medium text-primary underline-offset-4 hover:underline"
                       >
                         {c.name}
                       </Link>
                       {c.email ? (
-                        <p className="text-xs text-muted-foreground">{c.email}</p>
+                        <Text type="supporting">{c.email}</Text>
                       ) : null}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {c.phone ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {c.city ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          c.status === "active" ? "secondary" : "outline"
-                        }
-                      >
-                        {c.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
+                    </VStack>
+                  </TableCell>
+                  <TableCell>
+                    <Text color="secondary">{c.phone ?? "—"}</Text>
+                  </TableCell>
+                  <TableCell>
+                    <Text color="secondary">{c.city ?? "—"}</Text>
+                  </TableCell>
+                  <TableCell>
+                    <Token
+                      size="sm"
+                      label={c.status}
+                      color={c.status === "active" ? "green" : "gray"}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
           <PaginationNav
             pathname="/customers"
             page={result.data.page}
@@ -161,6 +151,6 @@ export default async function CustomersPage({
           />
         </Card>
       )}
-    </div>
+    </VStack>
   );
 }

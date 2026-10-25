@@ -1,32 +1,47 @@
-import Link from "next/link";
+import { Button } from "@astryxdesign/core/Button";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { VStack } from "@astryxdesign/core/VStack";
 import { CreateProductForm } from "@/components/products/create-product-form";
+import { CreateSeriesProductForm } from "@/components/products/create-series-product-form";
+import { safeDbQuery } from "@/lib/db-safe";
+import { listSeriesForProductCreate } from "@/lib/production";
 import { requireCapability } from "@/lib/session";
+import { PageBreadcrumbs } from "@/components/page-breadcrumbs";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewProductPage() {
+export default async function NewProductPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mode?: string }>;
+}) {
   await requireCapability("catalog.manage-commercials", {
     redirectToLogin: true,
   });
+  const { mode } = await searchParams;
+  const seriesResult = await safeDbQuery(() => listSeriesForProductCreate());
+  const series = seriesResult.data ?? [];
+  const isCustom = mode === "custom" || series.length === 0;
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      <div>
-        <p className="text-xs text-muted-foreground">
-          <Link
-            href="/products"
-            className="underline-offset-4 hover:text-foreground hover:underline"
-          >
-            Products
-          </Link>
-          <span className="mx-1.5">/</span>
-          New
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-          Create product
-        </h1>
-      </div>
-      <CreateProductForm />
-    </div>
+    <VStack gap={6} className="mx-auto w-full max-w-6xl">
+      <HStack gap={4} justify="between" align="end" wrap="wrap">
+        <VStack gap={1}>
+          <PageBreadcrumbs
+            items={[{ label: "Products", href: "/products" }, { label: "New" }]}
+          />
+          <Heading level={1}>Create product</Heading>
+        </VStack>
+        {series.length > 0 ? (
+          <Button
+            label={isCustom ? "Use a series" : "Without a series"}
+            href={isCustom ? "/products/new" : "/products/new?mode=custom"}
+            variant="secondary"
+          />
+        ) : null}
+      </HStack>
+      {isCustom ? <CreateProductForm /> : <CreateSeriesProductForm series={series} />}
+    </VStack>
   );
 }

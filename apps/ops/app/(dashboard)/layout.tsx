@@ -1,5 +1,7 @@
+import { cookies } from "next/headers";
 import { AppShell } from "@/components/app-shell";
 import { ObservabilityUser } from "@/components/observability-user";
+import { navCollapsedCookie, parseNavCollapsed } from "@/lib/nav-preferences";
 import { hasOpsCapability, parseOpsRole } from "@/lib/ops-access";
 import { requireOpsSession } from "@/lib/session";
 import { getLowStockCount } from "@/lib/stock";
@@ -20,11 +22,22 @@ export default async function DashboardLayout({
     ? await safeDbQuery(() => getLowStockCount())
     : { data: 0 };
   const lowStockCount = lowStock.data ?? 0;
+  const navCollapsed = parseNavCollapsed(
+    (await cookies()).get(navCollapsedCookie)?.value,
+  );
 
   return (
     <>
       <ObservabilityUser userId={session.user.id} role={role} />
-      <AppShell lowStockCount={lowStockCount} role={role}>
+      <AppShell
+        lowStockCount={lowStockCount}
+        account={{
+          name: session.user.name,
+          email: session.user.email,
+          role,
+        }}
+        defaultNavCollapsed={navCollapsed}
+      >
         {children}
       </AppShell>
     </>

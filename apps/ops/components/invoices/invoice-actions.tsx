@@ -1,26 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@perfume-aura/ui/components/alert-dialog";
-import {
-  Button,
-  buttonVariants,
-} from "@perfume-aura/ui/components/button";
-import { FieldError } from "@perfume-aura/ui/components/field";
-import { Spinner } from "@perfume-aura/ui/components/spinner";
-import { toast } from "@perfume-aura/ui/components/sonner";
+import { AlertDialog } from "@astryxdesign/core/AlertDialog";
+import { Button } from "@astryxdesign/core/Button";
+import { HStack } from "@astryxdesign/core/HStack";
+import { useToast } from "@astryxdesign/core/Toast";
 import {
   fulfillInvoiceAction,
   issueInvoiceAction,
@@ -36,86 +21,62 @@ type InvoiceActionConfig = {
   pendingLabel: string;
   title: string;
   description: string;
-  variant: "default" | "secondary" | "outline" | "destructive";
+  variant: "primary" | "secondary" | "destructive";
   run: () => ActionResponse;
 };
 
 function InvoiceActionDialog({ action }: { action: InvoiceActionConfig }) {
   const router = useRouter();
+  const showToast = useToast();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function execute() {
+    if (pending) return;
     setPending(true);
-    setError(null);
     let result: Awaited<ReturnType<typeof action.run>>;
     try {
       result = await action.run();
     } catch {
-      const message = "The invoice action could not be completed";
-      setError(message);
-      toast.error(message);
+      showToast({
+        body: "The invoice action could not be completed",
+        type: "error",
+      });
       setPending(false);
       return;
     }
     if (!result.ok) {
-      const message = result.error ?? "Action failed";
-      setError(message);
-      toast.error(message);
+      showToast({ body: result.error ?? "Action failed", type: "error" });
       setPending(false);
       return;
     }
-    toast.success(`${action.label} completed`);
+    showToast({ body: `${action.label} completed` });
     setOpen(false);
     setPending(false);
     router.refresh();
   }
 
   return (
-    <AlertDialog
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (pending) return;
-        setOpen(nextOpen);
-        if (!nextOpen) setError(null);
-      }}
-    >
-      <AlertDialogTrigger
-        render={
-          <Button
-            type="button"
-            variant={action.variant}
-            disabled={pending}
-            focusableWhenDisabled={pending}
-          />
-        }
-      >
-        {action.label}
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{action.title}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {action.description}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        {error ? <FieldError>{error}</FieldError> : null}
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            type="button"
-            variant={action.variant}
-            disabled={pending}
-            focusableWhenDisabled={pending}
-            onClick={execute}
-          >
-            {pending ? <Spinner data-icon="inline-start" /> : null}
-            {pending ? action.pendingLabel : action.label}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <>
+      <Button
+        label={action.label}
+        variant={action.variant}
+        onClick={() => setOpen(true)}
+      />
+      <AlertDialog
+        isOpen={open}
+        onOpenChange={(nextOpen) => {
+          if (pending) return;
+          setOpen(nextOpen);
+        }}
+        title={action.title}
+        description={action.description}
+        actionLabel={pending ? action.pendingLabel : action.label}
+        actionVariant={action.variant}
+        isActionLoading={pending}
+        onAction={execute}
+      />
+    </>
   );
 }
 
@@ -145,7 +106,7 @@ export function InvoiceStatusActions({
     title: "Issue invoice?",
     description:
       "Issuing assigns the invoice number and locks its current lines.",
-    variant: "default",
+    variant: "primary",
     run: () => issueInvoiceAction({ invoiceId }),
   };
   const markPaid: InvoiceActionConfig = {
@@ -154,7 +115,7 @@ export function InvoiceStatusActions({
     title: "Record full cash payment?",
     description:
       "This records the full remaining balance as a cash payment. It does not move stock.",
-    variant: "default",
+    variant: "primary",
     run: () => {
       markPaidRequest.current ??= {
         idempotencyKey: crypto.randomUUID(),
@@ -186,7 +147,7 @@ export function InvoiceStatusActions({
   };
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <HStack gap={2} wrap="wrap">
       {status === "draft" && canIssue ? (
         <InvoiceActionDialog action={issue} />
       ) : null}
@@ -200,14 +161,13 @@ export function InvoiceStatusActions({
       {status === "paid" && canFulfill ? (
         <InvoiceActionDialog action={fulfill} />
       ) : null}
-      <Link
+      <Button
+        label="Print / PDF"
         href={`/invoices/${invoiceId}/print`}
         target="_blank"
-        className={buttonVariants({ variant: "outline" })}
-      >
-        Print / PDF
-      </Link>
-    </div>
+        variant="secondary"
+      />
+    </HStack>
   );
 }
 
@@ -219,72 +179,56 @@ export function RemoveLineButton({
   lineId: string;
 }) {
   const router = useRouter();
+  const showToast = useToast();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function removeLine() {
+    if (pending) return;
     setPending(true);
-    setError(null);
     let result: Awaited<ReturnType<typeof removeInvoiceLineAction>>;
     try {
       result = await removeInvoiceLineAction({ invoiceId, lineId });
     } catch {
-      const message = "The invoice line could not be removed";
-      setError(message);
-      toast.error(message);
+      showToast({
+        body: "The invoice line could not be removed",
+        type: "error",
+      });
       setPending(false);
       return;
     }
     if (!result.ok) {
-      setError(result.error);
-      toast.error(result.error);
+      showToast({ body: result.error, type: "error" });
       setPending(false);
       return;
     }
-    toast.success("Invoice line removed");
+    showToast({ body: "Invoice line removed" });
     setOpen(false);
     setPending(false);
     router.refresh();
   }
 
   return (
-    <AlertDialog
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (pending) return;
-        setOpen(nextOpen);
-        if (!nextOpen) setError(null);
-      }}
-    >
-      <AlertDialogTrigger
-        render={<Button type="button" size="sm" variant="ghost" />}
-      >
-        Remove
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Remove invoice line?</AlertDialogTitle>
-          <AlertDialogDescription>
-            The draft total will be recalculated. This cannot be undone after
-            the line is removed.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        {error ? <FieldError>{error}</FieldError> : null}
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            type="button"
-            variant="destructive"
-            disabled={pending}
-            focusableWhenDisabled={pending}
-            onClick={removeLine}
-          >
-            {pending ? <Spinner data-icon="inline-start" /> : null}
-            {pending ? "Removing…" : "Remove line"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <>
+      <Button
+        label="Remove"
+        size="sm"
+        variant="ghost"
+        onClick={() => setOpen(true)}
+      />
+      <AlertDialog
+        isOpen={open}
+        onOpenChange={(nextOpen) => {
+          if (pending) return;
+          setOpen(nextOpen);
+        }}
+        title="Remove invoice line?"
+        description="The draft total will be recalculated. This cannot be undone after the line is removed."
+        actionLabel={pending ? "Removing…" : "Remove line"}
+        actionVariant="destructive"
+        isActionLoading={pending}
+        onAction={removeLine}
+      />
+    </>
   );
 }

@@ -1,8 +1,9 @@
-import Link from "next/link";
-import {
-  Button,
-  buttonVariants,
-} from "@perfume-aura/ui/components/button";
+"use client";
+
+import { useRouter } from "next/navigation";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Pagination } from "@astryxdesign/core/Pagination";
+import { Text } from "@astryxdesign/core/Text";
 import { paginationHref } from "@/lib/pagination";
 
 type Props = {
@@ -22,40 +23,27 @@ export function PaginationNav({
   search = {},
   pageParam = "page",
 }: Props) {
+  const router = useRouter();
   return (
-    <nav
-      aria-label="Pagination"
-      className="flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+    <HStack
+      justify="between"
+      align="center"
+      gap={3}
+      wrap="wrap"
+      className="border-t border-border px-4 py-3"
     >
-      <p className="text-sm text-muted-foreground" aria-live="polite">
+      <Text size="sm" color="secondary" aria-live="polite">
         Page {page} of {totalPages} · {total} {total === 1 ? "record" : "records"}
-      </p>
-      <div className="flex items-center gap-2">
-        {page > 1 ? (
-          <Link
-            href={paginationHref(pathname, page - 1, search, pageParam)}
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Previous
-          </Link>
-        ) : (
-          <Button variant="outline" size="sm" disabled>
-            Previous
-          </Button>
-        )}
-        {page < totalPages ? (
-          <Link
-            href={paginationHref(pathname, page + 1, search, pageParam)}
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Next
-          </Link>
-        ) : (
-          <Button variant="outline" size="sm" disabled>
-            Next
-          </Button>
-        )}
-      </div>
-    </nav>
+      </Text>
+      <Pagination
+        page={page}
+        totalPages={Math.max(totalPages, 1)}
+        variant="compact"
+        size="sm"
+        onChange={(next) =>
+          router.push(paginationHref(pathname, next, search, pageParam))
+        }
+      />
+    </HStack>
   );
 }

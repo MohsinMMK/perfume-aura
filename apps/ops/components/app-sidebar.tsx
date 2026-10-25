@@ -1,251 +1,230 @@
 "use client";
 
-import * as React from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { usePathname } from "next/navigation";
 import {
-  Alert02Icon,
-  Analytics01Icon,
-  DashboardSquare01Icon,
-  File01Icon,
-  Logout01Icon,
-  ChartHistogramIcon,
-  MoneyBag01Icon,
-  Package01Icon,
-  UserGroupIcon,
-  WarehouseIcon,
-  Invoice01Icon,
-  LockPasswordIcon,
-  ShoppingBag02Icon,
-  Settings02Icon,
-  StarIcon,
-  DeliveryTruck01Icon,
-  Tag01Icon,
-  CustomerSupportIcon,
+  PerfumeIcon,
+  Search01Icon,
+  SidebarLeftIcon,
 } from "@hugeicons/core-free-icons";
+import { useAppShellMobile } from "@astryxdesign/core/AppShell";
+import { Badge } from "@astryxdesign/core/Badge";
+import { Icon } from "@astryxdesign/core/Icon";
+import { IconButton } from "@astryxdesign/core/IconButton";
+import { NavIcon } from "@astryxdesign/core/NavIcon";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuBadge,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-  SidebarSeparator,
-} from "@perfume-aura/ui/components/sidebar";
-import { signOut } from "@/lib/auth-client";
-import { hasOpsCapability, type OpsRole } from "@/lib/ops-access";
-import { resetOpsObservabilityUser } from "@/components/observability-user";
+  SegmentedControl,
+  SegmentedControlItem,
+} from "@astryxdesign/core/SegmentedControl";
+import {
+  SideNav,
+  SideNavCollapseButton,
+  SideNavHeading,
+  SideNavItem,
+  SideNavSection,
+  useSideNavRenderMode,
+} from "@astryxdesign/core/SideNav";
+import { ToggleButton } from "@astryxdesign/core/ToggleButton";
+import { hugeIcon } from "@/components/astryx/huge-icon";
+import { AccountMenu, type OpsAccount } from "@/components/navigation/account-menu";
+import {
+  isNavItemActive,
+  type NavSection,
+  type NavSectionId,
+} from "@/components/navigation/nav-sections";
+import { cn } from "@/lib/cn";
 
-const inventoryNav = [
-  { href: "/dashboard", label: "Dashboard", icon: DashboardSquare01Icon, capability: "dashboard.view" },
-  { href: "/products", label: "Products", icon: Package01Icon, capability: "catalog.view" },
-  { href: "/stock", label: "Stock", icon: WarehouseIcon, capability: "stock.view" },
-  { href: "/stock/oil", label: "Oil stock", icon: WarehouseIcon, capability: "stock.view" },
-  { href: "/stock/low", label: "Low stock", icon: Alert02Icon, capability: "stock.view" },
-  { href: "/finance", label: "Finance", icon: ChartHistogramIcon, capability: "finance.view" },
-  { href: "/reports", label: "Reports", icon: Analytics01Icon, capability: "finance.view" },
-] as const;
+const brandIcon = hugeIcon(PerfumeIcon);
+const searchIcon = hugeIcon(Search01Icon);
+const collapseIcon = hugeIcon(SidebarLeftIcon);
 
-const salesNav = [
-  { href: "/sales/new", label: "New sale", icon: ShoppingBag02Icon, capability: "sales.complete" },
-  { href: "/customers", label: "Customers", icon: UserGroupIcon, capability: "customers.view" },
-  { href: "/invoices", label: "Invoices", icon: File01Icon, capability: "invoices.view" },
-  { href: "/invoices/ar", label: "AR", icon: Invoice01Icon, capability: "finance.view" },
-  { href: "/payments", label: "Payments", icon: MoneyBag01Icon, capability: "payments.record" },
-] as const;
+type AppSidebarProps = {
+  sections: readonly NavSection[];
+  activeSectionId: NavSectionId | undefined;
+  onSelectSection: (id: NavSectionId) => void;
+  isCollapsed: boolean;
+  onCollapsedChange: (isCollapsed: boolean) => void;
+  onOpenSearch: () => void;
+  lowStockCount: number;
+  account: OpsAccount;
+};
 
-const commerceNav = [
-  { href: "/commerce", label: "Commerce", icon: ShoppingBag02Icon, capability: "commerce.view" },
-  { href: "/commerce/catalog", label: "Store catalog", icon: Package01Icon, capability: "catalog.view" },
-  { href: "/commerce/orders", label: "Orders & delivery", icon: DeliveryTruck01Icon, capability: "commerce.view" },
-  { href: "/commerce/promotions", label: "Promotions", icon: Tag01Icon, capability: "commerce.promotions.manage" },
-  { href: "/commerce/reviews", label: "Reviews", icon: StarIcon, capability: "commerce.reviews.moderate" },
-  { href: "/commerce/support", label: "Support", icon: CustomerSupportIcon, capability: "commerce.support.manage" },
-  { href: "/commerce/settings", label: "Checkout gates", icon: Settings02Icon, capability: "commerce.release-gates.manage" },
-] as const;
-
-function isActive(pathname: string, href: string) {
-  if (href === "/stock") return pathname === "/stock";
-  if (href === "/stock/oil") return pathname === "/stock/oil" || pathname.startsWith("/stock/oil/");
-  if (href === "/invoices") {
-    return (
-      pathname === "/invoices" ||
-      (pathname.startsWith("/invoices/") && !pathname.startsWith("/invoices/ar"))
-    );
-  }
-  return pathname === href || pathname.startsWith(`${href}/`);
+function lowStockLabel(count: number) {
+  return count > 99 ? "99+" : count;
 }
 
-/**
- * Official shadcn Sidebar composition (base-luma / Hugeicons).
- */
-export function AppSidebar({
-  lowStockCount = 0,
-  role,
-  ...props
-}: React.ComponentProps<typeof Sidebar> & {
-  lowStockCount?: number;
-  role: OpsRole;
+function SectionItems({
+  section,
+  lowStockCount,
+}: {
+  section: NavSection;
+  lowStockCount: number;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
+  return (
+    <SideNavSection title={section.title}>
+      {section.items.map(({ href, label, icon }) => (
+        <SideNavItem
+          key={href}
+          label={label}
+          href={href}
+          icon={icon}
+          isSelected={isNavItemActive(pathname, href)}
+          endContent={
+            href === "/stock/low" && lowStockCount > 0 ? (
+              <Badge variant="error" label={lowStockLabel(lowStockCount)} />
+            ) : undefined
+          }
+        />
+      ))}
+    </SideNavSection>
+  );
+}
 
-  async function handleSignOut() {
-    await resetOpsObservabilityUser();
-    await signOut();
-    router.push("/login");
-    router.refresh();
+const heading = (
+  <SideNavHeading
+    heading="Perfume Aura"
+    subheading="Operations"
+    headingHref="/dashboard"
+  />
+);
+
+/**
+ * Ops navigation. On wide screens a section rail stays visible beside a
+ * SideNav that lists only the chosen section and collapses to icons. On
+ * narrow screens AppShell moves the SideNav into its drawer, where a
+ * segmented control switches sections instead of the rail.
+ */
+export function AppSidebar({
+  sections,
+  activeSectionId,
+  onSelectSection,
+  isCollapsed,
+  onCollapsedChange,
+  onOpenSearch,
+  lowStockCount,
+  account,
+}: AppSidebarProps) {
+  const { isMobile } = useAppShellMobile();
+  const renderMode = useSideNavRenderMode();
+  const activeSection =
+    sections.find((section) => section.id === activeSectionId) ?? sections[0];
+  const items = activeSection ? (
+    <SectionItems section={activeSection} lowStockCount={lowStockCount} />
+  ) : null;
+  const searchButton = (
+    <IconButton
+      label="Search pages"
+      tooltip="Search pages (⌘K)"
+      variant="ghost"
+      icon={<Icon icon={searchIcon} />}
+      onClick={onOpenSearch}
+    />
+  );
+
+  if (isMobile) {
+    return (
+      <SideNav
+        header={heading}
+        topContent={
+          sections.length > 1 && activeSection ? (
+            <SegmentedControl
+              label="Navigation section"
+              size="sm"
+              layout="fill"
+              value={activeSection.id}
+              onChange={(value) => {
+                const next = sections.find((section) => section.id === value);
+                if (next) onSelectSection(next.id);
+              }}
+            >
+              {sections.map((section) => (
+                <SegmentedControlItem
+                  key={section.id}
+                  value={section.id}
+                  label={section.title}
+                />
+              ))}
+            </SegmentedControl>
+          ) : undefined
+        }
+        footer={<AccountMenu account={account} isCollapsed={false} />}
+        // The narrow top bar already offers search; the drawer does not repeat it.
+        footerIcons={renderMode === "topbar" ? searchButton : undefined}
+      >
+        {items}
+      </SideNav>
+    );
   }
 
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              render={<Link href="/dashboard" />}
-              tooltip="Perfume Aura Ops"
+    <div className="flex h-full min-h-0">
+      <div
+        role="group"
+        aria-label="Navigation sections"
+        className="flex w-16 shrink-0 flex-col items-center gap-2 border-e border-border py-3"
+      >
+        <Link
+          href="/dashboard"
+          aria-label="Perfume Aura dashboard"
+          className="mb-2 flex size-11 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-outline-color)]"
+        >
+          <NavIcon icon={<Icon icon={brandIcon} />} />
+        </Link>
+        {sections.map((section) => {
+          const alertCount = section.id === "inventory" ? lowStockCount : 0;
+          return (
+            <span key={section.id} className="relative">
+              <ToggleButton
+                label={
+                  alertCount > 0
+                    ? `${section.title}, ${alertCount} low stock`
+                    : section.title
+                }
+                tooltip={section.title}
+                isIconOnly
+                icon={<Icon icon={section.icon} />}
+                isPressed={section.id === activeSection?.id && !isCollapsed}
+                onPressedChange={() => onSelectSection(section.id)}
+              />
+              {alertCount > 0 ? (
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute end-0.5 top-0.5 size-2 rounded-full bg-error ring-2 ring-[var(--color-background-wash)]"
+                />
+              ) : null}
+            </span>
+          );
+        })}
+        <span className="mt-auto">{searchButton}</span>
+      </div>
+      <SideNav
+        className="min-w-0"
+        collapsible={{
+          isCollapsed,
+          onCollapsedChange,
+          hasButton: false,
+        }}
+        header={
+          <div
+            className={cn(
+              "flex min-w-0 items-center gap-1",
+              isCollapsed && "justify-center",
+            )}
+          >
+            <SideNavCollapseButton
+              collapsible={{ isCollapsed, onCollapsedChange }}
+              label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              <div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <span className="text-xs font-semibold">PA</span>
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">Perfume Aura</span>
-                <span className="truncate text-xs text-muted-foreground">
-                  Ops · inventory + sales
-                </span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Inventory</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {inventoryNav.filter((item) => hasOpsCapability(role, item.capability)).map(({ href, label, icon }) => {
-                const active = isActive(pathname, href);
-                const showBadge = href === "/stock/low" && lowStockCount > 0;
-                return (
-                  <SidebarMenuItem key={href}>
-                    <SidebarMenuButton
-                      isActive={active}
-                      tooltip={
-                        showBadge ? `${label} (${lowStockCount})` : label
-                      }
-                      render={<Link href={href} />}
-                    >
-                      <HugeiconsIcon icon={icon} strokeWidth={2} />
-                      <span>{label}</span>
-                    </SidebarMenuButton>
-                    {showBadge ? (
-                      <SidebarMenuBadge className="bg-destructive/15 text-destructive">
-                        {lowStockCount > 99 ? "99+" : lowStockCount}
-                      </SidebarMenuBadge>
-                    ) : null}
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Sales</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {salesNav.filter((item) => hasOpsCapability(role, item.capability)).map(({ href, label, icon }) => (
-                <SidebarMenuItem key={href}>
-                  <SidebarMenuButton
-                    isActive={isActive(pathname, href)}
-                    tooltip={label}
-                    render={<Link href={href} />}
-                  >
-                    <HugeiconsIcon icon={icon} strokeWidth={2} />
-                    <span>{label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Storefront</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {commerceNav.filter((item) => hasOpsCapability(role, item.capability)).map(({ href, label, icon }) => (
-                <SidebarMenuItem key={href}>
-                  <SidebarMenuButton
-                    isActive={
-                      href === "/commerce"
-                        ? pathname === href
-                        : isActive(pathname, href)
-                    }
-                    tooltip={label}
-                    render={<Link href={href} />}
-                  >
-                    <HugeiconsIcon icon={icon} strokeWidth={2} />
-                    <span>{label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarSeparator />
-
-      <SidebarFooter>
-        <SidebarMenu>
-          {hasOpsCapability(role, "security.self") ? (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                isActive={isActive(pathname, "/settings/security")}
-                tooltip="Security"
-                render={<Link href="/settings/security" />}
-              >
-                <HugeiconsIcon icon={LockPasswordIcon} strokeWidth={2} />
-                <span>Security</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ) : null}
-          {hasOpsCapability(role, "security.staff.manage") ? (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                isActive={isActive(pathname, "/settings/staff")}
-                tooltip="Staff access"
-                render={<Link href="/settings/staff" />}
-              >
-                <HugeiconsIcon icon={UserGroupIcon} strokeWidth={2} />
-                <span>Staff access</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ) : null}
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Sign out" onClick={handleSignOut}>
-              <HugeiconsIcon icon={Logout01Icon} strokeWidth={2} />
-              <span>Sign out</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-        <p className="px-2 pb-1 text-[10px] text-muted-foreground group-data-[collapsible=icon]:hidden">
-          Inventory + finance + commerce
-        </p>
-      </SidebarFooter>
-
-      <SidebarRail />
-    </Sidebar>
+              <Icon icon={collapseIcon} />
+            </SideNavCollapseButton>
+            {heading}
+          </div>
+        }
+        footer={<AccountMenu account={account} isCollapsed={isCollapsed} />}
+      >
+        {items}
+      </SideNav>
+    </div>
   );
 }

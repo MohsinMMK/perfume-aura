@@ -1,21 +1,18 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Button } from "@perfume-aura/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@perfume-aura/ui/components/card";
-import { Input } from "@perfume-aura/ui/components/input";
-import { Label } from "@perfume-aura/ui/components/label";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@perfume-aura/ui/components/native-select";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Selector } from "@astryxdesign/core/Selector";
+import { Switch } from "@astryxdesign/core/Switch";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
+import { FormField } from "@/components/form-field";
+import { cn } from "@/lib/cn";
 import { updateCommerceSettingsAction } from "@/lib/commerce";
 
 type SettingsValue = {
@@ -42,6 +39,7 @@ export function CommerceSettingsForm({ settings }: { settings: SettingsValue }) 
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [taxTreatment, setTaxTreatment] = useState(settings?.taxTreatment ?? "");
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -72,18 +70,17 @@ export function CommerceSettingsForm({ settings }: { settings: SettingsValue }) 
   return (
     <form onSubmit={onSubmit} className="max-w-3xl">
       <Card>
-        <CardHeader>
-          <CardTitle>India checkout policy gates</CardTitle>
-          <CardDescription>
-            Amounts are entered in INR and stored as integer paise. Provider credentials and
-            legal approval are separate release gates.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-6 sm:grid-cols-2">
-          <div className="grid gap-2">
-            <Label htmlFor="flatShippingAmount">Flat delivery fee (INR)</Label>
-            <Input
-              id="flatShippingAmount"
+        <VStack gap={6}>
+          <VStack gap={1}>
+            <Heading level={2}>India checkout policy gates</Heading>
+            <Text as="p" color="secondary">
+              Amounts are entered in INR and stored as integer paise. Provider credentials and
+              legal approval are separate release gates.
+            </Text>
+          </VStack>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <FormField
+              label="Flat delivery fee (INR)"
               name="flatShippingAmount"
               type="number"
               min="0"
@@ -91,11 +88,8 @@ export function CommerceSettingsForm({ settings }: { settings: SettingsValue }) 
               required
               defaultValue={rupees(settings?.flatShippingAmountMinor)}
             />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="freeShippingThreshold">Free-shipping threshold (INR)</Label>
-            <Input
-              id="freeShippingThreshold"
+            <FormField
+              label="Free-shipping threshold (INR)"
               name="freeShippingThreshold"
               type="number"
               min="0"
@@ -103,81 +97,73 @@ export function CommerceSettingsForm({ settings }: { settings: SettingsValue }) 
               defaultValue={rupees(settings?.freeShippingThresholdMinor)}
               placeholder="Optional"
             />
-          </div>
-          <div className="grid gap-2 sm:col-span-2">
-            <Label htmlFor="taxTreatment">Approved tax treatment</Label>
-            <NativeSelect
-              id="taxTreatment"
-              name="taxTreatment"
-              required
-              defaultValue={settings?.taxTreatment ?? ""}
-            >
-              <NativeSelectOption value="" disabled>Select only after owner/legal approval</NativeSelectOption>
-              <NativeSelectOption value="prices_include_approved_tax">Approved tax is included in listed prices</NativeSelectOption>
-              <NativeSelectOption value="no_tax_collected_owner_approved">No tax collected (owner/legal approved)</NativeSelectOption>
-            </NativeSelect>
-          </div>
-          <div className="grid gap-2 sm:col-span-2">
-            <Label htmlFor="taxApprovalReference">Tax approval reference</Label>
-            <Input id="taxApprovalReference" name="taxApprovalReference" defaultValue={settings?.taxApprovalReference ?? ""} placeholder="Approved decision or adviser reference" />
-          </div>
-          <label className="flex min-h-11 items-center gap-3 rounded-md border px-3 text-sm sm:col-span-2">
-            <input name="taxPolicyApproved" type="checkbox" defaultChecked={settings?.taxPolicyApproved ?? false} className="size-4" />
-            Tax treatment and evidence reference approved
-          </label>
-          <div className="grid gap-2 sm:col-span-2">
-            <Label htmlFor="supportChannel">Approved customer support channel</Label>
-            <Input
-              id="supportChannel"
+            <div className="sm:col-span-2">
+              <Selector
+                id="taxTreatment"
+                label="Approved tax treatment"
+                htmlName="taxTreatment"
+                isRequired
+                placeholder="Select only after owner/legal approval"
+                value={taxTreatment}
+                onChange={(next) => setTaxTreatment(next)}
+                options={[
+                  { value: "prices_include_approved_tax", label: "Approved tax is included in listed prices" },
+                  { value: "no_tax_collected_owner_approved", label: "No tax collected (owner/legal approved)" },
+                ]}
+                width="100%"
+              />
+            </div>
+            <FormField className="sm:col-span-2" label="Tax approval reference" name="taxApprovalReference" defaultValue={settings?.taxApprovalReference ?? ""} placeholder="Approved decision or adviser reference" />
+            <GateCheckbox className="sm:col-span-2" name="taxPolicyApproved" label="Tax treatment and evidence reference approved" defaultChecked={settings?.taxPolicyApproved ?? false} />
+            <FormField
+              className="sm:col-span-2"
+              label="Approved customer support channel"
               name="supportChannel"
               required
               defaultValue={settings?.supportChannel ?? ""}
               placeholder="Email or phone approved for public policy pages"
             />
+            <GateCheckbox className="sm:col-span-2" name="supportOperationsApproved" label="Support channel, staffing, and response operations approved" defaultChecked={settings?.supportOperationsApproved ?? false} />
+            <FormField className="sm:col-span-2" label="Catalog legal approval reference" name="legalApprovalReference" defaultValue={settings?.legalApprovalReference ?? ""} placeholder="India-counsel evidence reference" />
+            <GateCheckbox className="sm:col-span-2" name="catalogLegalApproved" label="Catalog naming, surfaces, and disclaimer treatment approved" defaultChecked={settings?.catalogLegalApproved ?? false} />
+            <fieldset className="grid gap-3 sm:col-span-2">
+              <legend className="mb-3 text-sm font-medium text-primary">Policy approvals</legend>
+              {([
+                ["shippingPolicyApproved", "Shipping policy approved", settings?.shippingPolicyApproved],
+                ["returnsPolicyApproved", "Returns policy approved", settings?.returnsPolicyApproved],
+                ["cancellationPolicyApproved", "Cancellation policy approved", settings?.cancellationPolicyApproved],
+              ] as const).map(([name, label, checked]) => (
+                <GateCheckbox key={name} name={name} label={label} defaultChecked={checked ?? false} />
+              ))}
+            </fieldset>
+            <CheckoutSwitch defaultChecked={settings?.checkoutEnabled ?? false} />
+            {error ? <div className="sm:col-span-2"><Banner status="error" title={error} role="alert" /></div> : null}
+            {message ? <div className="sm:col-span-2"><Banner status="success" title={message} role="status" /></div> : null}
           </div>
-          <label className="flex min-h-11 items-center gap-3 rounded-md border px-3 text-sm sm:col-span-2">
-            <input name="supportOperationsApproved" type="checkbox" defaultChecked={settings?.supportOperationsApproved ?? false} className="size-4" />
-            Support channel, staffing, and response operations approved
-          </label>
-          <div className="grid gap-2 sm:col-span-2">
-            <Label htmlFor="legalApprovalReference">Catalog legal approval reference</Label>
-            <Input id="legalApprovalReference" name="legalApprovalReference" defaultValue={settings?.legalApprovalReference ?? ""} placeholder="India-counsel evidence reference" />
-          </div>
-          <label className="flex min-h-11 items-center gap-3 rounded-md border px-3 text-sm sm:col-span-2">
-            <input name="catalogLegalApproved" type="checkbox" defaultChecked={settings?.catalogLegalApproved ?? false} className="size-4" />
-            Catalog naming, surfaces, and disclaimer treatment approved
-          </label>
-          <fieldset className="grid gap-3 sm:col-span-2">
-            <legend className="text-sm font-medium">Policy approvals</legend>
-            {[
-              ["shippingPolicyApproved", "Shipping policy approved", settings?.shippingPolicyApproved],
-              ["returnsPolicyApproved", "Returns policy approved", settings?.returnsPolicyApproved],
-              ["cancellationPolicyApproved", "Cancellation policy approved", settings?.cancellationPolicyApproved],
-            ].map(([name, label, checked]) => (
-              <label key={String(name)} className="flex min-h-11 items-center gap-3 rounded-md border px-3 text-sm">
-                <input name={String(name)} type="checkbox" defaultChecked={Boolean(checked)} className="size-4" />
-                {String(label)}
-              </label>
-            ))}
-          </fieldset>
-          <label className="flex min-h-11 items-center gap-3 rounded-md border border-amber-500/40 bg-amber-500/5 px-3 text-sm sm:col-span-2">
-            <input
-              name="checkoutEnabled"
-              type="checkbox"
-              defaultChecked={settings?.checkoutEnabled ?? false}
-              className="size-4"
-            />
-            Enable checkout after all policy approvals are confirmed
-          </label>
-          {error ? <p className="text-sm text-destructive sm:col-span-2" role="alert">{error}</p> : null}
-          {message ? <p className="text-sm text-emerald-700 sm:col-span-2" role="status">{message}</p> : null}
-        </CardContent>
-        <CardFooter className="justify-end">
-          <Button type="submit" disabled={pending} focusableWhenDisabled={pending}>
-            {pending ? "Saving…" : "Save checkout gates"}
-          </Button>
-        </CardFooter>
+          <HStack justify="end" gap={2}>
+            <Button type="submit" variant="primary" label={pending ? "Saving…" : "Save checkout gates"} isLoading={pending} />
+          </HStack>
+        </VStack>
       </Card>
     </form>
+  );
+}
+
+/** Controlled Astryx checkbox that still posts "on" under `name`, like the native one it replaces. */
+function GateCheckbox({ name, label, defaultChecked, className }: Readonly<{ name: string; label: string; defaultChecked: boolean; className?: string }>) {
+  const [checked, setChecked] = useState(defaultChecked);
+  return (
+    <div className={cn("flex min-h-11 items-center rounded-md border border-border px-3", className)}>
+      <CheckboxInput label={label} htmlName={name} value={checked} onChange={(next) => setChecked(next)} />
+    </div>
+  );
+}
+
+function CheckoutSwitch({ defaultChecked }: Readonly<{ defaultChecked: boolean }>) {
+  const [checked, setChecked] = useState(defaultChecked);
+  return (
+    <div className="flex min-h-11 items-center rounded-md border border-warning bg-warning-muted px-3 sm:col-span-2">
+      <Switch label="Enable checkout after all policy approvals are confirmed" htmlName="checkoutEnabled" value={checked} onChange={(next) => setChecked(next)} />
+    </div>
   );
 }

@@ -1,13 +1,12 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
-import { Input } from "@perfume-aura/ui/components/input";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@perfume-aura/ui/components/native-select";
-import { cn } from "@perfume-aura/ui/lib/utils";
+import { useState, useTransition } from "react";
+import { Button } from "@astryxdesign/core/Button";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Selector } from "@astryxdesign/core/Selector";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { cn } from "@/lib/cn";
 
 type Props = {
   q: string;
@@ -16,6 +15,12 @@ type Props = {
   searchPlaceholder?: string;
   searchLabel?: string;
 };
+
+const STATUS_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "archived", label: "Archived" },
+  { value: "all", label: "All" },
+];
 
 /**
  * GET filters for products list (shareable URL, server-rendered results).
@@ -31,6 +36,8 @@ export function ProductFilters({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [pending, startTransition] = useTransition();
+  const [search, setSearch] = useState(q);
+  const [statusValue, setStatusValue] = useState<string>(status);
 
   function update(next: { q?: string; status?: string }) {
     const params = new URLSearchParams(searchParams.toString());
@@ -51,50 +58,43 @@ export function ProductFilters({
   }
 
   return (
-    <form
-      className={cn(
-        "flex flex-col gap-2 sm:flex-row sm:items-center",
-        pending && "opacity-70",
-        className,
-      )}
+    <HStack
+      as="form"
+      gap={2}
+      align="end"
+      wrap="wrap"
+      className={cn(pending && "opacity-70", className)}
       onSubmit={(e) => {
         e.preventDefault();
-        const fd = new FormData(e.currentTarget);
-        update({
-          q: String(fd.get("q") ?? ""),
-          status: String(fd.get("status") ?? "active"),
-        });
+        update({ q: search, status: statusValue });
       }}
     >
-      <Input
-        name="q"
-        defaultValue={q}
+      <TextInput
+        label={searchLabel}
+        htmlName="q"
+        value={search}
+        onChange={setSearch}
         placeholder={searchPlaceholder}
-        className="sm:max-w-xs"
-        aria-label={searchLabel}
+        hasClear
+        containerClassName="w-full sm:w-80"
       />
-      <NativeSelect
-        name="status"
-        defaultValue={status}
-        className="w-full sm:w-40"
-        aria-label="Status filter"
-        onChange={(e) => {
-          const form = e.currentTarget.form;
-          if (!form) return;
-          const fd = new FormData(form);
-          update({
-            q: String(fd.get("q") ?? ""),
-            status: e.currentTarget.value,
-          });
+      <Selector
+        label="Status"
+        htmlName="status"
+        options={STATUS_OPTIONS}
+        value={statusValue}
+        onChange={(next) => {
+          setStatusValue(next);
+          update({ q: search, status: next });
         }}
-      >
-        <NativeSelectOption value="active">Active</NativeSelectOption>
-        <NativeSelectOption value="archived">Archived</NativeSelectOption>
-        <NativeSelectOption value="all">All</NativeSelectOption>
-      </NativeSelect>
-      <button type="submit" className="sr-only">
-        Apply
-      </button>
-    </form>
+        containerClassName="w-full sm:w-40"
+      />
+      {/* Enter in the search box submits; keyboard users see the button when it takes focus. */}
+      <Button
+        type="submit"
+        label="Apply filters"
+        className="not-focus-visible:sr-only"
+      />
+    </HStack>
   );
 }

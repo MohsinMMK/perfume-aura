@@ -127,6 +127,16 @@ describe("manual stock idempotency contract", () => {
       "await adjustStockAction(payload)",
       "AdjustStockForm",
     );
+    assertStableClientKey(
+      await sourceFile("../components/supplies/receive-supply-form.tsx"),
+      "await receiveSupplyAction(payload)",
+      "ReceiveSupplyForm",
+    );
+    assertStableClientKey(
+      await sourceFile("../components/supplies/adjust-supply-form.tsx"),
+      "await adjustSupplyAction(payload)",
+      "AdjustSupplyForm",
+    );
   });
 
   it("passes the UUID to the domain call and keeps cache work outside the mutation catch", async () => {

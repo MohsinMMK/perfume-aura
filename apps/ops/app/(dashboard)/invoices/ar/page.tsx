@@ -1,20 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@perfume-aura/ui/components/card";
+import { Card } from "@astryxdesign/core/Card";
+import { EmptyState } from "@astryxdesign/core/EmptyState";
 import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
+  TableHeaderCell,
   TableRow,
-} from "@perfume-aura/ui/components/table";
+} from "@astryxdesign/core/Table";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { listInvoices, getOpenArTotalCents } from "@/lib/invoices";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatInr } from "@/lib/money";
@@ -27,6 +24,7 @@ import {
   parsePage,
 } from "@/lib/pagination";
 import { PaginationNav } from "@/components/pagination-nav";
+import { PageHeader } from "@/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -57,80 +55,77 @@ export default async function ArPage({
   const openAr = totalResult.data ?? 0;
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      <div>
+    <VStack gap={6} className="mx-auto w-full max-w-6xl">
+      <VStack gap={2}>
         <Link
           href="/invoices"
-          className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+          className="w-fit text-sm text-secondary underline-offset-4 hover:underline"
         >
           ← Invoices
         </Link>
-        <h1 className="mt-2 font-heading text-2xl font-semibold tracking-tight">
-          Accounts receivable
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Issued invoices with unpaid balances.
-        </p>
-      </div>
+        <PageHeader
+          title="Accounts receivable"
+          description="Issued invoices with unpaid balances."
+        />
+      </VStack>
 
       {error ? <DbUnavailableState message={error} /> : null}
 
       <Card>
-        <CardHeader>
-          <CardDescription>Open AR</CardDescription>
-          <CardTitle className="text-2xl tabular-nums">
+        <VStack gap={1}>
+          <Text type="supporting">Open AR</Text>
+          <Text size="2xl" weight="semibold" hasTabularNumbers>
             {formatInr(openAr)}
-          </CardTitle>
-        </CardHeader>
+          </Text>
+        </VStack>
       </Card>
 
       {rows.length === 0 && !error ? (
-        <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            No open AR. All issued invoices are paid or none issued yet.
-          </CardContent>
+        <Card variant="muted">
+          <EmptyState
+            title="No open AR"
+            description="All issued invoices are paid or none issued yet."
+          />
         </Card>
       ) : (
-        <Card className="overflow-hidden py-0">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Issued</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
+        <Card padding={0} className="overflow-hidden">
+          <Table hasHover>
+            <TableHeader>
+              <TableRow>
+                <TableHeaderCell>Invoice</TableHeaderCell>
+                <TableHeaderCell>Customer</TableHeaderCell>
+                <TableHeaderCell>Issued</TableHeaderCell>
+                <TableHeaderCell className="text-right">Total</TableHeaderCell>
+                <TableHeaderCell className="text-right">Balance</TableHeaderCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((inv) => (
+                <TableRow key={inv.id}>
+                  <TableCell>
+                    <Link
+                      href={`/invoices/${inv.id}`}
+                      className="font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                      {inv.number ?? inv.id.slice(0, 8)}
+                    </Link>
+                  </TableCell>
+                  <TableCell>{inv.customerName}</TableCell>
+                  <TableCell>
+                    <Text color="secondary">
+                      {inv.issueDate ? formatBusinessDate(inv.issueDate) : "—"}
+                    </Text>
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatInr(inv.totalCents)}
+                  </TableCell>
+                  <TableCell className="text-right font-medium tabular-nums">
+                    {formatInr(inv.balanceCents)}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((inv) => (
-                  <TableRow key={inv.id}>
-                    <TableCell>
-                      <Link
-                        href={`/invoices/${inv.id}`}
-                        className="font-medium underline-offset-4 hover:underline"
-                      >
-                        {inv.number ?? inv.id.slice(0, 8)}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{inv.customerName}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {inv.issueDate
-                        ? formatBusinessDate(inv.issueDate)
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatInr(inv.totalCents)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums font-medium">
-                      {formatInr(inv.balanceCents)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
+              ))}
+            </TableBody>
+          </Table>
           {pageData ? (
             <PaginationNav
               pathname="/invoices/ar"
@@ -141,6 +136,6 @@ export default async function ArPage({
           ) : null}
         </Card>
       )}
-    </div>
+    </VStack>
   );
 }

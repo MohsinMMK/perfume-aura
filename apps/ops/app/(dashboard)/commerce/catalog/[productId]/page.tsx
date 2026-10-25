@@ -1,13 +1,17 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Badge } from "@perfume-aura/ui/components/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@perfume-aura/ui/components/card";
+import { Card } from "@astryxdesign/core/Card";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Text } from "@astryxdesign/core/Text";
+import { Token } from "@astryxdesign/core/Token";
+import { VStack } from "@astryxdesign/core/VStack";
 import { CatalogPublicationForm, type CatalogPublicationInitial } from "@/components/commerce/catalog-publication-form";
 import { CatalogMediaControl, CatalogVariantPriceControl } from "@/components/commerce/catalog-commercial-controls";
 import { DbUnavailableState } from "@/components/db-empty-state";
 import { getCommerceCatalogProduct } from "@/lib/commerce";
 import { safeDbQuery } from "@/lib/db-safe";
 import { requireCapability } from "@/lib/session";
+import { PageBreadcrumbs } from "@/components/page-breadcrumbs";
 
 export const dynamic = "force-dynamic";
 
@@ -50,9 +54,46 @@ export default async function CatalogProductReviewPage({ params }: Readonly<{ pa
     featuredRank: product.featuredRank,
   };
 
-  return <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-    <div className="flex flex-wrap items-start justify-between gap-4"><div><Link href="/commerce/catalog" className="text-sm text-muted-foreground underline-offset-4 hover:underline">Back to catalog approval</Link><h1 className="mt-2 font-heading text-2xl font-semibold tracking-tight">{product.internalName}</h1><p className="mt-1 text-sm text-muted-foreground">Review public copy and record evidence without changing internal inventory history.</p></div><Badge variant="secondary">{product.status ?? "not started"}</Badge></div>
-    <div className="grid gap-6 lg:grid-cols-2"><Card><CardHeader><CardTitle>Variant price approvals</CardTitle></CardHeader><CardContent className="grid gap-3">{variants.length === 0 ? <p className="text-sm text-muted-foreground">No variants exist.</p> : variants.map((variant) => <CatalogVariantPriceControl key={variant.id} value={{ productId: product.productId, variantId: variant.id, sku: variant.sku, sizeMl: variant.sizeMl, amountMinor: variant.amountMinor, active: variant.priceActive ?? false, approvedAt: variant.priceApprovedAt, approvalReference: variant.priceApprovalReference, expectedUpdatedAt: variant.priceUpdatedAt?.toISOString() ?? "missing" }} />)}</CardContent></Card><Card><CardHeader><CardTitle>Media metadata approvals</CardTitle></CardHeader><CardContent className="grid gap-3">{media.length === 0 ? <p className="text-sm text-muted-foreground">No product media exists.</p> : media.map((asset) => <CatalogMediaControl key={asset.id} value={{ productId: product.productId, mediaId: asset.id, kind: asset.kind, storageKey: asset.storageKey, altText: asset.altText, dimensions: `${asset.width}×${asset.height}`, position: asset.position, approvedAt: asset.approvedAt, approvalReference: asset.approvalReference, expectedUpdatedAt: asset.updatedAt.toISOString() }} />)}</CardContent></Card></div>
-    <CatalogPublicationForm initial={initial} />
-  </div>;
+  return (
+    <VStack gap={6} className="mx-auto w-full max-w-6xl">
+      <HStack justify="between" align="start" gap={4} wrap="wrap">
+        <VStack gap={2}>
+          <PageBreadcrumbs
+            items={[
+              { label: "Store catalog", href: "/commerce/catalog" },
+              { label: product.internalName },
+            ]}
+          />
+          <VStack gap={1}>
+            <Heading level={1}>{product.internalName}</Heading>
+            <Text as="p" color="secondary">Review public copy and record evidence without changing internal inventory history.</Text>
+          </VStack>
+        </VStack>
+        <Token size="sm" label={product.status ?? "not started"} color={publicationColor(product.status)} />
+      </HStack>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <VStack gap={3}>
+            <Heading level={2}>Variant price approvals</Heading>
+            {variants.length === 0 ? <Text as="p" color="secondary">No variants exist.</Text> : variants.map((variant) => <CatalogVariantPriceControl key={variant.id} value={{ productId: product.productId, variantId: variant.id, sku: variant.sku, sizeMl: variant.sizeMl, amountMinor: variant.amountMinor, active: variant.priceActive ?? false, approvedAt: variant.priceApprovedAt, approvalReference: variant.priceApprovalReference, expectedUpdatedAt: variant.priceUpdatedAt?.toISOString() ?? "missing" }} />)}
+          </VStack>
+        </Card>
+        <Card>
+          <VStack gap={3}>
+            <Heading level={2}>Media metadata approvals</Heading>
+            {media.length === 0 ? <Text as="p" color="secondary">No product media exists.</Text> : media.map((asset) => <CatalogMediaControl key={asset.id} value={{ productId: product.productId, mediaId: asset.id, kind: asset.kind, storageKey: asset.storageKey, altText: asset.altText, dimensions: `${asset.width}×${asset.height}`, position: asset.position, approvedAt: asset.approvedAt, approvalReference: asset.approvalReference, expectedUpdatedAt: asset.updatedAt.toISOString() }} />)}
+          </VStack>
+        </Card>
+      </div>
+      <CatalogPublicationForm initial={initial} />
+    </VStack>
+  );
+}
+
+function publicationColor(status: string | null) {
+  if (status === "published") return "green" as const;
+  if (status === "approved") return "blue" as const;
+  if (status === "blocked") return "red" as const;
+  if (status === "withdrawn") return "orange" as const;
+  return "gray" as const;
 }

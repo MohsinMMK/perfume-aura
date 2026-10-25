@@ -48,6 +48,9 @@ peerDependencyRules:
     "eslint-plugin-react>eslint": "10"
 
 allowBuilds:
+  # Astryx's postinstalls only print an `astryx init` hint.
+  '@astryxdesign/cli': false
+  '@astryxdesign/core': false
   '@sentry/cli': true
   core-js: false
   esbuild: true

@@ -19,11 +19,12 @@ function exportedFunction(source: string, name: string): string {
 
 describe("direct operations action capability boundaries", () => {
   it("authorizes sensitive server actions before accepting caller data", async () => {
-    const [commerce, products, staff, stock] = await Promise.all([
+    const [commerce, products, staff, stock, production] = await Promise.all([
       sourceFile("commerce.ts"),
       sourceFile("products.ts"),
       sourceFile("staff-operations.ts"),
       sourceFile("stock.ts"),
+      sourceFile("production.ts"),
     ]);
     const actions = [
       {
@@ -61,6 +62,42 @@ describe("direct operations action capability boundaries", () => {
         name: "deactivateStaffAction",
         capability: "security.staff.manage",
         input: "staffUserIdSchema.safeParse",
+      },
+      {
+        source: production,
+        name: "createSeriesAction",
+        capability: "catalog.manage-commercials",
+        input: "createSeriesSchema.safeParse",
+      },
+      {
+        source: production,
+        name: "saveSeriesSizeAction",
+        capability: "catalog.manage-commercials",
+        input: "seriesSizeSchema.safeParse",
+      },
+      {
+        source: production,
+        name: "assignProductSeriesAction",
+        capability: "catalog.manage-commercials",
+        input: "assignProductSeriesSchema.safeParse",
+      },
+      {
+        source: production,
+        name: "createSupplyAction",
+        capability: "stock.adjust",
+        input: "createSupplySchema.safeParse",
+      },
+      {
+        source: production,
+        name: "receiveSupplyAction",
+        capability: "stock.receive",
+        input: "receiveSupplySchema.safeParse",
+      },
+      {
+        source: production,
+        name: "adjustSupplyAction",
+        capability: "stock.adjust",
+        input: "adjustSupplySchema.safeParse",
       },
     ];
 

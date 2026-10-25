@@ -37,8 +37,8 @@ in [Product behavior](COMMERCE.md#product-behavior).
 ```text
 apps/storefront/  public Next.js application; pack entry apps/storefront/server.js
 apps/ops/         internal Next.js application; pack entry apps/ops/server.js
-packages/db/      Drizzle schema, 18 SQL migrations, runtime grants, tests
-packages/ui/      shadcn/Base UI primitives
+packages/db/      Drizzle schema, SQL migrations, runtime grants, tests
+packages/ui/      shadcn/Base UI primitives (storefront only)
 packages/validators/  Zod schemas used by ops
 scripts/          pack, deploy, verify, commerce, client-JS budgets
 deploy/ops-vps/   ops image/compose
@@ -68,8 +68,8 @@ Change stack only through an explicit reviewed decision. No Vercel production.
 | Pins | Node `26.12.1`, npm `11.20.0` (`.nvmrc`, CI, both images, packers) |
 | Apps | Next.js `16.4.3`, React `19.3.1`, App Router, `output: "standalone"` |
 | TypeScript | `tsc` is `7.0.2` via `@typescript/native`. Package named `typescript` is `@typescript/typescript6@6.0.2` for eslint/Next compiler API. `strict: true` |
-| UI | shadcn `^4.22.1`, `@base-ui/react` `^1.9.0`, Tailwind `4.3.3`, Hugeicons. No Radix runtime |
-| Fonts | Ops: IBM Plex Sans + Raleway. Storefront: self-hosted Londrina Solid/Outline + Inter Tight |
+| UI | Storefront: shadcn `^4.22.1`, `@base-ui/react` `^1.9.0`. Ops: Astryx `@astryxdesign/core` + `theme-neutral` `0.7.3`, `@stylexjs/stylex` `0.19.1`. Tailwind `4.3.3`, Hugeicons. No Radix runtime |
+| Fonts | Ops: self-hosted Figtree (Astryx neutral theme). Storefront: self-hosted Londrina Solid/Outline + Inter Tight |
 | Auth | Better Auth `1.7.12`, two Drizzle adapters; account identity is unique on (`provider_id`, `account_id`) |
 | Database | drizzle-orm `0.45.4`, drizzle-kit `^0.31.11`, `pg` `8.23.1` Pool (`max: 10`) |
 | Validation | Zod `4.6.7` |
@@ -90,23 +90,43 @@ builds, and both packages.
 Both production images use `node:26.12.1-trixie-slim` by digest; CI pins Node `26.12.1`
 and PostgreSQL `16.15` by digest for integration jobs.
 
-## Shared UI contract
+## UI contracts
 
-- Base UI package: `packages/ui` (`@perfume-aura/ui`).
-- Apps import `@perfume-aura/ui/components/*`. Never place base UI under
+Storefront (shadcn):
+
+- Base UI package: `packages/ui` (`@perfume-aura/ui`), used only by the storefront.
+  Import `@perfume-aura/ui/components/*`; never place base UI under
   `apps/*/components/ui`.
 - Preset identity `b23PPibQOI` lives in `packages/ui/src/globals.css`.
   `components.json` uses `style: "base-luma"`.
-- Tokens: `packages/ui/src/globals.css` only. Ops `components.json` must point
-  `tailwind.css` at `../../packages/ui/src/globals.css`.
 
 ```bash
-pnpm dlx shadcn@latest preset resolve -c apps/ops
-pnpm dlx shadcn@latest add button -c apps/ops -y
 pnpm dlx shadcn@latest preset resolve -c apps/storefront
 ```
 
 Preset resolve must return `b23PPibQOI` without fallback.
+
+Ops (Astryx):
+
+- Ops renders Meta's Astryx design system with per-component imports
+  (`@astryxdesign/core/<Component>`) and the prebuilt neutral theme
+  (`@astryxdesign/theme-neutral/built`). It does not depend on `packages/ui`.
+- `apps/ops/app/globals.css` loads the Astryx reset, CSS, theme and Tailwind
+  bridge; coarse pointers raise control tokens to 44px. App-level wrappers live
+  in `apps/ops/components/astryx/` and `components/form-field.tsx`.
+- Light, dark and system modes; the choice is the `ops-theme-mode` cookie and
+  the switch lives in the sidebar account menu.
+- Navigation (`components/app-shell.tsx`, `app-sidebar.tsx`, `navigation/`):
+  `nav-sections.ts` groups pages into role-filtered Inventory, Sales and
+  Storefront sections. Wide screens show a section rail beside a SideNav that
+  lists one section and collapses to icons from its top toggle; the
+  `ops-nav-collapsed` cookie keeps that state. Narrow screens use AppShell's
+  drawer with a segmented section switcher. ⌘K / Ctrl+K opens a page search.
+- Detail and create pages start with `PageBreadcrumbs`; URL filters use
+  `navigation/filter-tabs.tsx` (link tabs in a `<nav>`).
+- Astryx components are client components: server pages use Table children
+  mode and pass icon elements, never functions. Pending submits use
+  `isLoading`, never `isDisabled`.
 
 Skills live under `.agents/skills/` and are locked by `skills-lock.json`.
 Never use Vercel deploy skills.
@@ -120,7 +140,8 @@ Never use Vercel deploy skills.
 - Money persists as integer INR paise. Ops/invoice columns often `*_cents`;
   commerce columns often `amount_minor`. Same unit. No browser float is
   authoritative.
-- Repo migrations: `0000`–`0019` (20 files). Production (VPS PostgreSQL) has applied and recorded all of them.
+- Repo migrations: `0000`–`0020` (21 files). Production (VPS PostgreSQL) has
+  applied and recorded `0000`–`0019`; `0020_series_supplies` is not applied.
   See [`CURRENT_STATE.md`](CURRENT_STATE.md).
 - `oil_reservations` and settlement routines are SQL in `0017`, not Drizzle TS
   tables. Finalizer env: `STOREFRONT_PAYMENT_FINALIZER_DATABASE_URL`. That role
@@ -187,9 +208,12 @@ Inventory rules that remain in force:
    independently verified payment. `consumeCheckoutReservations` is owner-only
    support/test plumbing.
 2. Stock never goes negative. Sales respect `available = on_hand - qty_reserved`.
-   Finished-bottle sales consume concentrate from `oil_lots` at 50% of bottle
-   millilitres (1 kg = 1000 ml; Signature 105 ml consumes 53 ml, ceiled).
-   Checkout reserves exact FIFO lots before a provider session can be bound.
+   Ops sales (`completeOpsSale`) sell finished bottles first, then make the
+   shortfall at sale: oil from FIFO `oil_lots` at the product series' share
+   (ceiled ml; Signature 105 ml at 50% uses 53 ml), base mixture for the rest,
+   plus the size's linked bottle and optional box, all in one transaction.
+   Storefront checkout (`0017` SQL) still reserves finished stock and oil at a
+   fixed 50%; align it before any checkout release.
 3. Owner-authorized local invoice-line returns restore finished stock, never
    restore consumed oil, and never imply a provider refund.
 4. `0013_silly_vanisher` added the Better Auth 1.7.0 issuer column;
@@ -197,7 +221,11 @@ Inventory rules that remain in force:
    provider for 1.7.3+, failing closed on duplicate provider identities.
    `0014_oil_lots` owns the concentrate ledger. `0016_even_silk_fever` adds
    optional oil-lot provenance. `0017_storefront_sale_settlement` owns
-   reservations and finalizer routines.
+   reservations and finalizer routines. `0020_series_supplies` adds
+   `product_series` (oil share, reorder level), `series_sizes` (price, linked
+   bottle/box), `supply_items` (bottle, box, one active base) and the
+   append-only `supply_movements` ledger, and seeds Inspired and Signature at
+   50% with their sizes.
 
 ## Local development and validation
 
@@ -293,9 +321,9 @@ contracts. Client-JS budgets are asserted by `pnpm check`, not by CI `quality`.
 | Storefront | `/checkout` | 233_500 |
 | Storefront | `/search` | 235_000 |
 | Storefront | `/account/sign-in` | 235_000 |
-| Ops | login | 185_000 |
-| Ops | forgot / reset / 2FA | 181_000 / 184_000 / 176_000 |
-| Ops | dashboard | 396_000 |
+| Ops | login | 364_000 |
+| Ops | forgot / reset / 2FA | 354_000 / 362_000 / 368_000 |
+| Ops | dashboard (includes the nav shell) | 506_000 |
 
 Animate only `transform` and `opacity` where behavior remains equivalent;
 preserve reduced motion. Generated traces stay untracked. Fresh measurements and `CURRENT_STATE.md` own acceptance; do not reuse old attestations.
@@ -340,7 +368,9 @@ Activation procedure:
 
 ## Quality and accessibility
 
-- Use the official shadcn CLI; shared primitives belong in `packages/ui`.
+- Storefront: use the official shadcn CLI; shared primitives belong in
+  `packages/ui`. Ops: use Astryx components; app wrappers belong in
+  `apps/ops/components/astryx/`.
 - Keep secrets only in ignored local env files or the owning platform's secret
   store: separate root-owned VPS environment files for storefront and Ops.
 - Use persistent labels, semantic buttons, 44px minimum targets, inert closed
@@ -350,7 +380,8 @@ Activation procedure:
 
 ## Pending outcome
 
-Do not apply `0016`, `0017`, `0018` or `0019` to production without the owner migration gate.
+Do not apply `0020` to production without the owner migration gate and a
+reapply of `ops-runtime-grants.sql` and `storefront-runtime-grants.sql`.
 Do not treat CI `quality` as `pnpm check`. Capture privacy-safe Core Web Vitals
 only after approved catalog content is live. Next production actions live in
 [`CURRENT_STATE.md`](CURRENT_STATE.md).

@@ -1,19 +1,20 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  Card,
-  CardContent,
-} from "@perfume-aura/ui/components/card";
-import { Badge } from "@perfume-aura/ui/components/badge";
-import { buttonVariants } from "@perfume-aura/ui/components/button";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { EmptyState } from "@astryxdesign/core/EmptyState";
+import { HStack } from "@astryxdesign/core/HStack";
 import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
+  TableHeaderCell,
   TableRow,
-} from "@perfume-aura/ui/components/table";
+} from "@astryxdesign/core/Table";
+import { Text } from "@astryxdesign/core/Text";
+import { Token } from "@astryxdesign/core/Token";
+import { VStack } from "@astryxdesign/core/VStack";
 import { listInvoices } from "@/lib/invoices";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatInr } from "@/lib/money";
@@ -26,7 +27,8 @@ import {
   parsePage,
 } from "@/lib/pagination";
 import { PaginationNav } from "@/components/pagination-nav";
-import { cn } from "@perfume-aura/ui/lib/utils";
+import { FilterTabs } from "@/components/navigation/filter-tabs";
+import { PageHeader } from "@/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -46,18 +48,16 @@ function parseStatus(
   return "all";
 }
 
-function statusVariant(
-  s: string,
-): "default" | "secondary" | "destructive" | "outline" {
+function statusColor(s: string): "gray" | "blue" | "green" | "red" {
   switch (s) {
     case "issued":
-      return "default";
+      return "blue";
     case "paid":
-      return "secondary";
+      return "green";
     case "void":
-      return "outline";
+      return "red";
     default:
-      return "outline";
+      return "gray";
   }
 }
 
@@ -99,107 +99,97 @@ export default async function InvoicesPage({
   ] as const;
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">
-            Invoices
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Draft → issue → paid/void. Stock moves only on fulfill.
-          </p>
-        </div>
-        {canDraft ? (
-          <Link
-            href="/invoices/new"
-            className={cn(buttonVariants(), "w-full sm:w-auto")}
-          >
-            New invoice
-          </Link>
-        ) : null}
-      </div>
+    <VStack gap={6} className="mx-auto w-full max-w-6xl">
+      <PageHeader
+        title="Invoices"
+        description="Draft → issue → paid/void. Stock moves only on fulfill."
+        actions={
+          canDraft ? (
+            <Button label="New invoice" href="/invoices/new" variant="primary" />
+          ) : null
+        }
+      />
 
-      <div className="flex flex-wrap gap-2">
-        {filters.map((f) => (
-          <Link
-            key={f.key}
-            href={
-              f.key === "all" ? "/invoices" : `/invoices?status=${f.key}`
-            }
-            className={buttonVariants({
-              variant: status === f.key ? "default" : "outline",
-              size: "sm",
-            })}
-          >
-            {f.label}
-          </Link>
-        ))}
+      <HStack gap={4} vAlign="end" justify="between" wrap="wrap">
+        <FilterTabs
+          label="Invoice status"
+          value={status}
+          tabs={filters.map((f) => ({
+            value: f.key,
+            label: f.label,
+            href: f.key === "all" ? "/invoices" : `/invoices?status=${f.key}`,
+          }))}
+        />
         {canViewFinance ? (
-          <Link
-            href="/invoices/ar"
-            className={buttonVariants({ variant: "secondary", size: "sm" })}
-          >
-            AR list
-          </Link>
+          <Button label="AR list" href="/invoices/ar" variant="ghost" size="sm" />
         ) : null}
-      </div>
+      </HStack>
 
       {result.error || !result.data ? (
         <DbUnavailableState message={result.error ?? "No data"} />
       ) : result.data.items.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            No invoices.{" "}
-            {canDraft ? (
-              <Link href="/invoices/new" className="underline-offset-4 hover:underline">
-                Create a draft
-              </Link>
-            ) : null}
-          </CardContent>
+        <Card variant="muted">
+          <EmptyState
+            title="No invoices"
+            description={
+              status === "all"
+                ? "Draft an invoice to bill a customer."
+                : "No invoices match this status."
+            }
+            actions={
+              canDraft ? (
+                <Button
+                  label="Create a draft"
+                  href="/invoices/new"
+                  variant="primary"
+                />
+              ) : null
+            }
+          />
         </Card>
       ) : (
-        <Card className="overflow-hidden py-0">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Number</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
+        <Card padding={0} className="overflow-hidden">
+          <Table hasHover>
+            <TableHeader>
+              <TableRow>
+                <TableHeaderCell>Number</TableHeaderCell>
+                <TableHeaderCell>Customer</TableHeaderCell>
+                <TableHeaderCell>Status</TableHeaderCell>
+                <TableHeaderCell className="text-right">Total</TableHeaderCell>
+                <TableHeaderCell className="text-right">Balance</TableHeaderCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {result.data.items.map((inv) => (
+                <TableRow key={inv.id}>
+                  <TableCell>
+                    <Link
+                      href={`/invoices/${inv.id}`}
+                      className="font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                      {inv.number ?? "Draft"}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Text color="secondary">{inv.customerName}</Text>
+                  </TableCell>
+                  <TableCell>
+                    <Token
+                      size="sm"
+                      label={inv.status}
+                      color={statusColor(inv.status)}
+                    />
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatInr(inv.totalCents)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatInr(inv.balanceCents)}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {result.data.items.map((inv) => (
-                  <TableRow key={inv.id}>
-                    <TableCell>
-                      <Link
-                        href={`/invoices/${inv.id}`}
-                        className="font-medium underline-offset-4 hover:underline"
-                      >
-                        {inv.number ?? "Draft"}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {inv.customerName}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={statusVariant(inv.status)}>
-                        {inv.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatInr(inv.totalCents)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatInr(inv.balanceCents)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
+              ))}
+            </TableBody>
+          </Table>
           <PaginationNav
             pathname="/invoices"
             page={result.data.page}
@@ -209,6 +199,6 @@ export default async function InvoicesPage({
           />
         </Card>
       )}
-    </div>
+    </VStack>
   );
 }

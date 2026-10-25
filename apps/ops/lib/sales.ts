@@ -6,8 +6,8 @@ import {
   db,
   DomainError,
   eq,
+  loadVariantCapacity,
   oilLots,
-  oilMlForBottles,
   products,
   productVariants,
   sql,
@@ -33,7 +33,15 @@ export type SaleCatalogItem = {
   remainingOilMl: number;
   reservedOilMl: number;
   availableOilMl: number;
-  oilMlPerBottle: number;
+  seriesName: string | null;
+  concentrationPercent: number | null;
+  /** Oil and base one bottle made at sale uses; null without a recipe. */
+  oilMlPerBottle: number | null;
+  baseMlPerBottle: number | null;
+  /** Extra bottles the shelf can make at sale, beyond finished stock. */
+  canMake: number;
+  limitedBy: "oil" | "base" | "bottle" | "box" | null;
+  blocker: string | null;
 };
 
 export async function listSaleCatalog(): Promise<SaleCatalogItem[]> {
@@ -78,13 +86,26 @@ export async function listSaleCatalog(): Promise<SaleCatalogItem[]> {
     });
   }
 
-  return variants.map((variant) => ({
-    ...variant,
-    remainingOilMl: oilByProduct.get(variant.productId)?.remainingMl ?? 0,
-    reservedOilMl: oilByProduct.get(variant.productId)?.reservedMl ?? 0,
-    availableOilMl: oilByProduct.get(variant.productId)?.availableMl ?? 0,
-    oilMlPerBottle: oilMlForBottles(variant.sizeMl, 1),
-  }));
+  const capacity = await loadVariantCapacity(
+    variants.map((variant) => variant.variantId),
+  );
+
+  return variants.map((variant) => {
+    const made = capacity.get(variant.variantId);
+    return {
+      ...variant,
+      remainingOilMl: oilByProduct.get(variant.productId)?.remainingMl ?? 0,
+      reservedOilMl: oilByProduct.get(variant.productId)?.reservedMl ?? 0,
+      availableOilMl: oilByProduct.get(variant.productId)?.availableMl ?? 0,
+      seriesName: made?.seriesName ?? null,
+      concentrationPercent: made?.concentrationPercent ?? null,
+      oilMlPerBottle: made?.recipe?.oilMl ?? null,
+      baseMlPerBottle: made?.recipe?.baseMl ?? null,
+      canMake: made?.canMake ?? 0,
+      limitedBy: made?.limitedBy ?? null,
+      blocker: made?.blocker ?? null,
+    };
+  });
 }
 
 export async function completeSaleAction(
@@ -153,6 +174,8 @@ export async function completeSaleAction(
     revalidatePath(`/customers/${result.customerId}`);
     revalidatePath("/stock");
     revalidatePath("/stock/oil");
+    revalidatePath("/stock/supplies");
+    revalidatePath("/stock/low");
     revalidatePath("/dashboard");
     revalidatePath("/reports");
     return actionOk({

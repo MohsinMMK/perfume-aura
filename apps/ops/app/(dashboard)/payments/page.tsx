@@ -1,18 +1,18 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  Card,
-  CardContent,
-} from "@perfume-aura/ui/components/card";
-import { Badge } from "@perfume-aura/ui/components/badge";
+import { Card } from "@astryxdesign/core/Card";
+import { EmptyState } from "@astryxdesign/core/EmptyState";
 import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
+  TableHeaderCell,
   TableRow,
-} from "@perfume-aura/ui/components/table";
+} from "@astryxdesign/core/Table";
+import { Text } from "@astryxdesign/core/Text";
+import { Token } from "@astryxdesign/core/Token";
+import { VStack } from "@astryxdesign/core/VStack";
 import { listPayments } from "@/lib/payments";
 import { safeDbQuery } from "@/lib/db-safe";
 import { formatInr } from "@/lib/money";
@@ -25,6 +25,7 @@ import {
   parsePage,
 } from "@/lib/pagination";
 import { PaginationNav } from "@/components/pagination-nav";
+import { PageHeader } from "@/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -60,69 +61,66 @@ export default async function PaymentsPage({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      <div>
-        <h1 className="font-heading text-2xl font-semibold tracking-tight">
-          Payments
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Manual receipts against invoices. Never changes stock.
-        </p>
-      </div>
+    <VStack gap={6} className="mx-auto w-full max-w-6xl">
+      <PageHeader
+        title="Payments"
+        description="Manual receipts against invoices. Never changes stock."
+      />
 
       {result.error || !result.data ? (
         <DbUnavailableState message={result.error ?? "No data"} />
       ) : result.data.items.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            No payments yet. Record one from an issued invoice.
-          </CardContent>
+        <Card variant="muted">
+          <EmptyState
+            title="No payments yet"
+            description="Record one from an issued invoice."
+          />
         </Card>
       ) : (
-        <Card className="overflow-hidden py-0">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Number</TableHead>
-                  <TableHead>Invoice</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Method</TableHead>
-                  <TableHead>When</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {result.data.items.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-medium">
-                      {p.number ?? p.id.slice(0, 8)}
-                    </TableCell>
-                    <TableCell>
-                      <Link
-                        href={`/invoices/${p.invoiceId}`}
-                        className="underline-offset-4 hover:underline"
-                      >
-                        {p.invoiceNumber ?? "Invoice"}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {p.customerName ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{methodLabel(p.method)}</Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
+        <Card padding={0} className="overflow-hidden">
+          <Table hasHover>
+            <TableHeader>
+              <TableRow>
+                <TableHeaderCell>Number</TableHeaderCell>
+                <TableHeaderCell>Invoice</TableHeaderCell>
+                <TableHeaderCell>Customer</TableHeaderCell>
+                <TableHeaderCell>Method</TableHeaderCell>
+                <TableHeaderCell>When</TableHeaderCell>
+                <TableHeaderCell className="text-right">Amount</TableHeaderCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {result.data.items.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell className="font-medium">
+                    {p.number ?? p.id.slice(0, 8)}
+                  </TableCell>
+                  <TableCell>
+                    <Link
+                      href={`/invoices/${p.invoiceId}`}
+                      className="font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                      {p.invoiceNumber ?? "Invoice"}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Text color="secondary">{p.customerName ?? "—"}</Text>
+                  </TableCell>
+                  <TableCell>
+                    <Token size="sm" label={methodLabel(p.method)} color="gray" />
+                  </TableCell>
+                  <TableCell>
+                    <Text type="supporting">
                       {formatBusinessDateTime(p.paidAt)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatInr(p.amountCents)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
+                    </Text>
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatInr(p.amountCents)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
           <PaginationNav
             pathname="/payments"
             page={result.data.page}
@@ -131,6 +129,6 @@ export default async function PaymentsPage({
           />
         </Card>
       )}
-    </div>
+    </VStack>
   );
 }

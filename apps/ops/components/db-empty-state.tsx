@@ -1,98 +1,81 @@
-import Link from "next/link";
-import { buttonVariants } from "@perfume-aura/ui/components/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@perfume-aura/ui/components/empty";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { EmptyState } from "@astryxdesign/core/EmptyState";
 import {
   Alert02Icon,
   DatabaseIcon,
   Package01Icon,
 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+
+/** EmptyState art; a plain SVG element so server pages can render it. */
+function emptyIcon(icon: IconSvgElement) {
+  return (
+    <HugeiconsIcon
+      icon={icon}
+      size={32}
+      strokeWidth={1.75}
+      className="text-secondary"
+    />
+  );
+}
 
 type DbUnavailableProps = {
   message?: string;
 };
 
-/** Official Empty composition for DB / connection failures. */
+/** Astryx EmptyState for DB / connection failures. */
 export function DbUnavailableState({
   message = "Database is not ready.",
 }: DbUnavailableProps) {
   return (
-    <Empty className="border border-dashed">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <HugeiconsIcon icon={DatabaseIcon} strokeWidth={2} />
-        </EmptyMedia>
-        <EmptyTitle>Database unavailable</EmptyTitle>
-        <EmptyDescription>
-          {message} Set{" "}
-          <code className="text-foreground">DATABASE_URL</code>, run migrations,
-          seed MAIN location, then refresh.
-        </EmptyDescription>
-      </EmptyHeader>
-    </Empty>
+    <Card variant="muted">
+      <EmptyState
+        icon={emptyIcon(DatabaseIcon)}
+        title="Database unavailable"
+        description={`${message} Set DATABASE_URL, run migrations, seed MAIN location, then refresh.`}
+      />
+    </Card>
   );
 }
 
 type CatalogEmptyProps = {
-  title?: string;
-  description?: string;
-  actionHref?: string;
-  actionLabel?: string;
+  /** Only staff who may create products get the create action. */
+  canCreate: boolean;
 };
 
-/** Official Empty for empty product catalog. */
-export function CatalogEmptyState({
-  title = "No products yet",
-  description = "Add your first fragrance to start tracking stock.",
-  actionHref = "/products/new",
-  actionLabel = "Create product",
-}: CatalogEmptyProps) {
+/** Astryx EmptyState for an empty product catalog. */
+export function CatalogEmptyState({ canCreate }: CatalogEmptyProps) {
   return (
-    <Empty className="border border-dashed">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <HugeiconsIcon icon={Package01Icon} strokeWidth={2} />
-        </EmptyMedia>
-        <EmptyTitle>{title}</EmptyTitle>
-        <EmptyDescription>{description}</EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <Link href={actionHref} className={buttonVariants()}>
-          {actionLabel}
-        </Link>
-      </EmptyContent>
-    </Empty>
+    <Card variant="muted">
+      <EmptyState
+        icon={emptyIcon(Package01Icon)}
+        title="No products yet"
+        description={
+          canCreate
+            ? "Add your first fragrance to start tracking stock."
+            : "Products appear here once the owner adds them."
+        }
+        actions={
+          canCreate ? (
+            <Button label="Create product" href="/products/new" variant="primary" />
+          ) : undefined
+        }
+      />
+    </Card>
   );
 }
 
-/** Official Empty when low-stock list is clear. */
+/** Astryx EmptyState when the low-stock list is clear. */
 export function LowStockClearState() {
   return (
-    <Empty className="border border-dashed">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <HugeiconsIcon icon={Alert02Icon} strokeWidth={2} />
-        </EmptyMedia>
-        <EmptyTitle>All clear</EmptyTitle>
-        <EmptyDescription>
-          No active variants are at or below their reorder threshold.
-        </EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <Link
-          href="/stock"
-          className={buttonVariants({ variant: "outline" })}
-        >
-          Receive stock
-        </Link>
-      </EmptyContent>
-    </Empty>
+    <Card variant="muted">
+      <EmptyState
+        icon={emptyIcon(Alert02Icon)}
+        title="All clear"
+        description="No oil, base, packaging or finished bottle is at its reorder level."
+        actions={<Button label="Receive stock" href="/stock" variant="secondary" />}
+      />
+    </Card>
   );
 }
