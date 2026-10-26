@@ -1,17 +1,15 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
-  ArrowRight01Icon,
   Calendar03Icon,
   CheckmarkBadge01Icon,
   FireIcon,
   Moon02Icon,
 } from "@hugeicons/core-free-icons";
-import { Button } from "@perfume-aura/ui/components/button";
 import { HomeHero } from "@/components/home-hero";
+import { HomeReviews } from "@/components/home-reviews";
 import { IngredientAtmosphere } from "@/components/ingredient-atmosphere";
 import { OpeningIntro } from "@/components/opening-intro";
 import { StackAtmosphere } from "@/components/stack-atmosphere";
@@ -265,28 +263,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="overflow-hidden bg-[var(--aura-ink)] py-20 text-[var(--aura-ivory)] lg:py-28">
-        <h2 className="font-display text-outline whitespace-nowrap px-[var(--aura-gutter)] text-[clamp(2.2rem,14vw,16rem)] leading-[0.72] lg:px-[var(--aura-gutter-lg)]">The opening edit</h2>
-        <div className="relative mx-[var(--aura-gutter)] mt-10 min-h-[36rem] overflow-hidden border-y border-dashed border-[color:var(--aura-rule)] lg:mx-[var(--aura-gutter-lg)] lg:min-h-[44rem]">
-          <Image src="/images/hero-bottle-still-life.webp" alt="Three Perfume Aura bottles arranged on a dark stone plinth" fill sizes="100vw" className="object-cover opacity-75" />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(16,11,6,.92)_0%,rgba(16,11,6,.5)_52%,rgba(16,11,6,.12)_100%)]" />
-          <div className="relative flex min-h-[36rem] max-w-2xl flex-col justify-end p-6 sm:p-10 lg:min-h-[44rem] lg:p-16">
-            <p className="font-display text-[clamp(3.5rem,8vw,7rem)] leading-[0.86] text-balance">Made for the moment after you arrive.</p>
-            <p className="mt-5 max-w-lg text-base leading-7 text-[color:rgb(245_228_199_/_76%)]">Explore the house, the scent finder, and the world taking shape before the first collection goes live.</p>
-          </div>
-        </div>
-        <div className="mt-14 text-center">
-          <Button
-            render={<Link href="/fragrance-guide" />}
-            nativeButton={false}
-            size="lg"
-            className="aura-cream-action min-h-16 w-[calc(100%-2rem)] max-w-sm justify-between rounded-[var(--aura-radius)] px-8 font-display text-xl tracking-[0.02em] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)]"
-          >
-            Learn how to choose a scent
-            <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={1.8} aria-hidden="true" />
-          </Button>
-        </div>
-      </section>
+      <HomeReviews />
     </>
   );
 }

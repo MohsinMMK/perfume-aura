@@ -6,6 +6,7 @@ import {
   type CSSProperties,
   type TouchEvent,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -16,7 +17,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { Button } from "@perfume-aura/ui/components/button";
 import { cn } from "@perfume-aura/ui/lib/utils";
-import { afterOpeningIntro } from "@/lib/opening-intro";
+import { afterOpeningIntro, isOpeningIntroPlaying } from "@/lib/opening-intro";
 
 type HeroProduct = Readonly<{
   slug: string;
@@ -91,7 +92,10 @@ export function HomeHero() {
   const [activeIndex, setActiveIndex] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLDivElement>(null);
+  const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const shownIndexRef = useRef(0);
+  const slideDirectionRef = useRef<-1 | 1>(1);
+  const gsapRef = useRef<typeof import("gsap").default | null>(null);
   const nameRef = useRef<HTMLSpanElement>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
@@ -112,6 +116,11 @@ export function HomeHero() {
     const media = mediaRef.current;
     const controls = controlsRef.current;
     const cta = ctaRef.current;
+    // React clears ref slots before this cleanup runs, so the nodes whose
+    // slide tweens must stop are copied now.
+    const slideTargets = [...slideRefs.current, nameRef.current].filter(
+      (target): target is HTMLElement => target !== null,
+    );
     if (!section || !media || !cta) return;
     let active = true;
     let cleanup = () => {};
@@ -119,6 +128,7 @@ export function HomeHero() {
     void import("gsap").then(
       ({ default: gsap }) => {
         if (!active) return;
+        gsapRef.current = gsap;
         const motionMedia = gsap.matchMedia(section);
 
         motionMedia.add("(prefers-reduced-motion: no-preference)", () => {
@@ -129,11 +139,23 @@ export function HomeHero() {
             paused: true,
             defaults: { ease: "power4.out" },
           });
-          timeline.from(media, { y: 28, scale: 0.94, duration: 0.82 }, 0.18);
-          if (controls) {
-            timeline.from(controls, { scale: 0.86, duration: 0.42 }, 0.48);
+          // Out of the opening, the heading words lead (their CSS entrance
+          // starts on the same hand-over), then the bottle pops in and the
+          // controls follow, so the hero builds in order.
+          if (isOpeningIntroPlaying()) {
+            timeline
+              .from(media, { autoAlpha: 0, y: 48, scale: 0.55, duration: 0.9, ease: "back.out(1.5)" }, 0.85)
+              .from(cta, { autoAlpha: 0, y: 20, duration: 0.5 }, 1.3);
+            if (controls) {
+              timeline.from(controls, { autoAlpha: 0, scale: 0.6, duration: 0.5, ease: "back.out(1.7)" }, 1.2);
+            }
+          } else {
+            timeline.from(media, { y: 28, scale: 0.94, duration: 0.82 }, 0.18);
+            if (controls) {
+              timeline.from(controls, { scale: 0.86, duration: 0.42 }, 0.48);
+            }
+            timeline.from(cta, { y: 20, duration: 0.46 }, 0.56);
           }
-          timeline.from(cta, { y: 20, duration: 0.46 }, 0.56);
           return afterOpeningIntro(() => timeline.play());
         });
 
@@ -144,64 +166,73 @@ export function HomeHero() {
     return () => {
       active = false;
       cleanup();
+      gsapRef.current?.killTweensOf(slideTargets);
     };
   }, []);
 
-  useEffect(() => {
-    const section = sectionRef.current;
-    const image = imageRef.current;
+  // Each change slides the new bottle in from the side of the arrow (or
+  // swipe) that asked for it while the old one leaves the other way. It runs
+  // before paint, so the old bottle never blinks out first. The breathing
+  // lives on a wrapper around every slide, so a change, a hover or a scroll
+  // never interrupts it.
+  useLayoutEffect(() => {
+    const previousIndex = shownIndexRef.current;
+    shownIndexRef.current = activeIndex;
+    const gsap = gsapRef.current;
     const name = nameRef.current;
-    if (!section || !image || !name) return;
-    let active = true;
-    let cleanup = () => {};
+    const incoming = slideRefs.current[activeIndex];
+    const outgoing = slideRefs.current[previousIndex];
+    if (!gsap || !name || !incoming || previousIndex === activeIndex) return;
 
-    void import("gsap").then(({ default: gsap }) => {
-      if (!active) return;
-      const motionMedia = gsap.matchMedia(section);
+    const slides = slideRefs.current.filter(
+      (slide): slide is HTMLDivElement => slide !== null,
+    );
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      gsap.killTweensOf(slides);
+      gsap.set(slides, { clearProps: "opacity,visibility,transform" });
+      return;
+    }
 
-      motionMedia.add("(prefers-reduced-motion: no-preference)", () => {
-        gsap.fromTo(
-          image,
-          { y: 28, scale: 1.04, opacity: 0.35 },
-          {
-            y: 0,
-            scale: 1,
-            opacity: 1,
-            duration: 0.72,
-            ease: "power4.out",
-          },
-        );
-        gsap.fromTo(
-          name,
-          { y: 12 },
-          { y: 0, duration: 0.38, ease: "power4.out" },
-        );
-        if (!activeProduct.floating) return;
-
-        const pulse = gsap.timeline({ delay: 0.72 });
-        pulse
-          .to(image, {
-            y: -12,
-            duration: 1,
-            ease: "sine.inOut",
-          })
-          .to(image, {
-            y: 0,
-            duration: 1.2,
-            ease: "sine.inOut",
-          });
-      });
-
-      cleanup = () => motionMedia.revert();
-    });
-
-    return () => {
-      active = false;
-      cleanup();
-    };
-  }, [activeIndex, activeProduct.floating]);
+    const direction = slideDirectionRef.current;
+    gsap.set(
+      slides.filter((slide) => slide !== incoming && slide !== outgoing),
+      { autoAlpha: 0, xPercent: 0, overwrite: true },
+    );
+    if (outgoing) {
+      // The class change has already hidden it, so it leaves from wherever
+      // it was, including halfway through an earlier slide.
+      gsap.fromTo(
+        outgoing,
+        {
+          autoAlpha: Number(outgoing.style.opacity || 1),
+          xPercent: Number(gsap.getProperty(outgoing, "xPercent")),
+        },
+        {
+          xPercent: direction * -70,
+          autoAlpha: 0,
+          duration: 0.6,
+          ease: "power3.in",
+          overwrite: true,
+        },
+      );
+    }
+    gsap.fromTo(
+      incoming,
+      { xPercent: direction * 70, autoAlpha: 0 },
+      {
+        xPercent: 0,
+        autoAlpha: 1,
+        duration: 0.85,
+        ease: "power3.out",
+        delay: 0.12,
+        overwrite: true,
+      },
+    );
+    gsap.fromTo(name, { y: 12 }, { y: 0, duration: 0.38, ease: "power4.out" });
+  }, [activeIndex]);
 
   function rotate(direction: -1 | 1) {
+    slideDirectionRef.current = direction;
     setActiveIndex((currentIndex) =>
       (currentIndex + direction + slides.length) % slides.length,
     );
@@ -275,22 +306,36 @@ export function HomeHero() {
             onTouchCancel={handleTouchCancel}
             className={`relative mx-auto min-h-0 w-full max-w-[47rem] [touch-action:pan-y_pinch-zoom] ${activeProduct.floating ? "overflow-visible" : "overflow-hidden"}`}
           >
-            <div ref={imageRef} key={activeProduct.image} className="absolute inset-0">
-              <Image
-                src={activeProduct.image}
-                alt={activeProduct.imageAlt}
-                fill
-                preload
-                sizes="(max-width: 768px) 100vw, 46rem"
-                className={cn(
-                  "z-10 object-contain object-center",
-                  activeProduct.floating &&
-                    "aura-hero-bottle-float drop-shadow-[0_1.4rem_1.2rem_rgba(0,0,0,.34)]",
-                  activeProduct.floating &&
-                    (activeProduct.floatingScaleClassName ??
-                      "scale-[.82] sm:scale-[.86] lg:scale-[.9]"),
-                )}
-              />
+            <div className={cn("absolute inset-0", activeProduct.floating && "aura-hero-bottle-breathe")}>
+              {slides.map((product, index) => (
+                <div
+                  key={product.image}
+                  ref={(slide) => {
+                    slideRefs.current[index] = slide;
+                  }}
+                  aria-hidden={index === activeIndex ? undefined : true}
+                  className={cn(
+                    "absolute inset-0",
+                    index !== activeIndex && "invisible opacity-0",
+                  )}
+                >
+                  <Image
+                    src={product.image}
+                    alt={product.imageAlt}
+                    fill
+                    preload={index === 0}
+                    sizes="(max-width: 768px) 100vw, 46rem"
+                    className={cn(
+                      "z-10 object-contain object-center",
+                      product.floating &&
+                        "drop-shadow-[0_1.4rem_1.2rem_rgba(0,0,0,.34)]",
+                      product.floating &&
+                        (product.floatingScaleClassName ??
+                          "scale-[.82] sm:scale-[.86] lg:scale-[.9]"),
+                    )}
+                  />
+                </div>
+              ))}
             </div>
             {activeProduct.floating ? null : (
               <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(16,11,6,.1)_0%,transparent_18%,transparent_70%,rgba(16,11,6,.78)_100%)]" />

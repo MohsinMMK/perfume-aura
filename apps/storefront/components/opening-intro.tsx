@@ -26,37 +26,96 @@ export function OpeningIntro() {
     if (!root || root.dataset.state !== "play") return;
 
     let active = true;
+    let released = false;
     let finished = false;
     let stopMotion = () => {};
     let cleanup = () => {};
+
+    // Release starts the hero entrance once the ingredients have cleared and
+    // the logo is dissolving. The overlay is click-through from here until
+    // the logo has gone. If the gate's failsafe already handed the page over,
+    // the overlay must never come back, so only the motion is stopped.
+    const release = () => {
+      if (released) return;
+      released = true;
+      if (root.dataset.state !== "play") {
+        finished = true;
+        stopMotion();
+        return;
+      }
+      root.dataset.state = "exit";
+      window.dispatchEvent(new Event(openingIntroEndEvent));
+    };
 
     // Hand-over also stops the looping floats and skip listeners, so nothing
     // keeps ticking behind the hidden overlay for the life of the page.
     const handOver = () => {
       if (finished) return;
+      release();
       finished = true;
       stopMotion();
       root.dataset.state = "done";
-      window.dispatchEvent(new Event(openingIntroEndEvent));
     };
 
     void import("gsap").then(({ default: gsap }) => {
       if (!active) return;
+      if (root.dataset.state !== "play") {
+        handOver();
+        return;
+      }
 
       const ringElements = gsap.utils.toArray<HTMLElement>("[data-intro-ring]", root);
-      const stage = root.querySelector<HTMLElement>("[data-intro-stage]");
+      const inkRing = ringElements.at(-1);
       const logo = root.querySelector<HTMLElement>("[data-intro-logo]");
       const floaters = gsap.utils.toArray<HTMLElement>("[data-intro-ingredient]", root);
-      if (!stage || !logo) {
+      if (!inkRing || !logo) {
         handOver();
         return;
       }
 
       const floats: gsap.core.Tween[] = [];
-      const timeline = gsap.timeline({
-        defaults: { ease: "expo.out" },
-        onComplete: handOver,
-      });
+      let exitTimeline: gsap.core.Timeline | undefined;
+
+      // The hand-over runs in order: the ingredients fly off, the logo lifts
+      // and dissolves in place while the ink clears, then the hero takes over
+      // with its heading first and the bottle after it.
+      const exit = (speed: number) => {
+        if (exitTimeline) return;
+        floats.forEach((tween) => tween.kill());
+
+        exitTimeline = gsap
+          .timeline({ onComplete: handOver })
+          .set(ringElements.slice(0, -1), { autoAlpha: 0 }, 0)
+          .set(inkRing, { scale: 1 }, 0)
+          .set(root, { backgroundColor: "transparent" }, 0)
+          .to(
+            floaters,
+            {
+              xPercent: (index) => (ingredients[index]?.x ?? 1) * 420,
+              yPercent: (index) => (ingredients[index]?.y ?? 1) * 320,
+              rotate: (index) => (ingredients[index]?.rotate ?? 0) * 3,
+              duration: 0.75,
+              ease: "back.in(1.4)",
+              stagger: 0.05,
+            },
+            0,
+          )
+          // A skip can catch the logo mid-entrance, so the lift is relative
+          // to wherever it is rather than to its settled pose. It rises
+          // toward the heading and evaporates on the way.
+          .set(logo, { filter: "blur(0px)" }, 0)
+          .to(
+            logo,
+            { y: `-=${Math.round(window.innerHeight * 0.24)}`, scale: "*=1.18", duration: 1, ease: "power2.out" },
+            0.25,
+          )
+          .to(logo, { autoAlpha: 0, filter: "blur(14px)", duration: 0.7, ease: "power1.in" }, 0.35)
+          .to(inkRing, { autoAlpha: 0, duration: 0.6, ease: "power1.inOut" }, 0.4)
+          .call(release, undefined, 0.6);
+        exitTimeline.timeScale(speed);
+      };
+
+      const timeline = gsap.timeline({ defaults: { ease: "expo.out" } });
 
       timeline
         .fromTo(
@@ -105,20 +164,19 @@ export function OpeningIntro() {
           },
           "<0.08",
         )
-        .addLabel("exit", "+=0.25")
-        .to(stage, { scale: 2.6, autoAlpha: 0, duration: 0.6, ease: "expo.in" }, "exit")
-        .to(root, { autoAlpha: 0, duration: 0.4, ease: "power2.out" }, "exit+=0.35");
+        .call(() => exit(1), undefined, "+=0.45");
 
-      // The opening never blocks: any intent skips straight to the hand-over.
+      // The opening never blocks: any intent runs the same hand-over at
+      // double speed from wherever the opening is.
       const skip = () => {
-        if (finished || timeline.progress() > 0.92) return;
+        if (exitTimeline) return;
+        if (root.dataset.state !== "play") {
+          handOver();
+          return;
+        }
         timeline.pause();
-        gsap.to(root, {
-          autoAlpha: 0,
-          duration: 0.24,
-          ease: "power2.out",
-          onComplete: handOver,
-        });
+        gsap.set(logo, { autoAlpha: 1 });
+        exit(2);
       };
       skipEvents.forEach((type) =>
         window.addEventListener(type, skip, { passive: true, once: true }),
@@ -128,7 +186,7 @@ export function OpeningIntro() {
         skipEvents.forEach((type) => window.removeEventListener(type, skip));
         floats.forEach((tween) => tween.kill());
         timeline.kill();
-        gsap.killTweensOf(root);
+        exitTimeline?.kill();
       };
       cleanup = handOver;
     }, () => {
