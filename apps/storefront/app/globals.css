@@ -353,6 +353,22 @@ html.lenis body {
   animation: aura-intro-failsafe 300ms ease-out 5s forwards;
 }
 
+/*
+ * The exit keeps the overlay fixed but click-through while the ingredients
+ * leave and the logo dissolves over the hero's entrance.
+ */
+.aura-intro[data-state="exit"] {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: block;
+  overflow: hidden;
+  pointer-events: none;
+  /* A new name restarts the clock; reusing the play failsafe would resume its
+     timer and cut the dissolve short. */
+  animation: aura-intro-exit-failsafe 300ms ease-out 1.6s forwards;
+}
+
 body:has(.aura-intro[data-state="play"]) :is(.aura-hero-motion__word, .aura-header-logo-enter) {
   animation-play-state: paused;
 }
@@ -426,6 +442,33 @@ body:has(.aura-intro[data-state="play"]) :is(.aura-hero-motion__word, .aura-head
     visibility: hidden;
     opacity: 0;
     pointer-events: none;
+  }
+}
+
+@keyframes aura-intro-exit-failsafe {
+  to {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+/* The hero bottle breathes for as long as the page is open. It runs on the
+   compositor, so scrolling, hovering or a slide change never stalls it. */
+@media (prefers-reduced-motion: no-preference) {
+  .aura-hero-bottle-breathe {
+    animation: aura-hero-bottle-breathe 4.4s ease-in-out infinite;
+  }
+}
+
+@keyframes aura-hero-bottle-breathe {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(0, -12px, 0);
   }
 }
 
@@ -1287,6 +1330,22 @@ textarea {
   }
 }
 
+/* About hero: the still life settles into frame once, then scroll parallax takes over. */
+@media (prefers-reduced-motion: no-preference) {
+  .aura-about-hero__photo {
+    animation: aura-about-hero-settle 1800ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes aura-about-hero-settle {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -1307,6 +1366,8 @@ textarea {
   [data-motion-float],
   [data-motion-parallax],
   [data-motion-product-card],
+  [data-motion-letter],
+  [data-motion-track],
   [data-motion-stack-card],
   [data-motion-float-loop] {
     transform: none !important;

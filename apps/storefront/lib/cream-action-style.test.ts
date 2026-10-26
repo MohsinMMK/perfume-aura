@@ -23,7 +23,7 @@ describe("cream action design contract", () => {
     const files = await Promise.all([
       readStorefront("../components/site-header.tsx"),
       readStorefront("../components/home-hero.tsx"),
-      readStorefront("../app/page.tsx"),
+      readStorefront("../components/home-reviews.tsx"),
       readStorefront("../components/product-card.tsx"),
       readStorefront("../components/gated-inquiry-form.tsx"),
       readStorefront("../components/shop-listing-controls.tsx"),

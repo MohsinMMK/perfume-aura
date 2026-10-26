@@ -508,6 +508,49 @@ export function StorefrontMotion() {
                 );
               });
 
+            // Outline titles settle letter by letter as their section scrolls in.
+            gsap.utils
+              .toArray<HTMLElement>("[data-motion-letters]", contentRoot)
+              .forEach((title) => {
+                const letters = gsap.utils.toArray<HTMLElement>("[data-motion-letter]", title);
+                if (letters.length === 0) return;
+                gsap.fromTo(
+                  letters,
+                  { yPercent: (index) => -80 + (index * 70) / letters.length },
+                  {
+                    yPercent: 0,
+                    ease: "none",
+                    scrollTrigger: {
+                      trigger: title,
+                      start: "top bottom",
+                      end: "bottom 55%",
+                      scrub: 0.6,
+                    },
+                  },
+                );
+              });
+
+            if (context.conditions?.isDesktop) {
+              gsap.utils
+                .toArray<HTMLElement>("[data-motion-track]", contentRoot)
+                .forEach((track) => {
+                  gsap.fromTo(
+                    track,
+                    { xPercent: 14 },
+                    {
+                      xPercent: 0,
+                      ease: "none",
+                      scrollTrigger: {
+                        trigger: track,
+                        start: "top bottom",
+                        end: "top 45%",
+                        scrub: 0.6,
+                      },
+                    },
+                  );
+                });
+            }
+
             const guardCleanups: Array<() => void> = [];
 
             // Sticky CSS owns the stack; motion only tilts each card in and

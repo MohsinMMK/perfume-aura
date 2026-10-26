@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { GatedInquiryForm } from "@/components/gated-inquiry-form";
+import { StoreVisitSection } from "@/components/store-visit-section";
 import { resolvePublicSupportConfig } from "@/lib/support-config";
 import { noIndexRobots } from "@/lib/seo";
 
@@ -9,6 +10,7 @@ export default function ContactPage() {
   const enabled = process.env.STOREFRONT_INQUIRIES_ENABLED === "true";
   const support = enabled ? resolvePublicSupportConfig() : null;
   return (
+    <>
     <section className="min-h-[92svh] bg-[var(--aura-ink)] px-[var(--aura-gutter)] pb-24 pt-28 text-[var(--aura-ivory)] lg:px-[var(--aura-gutter-lg)] lg:pt-32">
       <div className="mx-auto max-w-[82rem] text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--aura-text-muted-on-ink)]">We are listening</p>
@@ -20,5 +22,7 @@ export default function ContactPage() {
         </div>
       </div>
     </section>
+    <StoreVisitSection />
+    </>
   );
 }

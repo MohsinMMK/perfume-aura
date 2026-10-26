@@ -1,5 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowUpRight01Icon, CallIcon, Location01Icon } from "@hugeicons/core-free-icons";
+import {
+  perfumeAuraGoogleMapsUrl,
+  perfumeAuraStoreAddress,
+  perfumeAuraStorePhoneDisplay,
+  perfumeAuraStorePhoneUrl,
+} from "@/lib/store-location";
+
+const visitActionClassName =
+  "group inline-flex min-h-12 items-center justify-between gap-3 rounded-[var(--aura-radius)] bg-[var(--aura-ivory)] px-5 font-display text-lg text-[var(--aura-ink)] transition-colors hover:bg-[var(--aura-brass)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ivory)]";
 
 const navigation = [
   ["Shop", "/shop"],
@@ -46,14 +57,47 @@ export function SiteFooter() {
           </div>
         </nav>
 
-        <div data-footer-aura-list>
-          <h2 className="font-display text-3xl">Join the Aura list</h2>
-          <p className="mt-2 text-xs leading-5 text-[color:rgb(245_228_199_/_65%)]">
-            New compositions, launch notes, and the first word when the collection opens.
-          </p>
-          <div className="mt-6 flex min-h-14 items-center border-y border-dashed border-[color:var(--aura-rule)] px-1 text-xs text-[color:rgb(245_228_199_/_68%)]" aria-label="Aura list opening soon">
-            House dispatch
-            <span className="ml-auto font-semibold uppercase tracking-[0.12em]">Opening soon</span>
+        <div className="grid content-between gap-6">
+          <div data-footer-aura-list>
+            <h2 className="font-display text-3xl">Join the Aura list</h2>
+            <p className="mt-2 text-xs leading-5 text-[color:rgb(245_228_199_/_65%)]">
+              New compositions, launch notes, and the first word when the collection opens.
+            </p>
+            <div className="mt-6 flex min-h-14 items-center border-y border-dashed border-[color:var(--aura-rule)] px-1 text-xs text-[color:rgb(245_228_199_/_68%)]" aria-label="Aura list opening soon">
+              House dispatch
+              <span className="ml-auto font-semibold uppercase tracking-[0.12em]">Opening soon</span>
+            </div>
+          </div>
+
+          <div data-footer-visit className="grid gap-4 rounded-[var(--aura-radius)] border border-[color:rgb(245_228_199_/_55%)] p-5 sm:grid-cols-[1fr_auto] sm:items-end">
+            <div>
+              <h2 className="font-display text-3xl">Visit the store</h2>
+              <address className="mt-2 max-w-md not-italic text-xs leading-5 text-[color:rgb(245_228_199_/_65%)]">
+                {perfumeAuraStoreAddress}
+              </address>
+            </div>
+            <div className="grid gap-2">
+              <a
+                href={perfumeAuraStorePhoneUrl}
+                className={visitActionClassName}
+              >
+                <HugeiconsIcon icon={CallIcon} strokeWidth={1.8} aria-hidden="true" className="size-5" />
+                Call the store
+                <HugeiconsIcon icon={ArrowUpRight01Icon} strokeWidth={1.8} aria-hidden="true" className="size-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transition-none" />
+                <span className="sr-only"> on {perfumeAuraStorePhoneDisplay}</span>
+              </a>
+              <a
+                href={perfumeAuraGoogleMapsUrl}
+                target="_blank"
+                rel="noreferrer"
+                className={visitActionClassName}
+              >
+                <HugeiconsIcon icon={Location01Icon} strokeWidth={1.8} aria-hidden="true" className="size-5" />
+                Open in Maps
+                <HugeiconsIcon icon={ArrowUpRight01Icon} strokeWidth={1.8} aria-hidden="true" className="size-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transition-none" />
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a>
+            </div>
           </div>
         </div>
 
@@ -63,9 +107,11 @@ export function SiteFooter() {
         </div>
       </div>
 
-      <div className="mt-3 grid w-full gap-x-5 border-t border-dashed border-[color:var(--aura-rule)] px-[var(--aura-gutter)] pt-3 text-[0.62rem] uppercase tracking-[0.08em] text-[color:rgb(245_228_199_/_65%)] sm:grid-cols-[1fr_auto] sm:items-center lg:grid-cols-[1fr_auto_1fr] lg:px-[var(--aura-gutter-lg)]">
-        <p>© {new Date().getFullYear()} Perfume Aura. All rights reserved.</p>
-        <div className="flex flex-wrap gap-x-4 sm:justify-end lg:justify-center">
+      {/* Phones stack the bar and centre every line; from tablets up it sits on
+          one line with the policies in the middle. */}
+      <div className="mt-3 grid w-full justify-items-center gap-x-6 border-t border-dashed border-[color:var(--aura-rule)] px-[var(--aura-gutter)] pt-3 text-center text-[0.62rem] uppercase tracking-[0.08em] text-[color:rgb(245_228_199_/_65%)] md:grid-cols-[auto_1fr_auto] md:items-center md:text-left lg:grid-cols-[1fr_auto_1fr] lg:px-[var(--aura-gutter-lg)]">
+        <p className="flex min-h-11 items-center md:justify-self-start">© {new Date().getFullYear()} Perfume Aura. All rights reserved.</p>
+        <div className="flex flex-wrap justify-center gap-x-5 md:gap-x-4">
           {policies.map(([label, href]) => <Link key={href} href={href} prefetch={false} className="inline-flex min-h-11 items-center hover:text-[var(--aura-ivory)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)]">{label}</Link>)}
         </div>
         <a
@@ -73,9 +119,9 @@ export function SiteFooter() {
           target="_blank"
           rel="noreferrer"
           aria-label="Website by Khanect AI"
-          className="group inline-flex min-h-11 w-fit items-center justify-self-end text-[var(--aura-ivory)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)] sm:col-span-2 lg:col-span-1"
+          className="group inline-flex min-h-11 w-fit items-center justify-self-center text-[var(--aura-ivory)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-ivory)] md:justify-self-end"
         >
-          <span aria-hidden="true" className="relative grid h-6 min-w-[9.5rem] overflow-hidden text-right">
+          <span aria-hidden="true" className="relative grid h-6 min-w-[9.5rem] overflow-hidden text-center md:text-right">
             <span className="col-start-1 row-start-1 self-center transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-[140%] group-focus-visible:translate-y-[140%] motion-reduce:transition-none">
               Website by Khanect AI
             </span>

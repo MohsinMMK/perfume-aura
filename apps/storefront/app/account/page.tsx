@@ -82,14 +82,16 @@ export default async function AccountPage() {
         >
           Sign in
         </Button>
-        <Button
-          render={<Link href="/account/register" />}
-          nativeButton={false}
-          variant="outline"
-          className="min-h-12 rounded-[var(--aura-radius)] border-black/25 bg-transparent px-8 text-[var(--aura-ink)] hover:bg-black/5"
-        >
-          Create account
-        </Button>
+        {enabled ? (
+          <Button
+            render={<Link href="/account/register" />}
+            nativeButton={false}
+            variant="outline"
+            className="min-h-12 rounded-[var(--aura-radius)] border-black/25 bg-transparent px-8 text-[var(--aura-ink)] hover:bg-black/5"
+          >
+            Create account
+          </Button>
+        ) : null}
       </div>
       <div className="mt-12 grid gap-0 border-y border-black/20 sm:grid-cols-3">
         {accountDestinations.map((destination) => (
