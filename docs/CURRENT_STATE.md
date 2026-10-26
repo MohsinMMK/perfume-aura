@@ -7,7 +7,7 @@ Never infer a live release from Git HEAD. Never record secrets or customer data.
 
 | Surface | Owner | Live source |
 |---|---|---|
-| `perfumeaura.com` | VPS Caddy → loopback 3031 → storefront | `30a72e68225fa544bb0fd6c6ec1067b843ea4694` |
+| `perfumeaura.com` | VPS Caddy → loopback 3031 → storefront | `d9b82f1524096fbc7141bc5099bd08919987af75` |
 | `www.perfumeaura.com` | Caddy HTTPS 308 to apex, preserving path/query | Same storefront |
 | `app.perfumeaura.com` | VPS Caddy → loopback 3020 → Ops | `30a72e68225fa544bb0fd6c6ec1067b843ea4694` |
 
