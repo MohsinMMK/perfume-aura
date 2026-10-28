@@ -74,8 +74,7 @@ outside it is still open.
 
 Source dependencies are latest outside pnpm's 24h release-age quarantine: Next.js `16.4.3`, React `19.3.1`, Better
 Auth `1.7.14`, ESLint `10`, Sentry `11.9.0`, Sharp `0.35.5`, Nodemailer `10.2.1`
-and reviewed transitive overrides. `posthog-js` `1.440.0` is held by the 24h
-release-age policy until 2026-10-28T16:45Z. `pnpm check` passes except its full-tree
+and reviewed transitive overrides, PostHog `1.440.0`. `pnpm check` passes except its full-tree
 audit, which flags low advisory GHSA-gcqx-w48m-w2h4 in dev-only `deepmerge@4.3.1`
 (via shadcn; no patched release); the production audit is clean. 122
 disposable-database integration tests pass. CI integration stays on

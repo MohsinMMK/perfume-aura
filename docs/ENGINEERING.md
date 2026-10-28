@@ -75,7 +75,7 @@ Versions are latest outside pnpm's 24h release-age quarantine; check with
 | Auth | Better Auth `1.7.14`, two Drizzle adapters; account identity is unique on (`provider_id`, `account_id`) |
 | Database | drizzle-orm `0.45.4`, drizzle-kit `^0.31.11`, `pg` `8.23.1` Pool (`max: 10`) |
 | Validation | Zod `4.6.7` |
-| Telemetry | `posthog-js` `1.438.24` (`1.440.0` held by the 24h release-age policy until 2026-10-28T16:45Z), `@sentry/nextjs` `11.9.0` |
+| Telemetry | `posthog-js` `1.440.0`, `@sentry/nextjs` `11.9.0` |
 | Lint | ESLint `10`; `peerDependencyRules` admits it for import/jsx-a11y/react plugins still capped at 9 |
 | Payments | Cashfree JS `^1.0.7`; dashboard TTL 20 minutes; provider order expiry 15 minutes |
 

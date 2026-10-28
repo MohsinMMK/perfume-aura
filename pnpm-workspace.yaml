@@ -18,10 +18,6 @@ minimumReleaseAgeExclude:
   - "@next/swc-win32-x64-msvc@16.4.3"
   - "eslint-config-next@16.4.3"
   - "next@16.4.3"
-  # shadcn@4.23.0 and @shadcn/registry@0.2.1 clear the quarantine at
-  # 2026-10-28T12:33Z; remove these two entries after that date.
-  - "@shadcn/registry@0.2.1"
-  - "shadcn@4.23.0"
 
 overrides:
   sharp: "0.35.5"
