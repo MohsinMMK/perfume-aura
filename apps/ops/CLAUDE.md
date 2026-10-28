@@ -1,7 +1,7 @@
 @AGENTS.md
 
 <!-- ASTRYX:START -->
-Astryx v0.7.3 · 173 components
+Astryx v0.7.4 · 173 components
 CLI: run every command as `pnpm exec astryx <cmd>` (shown below as `astryx ...`).
 
 SETUP (once, in app entry e.g. main.tsx) — without these, components render unstyled:

@@ -61,6 +61,8 @@ No static marketing app, generated storefront branch, root `tsconfig.json`, or
 ## Locked runtime and tooling
 
 Change stack only through an explicit reviewed decision. No Vercel production.
+Versions are latest outside pnpm's 24h release-age quarantine; check with
+`pnpm -r outdated --config.minimum-release-age=0` so nothing is hidden.
 
 | Area | Choice |
 |---|---|
@@ -73,7 +75,7 @@ Change stack only through an explicit reviewed decision. No Vercel production.
 | Auth | Better Auth `1.7.14`, two Drizzle adapters; account identity is unique on (`provider_id`, `account_id`) |
 | Database | drizzle-orm `0.45.4`, drizzle-kit `^0.31.11`, `pg` `8.23.1` Pool (`max: 10`) |
 | Validation | Zod `4.6.7` |
-| Telemetry | `posthog-js` `1.438.24`, `@sentry/nextjs` `11.9.0` |
+| Telemetry | `posthog-js` `1.438.24` (`1.440.0` held by the 24h release-age policy until 2026-10-28T16:45Z), `@sentry/nextjs` `11.9.0` |
 | Lint | ESLint `10`; `peerDependencyRules` admits it for import/jsx-a11y/react plugins still capped at 9 |
 | Payments | Cashfree JS `^1.0.7`; dashboard TTL 20 minutes; provider order expiry 15 minutes |
 
@@ -248,8 +250,8 @@ and the workspace plus ops-runtime audits. Integration tests are **not** inside
 `pnpm check`.
 
 Tests use Node built-in runner via `tsx --test` (not Vitest/Jest). Inventory
-guard: `scripts/check-test-inventory.mjs`. Approximately 73 unit files (~302
-cases) and 18 integration files (110 cases). DB integration uses
+guard: `scripts/check-test-inventory.mjs`. 76 unit files (324
+cases) and 20 integration files (122 cases). DB integration uses
 `--test-concurrency=1`.
 
 Ops local bootstrap:

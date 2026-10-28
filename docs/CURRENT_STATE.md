@@ -68,13 +68,14 @@ outside it is still open.
   deploy Ops or apply migrations. Database changes fail closed at the owner gate.
 - Source pin is Node `26.12.1` / npm `11.20.0` / pnpm `12.15.0` on
   `node:26.12.1-trixie-slim@sha256:94816674c62774da0d099a947bf4613b9e1972a2733abd0d0cd80e795f8411d0`.
-  Both live apps are built on this pin.
+  Live apps adopt this digest on their next redeploy.
 
 ## Active release locks
 
-Source dependencies are at latest: Next.js `16.4.3`, React `19.3.1`, Better
+Source dependencies are latest outside pnpm's 24h release-age quarantine: Next.js `16.4.3`, React `19.3.1`, Better
 Auth `1.7.14`, ESLint `10`, Sentry `11.9.0`, Sharp `0.35.5`, Nodemailer `10.2.1`
-and reviewed transitive overrides. `pnpm check` passes except its full-tree
+and reviewed transitive overrides. `posthog-js` `1.440.0` is held by the 24h
+release-age policy until 2026-10-28T16:45Z. `pnpm check` passes except its full-tree
 audit, which flags low advisory GHSA-gcqx-w48m-w2h4 in dev-only `deepmerge@4.3.1`
 (via shadcn; no patched release); the production audit is clean. 122
 disposable-database integration tests pass. CI integration stays on
