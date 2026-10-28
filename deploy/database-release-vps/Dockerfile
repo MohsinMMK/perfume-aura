@@ -1,7 +1,7 @@
 # Build from the repository root at the exact release commit.
 # pg_dump/psql must be at least the server major version; PostgreSQL 18 client
 # tools also serve the current Neon server. Node comes from the pinned runtime image.
-FROM node:26.12.1-trixie-slim@sha256:36793bcbb160a6a16cede1e62b93f84e26b78a972a8a4c0b879c1c12f22761ec AS node-runtime
+FROM node:26.12.1-trixie-slim@sha256:94816674c62774da0d099a947bf4613b9e1972a2733abd0d0cd80e795f8411d0 AS node-runtime
 
 FROM node-runtime AS dependencies
 WORKDIR /app/runner
