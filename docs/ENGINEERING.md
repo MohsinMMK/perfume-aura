@@ -61,6 +61,8 @@ No static marketing app, generated storefront branch, root `tsconfig.json`, or
 ## Locked runtime and tooling
 
 Change stack only through an explicit reviewed decision. No Vercel production.
+Versions are latest outside pnpm's 24h release-age quarantine; check with
+`pnpm -r outdated --config.minimum-release-age=0` so nothing is hidden.
 
 | Area | Choice |
 |---|---|
@@ -68,21 +70,19 @@ Change stack only through an explicit reviewed decision. No Vercel production.
 | Pins | Node `26.12.1`, npm `11.20.0` (`.nvmrc`, CI, both images, packers) |
 | Apps | Next.js `16.4.3`, React `19.3.1`, App Router, `output: "standalone"` |
 | TypeScript | `tsc` is `7.0.2` via `@typescript/native`. Package named `typescript` is `@typescript/typescript6@6.0.2` for eslint/Next compiler API. `strict: true` |
-| UI | Storefront: shadcn `^4.22.1`, `@base-ui/react` `^1.9.0`. Ops: Astryx `@astryxdesign/core` + `theme-neutral` `0.7.3`, `@stylexjs/stylex` `0.19.1`. Tailwind `4.3.3`, Hugeicons. No Radix runtime |
+| UI | Storefront: shadcn `^4.23.0`, `@base-ui/react` `^1.9.0`. Ops: Astryx `@astryxdesign/core` + `theme-neutral` `0.7.4`, `@stylexjs/stylex` `0.19.1`. Tailwind `4.3.3`, Hugeicons. No Radix runtime |
 | Fonts | Ops: self-hosted Figtree (Astryx neutral theme). Storefront: self-hosted Londrina Solid/Outline + Inter Tight |
-| Auth | Better Auth `1.7.12`, two Drizzle adapters; account identity is unique on (`provider_id`, `account_id`) |
+| Auth | Better Auth `1.7.14`, two Drizzle adapters; account identity is unique on (`provider_id`, `account_id`) |
 | Database | drizzle-orm `0.45.4`, drizzle-kit `^0.31.11`, `pg` `8.23.1` Pool (`max: 10`) |
 | Validation | Zod `4.6.7` |
-| Telemetry | `posthog-js` `1.438.19`, `@sentry/nextjs` `11.8.0` |
+| Telemetry | `posthog-js` `1.438.24` (`1.440.0` held by the 24h release-age policy until 2026-10-28T16:45Z), `@sentry/nextjs` `11.9.0` |
 | Lint | ESLint `10`; `peerDependencyRules` admits it for import/jsx-a11y/react plugins still capped at 9 |
 | Payments | Cashfree JS `^1.0.7`; dashboard TTL 20 minutes; provider order expiry 15 minutes |
 
-`pnpm-workspace.yaml` overrides: `sharp@0.35.5`, `postcss@8.5.31`,
-`@hono/node-server@1.19.14 → 2.0.10`, `brace-expansion@5.0.12`,
-`esbuild@0.18.20 → 0.25.12`, `fast-uri@3.1.9`, `hono@4.13.13`,
-`ip-address@10.7.4`, `js-yaml@4.3.2`, `nanoid@3.3.20`, `qs@6.16.1`,
-`source-map-js@1.2.2`, `proxy-addr@2.0.8`, `postcss-selector-parser@7.1.7`,
-`@modelcontextprotocol/sdk@1.32.2`, `undici@7.30.1`, `dompurify@3.4.17`. Patch:
+`pnpm-workspace.yaml` overrides: `sharp@0.35.5`, `postcss@8.5.32`,
+`brace-expansion@5.0.12`, `esbuild@0.18.20 → 0.25.12`, `fast-uri@3.1.9`,
+`ip-address@10.7.5`, `nanoid@3.3.20`, `source-map-js@1.2.2`,
+`postcss-selector-parser@7.1.7`, `undici@7.30.1`, `dompurify@3.4.17`. Patch:
 `patches/minimatch@3.1.5.patch`. Change an override only with dependency-path
 evidence, then verify audit, lint, shadcn preset resolution, migrations, both
 builds, and both packages.
@@ -250,8 +250,8 @@ and the workspace plus ops-runtime audits. Integration tests are **not** inside
 `pnpm check`.
 
 Tests use Node built-in runner via `tsx --test` (not Vitest/Jest). Inventory
-guard: `scripts/check-test-inventory.mjs`. Approximately 73 unit files (~302
-cases) and 18 integration files (110 cases). DB integration uses
+guard: `scripts/check-test-inventory.mjs`. 76 unit files (324
+cases) and 20 integration files (122 cases). DB integration uses
 `--test-concurrency=1`.
 
 Ops local bootstrap:

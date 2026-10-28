@@ -241,7 +241,7 @@ jobs:
     timeout-minutes: 35
     services:
       postgres:
-        image: postgres:16.15@sha256:9e2cf6287f25c3151f4c9421ccce2b17f3e60061c111a29165e0d2cdd9ff0a97
+        image: postgres:16.15@sha256:1beaa3084eee2676f20a9cd9928f0bf2c5bf674f8e49f81017912183d377c61c
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -280,7 +280,7 @@ jobs:
     timeout-minutes: 20
     services:
       postgres:
-        image: postgres:16.15@sha256:9e2cf6287f25c3151f4c9421ccce2b17f3e60061c111a29165e0d2cdd9ff0a97
+        image: postgres:16.15@sha256:1beaa3084eee2676f20a9cd9928f0bf2c5bf674f8e49f81017912183d377c61c
         env: { POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres, POSTGRES_DB: perfume_aura_phase99_ci_storefront }
         ports: ["5432:5432"]
         options: >-
@@ -311,7 +311,7 @@ jobs:
     timeout-minutes: 20
     services:
       postgres:
-        image: postgres:16.15@sha256:9e2cf6287f25c3151f4c9421ccce2b17f3e60061c111a29165e0d2cdd9ff0a97
+        image: postgres:16.15@sha256:1beaa3084eee2676f20a9cd9928f0bf2c5bf674f8e49f81017912183d377c61c
         env: { POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres, POSTGRES_DB: perfume_aura_phase99_ci_ops }
         ports: ["5432:5432"]
         options: >-
@@ -399,7 +399,7 @@ jobs:
     timeout-minutes: 40
     services:
       postgres:
-        image: postgres:16.15@sha256:9e2cf6287f25c3151f4c9421ccce2b17f3e60061c111a29165e0d2cdd9ff0a97
+        image: postgres:16.15@sha256:1beaa3084eee2676f20a9cd9928f0bf2c5bf674f8e49f81017912183d377c61c
         env: { POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres, POSTGRES_DB: perfume_aura_phase99_package_ops }
         ports: ["5432:5432"]
         options: >-
@@ -579,18 +579,18 @@ jobs:
           persist-credentials: false
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
       - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Build and push immutable database release image
         id: image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ${{ github.workspace }}
           file: ${{ github.workspace }}/deploy/database-release-vps/Dockerfile
@@ -602,7 +602,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=perfume-aura-database-release
 
       - name: Connect release runner to Tailscale
-        uses: tailscale/github-action@306e68a486fd2350f2bfc3b19fcd143891a4a2d8 # v4
+        uses: tailscale/github-action@99a8333667fff04fdd6cffb46dfd409f8329a7bf # v4.3.0
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}

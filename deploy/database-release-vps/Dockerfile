@@ -1,14 +1,14 @@
 # Build from the repository root at the exact release commit.
 # pg_dump/psql must be at least the server major version; PostgreSQL 18 client
 # tools also serve the current Neon server. Node comes from the pinned runtime image.
-FROM node:26.12.1-trixie-slim@sha256:36793bcbb160a6a16cede1e62b93f84e26b78a972a8a4c0b879c1c12f22761ec AS node-runtime
+FROM node:26.12.1-trixie-slim@sha256:94816674c62774da0d099a947bf4613b9e1972a2733abd0d0cd80e795f8411d0 AS node-runtime
 
 FROM node-runtime AS dependencies
 WORKDIR /app/runner
 COPY deploy/database-release-vps/runner/package.json deploy/database-release-vps/runner/package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 
-FROM postgres:18.6-trixie@sha256:edb0c08dc33befd0262ab3b5cf1c4f3f8cfd8b09e88c05b45adee29d6761ddb6
+FROM postgres:18.6-trixie@sha256:979bccfde35445db618c65107d27d08c6c21339d8dc3ad4c830c6633947be0e4
 
 ARG SOURCE_COMMIT
 LABEL org.opencontainers.image.source="https://github.com/MohsinMMK/perfume-aura" \
