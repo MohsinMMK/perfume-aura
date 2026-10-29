@@ -81,6 +81,15 @@ disposable-database integration tests pass. CI integration stays on
 PostgreSQL `16.15` to match the protected `postgresql-16-integration` check;
 production now runs 18.6, so moving CI to 18 is an open follow-up.
 
+Next dependency pass (recorded 30 Oct 2026): run `pnpm outdated -r`, which
+applies the 24h quarantine, and take what it reports. These were still in
+quarantine at the 29 Oct pass: `posthog-js` 1.442.x (pinned exactly; 1.442.1
+then), `nodemailer` 10.3.x (10.3.1 then) and `@hugeicons/core-free-icons`
+4.4.0. Also held then: `tailscale/github-action` v4.4.0 (under an hour old;
+`ops-pack.yml` pins v4.3.0 by SHA) and the `deploy/postgres-vps` production
+database images, which change only with a production verifier run (see
+Operations). Delete each item here once it lands.
+
 All remain false: `STOREFRONT_PUBLIC_RELEASE`,
 `STOREFRONT_CUSTOMER_AUTH_ENABLED`, `STOREFRONT_CHECKOUT_RELEASE_APPROVED`,
 `STOREFRONT_INQUIRIES_ENABLED`, `STOREFRONT_COMMERCE_MAINTENANCE_ENABLED`,
