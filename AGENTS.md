@@ -9,6 +9,7 @@ Fresh source/provider/DNS/endpoint evidence outranks documentation.
 |---|---|
 | Code, tests, architecture, UI/data/auth invariants | `docs/ENGINEERING.md` |
 | Hosting, deployment, DNS, secrets, migrations, recovery | `docs/OPERATIONS.md` |
+| Dependency upgrades: what is waiting or held | `docs/CURRENT_STATE.md`, Active release locks |
 
 Engineering routes product/commerce questions to `docs/COMMERCE.md` and exact
 catalog/legal/design evidence to `docs/REFERENCE.md`. Do not load all docs.
