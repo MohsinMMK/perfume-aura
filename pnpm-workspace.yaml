@@ -2,22 +2,9 @@ packages:
   - "apps/*"
   - "packages/*"
 
-# pnpm's default minimumReleaseAge quarantines releases for 24 hours.
-minimumReleaseAgeExclude:
-  # Exact versions reviewed in this dependency update; later releases remain
-  # subject to pnpm's default 24-hour quarantine.
-  - "@next/env@16.4.3"
-  - "@next/eslint-plugin-next@16.4.3"
-  - "@next/swc-darwin-arm64@16.4.3"
-  - "@next/swc-darwin-x64@16.4.3"
-  - "@next/swc-linux-arm64-gnu@16.4.3"
-  - "@next/swc-linux-arm64-musl@16.4.3"
-  - "@next/swc-linux-x64-gnu@16.4.3"
-  - "@next/swc-linux-x64-musl@16.4.3"
-  - "@next/swc-win32-arm64-msvc@16.4.3"
-  - "@next/swc-win32-x64-msvc@16.4.3"
-  - "eslint-config-next@16.4.3"
-  - "next@16.4.3"
+# pnpm's default minimumReleaseAge quarantines releases for 24 hours. Add an
+# exact-version minimumReleaseAgeExclude entry only for a reviewed release that
+# must land before it clears.
 
 overrides:
   sharp: "0.35.5"
