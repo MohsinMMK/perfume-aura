@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { arcGeometry, arcItemOpacity, defaultArcStepDegrees } from "@/lib/arc-motion";
 import { attachContinuousMotionGuard } from "@/lib/continuous-motion";
 import { compactHeaderScrollY } from "@/lib/header-motion";
 import { jumpWindowScroll } from "@/lib/smooth-scroll";
@@ -765,31 +766,28 @@ export function StorefrontMotion() {
                 );
                 if (!pin || !wheel || items.length < 2) return;
 
-                let stepDegrees = 24;
+                let stepDegrees = defaultArcStepDegrees;
                 const layoutArc = () => {
-                  const width = section.clientWidth || window.innerWidth;
-                  const rem =
+                  // An unmeasurable section keeps the previous geometry (or
+                  // the CSS fallbacks); a refresh lays it out once visible.
+                  const geometry = arcGeometry(
+                    section.clientWidth || window.innerWidth,
                     Number.parseFloat(
                       window.getComputedStyle(document.documentElement).fontSize,
-                    ) || 16;
-                  const itemWidth = Math.min(28 * rem, width * 0.82);
-                  const radius = Math.max(
-                    width * (context.conditions?.isMobile ? 1.7 : 0.95),
-                    40 * rem,
+                    ),
+                    Boolean(context.conditions?.isMobile),
                   );
-                  stepDegrees = ((itemWidth * 1.3) / radius) * (180 / Math.PI);
-                  section.style.setProperty("--aura-arc-item", `${itemWidth}px`);
-                  section.style.setProperty("--aura-arc-radius", `${radius}px`);
+                  if (!geometry) return;
+                  stepDegrees = geometry.stepDegrees;
+                  section.style.setProperty("--aura-arc-item", `${geometry.itemWidth}px`);
+                  section.style.setProperty("--aura-arc-radius", `${geometry.radius}px`);
                   section.style.setProperty("--aura-arc-step", `${stepDegrees}deg`);
                   section.style.setProperty("--aura-arc-center", "46%");
                 };
                 const paintArc = () => {
-                  const rotation = Number(gsap.getProperty(wheel, "rotate")) || 0;
+                  const rotation = Number(gsap.getProperty(wheel, "rotate"));
                   items.forEach((item, index) => {
-                    const distance = Math.abs(index * stepDegrees + rotation) / stepDegrees;
-                    item.style.opacity = gsap.utils
-                      .clamp(0.16, 1, 1 - distance * 0.72)
-                      .toFixed(3);
+                    item.style.opacity = arcItemOpacity(index, rotation, stepDegrees).toFixed(3);
                   });
                 };
 

@@ -42,13 +42,13 @@ flowchart LR
 
 ## Local setup
 
-Repository tooling, CI and both production images pin Node `26.12.1`; pnpm is
-`12.15.0` via `packageManager`. Use disposable
+Repository tooling, CI and both production images pin Node `26.13.0`; pnpm is
+`12.16.1` via `packageManager`. Use disposable
 loopback PostgreSQL for integration tests.
 
 ```bash
 nvm use
-npm install --global pnpm@12.15.0
+npm install --global pnpm@12.16.1
 pnpm install --frozen-lockfile
 pnpm check
 ```

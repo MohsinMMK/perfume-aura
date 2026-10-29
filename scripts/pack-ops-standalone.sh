@@ -360,9 +360,9 @@ if [[ "${1:-}" == "self-test" ]]; then
   exit 0
 fi
 
-EXPECTED_NODE_VERSION="26.12.1"
+EXPECTED_NODE_VERSION="26.13.0"
 EXPECTED_NPM_VERSION="11.20.0"
-EXPECTED_PNPM_VERSION="12.15.0"
+EXPECTED_PNPM_VERSION="12.16.1"
 EXPECTED_NEXT_VERSION="16.4.3"
 EXPECTED_SHARP_VERSION="0.35.5"
 EXPECTED_POSTCSS_VERSION="8.5.32"
@@ -818,7 +818,7 @@ cat > "$STAGE/apps/ops/package.json" << 'OPSPKG'
   "name": "perfume-aura-ops-standalone-app",
   "private": true,
   "engines": {
-    "node": ">=26.12.1 <27"
+    "node": ">=26.13.0 <27"
   },
   "scripts": {
     "start": "node server.js"
@@ -833,7 +833,7 @@ cat > "$STAGE/package.json" << 'PKG'
   "name": "perfume-aura-ops-standalone",
   "private": true,
   "engines": {
-    "node": ">=26.12.1 <27"
+    "node": ">=26.13.0 <27"
   },
   "dependencies": {},
   "scripts": {
@@ -863,7 +863,7 @@ Hostinger Node.js Web App — prebuilt standalone (Perfume Aura ops)
 Settings and redeploy:
   Source: upload this zip
   Framework: Other (or Next.js)
-  Node: 26.x (archive built and validated with 26.12.1)
+  Node: 26.x (archive built and validated with 26.13.0)
   Root directory: ./
   Build command: echo prebuilt-standalone
   Package manager: pnpm (or npm)

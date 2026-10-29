@@ -66,8 +66,8 @@ Versions are latest outside pnpm's 24h release-age quarantine; check with
 
 | Area | Choice |
 |---|---|
-| Workspace | pnpm `12.15.0` (`packageManager`), engines Node `>=26.12.1 <27` |
-| Pins | Node `26.12.1`, npm `11.20.0` (`.nvmrc`, CI, both images, packers) |
+| Workspace | pnpm `12.16.1` (`packageManager`), engines Node `>=26.13.0 <27` |
+| Pins | Node `26.13.0`, npm `11.20.0` (`.nvmrc`, CI, both images, packers) |
 | Apps | Next.js `16.4.3`, React `19.3.1`, App Router, `output: "standalone"` |
 | TypeScript | `tsc` is `7.0.2` via `@typescript/native`. Package named `typescript` is `@typescript/typescript6@6.0.2` for eslint/Next compiler API. `strict: true` |
 | UI | Storefront: shadcn `^4.23.0`, `@base-ui/react` `^1.9.0`. Ops: Astryx `@astryxdesign/core` + `theme-neutral` `0.7.4`, `@stylexjs/stylex` `0.19.1`. Tailwind `4.3.3`, Hugeicons. No Radix runtime |
@@ -75,7 +75,7 @@ Versions are latest outside pnpm's 24h release-age quarantine; check with
 | Auth | Better Auth `1.7.14`, two Drizzle adapters; account identity is unique on (`provider_id`, `account_id`) |
 | Database | drizzle-orm `0.45.4`, drizzle-kit `^0.31.11`, `pg` `8.23.1` Pool (`max: 10`) |
 | Validation | Zod `4.6.7` |
-| Telemetry | `posthog-js` `1.440.0`, `@sentry/nextjs` `11.9.0` |
+| Telemetry | `posthog-js` `1.441.2`, `@sentry/nextjs` `11.10.0` |
 | Lint | ESLint `10`; `peerDependencyRules` admits it for import/jsx-a11y/react plugins still capped at 9 |
 | Payments | Cashfree JS `^1.0.7`; dashboard TTL 20 minutes; provider order expiry 15 minutes |
 
@@ -87,7 +87,7 @@ Versions are latest outside pnpm's 24h release-age quarantine; check with
 evidence, then verify audit, lint, shadcn preset resolution, migrations, both
 builds, and both packages.
 
-Both production images use `node:26.12.1-trixie-slim` by digest; CI pins Node `26.12.1`
+Both production images use `node:26.13.0-trixie-slim` by digest; CI pins Node `26.13.0`
 and PostgreSQL `16.15` by digest for integration jobs.
 
 ## UI contracts
@@ -250,7 +250,7 @@ and the workspace plus ops-runtime audits. Integration tests are **not** inside
 `pnpm check`.
 
 Tests use Node built-in runner via `tsx --test` (not Vitest/Jest). Inventory
-guard: `scripts/check-test-inventory.mjs`. 76 unit files (324
+guard: `scripts/check-test-inventory.mjs`. 77 unit files (329
 cases) and 20 integration files (122 cases). DB integration uses
 `--test-concurrency=1`.
 
@@ -297,8 +297,8 @@ without publishing. CI never creates a secondary deployment branch.
 | `verify-production-deploy.mjs` | `pnpm ops:verify-production-deploy` |
 | `verify-commerce-foundation.mjs` | `pnpm commerce:verify` |
 
-The ops packer pins Node `26.12.1`, npm `11.20.0`, and pnpm `12.15.0`. The
-storefront source build uses CI Node `26.12.1` and pins pnpm `12.15.0`.
+The ops packer pins Node `26.13.0`, npm `11.20.0`, and pnpm `12.16.1`. The
+storefront source build uses CI Node `26.13.0` and pins pnpm `12.16.1`.
 Both reject secret-shaped output, verify Linux x64/glibc Sharp, and smoke their
 materialized servers.
 

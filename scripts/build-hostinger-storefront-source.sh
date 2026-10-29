@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-EXPECTED_PNPM="12.15.0"
+EXPECTED_PNPM="12.16.1"
 EXPECTED_SHARP="0.35.5"
 OUTPUT_DIR="$ROOT/.hostinger/storefront"
 RUNTIME_DEPS_DIR="$ROOT/scripts/ops-runtime-deps"
@@ -20,7 +20,7 @@ verify_repository_contract() {
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const rootPackage = JSON.parse(fs.readFileSync("package.json", "utf8"));
-assert.equal(rootPackage.packageManager, "pnpm@12.15.0");
+assert.equal(rootPackage.packageManager, "pnpm@12.16.1");
 assert.equal(rootPackage.scripts.build, "pnpm hostinger:build:storefront");
 assert.equal(
   rootPackage.scripts["hostinger:build:storefront"],
@@ -200,7 +200,7 @@ cat > "$STAGE/package.json" <<'JSON'
 {
   "name": "perfume-aura-storefront-hostinger-source",
   "private": true,
-  "engines": { "node": ">=26.12.1 <27" },
+  "engines": { "node": ">=26.13.0 <27" },
   "scripts": { "start": "node apps/storefront/server.js" }
 }
 JSON

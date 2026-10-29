@@ -66,15 +66,15 @@ outside it is still open.
   desktop. Desktop/tablet/mobile browser checks pass.
 - Markdown-only changes must not deploy. Storefront-only releases must not
   deploy Ops or apply migrations. Database changes fail closed at the owner gate.
-- Source pin is Node `26.12.1` / npm `11.20.0` / pnpm `12.15.0` on
-  `node:26.12.1-trixie-slim@sha256:94816674c62774da0d099a947bf4613b9e1972a2733abd0d0cd80e795f8411d0`.
+- Source pin is Node `26.13.0` / npm `11.20.0` / pnpm `12.16.1` on
+  `node:26.13.0-trixie-slim@sha256:e4db4c914bf8ad241bd24804fc25d272d89bad97e68cdc8a1414862790a02c39`.
   Live apps adopt this digest on their next redeploy.
 
 ## Active release locks
 
 Source dependencies are latest outside pnpm's 24h release-age quarantine: Next.js `16.4.3`, React `19.3.1`, Better
-Auth `1.7.14`, ESLint `10`, Sentry `11.9.0`, Sharp `0.35.5`, Nodemailer `10.2.1`
-and reviewed transitive overrides, PostHog `1.440.0`. `pnpm check` passes except its full-tree
+Auth `1.7.14`, ESLint `10`, Sentry `11.10.0`, Sharp `0.35.5`, Nodemailer `10.2.1`
+and reviewed transitive overrides, PostHog `1.441.2`. `pnpm check` passes except its full-tree
 audit, which flags low advisory GHSA-gcqx-w48m-w2h4 in dev-only `deepmerge@4.3.1`
 (via shadcn; no patched release); the production audit is clean. 122
 disposable-database integration tests pass. CI integration stays on
