@@ -33,7 +33,7 @@ protected main merge → scoped quality/integration → clean Linux standalone
 | Setting | Contract |
 |---|---|
 | Workflow | `.github/workflows/ops-pack.yml`, storefront target |
-| Build | `scripts/build-hostinger-storefront-source.sh`; Linux x64/glibc, Node 26.12.1, pnpm 12.15.0 |
+| Build | `scripts/build-hostinger-storefront-source.sh`; Linux x64/glibc, Node 26.13.0, pnpm 12.16.1 |
 | Image | `ghcr.io/mohsinmmk/perfume-aura-storefront@sha256:<digest>` |
 | Compose | `/srv/khanect/stacks/perfume-aura-storefront/compose.yaml` |
 | Runtime env | `/etc/khanect/perfume-aura-storefront.env`, root:root 0600 |
