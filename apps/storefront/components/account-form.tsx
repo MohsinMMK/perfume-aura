@@ -297,7 +297,8 @@ export function AccountForm({
               <FieldLabel htmlFor="account-password" className="text-sm font-semibold">
                 Password
               </FieldLabel>
-              {mode === "sign-in" ? (
+              {/* /account/recover is a 404 while customer accounts are off. */}
+              {mode === "sign-in" && enabled ? (
                 <Link
                   href="/account/recover"
                   className="text-sm font-medium text-[var(--aura-text-muted-on-ivory)] underline-offset-4 hover:text-[var(--aura-ink)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--aura-ink)]"
