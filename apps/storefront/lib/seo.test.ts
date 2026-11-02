@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { describe, it } from "node:test";
+import { editorialGuides } from "./editorial-guides";
 import { faqItems } from "./faq";
 import {
   createAboutStructuredData,
@@ -9,7 +10,7 @@ import {
   createEditorialStructuredData,
   createHomeStructuredData,
   createProductStructuredData,
-  discoveryLastModified,
+  discoveryReviewedDates,
   discoverySitemapEntries,
   fragranceGuidePublishedDate,
   getStorefrontOrigin,
@@ -43,8 +44,6 @@ describe("storefront SEO contracts", () => {
         "/guides/perfume-for-occasions",
       ],
     );
-    assert.ok(privateCrawlerPaths.includes("/account"));
-    assert.ok(privateCrawlerPaths.includes("/account/"));
     assert.ok(privateCrawlerPaths.includes("/api/"));
     const discoveryPaths = new Set<string>(
       discoverySitemapEntries.map((entry) => entry.path),
@@ -53,6 +52,37 @@ describe("storefront SEO contracts", () => {
     assert.ok(
       discoverySitemapEntries.every((entry) => /^\d{4}-\d{2}-\d{2}$/.test(entry.lastModified)),
     );
+  });
+
+  it("dates each sitemap entry from the same reviewed date as its structured data", () => {
+    const lastModifiedByPath = new Map<string, string>(
+      discoverySitemapEntries.map((entry) => [entry.path, entry.lastModified]),
+    );
+    for (const guide of Object.values(editorialGuides)) {
+      assert.equal(lastModifiedByPath.get(guide.path), guide.reviewedDate);
+    }
+    assert.equal(
+      lastModifiedByPath.get("/fragrance-guide"),
+      createFragranceGuideStructuredData("https://perfumeaura.com")["@graph"][0].dateModified,
+    );
+  });
+
+  it("leaves account pages crawlable so their noindex is seen", async () => {
+    assert.equal(privateCrawlerPaths.some((path) => path.startsWith("/account")), false);
+    const accountPages = [
+      "page.tsx",
+      "sign-in/page.tsx",
+      "register/page.tsx",
+      "recover/page.tsx",
+      "settings/page.tsx",
+      "delivery/page.tsx",
+      "orders/page.tsx",
+      "orders/[orderNumber]/page.tsx",
+    ];
+    for (const page of accountPages) {
+      const source = await readFile(new URL(`../app/account/${page}`, import.meta.url), "utf8");
+      assert.match(source, /robots: noIndexRobots/u, page);
+    }
   });
 
   it("keeps search and AI crawlers on the same wildcard public-page policy", () => {
@@ -122,7 +152,7 @@ describe("storefront SEO contracts", () => {
     assert.equal(guide["@graph"][0].author["@id"], `${origin}/#organization`);
     assert.equal(guide["@graph"][0].url, `${origin}/fragrance-guide`);
     assert.equal(guide["@graph"][0].datePublished, fragranceGuidePublishedDate);
-    assert.equal(guide["@graph"][0].dateModified, discoveryLastModified);
+    assert.equal(guide["@graph"][0].dateModified, discoveryReviewedDates.fragranceGuide);
     assert.equal("telephone" in home["@graph"][0], false);
     assert.equal("address" in home["@graph"][0], false);
   });
