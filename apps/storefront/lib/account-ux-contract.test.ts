@@ -11,6 +11,7 @@ describe("customer account experience", () => {
 
     assert.match(accountForm, /Continue with Google/u);
     assert.match(accountForm, /Forgot password\?/u);
+    assert.match(accountForm, /mode === "sign-in" && enabled \? \(\s*<Link\s+href="\/account\/recover"/u);
     assert.match(accountForm, /Show password/u);
     assert.match(accountForm, /Use 12–256 characters/u);
     assert.match(accountForm, /Resend verification email/u);
@@ -34,6 +35,7 @@ describe("customer account experience", () => {
     assert.match(signInPage, /normalizeCustomerCallbackURL/u);
     assert.match(signInPage, /Sign in to continue checkout\. Your cart is saved\./u);
     assert.match(signInPage, /account\/register\?callbackURL=/u);
+    assert.match(signInPage, /footer=\{enabled \? /u);
     assert.match(registerPage, /normalizeCustomerCallbackURL/u);
     assert.match(registerPage, /account\/sign-in\?callbackURL=/u);
   });

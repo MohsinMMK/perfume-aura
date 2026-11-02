@@ -35,7 +35,8 @@ export default async function SignInPage({
       title="Sign in to Perfume Aura"
       description="Use Google for the quickest return, or continue with the email and password connected to your customer account."
       supportingText="One customer account keeps checkout, delivery details, and order history connected."
-      footer={<p>New to Perfume Aura? <Link href={registerHref} className="font-semibold text-[var(--aura-ink)] underline underline-offset-4">Create an account</Link>.</p>}
+      // /account/register is a 404 while customer accounts are off.
+      footer={enabled ? <p>New to Perfume Aura? <Link href={registerHref} className="font-semibold text-[var(--aura-ink)] underline underline-offset-4">Create an account</Link>.</p> : null}
     >
       <AccountForm
         mode="sign-in"
