@@ -1,44 +1,44 @@
+import { editorialGuideSlugs, editorialGuides } from "@/lib/editorial-guides";
+
 export const siteName = "Perfume Aura";
 
 export const defaultSiteDescription =
   "Perfume Aura is a fragrance store in Kondapur, Hyderabad, helping people choose perfume by mood, intensity, occasion, and composition.";
 
-export const discoveryLastModified = "2026-09-01";
 export const fragranceGuidePublishedDate = "2026-08-28";
 
+// The date each page's visible content was last reviewed. The sitemap lastmod
+// and any JSON-LD dateModified read from here (guides use their own
+// reviewedDate), so the two cannot drift. Update a date only when that page's
+// copy actually changes, not for styling or motion work.
+export const discoveryReviewedDates = {
+  home: "2026-10-26",
+  fragranceGuide: "2026-09-01",
+  about: "2026-10-26",
+  faq: "2026-10-09",
+} as const;
+
 export const discoverySitemapEntries = [
-  { path: "", changeFrequency: "weekly", priority: 1, lastModified: "2026-10-09" },
+  { path: "", changeFrequency: "weekly", priority: 1, lastModified: discoveryReviewedDates.home },
   {
     path: "/fragrance-guide",
     changeFrequency: "monthly",
     priority: 0.9,
-    lastModified: discoveryLastModified,
+    lastModified: discoveryReviewedDates.fragranceGuide,
   },
-  { path: "/about", changeFrequency: "monthly", priority: 0.7, lastModified: "2026-10-09" },
-  { path: "/faq", changeFrequency: "monthly", priority: 0.6, lastModified: "2026-10-09" },
-  {
-    path: "/guides/perfume-for-hyderabad-weather",
+  { path: "/about", changeFrequency: "monthly", priority: 0.7, lastModified: discoveryReviewedDates.about },
+  { path: "/faq", changeFrequency: "monthly", priority: 0.6, lastModified: discoveryReviewedDates.faq },
+  ...editorialGuideSlugs.map((slug) => ({
+    path: editorialGuides[slug].path,
     changeFrequency: "monthly",
     priority: 0.8,
-    lastModified: discoveryLastModified,
-  },
-  {
-    path: "/guides/fragrance-families",
-    changeFrequency: "monthly",
-    priority: 0.8,
-    lastModified: discoveryLastModified,
-  },
-  {
-    path: "/guides/perfume-for-occasions",
-    changeFrequency: "monthly",
-    priority: 0.8,
-    lastModified: discoveryLastModified,
-  },
+    lastModified: editorialGuides[slug].reviewedDate,
+  } as const)),
 ] as const;
 
+// Account pages are left crawlable on purpose: each one sends noindex, and a
+// Disallow would stop crawlers from ever seeing that noindex.
 export const privateCrawlerPaths = [
-  "/account",
-  "/account/",
   "/api/",
   "/cart",
   "/checkout",
@@ -242,7 +242,7 @@ export function createFragranceGuideStructuredData(
         publisher: { "@type": "Organization", "@id": `${origin}/#organization`, name: siteName, url: origin },
         image: `${origin}/images/hero-bottle-still-life.webp`,
         datePublished: fragranceGuidePublishedDate,
-        dateModified: discoveryLastModified,
+        dateModified: discoveryReviewedDates.fragranceGuide,
         inLanguage: "en-IN",
       },
       {

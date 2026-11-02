@@ -526,8 +526,11 @@ Reachable, `noindex`, not in sitemap: `/shop`, `/products/[slug]`,
 HTML `404` while flags are closed: `/checkout`, `/account/register`,
 `/account/recover`.
 
-`robots.txt` allows `/` and disallows `/account`, `/api/`, `/cart`,
-`/checkout`, `/order/`. Product and collection URLs enter the sitemap only
+`robots.txt` allows `/` and disallows `/api/`, `/cart`, `/checkout`,
+`/order/`. `/account` stays crawlable so its `noindex` is seen. Sitemap
+`lastmod` and JSON-LD `dateModified` both come from `discoveryReviewedDates`
+in `apps/storefront/lib/seo.ts` (guides: their `reviewedDate`); change a date
+only when that page's copy changes. Product and collection URLs enter the sitemap only
 after database publication and `STOREFRONT_PUBLIC_RELEASE=true`.
 
 Header: Shop, Scent guide, About, FAQ, Account, cart popover, WhatsApp “Get
