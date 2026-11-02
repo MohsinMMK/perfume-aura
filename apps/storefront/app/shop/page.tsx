@@ -8,6 +8,7 @@ import {
   parseShopListingQuery,
 } from "@/lib/shop-listing-query";
 import { isPublicCatalogEnabled } from "@/lib/catalog-policy";
+import { createShareMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
   searchParams,
@@ -26,8 +27,7 @@ export async function generateMetadata({
     description,
     alternates: { canonical: "/shop" },
     robots: { index: indexable, follow: indexable },
-    openGraph: { type: "website", url: "/shop", title: "Shop perfume | Perfume Aura", description },
-    twitter: { card: "summary_large_image", title: "Shop perfume | Perfume Aura", description },
+    ...createShareMetadata({ path: "/shop", title: "Shop perfume", description }),
   };
 }
 

@@ -7,6 +7,7 @@ import { Button } from "@perfume-aura/ui/components/button";
 import { DiscoveryGuideLinks } from "@/components/discovery-guide-links";
 import {
   createFragranceGuideStructuredData,
+  createShareMetadata,
   serializeJsonLd,
 } from "@/lib/seo";
 
@@ -15,22 +16,12 @@ export const metadata: Metadata = {
   description:
     "A practical fragrance guide to choosing perfume by mood, fragrance family, intensity, occasion, and a careful skin test.",
   alternates: { canonical: "/fragrance-guide" },
-  openGraph: {
-    siteName: "Perfume Aura",
-    locale: "en_IN",
-    type: "article",
-    url: "/fragrance-guide",
-    title: "How to choose a perfume | Perfume Aura",
-    description:
-      "Choose a perfume by mood, fragrance family, intensity, occasion, and a careful skin test.",
-    images: [{ url: "/images/hero-bottle-still-life.webp", alt: "Perfume Aura bottles arranged on a dark stone plinth" }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "How to choose a perfume | Perfume Aura",
+  ...createShareMetadata({
+    path: "/fragrance-guide",
+    title: "How to choose a perfume",
     description: "Choose a perfume by mood, fragrance family, intensity, occasion, and a careful skin test.",
-    images: ["/images/hero-bottle-still-life.webp"],
-  },
+    type: "article",
+  }),
 };
 
 const selectionSteps = [

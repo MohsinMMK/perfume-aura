@@ -10,12 +10,15 @@ import {
   createEditorialStructuredData,
   createHomeStructuredData,
   createProductStructuredData,
+  createShareMetadata,
+  defaultShareImage,
   discoveryReviewedDates,
   discoverySitemapEntries,
   fragranceGuidePublishedDate,
   getStorefrontOrigin,
   privateCrawlerPaths,
   serializeJsonLd,
+  shareImageFor,
 } from "./seo";
 import robots from "../app/robots";
 
@@ -83,6 +86,46 @@ describe("storefront SEO contracts", () => {
       const source = await readFile(new URL(`../app/account/${page}`, import.meta.url), "utf8");
       assert.match(source, /robots: noIndexRobots/u, page);
     }
+  });
+
+  it("serves 1200x630 JPEG share images that exist on disk", async () => {
+    const images = [
+      defaultShareImage,
+      ...Object.values(editorialGuides).map((guide) => shareImageFor(guide.image, guide.imageAlt)),
+      shareImageFor("/images/bottle-50ml.webp", "Bottle"),
+    ];
+    for (const image of images) {
+      assert.match(image.url, /^\/images\/share\/[a-z0-9-]+\.jpg$/u);
+      assert.equal(image.width, 1200);
+      assert.equal(image.height, 630);
+      const file = await readFile(new URL(`../public${image.url}`, import.meta.url));
+      assert.equal(file.readUInt16BE(0), 0xffd8, image.url);
+    }
+    assert.deepEqual(shareImageFor("/media/upload.webp", "Upload"), { url: "/media/upload.webp", alt: "Upload" });
+  });
+
+  it("gives every page preview its own URL, branded title and sized image", () => {
+    const share = createShareMetadata({ path: "/products/regent-noir", title: "Regent Noir", description: "A scent." });
+    assert.deepEqual(share.openGraph, {
+      type: "website",
+      locale: "en_IN",
+      siteName: "Perfume Aura",
+      url: "/products/regent-noir",
+      title: "Regent Noir | Perfume Aura",
+      description: "A scent.",
+      images: [defaultShareImage],
+    });
+    assert.equal(
+      createShareMetadata({ path: "/", title: "Perfume Aura | Home", description: "x" }).openGraph?.title,
+      "Perfume Aura | Home",
+    );
+  });
+
+  it("keeps page-specific preview fields out of the root layout", async () => {
+    const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
+    const openGraph = /openGraph: \{([^}]*)\}/u.exec(layout)?.[1] ?? "";
+    assert.ok(openGraph.includes("images"));
+    assert.doesNotMatch(openGraph, /\b(url|title|description):/u);
   });
 
   it("keeps search and AI crawlers on the same wildcard public-page policy", () => {

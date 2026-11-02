@@ -17,6 +17,7 @@ import { ProductCard } from "@/components/product-card";
 import { getFeaturedProducts } from "@/lib/catalog";
 import {
   createHomeStructuredData,
+  createShareMetadata,
   serializeJsonLd,
 } from "@/lib/seo";
 
@@ -25,21 +26,11 @@ export const metadata: Metadata = {
   description:
     "Discover Perfume Aura, a fragrance store in Kondapur, Hyderabad, and learn how to choose perfume by mood, intensity, occasion, and composition.",
   alternates: { canonical: "/" },
-  openGraph: {
-    siteName: "Perfume Aura",
-    locale: "en_IN",
-    type: "website",
-    url: "/",
+  ...createShareMetadata({
+    path: "/",
     title: "Perfume Aura | Perfume store in Kondapur, Hyderabad",
     description: "Discover Perfume Aura and choose perfume with practical guidance for Hyderabad and India.",
-    images: [{ url: "/images/hero-bottle-still-life.webp", alt: "Perfume Aura fragrance bottles arranged on a dark stone plinth" }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Perfume Aura | Perfume store in Kondapur, Hyderabad",
-    description: "Discover Perfume Aura and choose perfume with practical guidance for Hyderabad and India.",
-    images: ["/images/hero-bottle-still-life.webp"],
-  },
+  }),
 };
 
 const processSteps: readonly Readonly<{

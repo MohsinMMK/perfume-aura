@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { editorialGuideSlugs, editorialGuides } from "@/lib/editorial-guides";
 
 export const siteName = "Perfume Aura";
@@ -44,6 +45,69 @@ export const privateCrawlerPaths = [
   "/checkout",
   "/order/",
 ] as const;
+
+// 1200x630 JPEG share copies of these public/images WebPs live in
+// public/images/share/, because link previews (WhatsApp, Facebook, X, LinkedIn)
+// handle WebP and square images unreliably.
+const shareImageNames = new Set([
+  "hero-bottle-still-life",
+  "azure-tides-50ml",
+  "regent-noir-50ml",
+  "petalia-noir-50ml",
+  "azure-tides-flat",
+  "regent-noir-flat",
+  "petalia-noir-flat",
+  "bottle-50ml",
+]);
+
+export type ShareImage = Readonly<{
+  url: string;
+  width?: number;
+  height?: number;
+  alt: string;
+}>;
+
+export function shareImageFor(source: string, alt: string): ShareImage {
+  const name = /^\/images\/([a-z0-9-]+)\.webp$/u.exec(source)?.[1];
+  return name && shareImageNames.has(name)
+    ? { url: `/images/share/${name}.jpg`, width: 1200, height: 630, alt }
+    : { url: source, alt };
+}
+
+export const defaultShareImage = shareImageFor(
+  "/images/hero-bottle-still-life.webp",
+  "Perfume Aura fragrance bottles arranged on a dark stone plinth",
+);
+
+// Next.js replaces a parent openGraph/twitter object instead of merging it, so
+// every page that sets its own preview passes the complete set here.
+export function createShareMetadata(input: Readonly<{
+  path: string;
+  title: string;
+  description: string;
+  type?: "website" | "article";
+  image?: ShareImage;
+}>): Pick<Metadata, "openGraph" | "twitter"> {
+  const title = input.title.includes(siteName) ? input.title : `${input.title} | ${siteName}`;
+  const image = input.image ?? defaultShareImage;
+  return {
+    openGraph: {
+      type: input.type ?? "website",
+      locale: "en_IN",
+      siteName,
+      url: input.path,
+      title,
+      description: input.description,
+      images: [image],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description: input.description,
+      images: [image],
+    },
+  };
+}
 
 export const noIndexRobots = { index: false, follow: false } as const;
 

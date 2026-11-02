@@ -7,7 +7,7 @@ import { ProductCard } from "@/components/product-card";
 import { getStorefrontCollection } from "@/lib/catalog";
 import { isPublicCatalogEnabled } from "@/lib/catalog-policy";
 import { listingCollections } from "@/lib/listing-catalog";
-import { getStorefrontOrigin, serializeJsonLd, noIndexRobots } from "@/lib/seo";
+import { createShareMetadata, getStorefrontOrigin, serializeJsonLd, noIndexRobots } from "@/lib/seo";
 import { perfumeAuraGoogleMapsUrl } from "@/lib/store-location";
 
 // `panel` carries small ink text, so it stays on tokens with AA contrast.
@@ -32,8 +32,7 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
         title: collection.seoTitle,
         description: collection.seoDescription,
         alternates: { canonical: `/collections/${slug}` },
-        openGraph: { type: "website", url: `/collections/${slug}`, title: collection.seoTitle, description: collection.seoDescription },
-        twitter: { card: "summary_large_image", title: collection.seoTitle, description: collection.seoDescription },
+        ...createShareMetadata({ path: `/collections/${slug}`, title: collection.seoTitle, description: collection.seoDescription }),
       }
     : { title: collection?.title ?? "Collection unavailable", robots: noIndexRobots };
 }
