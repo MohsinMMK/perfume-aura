@@ -15,12 +15,15 @@ const DEPLOY_TARGETS = new Set(["ops", "storefront", "both"]);
 const SEO_MODES = new Set(["discovery", "public-catalog"]);
 const REQUIRED_STOREFRONT_ROBOTS_DIRECTIVES = [
   "Allow: /",
-  "Disallow: /account",
-  "Disallow: /account/",
   "Disallow: /api/",
   "Disallow: /cart",
   "Disallow: /checkout",
   "Disallow: /order/",
+];
+// /account pages carry noindex, which crawlers only see if robots.txt lets them fetch the page.
+const FORBIDDEN_STOREFRONT_ROBOTS_DIRECTIVES = [
+  "Disallow: /account",
+  "Disallow: /account/",
 ];
 const STOREFRONT_DISCOVERY_PATHS = [
   "/",
@@ -165,6 +168,11 @@ export function assertStorefrontDiscoveryFiles({
   for (const directive of REQUIRED_STOREFRONT_ROBOTS_DIRECTIVES) {
     if (!robotLines.has(directive)) {
       throw new Error(`storefront robots.txt missing ${directive}`);
+    }
+  }
+  for (const directive of FORBIDDEN_STOREFRONT_ROBOTS_DIRECTIVES) {
+    if (robotLines.has(directive)) {
+      throw new Error(`storefront robots.txt must not include ${directive}`);
     }
   }
   if (!robotLines.has(`Sitemap: ${publicBase}/sitemap.xml`)) {
@@ -580,7 +588,7 @@ function createFixtureServer(routes) {
 }
 
 function fixtureRobots(publicBase) {
-  return `User-Agent: *\nAllow: /\nDisallow: /account\nDisallow: /account/\nDisallow: /api/\nDisallow: /cart\nDisallow: /checkout\nDisallow: /order/\nSitemap: ${publicBase}/sitemap.xml\n`;
+  return `User-Agent: *\nAllow: /\nDisallow: /api/\nDisallow: /cart\nDisallow: /checkout\nDisallow: /order/\nSitemap: ${publicBase}/sitemap.xml\n`;
 }
 
 function fixtureSitemap(publicBase, paths = STOREFRONT_DISCOVERY_PATHS) {
@@ -663,6 +671,22 @@ async function selfTest() {
           },
         }),
       /robots\.txt missing/u,
+    );
+  }
+  for (const directive of FORBIDDEN_STOREFRONT_ROBOTS_DIRECTIVES) {
+    assert.throws(
+      () =>
+        assertStorefrontDiscoveryFiles({
+          ...validDiscoveryFiles,
+          robots: {
+            status: 200,
+            text: fixtureRobots(discoveryBase).replace(
+              "Disallow: /api/\n",
+              `${directive}\nDisallow: /api/\n`,
+            ),
+          },
+        }),
+      /robots\.txt must not include/u,
     );
   }
   assert.throws(
