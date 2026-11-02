@@ -2,23 +2,18 @@ import type { Metadata } from "next";
 import { DiscoveryGuideLinks } from "@/components/discovery-guide-links";
 import { EditorialPage } from "@/components/editorial-page";
 import { faqItems } from "@/lib/faq";
-import { createFaqStructuredData, serializeJsonLd } from "@/lib/seo";
+import { createFaqStructuredData, createShareMetadata, serializeJsonLd } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Perfume questions and answers",
   description:
     "Find Perfume Aura in Kondapur, Hyderabad, learn how to compare perfumes and notes, and check the current online checkout and delivery status.",
   alternates: { canonical: "/faq" },
-  openGraph: {
-    siteName: "Perfume Aura",
-    locale: "en_IN",
-    type: "website",
-    url: "/faq",
-    title: "Perfume questions and answers | Perfume Aura",
+  ...createShareMetadata({
+    path: "/faq",
+    title: "Perfume questions and answers",
     description: "Clear answers about Perfume Aura and choosing fragrance in Hyderabad and India.",
-    images: [{ url: "/images/hero-bottle-still-life.webp", alt: "Perfume Aura fragrance bottles arranged on a dark stone plinth" }],
-  },
-  twitter: { card: "summary_large_image", title: "Perfume questions and answers | Perfume Aura", description: "Clear answers about Perfume Aura and choosing fragrance in Hyderabad and India.", images: ["/images/hero-bottle-still-life.webp"] },
+  }),
 };
 
 export default function FaqPage() {

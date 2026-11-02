@@ -530,7 +530,10 @@ HTML `404` while flags are closed: `/checkout`, `/account/register`,
 `/order/`. `/account` stays crawlable so its `noindex` is seen. Sitemap
 `lastmod` and JSON-LD `dateModified` both come from `discoveryReviewedDates`
 in `apps/storefront/lib/seo.ts` (guides: their `reviewedDate`); change a date
-only when that page's copy changes. Product and collection URLs enter the sitemap only
+only when that page's copy changes. Share previews come from
+`createShareMetadata` (full Open Graph/Twitter set per page; the root layout
+carries only site name, locale and the default image) and use 1200x630 JPEGs in
+`public/images/share/`; add one there with `shareImageFor` for a new WebP. Product and collection URLs enter the sitemap only
 after database publication and `STOREFRONT_PUBLIC_RELEASE=true`.
 
 Header: Shop, Scent guide, About, FAQ, Account, cart popover, WhatsApp “Get

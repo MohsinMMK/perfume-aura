@@ -15,6 +15,7 @@ import { StoreVisitSection } from "@/components/store-visit-section";
 import {
   aboutPageDescription,
   createAboutStructuredData,
+  createShareMetadata,
   serializeJsonLd,
 } from "@/lib/seo";
 
@@ -22,16 +23,11 @@ export const metadata: Metadata = {
   title: "Our story",
   description: aboutPageDescription,
   alternates: { canonical: "/about" },
-  openGraph: {
-    siteName: "Perfume Aura",
-    locale: "en_IN",
-    type: "website",
-    url: "/about",
-    title: "Our story | Perfume Aura",
+  ...createShareMetadata({
+    path: "/about",
+    title: "Our story",
     description: "Meet Perfume Aura, a fragrance store in Kondapur, Hyderabad.",
-    images: [{ url: "/images/hero-bottle-still-life.webp", alt: "Perfume Aura bottles arranged in the studio" }],
-  },
-  twitter: { card: "summary_large_image", title: "Our story | Perfume Aura", description: "Meet Perfume Aura, a fragrance store in Kondapur, Hyderabad.", images: ["/images/hero-bottle-still-life.webp"] },
+  }),
 };
 
 const storyChapters = [

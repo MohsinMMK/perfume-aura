@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { StorefrontShell } from "@/components/storefront-shell";
 import { getOptionalEmbeddedBuildSourceCommit } from "@/lib/build-version";
-import { defaultSiteDescription, indexableRobots, siteName } from "@/lib/seo";
+import { defaultShareImage, defaultSiteDescription, indexableRobots, siteName } from "@/lib/seo";
 import "./globals.css";
 
 export const dynamic = "force-dynamic";
@@ -62,27 +62,17 @@ export const metadata: Metadata = {
   publisher: siteName,
   category: "fragrance",
   robots: indexableRobots,
+  // Only site-wide preview fields live here. A page that sets no preview of its
+  // own must not inherit the homepage's og:url, title or description.
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "/",
     siteName,
-    title: "Perfume Aura | Perfume store in Kondapur, Hyderabad",
-    description: defaultSiteDescription,
-    images: [
-      {
-        url: "/images/hero-bottle-still-life.webp",
-        width: 1686,
-        height: 933,
-        alt: "Perfume Aura fragrance bottles arranged on a dark stone plinth",
-      },
-    ],
+    images: [defaultShareImage],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Perfume Aura | Perfume store in Kondapur, Hyderabad",
-    description: defaultSiteDescription,
-    images: ["/images/hero-bottle-still-life.webp"],
+    images: [defaultShareImage],
   },
   manifest: "/manifest.webmanifest",
   icons: {

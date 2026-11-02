@@ -18,7 +18,9 @@ import { formatMoney } from "@/lib/money";
 import { loadApprovedProductReviews } from "@/lib/public-catalog";
 import {
   createProductStructuredData,
+  createShareMetadata,
   serializeJsonLd,
+  shareImageFor,
 } from "@/lib/seo";
 import { isPublicCatalogEnabled } from "@/lib/catalog-policy";
 
@@ -37,19 +39,12 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
       index: publicRelease && product.publicationState === "published",
       follow: publicRelease && product.publicationState === "published",
     },
-    openGraph: {
-      type: "website",
-      url: `/products/${product.slug}`,
+    ...createShareMetadata({
+      path: `/products/${product.slug}`,
       title: product.seoTitle ?? product.name,
       description: product.seoDescription ?? product.summary,
-      images: [{ url: product.socialImage, alt: product.socialImageAlt }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: product.seoTitle ?? product.name,
-      description: product.seoDescription ?? product.summary,
-      images: [product.socialImage],
-    },
+      image: shareImageFor(product.socialImage, product.socialImageAlt),
+    }),
   };
 }
 
